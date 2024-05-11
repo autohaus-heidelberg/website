@@ -38,18 +38,18 @@ dayjs.extend(relativeTime);
 dayjs.locale('de')
 
 const date = computed(() => {
-    const date = dayjs(event.value.date).locale('de');
+    const date = dayjs(event.value?.date).locale('de');
     return date.format("dddd - DD/MM/YYYY")
   
     }
     )
 
 const showDatediff = computed(() => {
-    return dayjs(event.value.date).diff(dayjs(), "day") < 7;
+    return dayjs(event.value?.date).diff(dayjs(), "day") < 7;
 })
 
 const dateDiff = computed(() => {
-    return dayjs(event.value.date).locale('de').fromNow();
+    return dayjs(event.value?.date).locale('de').fromNow();
 })
 
 </script>
