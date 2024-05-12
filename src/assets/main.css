@@ -189,6 +189,9 @@ sup { font-size: 80%; vertical-align: top; }
     }
 }
 
+p {
+    white-space: pre-wrap;
+}
 
 /* Button */
 

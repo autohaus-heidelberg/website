@@ -17,15 +17,15 @@ export type Event = {
 export const events: Event[] = [
     {
         date: '2024-05-16',
-        title: 'Busted Head Racket ❤️ Socke',
+        title: 'CarouSlam I: Busted Head Racket 🥊 Socke',
         time: '20 Uhr',
-        descriptionShort: 'Am 16 Mai ist mal wieder richtig Zeit für Punk.\n Es geht los mit der instantan lengendären Heidelberger Punk Band Socke, danach spielt Busted Head Racket auws Newcastle ihren genialen synth-punk.',
+        descriptionShort: "Am 16. und am 17. Mai lädt euch der Goldesel zum CarouSlam '24 ins Autohaus ein!\n\n Los geht es am 16. Mai mit Teil eins: auf der einen Seite stehen Busted Head Racket, feinster eggy Synth Punk aus Australien, welche vor drei Wochen bei Erste Theke Tonträger (aus Mannheim mit dem Spezialgebiet: arschgeile Mucke) ihr Album Go Go Go! veröffentlichten und nun auf Europatournee auch bei uns auf die Matte bringen werden. Finishing Move: Pitch Wheel Drop. \n\n Auf der anderen Ringseite warten die wenig kuscheligen Heidelberger Socke mit P-P-P-Punk um euch links zu drehen! Finishing Move: Axe Africa Bomber.",
         artists: [
             {
                 name: 'Busted Head Racket',
                 link: "https://bustedheadracket.bandcamp.com/",
                 description: "Originally starting out as a solo bedroom project for bassist-vocalist Arden Guff, Busted Head Racket, have been one of leading bands in the current Newcastle punk scene. Their radiant energy of unrestrained and hyper-accelerated synth-punk recently earned them an opening spot for rising Nashville punks Snõõper. Following up last year's split tape with weirdo German punk Teo Wise, the trio that now includes Guff, keyboardist Dave Cunningham, and drummer Riley Gardiner, have a new 8-track EP out today called Junk Food.",
-                youtube: "https://www.youtube.com/embed/Eu6Qv_ySFgo?si=yZZBqU3RFmYtaGAy",
+                youtube: "https://www.youtube.com/embed/Eu6Qv_ySFgo?si=cGZX-9ECsip4VDQZ",
                 soundcloud: "https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1376989297&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true"
             },
             {
@@ -38,9 +38,9 @@ export const events: Event[] = [
 
     {
         date: '2024-05-17',
-        title: 'The Whiffs ❤️ City Boys',
+        title: 'CarouSlam II: The Whiffs 🥊 City Boys',
         time: '20 Uhr',
-        descriptionShort: 'Am 17 Mai beehrt uns the Wiffs aus Kansas. Davor spielen die City Boys',
+        descriptionShort: "CarouSlam Runde zwei startet am 17. Mai ab 20:00 im Autohaus! \n\n Die Herausforderer in der einen Ringecke kommen aus Kansas City, beherrschen Power Pop in so gut wie allen Facetten in Perfektion: The Whiffs! Letztes Jahr erschien Scratch ‘N’ Sniff, das bereits dritte Werk, gespickt mit einem Hit nach dem anderen, auf Dig! Records (bzw. in Europa auf dem legendären Label Bachelor Records) und knüpft nahtlos an die vorangegangenen Veröffentlichungen Take A Whiff und Another Whiff. Finishing Move: Double Knee Heartbreaker. \n\nDie Gastgeber in der anderen Ecke kennen jeden Quadratzentimeter des Carousels und versuchen mit Croonern im ¾ Takt über Bullet Dancing Western Nummern bis zu schnellen Pub Rockern den Gästen aus Missouri Paroli zu bieten. Die Hinrunde vor zwei Jahren in der Villa Nachttanz ging jedenfalls ordentlich in die Magengrube! Finishing Move: C# Shooter.Wer wird den Gürtel am Ende umschnallen? Kommt rum und findet es raus!",
         artists: [
             {
                 name: 'The Whiffs',

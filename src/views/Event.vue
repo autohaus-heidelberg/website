@@ -26,8 +26,6 @@ import { eventHash } from "../utils";
 const props = defineProps<{id: string}>();
 
 const event = computed(() => {
-    console.log(props.id)
-    console.log(events.map(item => eventHash(item)))
     return events.find(item => eventHash(item) === props.id.toString());
 })
 
