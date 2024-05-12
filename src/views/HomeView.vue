@@ -13,7 +13,9 @@ const upcoming = computed(() => events
 </script>
 
 <template lang="pug">
-h1 Autohaus Heidelberg
+//- h1 Autohaus Heidelberg
+.header-img
+  img(src="/text.gif")
 p Wir sind das Carousel im alten Autohaus.
   br 
   | Ein Ort für Musik, Kunst, Kultur und alles was Spaß macht.
@@ -26,7 +28,7 @@ h1 Newsletter
 p Abonniere den Newsletter um updates über anstehende Konzerte und Veranstaltungen zu erhalten. Wir senden dir meistens einen Newsletter im Monat über die anstehenden Veranstaltungen und eine Erinnerung am Tag der Veranstaltung.
 .newsletter-form
   div(id="mc_embed_shell")
-    link(href="//cdn-images.mailchimp.com/embedcode/classic-061523.css", rel="stylesheet", type="text/css")
+    //- link(href="//cdn-images.mailchimp.com/embedcode/classic-061523.css", rel="stylesheet", type="text/css")
     div(id="mc_embed_signup")
       form#mc-embedded-subscribe-form.validate(action="https://gmail.us17.list-manage.com/subscribe/post?u=96eb1b394c29f8ffd1ab89b4a&amp;id=83bbee113a&amp;f_id=00f8c2e1f0", method="post",  name="mc-embedded-subscribe-form", target="_blank")
         div(id="mc_embed_signup_scroll")
@@ -50,6 +52,11 @@ a(href="mailto:autohaus.heidelberg@gmail.com") autohaus.heidelberg@gmail.com
 
 <style scoped>
 .newsletter-form {
+  display: flex;
+  justify-content: center;
+}
+
+.header-img {
   display: flex;
   justify-content: center;
 }

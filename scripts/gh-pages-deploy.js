@@ -9,6 +9,8 @@ import  fs from "fs";
     await execa("npm", ["run", "build"]);
     // Understand if it's dist or build folder
     const folderName = fs.existsSync("dist") ? "dist" : "build";
+    // Copy the page to 404.html, this way accessing routes directly will work
+    await execa("cp", [folderName + "/index.html"], [folderName + "/404.html"])
     await execa("git", ["--work-tree", folderName, "add", "--all"]);
     await execa("git", ["--work-tree", folderName, "commit", "-m", "gh-pages"]);
     console.log("Pushing to gh-pages...");
