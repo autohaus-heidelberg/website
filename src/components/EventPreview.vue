@@ -5,7 +5,7 @@
     router-link(:to="{name: 'event', params: { id: eventHash(event) }}")
         h2(v-if="showDatediff") {{ dateDiff }}
         h2 {{ date }} 
-        h2 {{ event.time }}
+        h2 {{ time }}
         h2 {{ event.title }}
         p {{ event.description }}
             button Mehr Infos
@@ -59,6 +59,10 @@ const date = computed(() => {
   
     }
     )
+
+const time = computed(() => {
+    return dayjs(props.event.date).format("HH:mm")
+})
 
 const showDatediff = computed(() => {
     return dayjs(props.event.date).diff(dayjs(), "day") < 7;

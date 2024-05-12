@@ -1,24 +1,24 @@
 export type Event = {
-    date: string, 
-    time: string,
-    title: string, 
-    descriptionShort: string, 
-    descriptionLong?: string, 
+    date: string,
+    title: string,
+    descriptionShort: string,
+    descriptionLong?: string,
+    fee: string,
     artists: Array<{
         name: string,
-        image?: string, 
-        link?: string, 
-        description?: string, 
-        soundcloud?: string, 
+        image?: string,
+        link?: string,
+        description?: string,
+        soundcloud?: string,
         youtube?: string,
     }>
 };
 
 export const events: Event[] = [
     {
-        date: '2024-05-16',
+        date: '2024-05-16T20:00:00',
         title: 'CarouSlam I: Busted Head Racket 🥊 Socke',
-        time: '20 Uhr',
+        fee: "10€, Kombi-Preis mit CarouSlam II: 15€",
         descriptionShort: "Am 16. und am 17. Mai lädt euch der Goldesel zum CarouSlam '24 ins Autohaus ein!\n\n Los geht es am 16. Mai mit Teil eins: auf der einen Seite stehen Busted Head Racket, feinster eggy Synth Punk aus Australien, welche vor drei Wochen bei Erste Theke Tonträger (aus Mannheim mit dem Spezialgebiet: arschgeile Mucke) ihr Album Go Go Go! veröffentlichten und nun auf Europatournee auch bei uns auf die Matte bringen werden. Finishing Move: Pitch Wheel Drop. \n\n Auf der anderen Ringseite warten die wenig kuscheligen Heidelberger Socke mit P-P-P-Punk um euch links zu drehen! Finishing Move: Axe Africa Bomber.",
         artists: [
             {
@@ -37,9 +37,10 @@ export const events: Event[] = [
 
 
     {
-        date: '2024-05-17',
+        date: '2024-05-17T20:00:00',
         title: 'CarouSlam II: The Whiffs 🥊 City Boys',
-        time: '20 Uhr',
+        fee: "10€, Kombi-Preis mit CarouSlam II: 15€",
+
         descriptionShort: "CarouSlam Runde zwei startet am 17. Mai ab 20:00 im Autohaus! \n\n Die Herausforderer in der einen Ringecke kommen aus Kansas City, beherrschen Power Pop in so gut wie allen Facetten in Perfektion: The Whiffs! Letztes Jahr erschien Scratch ‘N’ Sniff, das bereits dritte Werk, gespickt mit einem Hit nach dem anderen, auf Dig! Records (bzw. in Europa auf dem legendären Label Bachelor Records) und knüpft nahtlos an die vorangegangenen Veröffentlichungen Take A Whiff und Another Whiff. Finishing Move: Double Knee Heartbreaker. \n\nDie Gastgeber in der anderen Ecke kennen jeden Quadratzentimeter des Carousels und versuchen mit Croonern im ¾ Takt über Bullet Dancing Western Nummern bis zu schnellen Pub Rockern den Gästen aus Missouri Paroli zu bieten. Die Hinrunde vor zwei Jahren in der Villa Nachttanz ging jedenfalls ordentlich in die Magengrube! Finishing Move: C# Shooter.Wer wird den Gürtel am Ende umschnallen? Kommt rum und findet es raus!",
         artists: [
             {
@@ -60,9 +61,9 @@ export const events: Event[] = [
 
 
     {
-        date: '2024-05-28',
+        date: '2024-05-28T20:00:00',
         title: 'Forest Ray ❤️ The Roaring 420s',
-        time: '20 Uhr',
+        fee: "10€",
         descriptionShort: 'Am 28 Mai wird es sommerlich psychedelisch im Autohaus, Forest Ray und The Roaring 420s.',
         artists: [
             {

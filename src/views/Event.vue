@@ -1,8 +1,9 @@
 <template lang="pug">
-h2 {{ date }} - {{ event.time }}
+h2 {{ date }} Uhr
 h1(v-if="showDatediff") {{ dateDiff }}
 h1 {{ event.title }}
 p {{ event.descriptionLong ? event.descriptionLong : event.descriptionShort }}
+h3 Unkostenbeitrag: {{ event.fee }}
 .artist(v-for="artist in event.artists")
     h2 {{ artist. name }}
     a(v-if="artist.link" :href="artist.link") Homepage
@@ -37,7 +38,7 @@ dayjs.locale('de')
 
 const date = computed(() => {
     const date = dayjs(event.value?.date).locale('de');
-    return date.format("dddd - DD/MM/YYYY")
+    return date.format("dddd - DD/MM/YYYY - HH")
   
     }
     )
