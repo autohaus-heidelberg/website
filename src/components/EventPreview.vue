@@ -7,12 +7,20 @@
         h2 {{ date }} 
         h2 {{ time }}
         h2 {{ event.title }}
-        p {{ event.description }}
-            button Mehr Infos
+        img.event-img(v-if="event.img" :src="event.img")
+        button.mb-1 Mehr Infos
 </template>
 
 <style scoped>
 .event-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.event-img {
+    max-width: min(500px, 90vw);
+    max-height: min(500px, 90vw);
 }
 
 .border {

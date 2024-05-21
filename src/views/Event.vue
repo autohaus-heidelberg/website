@@ -1,17 +1,19 @@
 <template lang="pug">
-h2 {{ date }} Uhr
-h1(v-if="showDatediff") {{ dateDiff }}
-h1 {{ event.title }}
-p {{ event.descriptionLong ? event.descriptionLong : event.descriptionShort }}
-h3 Unkostenbeitrag: {{ event.fee }}
-.artist(v-for="artist in event.artists")
-    h2 {{ artist. name }}
-    a(v-if="artist.link" :href="artist.link") Homepage
-    p {{ artist.description }}
-    .video-container(v-if="artist.youtube")
-        iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
-    //- .soundcloud-container(v-if="artist.soundcloud")
-    //-     iframe(width="100%", height="166", scrolling="no", frameborder="no", allow="autoplay", :src="artist.soundcloud")
+.event
+    h2 {{ date }} Uhr
+    h1(v-if="showDatediff") {{ dateDiff }}
+    h1 {{ event.title }}
+    img.event-img(v-if="event.img" :src="event.img")
+    p {{ event.descriptionLong ? event.descriptionLong : event.descriptionShort }}
+    h3 Unkostenbeitrag: {{ event.fee }}
+    .artist(v-for="artist in event.artists")
+        h2 {{ artist. name }}
+        a(v-if="artist.link" :href="artist.link") Homepage
+        p {{ artist.description }}
+        .video-container(v-if="artist.youtube")
+            iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
+        //- .soundcloud-container(v-if="artist.soundcloud")
+        //-     iframe(width="100%", height="166", scrolling="no", frameborder="no", allow="autoplay", :src="artist.soundcloud")
 
 </template>
 
@@ -69,5 +71,17 @@ const dateDiff = computed(() => {
   height: 100%;
 }
 
+
+.event-img {
+    max-width: min(500px, 90vw);
+    max-height: min(500px, 90vw);
+   }
+
+
+.event {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 </style>

@@ -1,6 +1,8 @@
 export type Event = {
     date: string,
     title: string,
+    // path to image
+    img?: string,
     descriptionShort: string,
     descriptionLong?: string,
     fee: string,
@@ -64,7 +66,12 @@ export const events: Event[] = [
         date: '2024-05-28T20:00:00',
         title: 'Forest Ray ❤️ The Roaring 420s',
         fee: "10€",
-        descriptionShort: 'Am 28 Mai wird es sommerlich psychedelisch im Autohaus, Forest Ray und The Roaring 420s.',
+        img: "/img/forest_ray.jpg",
+        descriptionShort: `Auch in diesem Jahr möchte der Goldesel wieder einen Beitrag zum Deutsch-Amerikanischen Freundschaftsfest leisten. Im Autohaus kurbeln wir daher am 28. Mai um 20 Uhr sämtliche Seitenscheiben runter, hängen das linke Bein zum Fenster raus (Automatik!), stellen die Lauscher auf und das Autoradio auf 98,7. Wolfman Jack heult los und kündigt Forest Ray zur Live-Session an. 
+
+        Die Psych-Rocker Kombo aus Seattle startet mit Please Be Nice To Me ihren V8 auf Benzos. Sämtliche Kofferraumdeckel  fangen an zu wummern, die B-Bender sorgen für angenehme Kurvenlage! Kräftiger Kickdown im Anflug, aber keinem verrutscht an diesem Abend das Bier auf der Rückbank. Doch was wäre so ein staubiger Roadtrip ohne Companion? Genau, nur ein Ghost on a Highway. Über die Route B96 kommen zum Glück die Roaring 420s aus Dresden zur Rettung!
+        
+        Und hinterher trinken alle noch 2 Bourbon Whisky im Soft Rock Cafe.`,
         artists: [
             {
                 name: 'Forest Ray',
