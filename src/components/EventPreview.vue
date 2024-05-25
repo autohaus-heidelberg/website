@@ -1,8 +1,8 @@
 
 
 <template lang="pug">
-.event-preview.border
-    router-link(:to="{name: 'event', params: { id: eventHash(event) }}")
+router-link(:to="{name: 'event', params: { id: eventHash(event) }}")
+    .event-preview.border
         h2(v-if="showDatediff") {{ dateDiff }}
         h2 {{ date }} 
         h2 {{ time }}
