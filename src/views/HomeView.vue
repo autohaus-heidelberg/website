@@ -21,8 +21,10 @@ p Wir sind das Carousel im alten Autohaus.
   | Ein Ort für Musik, Kunst, Kultur und alles was Spaß macht.
   
 h1 Termine
-.event.mb-1(v-for="event in upcoming")
-  EventPreview( :event="event")
+.empty(v-if="upcoming.length === 0")
+  p Aktuell gibt es keine anstehenden Events.
+.event.mb-1(v-else v-for="event in upcoming")
+  EventPreview(:event="event")
 
 h1 Newsletter
 p Abonniere den Newsletter um updates über anstehende Konzerte und Veranstaltungen zu erhalten. Wir senden dir meistens einen Newsletter im Monat über die anstehenden Veranstaltungen und eine Erinnerung am Tag der Veranstaltung.
