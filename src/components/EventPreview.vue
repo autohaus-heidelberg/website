@@ -70,10 +70,7 @@ dayjs.extend(isTomorrow)
 dayjs.updateLocale('de', {
   calendar: {
     sameDay: '[Heute um] LT',
-    nextDay: '[Morgen!]',
-    lastWeek: '[Letzten] dddd [um] LT',
-    nextWeek: 'dddd [um] LT',
-    sameElse: 'L'
+    nextDay: '[Morgen!]'
   }
 })
 dayjs.updateLocale('de', {
