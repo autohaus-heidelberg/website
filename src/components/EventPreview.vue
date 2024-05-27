@@ -52,6 +52,7 @@ import calendar from 'dayjs/plugin/calendar';
 import duration from 'dayjs/plugin/duration';
 import isToday from 'dayjs/plugin/isToday';
 import isTomorrow from 'dayjs/plugin/isTomorrow';
+import localizedFormat from 'dayjs/plugin/LocalizedFormat';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import 'dayjs/locale/de';
@@ -63,10 +64,11 @@ const props = defineProps<{event: Event}>();
 
 dayjs.extend(calendar)
 dayjs.extend(duration)
-dayjs.extend(relativeTime)
-dayjs.extend(updateLocale)
 dayjs.extend(isToday)
 dayjs.extend(isTomorrow)
+dayjs.extend(localizedFormat)
+dayjs.extend(relativeTime)
+dayjs.extend(updateLocale)
 dayjs.updateLocale('de', {
   calendar: {
     sameDay: '[Heute um] LT',
