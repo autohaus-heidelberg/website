@@ -52,7 +52,7 @@ import calendar from 'dayjs/plugin/calendar';
 import duration from 'dayjs/plugin/duration';
 import isToday from 'dayjs/plugin/isToday';
 import isTomorrow from 'dayjs/plugin/isTomorrow';
-import localizedFormat from 'dayjs/plugin/LocalizedFormat';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import 'dayjs/locale/de';
