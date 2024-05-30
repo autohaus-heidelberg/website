@@ -69,6 +69,7 @@ dayjs.extend(isTomorrow)
 dayjs.extend(localizedFormat)
 dayjs.extend(relativeTime)
 dayjs.extend(updateLocale)
+const localeList = dayjs.Ls;
 dayjs.updateLocale('de', {
   calendar: {
     sameDay: '[Heute um] LT',
@@ -77,6 +78,7 @@ dayjs.updateLocale('de', {
 })
 dayjs.updateLocale('de', {
   relativeTime: {
+    ...localeList['de'].relativeTime,
     future: "In %s",
     dd: "%d Tagen"
   }
@@ -85,13 +87,11 @@ dayjs.locale('de')
 
 const date = computed(() => {
     const date = dayjs(props.event.date).locale('de');
-    return date.format("dddd - DD/MM/YYYY")
-  
-    }
-    )
+    return date.format("dddd - DD/MM/YYYY"); 
+})
 
 const time = computed(() => {
-    return dayjs(props.event.date).format("HH:mm")
+    return dayjs(props.event.date).format("HH:mm");
 })
 
 const showDatediff = computed(() => {
