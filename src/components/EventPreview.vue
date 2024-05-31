@@ -48,8 +48,13 @@ animation: border-dance 1s infinite linear;
 
 <script lang="ts" setup>
 import type { Event } from "../events";
+import calendar from 'dayjs/plugin/calendar';
 import duration from 'dayjs/plugin/duration';
+import isToday from 'dayjs/plugin/isToday';
+import isTomorrow from 'dayjs/plugin/isTomorrow';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import updateLocale from 'dayjs/plugin/updateLocale';
 import 'dayjs/locale/de';
 import dayjs from "dayjs";
 import { computed } from "vue";
@@ -57,19 +62,36 @@ import { eventHash } from "../utils";
 
 const props = defineProps<{event: Event}>();
 
+dayjs.extend(calendar)
 dayjs.extend(duration)
-dayjs.extend(relativeTime);
+dayjs.extend(isToday)
+dayjs.extend(isTomorrow)
+dayjs.extend(localizedFormat)
+dayjs.extend(relativeTime)
+dayjs.extend(updateLocale)
+const localeList = dayjs.Ls;
+dayjs.updateLocale('de', {
+  calendar: {
+    sameDay: '[Heute um] LT',
+    nextDay: '[Morgen!]'
+  }
+})
+dayjs.updateLocale('de', {
+  relativeTime: {
+    ...localeList['de'].relativeTime,
+    future: "In %s",
+    dd: "%d Tagen"
+  }
+})
 dayjs.locale('de')
 
 const date = computed(() => {
     const date = dayjs(props.event.date).locale('de');
-    return date.format("dddd - DD/MM/YYYY")
-  
-    }
-    )
+    return date.format("dddd - DD/MM/YYYY"); 
+})
 
 const time = computed(() => {
-    return dayjs(props.event.date).format("HH:mm")
+    return dayjs(props.event.date).format("HH:mm");
 })
 
 const showDatediff = computed(() => {
@@ -77,6 +99,9 @@ const showDatediff = computed(() => {
 })
 
 const dateDiff = computed(() => {
+    if (dayjs(props.event.date).isTomorrow() || dayjs(props.event.date).isToday()) {
+        return dayjs(props.event.date).locale('de').calendar();
+    }
     return dayjs(props.event.date).locale('de').fromNow();
 })
 
