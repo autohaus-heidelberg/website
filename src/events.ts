@@ -103,6 +103,14 @@ export const events: Event[] = [
                 link: "https://breakinallrecords.bandcamp.com/album/hodilicious"
             }
         ]
+    },
+    {
+        date: '2024-06-22T14:00:00',
+        title: 'Sommer im Autohaus',
+        fee: "Spendenbasis",
+        // img: "/img/hodi_flow.jpg",
+        descriptionShort: `Der Sommer im Autohaus wird ein bunter Tag mit vielen Live Acts, Workshops, Spiel und Spaß. Schreibt es euch schonmal in den Kalender, Details folgen.`,
+        artists: []
     }
 
 ]
