@@ -1,4 +1,6 @@
 export type Event = {
+    // Unique id, this is used in the URL so URLencoded is better
+    id: string,
     date: string,
     title: string,
     // path to image
@@ -18,6 +20,7 @@ export type Event = {
 
 export const events: Event[] = [
     {
+        id: 'carouslam-1-05-16-2024',
         date: '2024-05-16T20:00:00',
         title: 'CarouSlam I: Busted Head Racket 🥊 Socke',
         fee: "10€, Kombi-Preis mit CarouSlam II: 15€",
@@ -39,6 +42,7 @@ export const events: Event[] = [
 
 
     {
+        id: 'carouslam-2-05-17-2024',
         date: '2024-05-17T20:00:00',
         title: 'CarouSlam II: The Whiffs 🥊 City Boys',
         fee: "10€, Kombi-Preis mit CarouSlam I: 15€",
@@ -63,6 +67,7 @@ export const events: Event[] = [
 
 
     {
+        id: 'forest-ray-28-05-2024',
         date: '2024-05-28T20:00:00',
         title: 'Forest Ray ❤️ The Roaring 420s',
         fee: "Spendenbasis",
@@ -90,6 +95,7 @@ export const events: Event[] = [
 
 
     {
+        id: 'hdf-31-05-2024',
         date: '2024-05-31T19:00:00',
         title: 'Hodi Flow Hodilicious Release Party',
         fee: "Spendenbasis",
@@ -105,6 +111,7 @@ export const events: Event[] = [
         ]
     },
     {
+        id: 'sommer-2024',
         date: '2024-06-22T14:00:00',
         title: 'Sommer im Autohaus',
         fee: "Spendenbasis",

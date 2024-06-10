@@ -1,7 +1,7 @@
 
 
 <template lang="pug">
-router-link(:to="{name: 'event', params: { id: eventHash(event) }}")
+router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
         h2(v-if="showDatediff") {{ dateDiff }}
         h2 {{ date }} 

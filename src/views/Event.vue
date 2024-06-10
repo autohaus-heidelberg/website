@@ -29,7 +29,7 @@ import { eventHash } from "../utils";
 const props = defineProps<{id: string}>();
 
 const event = computed(() => {
-    return events.find(item => eventHash(item) === props.id.toString());
+    return events.find(item => item.id === decodeURI(props.id));
 })
 
 
