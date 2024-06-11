@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import {  RouterView } from 'vue-router'
+import { computed } from 'vue'
+import {  RouterView, useRoute, useRouter } from 'vue-router'
+
+const route = useRoute();
+const isHome = computed(() => {
+  console.log(route.path)
+  return route.path === "/";
+})
+
 </script>
 
 <template lang="pug">
 header
-router-link(:to="{name: 'home'}") 
+router-link(v-if="!isHome" :to="{name: 'home'}") 
   a home
 RouterView
 </template>

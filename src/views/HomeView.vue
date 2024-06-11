@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { events } from "../events";
 import dayjs from "dayjs";
 import EventPreview from "../components/EventPreview.vue";
+import "leaflet/dist/leaflet.css";
+import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
-const upcoming = computed(() => events
-  .map(item => ({...item, date_d: dayjs(item.date) }) )
-  // Only show dates that are newer than yesterday
-  .filter(item => item.date_d.isAfter(dayjs().subtract(1, "day")))
-  .sort((a,b) => a.date_d.isAfter(b.date_d) ? 1 : -1));
+const upcoming = computed(() =>
+  events
+    .map((item) => ({ ...item, date_d: dayjs(item.date) }))
+    // Only show dates that are newer than yesterday
+    .filter((item) => item.date_d.isAfter(dayjs().subtract(1, "day")))
+    .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
+);
 
+const zoom = ref(17);
 </script>
 
 <template lang="pug">
@@ -19,35 +26,68 @@ const upcoming = computed(() => events
 p Wir sind das Carousel im alten Autohaus.
   br 
   | Ein Ort für Musik, Kunst, Kultur und alles was Spaß macht.
-  
+
 h1 Termine
 .empty(v-if="upcoming.length === 0")
   p Aktuell gibt es keine anstehenden Events.
-.event.mb-1(v-else v-for="event in upcoming")
+.event.mb-1(v-else, v-for="event in upcoming")
   EventPreview(:event="event")
 
 h1 Newsletter
 p Abonniere den Newsletter um updates über anstehende Konzerte und Veranstaltungen zu erhalten. Wir senden dir meistens einen Newsletter im Monat über die anstehenden Veranstaltungen und eine Erinnerung am Tag der Veranstaltung.
 .newsletter-form
-  div(id="mc_embed_shell")
+  #mc_embed_shell
     //- link(href="//cdn-images.mailchimp.com/embedcode/classic-061523.css", rel="stylesheet", type="text/css")
-    div(id="mc_embed_signup")
-      form#mc-embedded-subscribe-form.validate(action="https://gmail.us17.list-manage.com/subscribe/post?u=96eb1b394c29f8ffd1ab89b4a&amp;id=83bbee113a&amp;f_id=00f8c2e1f0", method="post",  name="mc-embedded-subscribe-form", target="_blank")
-        div(id="mc_embed_signup_scroll")
+    #mc_embed_signup
+      form#mc-embedded-subscribe-form.validate(
+        action="https://gmail.us17.list-manage.com/subscribe/post?u=96eb1b394c29f8ffd1ab89b4a&amp;id=83bbee113a&amp;f_id=00f8c2e1f0",
+        method="post",
+        name="mc-embedded-subscribe-form",
+        target="_blank"
+      )
+        #mc_embed_signup_scroll
           .mc-field-group
-            label(for="mce-EMAIL") E-Mail-Adresse 
+            label(for="mce-EMAIL") E-Mail-Adresse
+              |
               span.asterisk *
-            input#mce-EMAIL.required.email(type="email", name="EMAIL", required, value)
+            input#mce-EMAIL.required.email(
+              type="email",
+              name="EMAIL",
+              required,
+              value
+            )
           #mce-responses.clear.foot
-            #mce-error-response.response(style="display: none;")
-            #mce-success-response.response(style="display: none;")
-          div(style="position: absolute; left: -5000px;", aria-hidden="true")
+            #mce-error-response.response(style="display: none")
+            #mce-success-response.response(style="display: none")
+          div(style="position: absolute; left: -5000px", aria-hidden="true")
             | /* real people should not fill this in and expect good things - do not remove this or risk form bot signups */
-            input(type="text", name="b_96eb1b394c29f8ffd1ab89b4a_83bbee113a", tabindex="-1", value)
-          button.mt-1(type="submit" value="Anmelden" name="subscribe" id="mc-embedded-subscribe" class="button el-button el-button--default") Anmelden
+            input(
+              type="text",
+              name="b_96eb1b394c29f8ffd1ab89b4a_83bbee113a",
+              tabindex="-1",
+              value
+            )
+          button#mc-embedded-subscribe.mt-1.button.el-button.el-button--default(
+            type="submit",
+            value="Anmelden",
+            name="subscribe"
+          ) Anmelden
+
+h1 Lage
+p Das Carousel im alten Autohaus befindet sich in der 
+  a(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Hebelstraße 7
+  |  am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die 
+  a(href="https://maps.app.goo.gl/7k4UvxVHtGvHK1NfA") Rudolf-Diesel-Straße
+a.mb-1(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
+.map
+  l-map(ref="map", v-model:zoom="zoom", :center="[49.396956872123646, 8.680584425099438]")
+    l-tile-layer( url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          layer-type="base"
+          name="OpenStreetMap")
+    l-marker(:latLng="[49.39666, 8.680584425099438]")
 
 h1 Impressum
-p Verantwortlich für den Inhalt dieser Website: 
+p Verantwortlich für den Inhalt dieser Website:
 p Leo Reich - Plöck 85 - 69117
 a(href="mailto:autohaus.heidelberg@gmail.com") autohaus.heidelberg@gmail.com
 </template>
@@ -61,5 +101,11 @@ a(href="mailto:autohaus.heidelberg@gmail.com") autohaus.heidelberg@gmail.com
 .header-img {
   display: flex;
   justify-content: center;
+}
+
+.map {
+  margin-top: 1rem;
+  height: max(300px, 20vh);
+  width: 100%;
 }
 </style>
