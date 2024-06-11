@@ -112,12 +112,48 @@ export const events: Event[] = [
     },
     {
         id: 'sommer-2024',
-        date: '2024-06-22T14:00:00',
-        title: 'Sommer im Autohaus',
-        fee: "Spendenbasis",
-        // img: "/img/hodi_flow.jpg",
-        descriptionShort: `Der Sommer im Autohaus wird ein bunter Tag mit vielen Live Acts, Workshops, Spiel und Spaß. Schreibt es euch schonmal in den Kalender, Details folgen.`,
-        artists: []
+        date: '2024-06-22T16:00:00',
+        title: 'Carousel Sommerfest',
+        fee: "",
+        img: "/img/sommer-2024.jpeg",
+        descriptionShort: `Endlich Sommer im Autohaus! Am 22. Juni holen wir Tante Renates Cabrio aus der Garage und laden euch auf eine rasante Spritztour ein 🚗
+
+        Wir starten um 16 Uhr mit einem Donut im Hof und jeder Menge Action draußen wie drinnen. Euch erwarten:
+        
+        🎨 kreative Workshops
+        🎠 ein schwindelerregendes Kleiderkarussell (tausche alte gegen neue Styles, bäm!) und Flohmarkt
+        🍔 etwas leckeres zu Essen
+        🏓 Tischtennis-Action mit @pingpongsocialclubhd
+        🎶 DJs, DJs, DJs! - sie alle bringen uns den Beat!
+        🥁Live-Musik im Carousel
+        
+        Kurbelt eure Verdecks zurück, bringt gute Laune und eure Freunde mit und lasst uns zusammen feiern. Wir freuen uns auf euch und schalten schon mal in den 3. Gang. Weitere Infos folgen 🙂
+        
+        Das Sommerfest ist ein Projekt im Rahmen des Förderprogramms „Mehr junge Feierkultur“. Unterstützt vom @stadtjugendring.hd und @hdn8.de`,
+        artists: [
+            {
+                name: 'Beach Towel Duo',
+                description: ``,
+                youtube: `https://youtube.com/embed/hQjNV-fDMaU?si=gG6s4uNbVhc5aqMX`
+            },
+            {
+                name: 'Novitchok',
+                youtube: 'https://youtube.com/embed/ZtvqZdkan9g?si=rZOE7F49LLD5m4p_'
+            },
+            {
+                name: 'Bonfire Orchestra',
+                youtube: "https://youtube.com/embed/QSVKgdivYac?si=96IwQSzyB3vWZnN2",
+                // link: "https://instagram.com/bonfireorchestra"
+            },
+            {
+                name: 'Jimson Drift',
+                youtube: "https://youtube.com/embed/7jkGz_NHcT8?si=dFKpEzO5f9T8eX8G"
+            },
+            {
+                name: 'Rico Banton',
+                youtube: "https://youtube.com/embed/Sye9lUPlqnY?si=OlPnwRHrXuZIYY5d"
+            },
+        ]
     }
 
 ]

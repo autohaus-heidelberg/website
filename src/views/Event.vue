@@ -5,7 +5,7 @@
     h1 {{ event.title }}
     img.event-img(v-if="event.img" :src="event.img")
     p {{ event.descriptionLong ? event.descriptionLong : event.descriptionShort }}
-    h3 Eintritt: {{ event.fee }}
+    h3(v-if="event.fee") Eintritt: {{ event.fee }}
     .artist(v-for="artist in event.artists")
         h2 {{ artist. name }}
         a(v-if="artist.link" :href="artist.link") Homepage
@@ -71,6 +71,9 @@ const dateDiff = computed(() => {
   height: 100%;
 }
 
+.artist {
+    width: 100%; 
+}
 
 .event-img {
     max-width: min(500px, 90vw);
