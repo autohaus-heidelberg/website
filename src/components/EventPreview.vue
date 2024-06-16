@@ -5,7 +5,7 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
         h2(v-if="showDatediff") {{ dateDiff }}
         h2 {{ date }} 
-        h2 {{ time }}
+        h2 {{ time }} Uhr
         h2 {{ event.title }}
         img.event-img(v-if="event.img" :src="event.img")
         button.mb-1 Mehr Infos
