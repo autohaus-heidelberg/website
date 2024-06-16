@@ -120,11 +120,11 @@ export const events: Event[] = [
 
         Wir starten um 16 Uhr mit einem Donut im Hof und jeder Menge Action draußen wie drinnen. Euch erwarten:
         
-        🎨 kreative Workshops
+        🎨 Workshops zum Thema "Patriarchat Wegbügeln" von FemiHD sowie ein kreativer Workshop zur Herstellung einer Makramee Blumenampel
         🎠 ein schwindelerregendes Kleiderkarussell (tausche alte gegen neue Styles, bäm!) und Flohmarkt
         🍔 etwas leckeres zu Essen
         🏓 Tischtennis-Action mit @pingpongsocialclubhd
-        🎶 DJs, DJs, DJs! - sie alle bringen uns den Beat!
+        🎶 DJs, DJs, DJs! - sie alle bringen uns den Beat! Mit GiuNi Tunes, TretGold, Joschka Epiterra und Liminal Phase
         🥁Live-Musik im Carousel
         
         Kurbelt eure Verdecks zurück, bringt gute Laune und eure Freunde mit und lasst uns zusammen feiern. Wir freuen uns auf euch und schalten schon mal in den 3. Gang. Weitere Infos folgen 🙂
@@ -132,8 +132,7 @@ export const events: Event[] = [
         Das Sommerfest ist ein Projekt im Rahmen des Förderprogramms „Mehr junge Feierkultur“. Unterstützt vom @stadtjugendring.hd und @hdn8.de`,
         artists: [
             {
-                name: 'Beach Towel Duo',
-                description: ``,
+                name: 'Beach Towel',
                 youtube: `https://youtube.com/embed/hQjNV-fDMaU?si=gG6s4uNbVhc5aqMX`
             },
             {
@@ -142,8 +141,7 @@ export const events: Event[] = [
             },
             {
                 name: 'Bonfire Orchestra',
-                youtube: "https://youtube.com/embed/QSVKgdivYac?si=96IwQSzyB3vWZnN2",
-                // link: "https://instagram.com/bonfireorchestra"
+                youtube: "https://youtube.com/embed/QSVKgdivYac?si=96IwQSzyB3vWZnN2"
             },
             {
                 name: 'Jimson Drift',
@@ -153,6 +151,30 @@ export const events: Event[] = [
                 name: 'Rico Banton',
                 youtube: "https://youtube.com/embed/Sye9lUPlqnY?si=OlPnwRHrXuZIYY5d"
             },
+            {
+                name: 'Glider',
+                youtube: "https://youtube.com/embed/Gb9YfYRh-KQ?si=pTzdMeRosIxbcFdq"
+            }
+        ]
+    },
+    {
+        id: 'loons-mustang-fang',
+        date: '2024-07-11T20:00:00',
+        title: 'The Loons (Psychedelic Garage Beat aus San Diego, Kalifornien) mit Mustang Fang (Karlsruhe)',
+        fee: "",
+        img: "/img/loons.png",
+        descriptionShort: `Sixties Garage Sound, als käme er direkt von einer der legendären Nuggets Compilations zur amerikanischen Psychedelic Welle ab Mitte der Sechziger Jahre ist das, wozu der Goldesel euch am 11. Juli ins Carousel im Autohaus einlädt! The Loons drehen sich um Mike Stax (zuvor bei The Crawdaddys und The Tell-Tale Hearts und Herausgeber von Ugly Things Magazine), wurden 1997 gegründet, veröffentlichten seitdem fünf Alben auf den einschlägigen Labels wie BOMP! und Get Hip Recordings und touren nun mit dem neuesten Werk “Memories Have Faces” (Munster Records), um euch die buchstäblichen Faces mit ihrem Fuzz-durchtränkten Sound zu melten!
+
+Bevor wir uns in den Sechzigern wähnen, gibt es eine Dosis Country-Glitch-Hop von Mustang Fang auf die Lauscher.`,
+        artists: [
+            {
+                name: 'The Loons',
+                youtube: `https://youtube.com/embed/YnDbOZXJ0ro?si=7jNe2Jebllx6ceMr`
+            },
+            {
+                name: 'Mustang Fang',
+                youtube: 'https://youtube.com/embed/N_2srIvBDI8?si=GHPITpImKpgn0jOs'
+            }
         ]
     }
 
