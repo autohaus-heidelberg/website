@@ -115,21 +115,32 @@ export const events: Event[] = [
         date: '2024-06-22T16:00:00',
         title: 'Carousel Sommerfest',
         fee: "",
-        img: "/img/sommer-2024.jpeg",
-        descriptionShort: `Endlich Sommer im Autohaus! Am 22. Juni holen wir Tante Renates Cabrio aus der Garage und laden euch auf eine rasante Spritztour ein 🚗
+        img: "/img/sommerfest_flyer.png",
+        descriptionShort: `Endlich Sommer im Autohaus! Am 22. Juni holen wir Tante Renates Cabrio aus der Garage und laden euch auf eine rasante Spritztour ein. 🚗
 
-        Wir starten um 16 Uhr mit einem Donut im Hof und jeder Menge Action draußen wie drinnen. Euch erwarten:
-        
-        🎨 Workshops zum Thema "Patriarchat Wegbügeln" von FemiHD sowie ein kreativer Workshop zur Herstellung einer Makramee Blumenampel
-        🎠 ein schwindelerregendes Kleiderkarussell (tausche alte gegen neue Styles, bäm!) und Flohmarkt
-        🍔 etwas leckeres zu Essen
-        🏓 Tischtennis-Action mit @pingpongsocialclubhd
-        🎶 DJs, DJs, DJs! - sie alle bringen uns den Beat! Mit GiuNi Tunes, TretGold, Joschka Epiterra und Liminal Phase
-        🥁Live-Musik im Carousel
-        
-        Kurbelt eure Verdecks zurück, bringt gute Laune und eure Freunde mit und lasst uns zusammen feiern. Wir freuen uns auf euch und schalten schon mal in den 3. Gang. Weitere Infos folgen 🙂
-        
-        Das Sommerfest ist ein Projekt im Rahmen des Förderprogramms „Mehr junge Feierkultur“. Unterstützt vom @stadtjugendring.hd und @hdn8.de`,
+Wir starten um 16 Uhr mit einem Donut im Hof und jeder Menge Action draußen wie drinnen. Euch erwarten:
+
+- 🎨 kreative Workshops: Makramee Blumenampel mit Fenja, freies Malen für Kids (2-10 Jahre) mit Studio Kritzel Kratzel oder Bügeln gegen das Patriarchat mit FemiHD
+
+- 🎠 ein schwindelerregendes Kleiderkarussell (tausche alte gegen neue Styles, bäm!)
+
+- 👖Flohmarkt: meldet euch gerne vorab (über Insta oder per Mail an carouselev@gmail.com), wenn ihr mitmachen wollt, Tische sind vorhanden.
+
+- 🍔 etwas Leckeres zu essen von Erick’s Tacos & Eis vom N’Ice Bike.
+
+- 🏓 Tischtennis-Action mit dem Ping Pong Social Club.
+
+- 🎶 DJs, DJs, DJs! @lockedphase, Joschka Epiterra, @tretgold und GiuNi Tunes
+
+- 🥁 Live-Musik mit Jimson Drift, Beach Towel (als Duo-Infernale), Bonfire Orchestra, Glider, Novitchok und Turbo Mars Soundsystem
+
+- 🎆 Visuals von Bani Vardigans
+
+Kurbelt eure Verdecks zurück, bringt gute Laune und eure Friends mit. Wir freuen uns auf euch und schalten schon mal in den 3. Gang.
+
+Der Eintritt ist frei!
+
+Das Sommerfest ist ein Projekt im Rahmen des Förderprogramms „Mehr junge Feierkultur“. Unterstützt vom Stadtjugendring Heidelberg und hdn8.de 🙏`,
         artists: [
             {
                 name: 'Beach Towel',
