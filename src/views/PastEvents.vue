@@ -1,7 +1,8 @@
 <template lang="pug">
-h1 Vergangene Events
-.event.mb-1(v-for="event in upcoming" :key="event.id")
-  EventPreview(:event="event")
+.past-events
+  h1 Vergangene Events
+  .event.mb-1(v-for="event in upcoming" :key="event.id")
+    EventPreview(:event="event")
 
 </template>
 
@@ -21,3 +22,10 @@ const upcoming = computed(() =>
 
 
 </script>
+
+<style scoped>
+.past-events {
+  max-width: 75ch;
+  margin: auto;
+}
+</style>
