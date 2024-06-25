@@ -25,12 +25,14 @@ const zoom = ref(17);
   img(src="/text.gif")
 p Wir sind das Carousel im alten Autohaus.
   br 
-  | Ein Ort für Musik, Kunst, Kultur und alles was Spaß macht.
+  | Ein Ort für Musik, Kunst, Kultur für alle.
+  br
+  a(href="#about") Mehr erfahren
 
 h1 Termine
 .empty(v-if="upcoming.length === 0")
   p Aktuell gibt es keine anstehenden Events.
-.event.mb-1(v-else, v-for="event in upcoming")
+.event.mb-1(v-else, v-for="event in upcoming" :key="event.id")
   EventPreview(:event="event")
 
 h1 Newsletter
@@ -85,6 +87,16 @@ a.mb-1(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
           layer-type="base"
           name="OpenStreetMap")
     l-marker(:latLng="[49.39666, 8.680584425099438]")
+
+h1 Vergangene Events
+p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß? 
+router-link(:to="{name: 'pastEvents'}") Hier findet ihr die vergangengen Events
+
+#about
+  h1 Über uns
+  p Unser Ziel ist es niederschwellige Angebote zu schaffen für die lokale Kunst- und Kulturszene.
+  p Zum einen bieten wir Kunstschaffenden günstige Proberäume und einen Veranstaltungsort
+  p Zum anderen bieten wir Kunstinteressierten günstige Konzerte und Events
 
 h1 Impressum
 p Verantwortlich für den Inhalt dieser Website:
