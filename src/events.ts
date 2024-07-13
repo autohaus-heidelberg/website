@@ -187,6 +187,38 @@ Bevor wir uns in den Sechzigern wähnen, gibt es eine Dosis Country-Glitch-Hop v
                 youtube: 'https://youtube.com/embed/N_2srIvBDI8?si=GHPITpImKpgn0jOs'
             }
         ]
+    },
+    {
+        id: 'wurst-durst',
+        date: '2024-07-14T14:00:00',
+        title: 'Wurst & Durst',
+        fee: "",
+        img: "/img/wurst_durst.jpg",
+        descriptionShort: `Flanell Aktuell schmeißen den Grill an und ihr könnt bisschen die Ateliers anschauen, snacken, trinken…auf gemütlich!
+
+Gerne auch eigenes Grillgut mitbringen, wenn ihr großen Hunger habt :)
+
+14:00-18:00 Uhr
+ `,
+        artists: []
+    },
+    {
+        id: 'dgf_wild-mustang',
+        date: '2024-07-27T20:00:00',
+        title: 'Die Groben Fetten / Wild Mustang',
+        fee: "",
+        img: "/img/dgf_wild_mustang.jpg",
+        descriptionShort: `Mehr Infos bald!`,
+        artists: [
+            {
+                name: 'Die Groben Fetten',
+                youtube: `https://www.youtube.com/embed/XBFSX3olM1Y?si=inA7iO3A3p9DWJIf`
+            },
+            {
+                name: 'Wild Mustang',
+                youtube: 'https://www.youtube.com/embed/izYhyltt9fU?si=jdELNa4SxvO9vDhN'
+            }
+        ]
     }
 
 ]
