@@ -208,7 +208,9 @@ Gerne auch eigenes Grillgut mitbringen, wenn ihr großen Hunger habt :)
         title: 'Die Groben Fetten / Wild Mustang',
         fee: "",
         img: "/img/dgf_wild_mustang.jpg",
-        descriptionShort: `Mehr Infos bald!`,
+        descriptionShort: `DIE GROBEN FETTEN sind DER Headliner des Lametta & Wurst Festivals, welches es aber aus uns unerfindlichen Gründen noch immer (2024!) nicht gibt. Aus einem schimmligen Würzburger Keller haben sie es in nur 10 Jahren erstaunlich schnell und stilsicher ans Tageslicht geschafft und leben irgendwo zwischen Rügenwald und Ostpommern ein Leben auf der Überholspur. Fettige Ohrwürmer, Synthi und Nasenflöte, sowie ein ordentliches Pfund gehackte Anarcho-Performance, versprechen einen Abend, an dem auch mal mitgesungen werden darf. 
+
+Auf dem Rücken des WILD MUSTANG galoppieren wir durch lo-fi Countryland in den Sunset vom Autohaus. Bittersweete Melodien sind sein Leben und trotz staubigster Prärie: hier bleibt garantiert kein Auge trocken!`,
         artists: [
             {
                 name: 'Die Groben Fetten',
