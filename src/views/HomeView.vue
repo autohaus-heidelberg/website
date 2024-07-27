@@ -151,7 +151,7 @@ p Wir sind das Carousel im alten Autohaus.
     p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß?
     router-link(:to="{ name: 'pastEvents' }") Hier findet ihr die vergangengen Events
 
-  #about
+  #about()
     h1 Über uns
     p Unser Ziel ist es niederschwellige Angebote zu schaffen für die lokale Kunst- und Kulturszene.
     p Zum einen bieten wir Kunstschaffenden günstige Proberäume und einen Veranstaltungsort
@@ -172,6 +172,7 @@ p Wir sind das Carousel im alten Autohaus.
 
 .img-animate {
   position: absolute;
+  margin: 0;
   object-fit: cover;
   aspect-ratio: 3.57/1;
   top: 0;
@@ -194,6 +195,8 @@ p Wir sind das Carousel im alten Autohaus.
   right: 0;
   object-fit: cover;
   aspect-ratio: 3.57/1;
+  margin: 0;
+
 }
 
 .header-img {
@@ -204,10 +207,12 @@ p Wir sind das Carousel im alten Autohaus.
 
 .header-img > .container {
   position: relative;
+  margin: 0;
   max-width: 1024px;
   width: 100%;
   aspect-ratio: 3.57/1;
   margin-bottom: 2rem;
+  overflow: hidden;
 }
 
 .map {
