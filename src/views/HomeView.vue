@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { events } from "../events";
 import dayjs from "dayjs";
 import EventPreview from "../components/EventPreview.vue";
@@ -17,12 +17,55 @@ const upcoming = computed(() =>
 );
 
 const zoom = ref(17);
+
+const img1Current = ref(0);
+const img2Current = ref(1);
+const visibleImage = ref(0);
+const noOfImages = 6;
+
+const imgSrc1 = computed(() => {
+  return `/img/logo_animation/${img1Current.value + 1}.jpg`;
+});
+const imgSrc2 = computed(() => {
+  return `/img/logo_animation/${img2Current.value + 1}.jpg`;
+});
+
+const styleImg1 = computed(() => ({
+  opacity: visibleImage.value === 1 ? 1 : 0,
+}));
+
+const styleImg2 = computed(() => 
+  ({
+    opacity: visibleImage.value === 1 ? 0 : 1
+  })
+);
+
+let intervalId = null;
+
+onMounted(() => {
+  intervalId = setInterval(() => {
+    if (visibleImage.value === 1) {
+      img2Current.value = (img2Current.value + 2) % noOfImages;
+      visibleImage.value = 2;
+    } else {
+      img1Current.value = (img1Current.value + 2) % noOfImages;
+      visibleImage.value = 1;
+    }
+  }, 2000);
+});
+
+onUnmounted(() => {
+  clearInterval(intervalId);
+});
 </script>
 
 <template lang="pug">
 //- h1 Autohaus Heidelberg
 .header-img
-  img(src="/text.gif")
+  .container
+    img.img-animate(:src="imgSrc1", :style="styleImg1") 
+    img.img-animate(:src="imgSrc2", :style="styleImg2") 
+    img.img-outline(src="/img/logo_outline.svg")
 p Wir sind das Carousel im alten Autohaus.
   br 
   | Ein Ort für Musik, Kunst, Kultur für alle.
@@ -34,7 +77,7 @@ p Wir sind das Carousel im alten Autohaus.
     h1 Termine
     .empty(v-if="upcoming.length === 0")
       p Aktuell gibt es keine anstehenden Events.
-    .event.mb-1(v-else, v-for="event in upcoming" :key="event.id")
+    .event.mb-1(v-else, v-for="event in upcoming", :key="event.id")
       EventPreview(:event="event")
 
   .newsletter
@@ -64,7 +107,10 @@ p Wir sind das Carousel im alten Autohaus.
               #mce-responses.clear.foot
                 #mce-error-response.response(style="display: none")
                 #mce-success-response.response(style="display: none")
-              div(style="position: absolute; left: -5000px", aria-hidden="true")
+              div(
+                style="position: absolute; left: -5000px",
+                aria-hidden="true"
+              )
                 | /* real people should not fill this in and expect good things - do not remove this or risk form bot signups */
                 input(
                   type="text",
@@ -80,22 +126,30 @@ p Wir sind das Carousel im alten Autohaus.
 
   .directions
     h1 Lage
-    p Das Carousel im alten Autohaus befindet sich in der 
+    p Das Carousel im alten Autohaus befindet sich in der
+      |
       a(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Hebelstraße 7
-      |  am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die 
+      |
+      | am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die
       a(href="https://maps.app.goo.gl/7k4UvxVHtGvHK1NfA") Rudolf-Diesel-Straße
     a.mb-1(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
     .map
-      l-map(ref="map", v-model:zoom="zoom", :center="[49.396956872123646, 8.680584425099438]")
-        l-tile-layer( url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              layer-type="base"
-              name="OpenStreetMap")
+      l-map(
+        ref="map",
+        v-model:zoom="zoom",
+        :center="[49.396956872123646, 8.680584425099438]"
+      )
+        l-tile-layer(
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          layer-type="base",
+          name="OpenStreetMap"
+        )
         l-marker(:latLng="[49.39666, 8.680584425099438]")
 
   .past-events
     h1 Vergangene Events
-    p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß? 
-    router-link(:to="{name: 'pastEvents'}") Hier findet ihr die vergangengen Events
+    p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß?
+    router-link(:to="{ name: 'pastEvents' }") Hier findet ihr die vergangengen Events
 
   #about
     h1 Über uns
@@ -116,9 +170,44 @@ p Wir sind das Carousel im alten Autohaus.
   justify-content: center;
 }
 
+.img-animate {
+  position: absolute;
+  object-fit: cover;
+  aspect-ratio: 3.57/1;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transition: 2s;
+  filter: brightness(200%);
+  mask-image: url("/img/logo.svg");
+  mask-mode: luminance;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+
+.img-outline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  object-fit: cover;
+  aspect-ratio: 3.57/1;
+}
+
 .header-img {
   display: flex;
   justify-content: center;
+  width: 100%;
+}
+
+.header-img > .container {
+  position: relative;
+  max-width: 1024px;
+  width: 100%;
+  aspect-ratio: 3.57/1;
+  margin-bottom: 2rem;
 }
 
 .map {
@@ -133,46 +222,42 @@ p Wir sind das Carousel im alten Autohaus.
 }
 
 @media screen and (min-width: 150ch) {
+  .page-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    max-width: 200ch;
+    grid-gap: 1rem;
+    column-gap: 3rem;
+    grid-template-areas:
+      "dates newsletter"
+      "dates past-events"
+      "dates directions"
+      "dates about"
+      "dates impressum";
+  }
 
-.page-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  max-width: 150ch;
-  grid-gap: 1rem;
-  column-gap: 3rem;
-  grid-template: "dates newsletter"
-                 "dates past-events"
-                 "dates directions"
-                 "dates about"
-                 "dates impressum"
+  .dates {
+    grid-area: dates;
+  }
+
+  .newsletter {
+    grid-area: newsletter;
+  }
+
+  .past-events {
+    grid-area: past-events;
+  }
+
+  .directions {
+    grid-area: directions;
+  }
+
+  #about {
+    grid-area: about;
+  }
+
+  #impressum {
+    grid-area: impressum;
+  }
 }
-
-.dates {
-  grid-area: dates
-}
-
-.newsletter {
-  grid-area: newsletter
-}
-
-.past-events {
-  grid-area: past-events
-}
-
-.directions {
-  grid-area: directions
-}
-
-#about {
-  grid-area: about
-}
-
-#impressum {
-  grid-area: impressum
-}
-
-}
-
-
-
 </style>
