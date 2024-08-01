@@ -55,7 +55,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  clearInterval(intervalId);
+  if(intervalId !== null) {
+    clearInterval(intervalId);
+  }
 });
 </script>
 
