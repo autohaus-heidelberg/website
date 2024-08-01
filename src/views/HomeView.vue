@@ -160,8 +160,8 @@ p Wir sind das Carousel im alten Autohaus.
   #impressum
     h1 Impressum
     p Verantwortlich für den Inhalt dieser Website:
-    p Leo Reich - Plöck 85 - 69117
-    a(href="mailto:autohaus.heidelberg@gmail.com") autohaus.heidelberg@gmail.com
+    p Carousel e.V. - Hebelstraße 7 - 69115 Heidelberg
+    a(href="mailto:carouselev@gmail.com") carouselev@gmail.com
 </template>
 
 <style scoped>
