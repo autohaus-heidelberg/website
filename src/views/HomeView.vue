@@ -40,7 +40,7 @@ const styleImg2 = computed(() =>
   })
 );
 
-let intervalId = null;
+let intervalId: number | null = null;
 
 onMounted(() => {
   intervalId = setInterval(() => {
