@@ -7,11 +7,13 @@
     p {{ event.descriptionLong ? event.descriptionLong : event.descriptionShort }}
     h3(v-if="event.fee") Eintritt: {{ event.fee }}
     .artist(v-for="artist in event.artists")
-        h2 {{ artist. name }}
-        a(v-if="artist.link" :href="artist.link") Homepage
+        h2 {{ artist.name }}
+        a(v-if="artist.link" :href="artist.link") Im Netz
         p {{ artist.description }}
         .video-container(v-if="artist.youtube")
             iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
+        .bandcamp-container(v-if="artist.bandcamp")
+            iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="350px" height="786px" seamless>)
         //- .soundcloud-container(v-if="artist.soundcloud")
         //-     iframe(width="100%", height="166", scrolling="no", frameborder="no", allow="autoplay", :src="artist.soundcloud")
 
