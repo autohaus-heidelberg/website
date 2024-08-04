@@ -15,6 +15,7 @@ export type Event = {
         description?: string,
         soundcloud?: string,
         youtube?: string,
+        bandcamp?: string
     }>
 };
 
@@ -210,7 +211,7 @@ Gerne auch eigenes Grillgut mitbringen, wenn ihr großen Hunger habt :)
         img: "/img/dgf_wild_mustang.jpg",
         descriptionShort: `DIE GROBEN FETTEN sind DER Headliner des Lametta & Wurst Festivals, welches es aber aus uns unerfindlichen Gründen noch immer (2024!) nicht gibt. Aus einem schimmligen Würzburger Keller haben sie es in nur 10 Jahren erstaunlich schnell und stilsicher ans Tageslicht geschafft und leben irgendwo zwischen Rügenwald und Ostpommern ein Leben auf der Überholspur. Fettige Ohrwürmer, Synthi und Nasenflöte, sowie ein ordentliches Pfund gehackte Anarcho-Performance, versprechen einen Abend, an dem auch mal mitgesungen werden darf. 
 
-Auf dem Rücken des WILD MUSTANG galoppieren wir durch lo-fi Countryland in den Sunset vom Autohaus. Bittersweete Melodien sind sein Leben und trotz staubigster Prärie: hier bleibt garantiert kein Auge trocken!`,
+Auf dem Rücken des WILD MUSTANG galoppieren wir durch lo-fi Countryland in den Sunset vom Autohaus. Bittersweete Melodien sind sein Leben und trotz staubigster Prärie: hier bleibt garantiert kein Auge trocken!   `,
         artists: [
             {
                 name: 'Die Groben Fetten',
@@ -219,6 +220,21 @@ Auf dem Rücken des WILD MUSTANG galoppieren wir durch lo-fi Countryland in den 
             {
                 name: 'Wild Mustang',
                 youtube: 'https://www.youtube.com/embed/izYhyltt9fU?si=jdELNa4SxvO9vDhN'
+            }
+        ]
+    },
+    {
+        id: 'cool-sorcery',
+        date: '2024-09-11T20:00:00',
+        title: 'Cool Sorcery (Brasilien)',
+        fee: "",
+        img: "/img/COOL SORCERY TOUR POSTER.jpg",
+        descriptionShort: `Cool Sorcery is set to embark on their european tour, bringing their new album "Terra Invaders" experience to audiences across the continent. Known for their dynamic and improvisational live performances, the band promises a unique and unforgettable concert at every stop. Expect extended interludes, impromptu jams, and a captivating blend of their recorded music with fresh, live interpretations.`,
+        artists: [
+            {
+                name: 'Cool Sorcery',
+                link: 'https://distrokid.com/hyperfollow/coolsorcery/terra-invaders',
+                bandcamp: `https://bandcamp.com/EmbeddedPlayer/album=3272968982/size=large/bgcol=333333/linkcol=9a64ff/transparent=true/`
             }
         ]
     }
