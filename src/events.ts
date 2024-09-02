@@ -53,14 +53,14 @@ export const events: Event[] = [
             {
                 name: 'The Whiffs',
                 description: "This album just feels like America. It transports me to some mythical dive bar where The Replacements, Tom Petty, and Cheap Trick still rule the jukebox. — Faster And Louder",
-                youtube: "https://www.youtube.com/embed/6dM2rAb-RL8?si=ecPIR3xLm2FzGqNn",
+                youtube: "https://www.youtube.com/embed/6dM2rAb-RL8",
                 link: "https://www.thewhiffsband.com/"
             },
             {
                 name: 'City Boys',
                 link: 'https://city-boys.bandcamp.com/',
                 description: "Auf Gleis 7 schaufeln die City Boys ordentlich Kohlen in den Kessel des Country-Schrammelpop-Zugs auf dem Weg von Heidelberg nach Shelbyville. Toot-toot, bei 90/mph wollen alle sofort einen Line Dance aufs Parkett vom Bordbistro legen. Gitarre, Schlagzeug und Bass schlingern roadrunnermäßig um die 3/4 Akkord-Kurve. Jetzt erstmal einen Stopp bei Tank & Rast.",
-                youtube: 'https://www.youtube.com/embed/hpMjJ-4r-iM?si=8o89HfQU_fF9A_zP'
+                youtube: 'https://www.youtube.com/embed/hpMjJ-4r-iM'
             }
         ]
     },
@@ -73,23 +73,23 @@ export const events: Event[] = [
         title: 'Forest Ray ❤️ The Roaring 420s',
         fee: "Spendenbasis",
         img: "/img/forest_ray.jpg",
-        descriptionShort: `Auch in diesem Jahr möchte der Goldesel wieder einen Beitrag zum Deutsch-Amerikanischen Freundschaftsfest leisten. Im Autohaus kurbeln wir daher am 28. Mai um 20 Uhr sämtliche Seitenscheiben runter, hängen das linke Bein zum Fenster raus (Automatik!), stellen die Lauscher auf und das Autoradio auf 98,7. Wolfman Jack heult los und kündigt Forest Ray zur Live-Session an. 
+        descriptionShort: `Auch in diesem Jahr möchte der Goldesel wieder einen Beitrag zum Deutsch-Amerikanischen Freundschaftsfest leisten. Im Autohaus kurbeln wir daher am 28. Mai um 20 Uhr sämtliche Seitenscheiben runter, hängen das linke Bein zum Fenster raus (Automatik!), stellen die Lauscher auf und das Autoradio auf 98,7. Wolfman Jack heult los und kündigt Forest Ray zur Live-Session an.
 
-        Die Psych-Rocker Kombo aus Seattle startet mit Please Be Nice To Me ihren V8 auf Benzos. Sämtliche Kofferraumdeckel  fangen an zu wummern, die B-Bender sorgen für angenehme Kurvenlage! Kräftiger Kickdown im Anflug, aber keinem verrutscht an diesem Abend das Bier auf der Rückbank. Doch was wäre so ein staubiger Roadtrip ohne Companion? Genau, nur ein Ghost on a Highway. Über die Route B96 kommen zum Glück die Roaring 420s aus Dresden zur Rettung!
+        Die Psych-Rocker Kombo aus Seattle startet mit Please Be Nice To Me ihren V8 auf Benzos. Sämtliche Kofferraumdeckel  fangen an zu wummern, die B-Bender sorgen für angenehme Kurvenlage! Kräftiger Kickdown im Anflug, aber keinem verrutscht an diesem Abend das Bier auf der Rückbank. Doch was wäre so ein staubiger Roadtrip ohne Companion? Genau, nur ein Ghost on a Highway. Über die Route B96 kommen zum Glück die Roaring 420s aus Dresden zur Rettung!
         
-        Und hinterher trinken alle noch 2 Bourbon Whisky im Soft Rock Cafe.`,
+        Und hinterher trinken alle noch 2 Bourbon Whisky im Soft Rock Cafe.`,
         artists: [
             {
                 name: 'Forest Ray',
-                description: "Forest Ray is a psychedelic rock project whose dedication to analog recording has harbored a darker, older and more intimate sound. Forest Ray's music combines guitar driven psychedelic rock with tinges of raw synth-laced post-punk, Tropicalia flute and uninhibited performances that embody the garage punk aesthetic that fueled the group’s creation ",
-                youtube: "https://www.youtube.com/embed/I6estL4fqvI?si=hFss2Vy5v6V2rWpF",
+                description: "Forest Ray is a psychedelic rock project whose dedication to analog recording has harbored a darker, older and more intimate sound. Forest Ray's music combines guitar driven psychedelic rock with tinges of raw synth-laced post-punk, Tropicalia flute and uninhibited performances that embody the garage punk aesthetic that fueled the group's creation ",
+                youtube: "https://www.youtube.com/embed/I6estL4fqvI",
                 link: "https://forestray.bandcamp.com/"
             },
             {
                 name: 'The Roaring 420s',
                 link: "https://theroaring420s.bandcamp.com/album/the-roaring-420s",
                 description: "Blending surf rock and late 60s pre-Punk into Eastern psychedelia The Roaring 420s from Dresden, Germany, rather sound like an obscure little gem discovered at a garage sale in California. Roughly located somewhere between The Beach Boys and The Velvet Underground, they’re bursting out with twangy guitars, groovin' organ and an electric sitar! ",
-                youtube: 'https://www.youtube.com/embed/-psBFcQ8t-k?si=TWWI2BCI9UMncFcC'
+                youtube: 'https://www.youtube.com/embed/-psBFcQ8t-k'
             }
         ]
     },
@@ -106,7 +106,7 @@ export const events: Event[] = [
             {
                 name: 'Hodi Flow',
                 description: "Das lang ersehnte Album, 'Hodilicious', von Hodi Flow in Zusammenarbeit mit DJ Soundtrax hat nun den Weg ans Tageslicht gefunden. Mit satten HipHop Beats und Lyrics, die seinesgleichen suchen, wird Heidelbergs Hip Hop erneut auf die Bildfläche projiziert und zeigt sich hierbei von seiner besten Seite. Neben der Möglichkeit die Lieder auf Musik-Streaming Plattformen zu hören, können Hörer das Album nun auch als Vinyl oder Kassette erwerben.",
-                youtube: "https://www.youtube.com/embed/8hAQjFlv7jU?si=4-los_7Hcsjtabo2",
+                youtube: "https://www.youtube.com/embed/8hAQjFlv7jU",
                 link: "https://breakinallrecords.bandcamp.com/album/hodilicious"
             }
         ]
@@ -145,27 +145,27 @@ Das Sommerfest ist ein Projekt im Rahmen des Förderprogramms „Mehr junge Feie
         artists: [
             {
                 name: 'Beach Towel',
-                youtube: `https://youtube.com/embed/hQjNV-fDMaU?si=gG6s4uNbVhc5aqMX`
+                youtube: `https://youtube.com/embed/hQjNV-fDMaU`
             },
             {
                 name: 'Novitchok',
-                youtube: 'https://youtube.com/embed/ZtvqZdkan9g?si=rZOE7F49LLD5m4p_'
+                youtube: 'https://youtube.com/embed/ZtvqZdkan9g'
             },
             {
                 name: 'Bonfire Orchestra',
-                youtube: "https://youtube.com/embed/QSVKgdivYac?si=96IwQSzyB3vWZnN2"
+                youtube: "https://youtube.com/embed/QSVKgdivYac"
             },
             {
                 name: 'Jimson Drift',
-                youtube: "https://youtube.com/embed/7jkGz_NHcT8?si=dFKpEzO5f9T8eX8G"
+                youtube: "https://youtube.com/embed/7jkGz_NHcT8"
             },
             {
                 name: 'Rico Banton',
-                youtube: "https://youtube.com/embed/Sye9lUPlqnY?si=OlPnwRHrXuZIYY5d"
+                youtube: "https://youtube.com/embed/Sye9lUPlqnY"
             },
             {
                 name: 'Glider',
-                youtube: "https://youtube.com/embed/Gb9YfYRh-KQ?si=pTzdMeRosIxbcFdq"
+                youtube: "https://youtube.com/embed/Gb9YfYRh-KQ"
             }
         ]
     },
@@ -181,11 +181,11 @@ Bevor wir uns in den Sechzigern wähnen, gibt es eine Dosis Country-Glitch-Hop v
         artists: [
             {
                 name: 'The Loons',
-                youtube: `https://youtube.com/embed/YnDbOZXJ0ro?si=7jNe2Jebllx6ceMr`
+                youtube: `https://youtube.com/embed/YnDbOZXJ0ro`
             },
             {
                 name: 'Mustang Fang',
-                youtube: 'https://youtube.com/embed/N_2srIvBDI8?si=GHPITpImKpgn0jOs'
+                youtube: 'https://youtube.com/embed/N_2srIvBDI8'
             }
         ]
     },
@@ -215,26 +215,33 @@ Auf dem Rücken des WILD MUSTANG galoppieren wir durch lo-fi Countryland in den 
         artists: [
             {
                 name: 'Die Groben Fetten',
-                youtube: `https://www.youtube.com/embed/XBFSX3olM1Y?si=inA7iO3A3p9DWJIf`
+                youtube: `https://www.youtube.com/embed/XBFSX3olM1Y`
             },
             {
                 name: 'Wild Mustang',
-                youtube: 'https://www.youtube.com/embed/izYhyltt9fU?si=jdELNa4SxvO9vDhN'
+                youtube: 'https://www.youtube.com/embed/izYhyltt9fU'
             }
         ]
     },
     {
         id: 'cool-sorcery',
-        date: '2024-09-11T20:00:00',
+        date: '2024-09-11T19:00:00',
         title: 'Cool Sorcery (Brasilien)',
-        fee: "",
-        img: "/img/COOL SORCERY TOUR POSTER.jpg",
-        descriptionShort: `Cool Sorcery is set to embark on their european tour, bringing their new album "Terra Invaders" experience to audiences across the continent. Known for their dynamic and improvisational live performances, the band promises a unique and unforgettable concert at every stop. Expect extended interludes, impromptu jams, and a captivating blend of their recorded music with fresh, live interpretations.`,
+        fee: "10€",
+        img: "/img/cool sorcery, zyph.jpg",
+        descriptionShort: `Synth Punk's not dead! Jedenfalls nicht wenn es nach uns und Cool Sorcery geht. Und nein, die sind nicht aus Down Under sondern aus Brasilien, oha! Während die Alben weitestgehend alleine von Marcos Assis geschrieben, eingespielt, aufgenommen, gemischt und gemastered sind, muss er auf der Bühne nicht einen auf Hyper One-Man-Band machen, sondern spielt mit kompletter Band auf. Das neue Album heißt Terra Invaders, beinhaltet zahlreiche Features, handelt von uns überlegenen Aliens und ist eine spannende Mischung aus eggy Punk und Psych Jams.
+
+Uns aus der Sommerpause holen werden uns Zyph aus Mannheim, freshe Band, reißender Punk auf Deutsch. Pogo Kompatibilität 10/10.`,
         artists: [
             {
                 name: 'Cool Sorcery',
                 link: 'https://distrokid.com/hyperfollow/coolsorcery/terra-invaders',
-                bandcamp: `https://bandcamp.com/EmbeddedPlayer/album=3272968982/size=large/bgcol=333333/linkcol=9a64ff/transparent=true/`
+                bandcamp: `https://bandcamp.com/EmbeddedPlayer/album=3272968982/size=large/bgcol=333333/linkcol=9a64ff/transparent=true/`,
+                youtube: 'https://www.youtube.com/embed/1P3v6h1gZoc'
+            },
+            {
+                name: 'Zyph',
+                bandcamp: 'https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/'
             }
         ]
     }
