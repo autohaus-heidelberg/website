@@ -21,6 +21,16 @@ export type Event = {
 
 export const events: Event[] = [
     {
+        id: 'kino-1309',
+        date: '2024-09-13T21:00:00',
+        title: "Open air kino: Repo Man",
+        img: "/img/woanderskino-1309.jpeg",
+        descriptionShort: "Open air kino im Autohaus. Karlstorkino Midnight Madness zeigt Repo Man im Hinterhof. Es geht los bei Anbruch der Dunkelheit. <a href='https://www.karlstorkino.de/programm/repo-man/'>Mehr Infos</a>",
+        fee: "Pay what you want",
+        artists: [],
+
+    },
+    {
         id: 'carouslam-1-05-16-2024',
         date: '2024-05-16T20:00:00',
         title: 'CarouSlam I: Busted Head Racket 🥊 Socke',
