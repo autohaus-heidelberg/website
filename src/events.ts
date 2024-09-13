@@ -21,16 +21,6 @@ export type Event = {
 
 export const events: Event[] = [
     {
-        id: 'kino-1309',
-        date: '2024-09-13T21:00:00',
-        title: "Open air kino: Repo Man",
-        img: "/img/woanderskino-1309.jpeg",
-        descriptionShort: "Open air kino im Autohaus. Karlstorkino Midnight Madness zeigt Repo Man im Hinterhof. Es geht los bei Anbruch der Dunkelheit. <a href='https://www.karlstorkino.de/programm/repo-man/'>Mehr Infos</a>",
-        fee: "Pay what you want",
-        artists: [],
-
-    },
-    {
         id: 'carouslam-1-05-16-2024',
         date: '2024-05-16T20:00:00',
         title: 'CarouSlam I: Busted Head Racket 🥊 Socke',
@@ -236,7 +226,7 @@ Auf dem Rücken des WILD MUSTANG galoppieren wir durch lo-fi Countryland in den 
     {
         id: 'cool-sorcery',
         date: '2024-09-11T19:00:00',
-        title: 'Cool Sorcery (Brasilien)',
+        title: 'Cool Sorcery (Brasilien) und Zyph (Mannheim)',
         fee: "10€",
         img: "/img/cool sorcery, zyph.jpg",
         descriptionShort: `Synth Punk's not dead! Jedenfalls nicht wenn es nach uns und Cool Sorcery geht. Und nein, die sind nicht aus Down Under sondern aus Brasilien, oha! Während die Alben weitestgehend alleine von Marcos Assis geschrieben, eingespielt, aufgenommen, gemischt und gemastered sind, muss er auf der Bühne nicht einen auf Hyper One-Man-Band machen, sondern spielt mit kompletter Band auf. Das neue Album heißt Terra Invaders, beinhaltet zahlreiche Features, handelt von uns überlegenen Aliens und ist eine spannende Mischung aus eggy Punk und Psych Jams.
@@ -254,6 +244,26 @@ Uns aus der Sommerpause holen werden uns Zyph aus Mannheim, freshe Band, reißen
                 bandcamp: 'https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/'
             }
         ]
-    }
+    },
+    {
+        id: 'kino-1309',
+        date: '2024-09-13T21:00:00',
+        title: "Open air kino: Repo Man",
+        img: "/img/woanderskino-1309.jpeg",
+        descriptionShort: "Open air kino im Autohaus. Karlstorkino Midnight Madness zeigt Repo Man im Hinterhof. Es geht los bei Anbruch der Dunkelheit. <a href='https://www.karlstorkino.de/programm/repo-man/'>Mehr Infos</a>",
+        fee: "Pay what you want",
+        artists: [],
+
+    },
+    {
+        id: 'sluts-wkz-socke',
+        date: '2024-10-05T20:00:00',
+        title: "Sluts, WKZ und Socke",
+        img: "/img/sluts_wkz_socke.png",
+        descriptionShort: "Mehr Infos folgen ...",
+        fee: "",
+        artists: [],
+
+    },
 
 ]
