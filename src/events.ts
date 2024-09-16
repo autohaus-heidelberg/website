@@ -259,7 +259,7 @@ Uns aus der Sommerpause holen werden uns Zyph aus Mannheim, freshe Band, reißen
         id: 'sluts-wkz-socke',
         date: '2024-10-05T20:00:00',
         title: "Sluts, WKZ und Socke",
-        img: "/img/sluts_wkz_socke.png",
+        img: "/img/sluts_wkz_socke.jpg",
         descriptionShort: "Mehr Infos folgen ...",
         fee: "",
         artists: [],
