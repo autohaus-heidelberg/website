@@ -253,16 +253,34 @@ Uns aus der Sommerpause holen werden uns Zyph aus Mannheim, freshe Band, reißen
         descriptionShort: "Open air kino im Autohaus. Karlstorkino Midnight Madness zeigt Repo Man im Hinterhof. Es geht los bei Anbruch der Dunkelheit. <a href='https://www.karlstorkino.de/programm/repo-man/'>Mehr Infos</a>",
         fee: "Pay what you want",
         artists: [],
-
     },
     {
         id: 'sluts-wkz-socke',
         date: '2024-10-05T20:00:00',
         title: "Sluts, WKZ und Socke",
         img: "/img/sluts_wkz_socke.jpg",
-        descriptionShort: "Mehr Infos folgen ...",
+        descriptionShort: `Dreimal Deutschpunk gibt es nachträglich zum Tag der Deutschen Einheit am 5. Oktober im Carousel! Zweimal Routiniers und einmal unveröffentlicht und frisch aus dem Proberaum. 
+
+Sluts, die Unkaputtbaren der ersten Welle, in X-ter Besetzung nun (wieder? wer blickt da durch!) mit Diesel am Bass und Gesang, Pelle an der Gitarre (schon in der Braunschweiger pre-Sluts Kombo Bombed Bodies dabei) und Martin an den Drums spielen die Klassiker der Bäh! (Aggressive Rockproduktionen), Deep Cuts der späteren Heidelberger Inkarnation (als Sluts’n) und falls wir es verdienen auch 1-2 neue Stücke direkt aus dem Proberaum.
+
+Die Wehrkraftzersetzer (kurz WKZ) gründeten sich, als die Sluts bereits ihre erste Trennung (1982) hinter sich hatten, um 1983 rum und veröffentlichten 1986 ihre LP Echte Punx. Die Ludwigshafener Band wechselten die Besetzung bestimmt so oft wie die Sluts und sind ebenso aktiv.
+
+Fast 40 Jahre Vorspulen…: Pogo Alarm löst die Band Socke seit einigen Monaten regelmäßig in und um Heidelberg aus. Man munkelt, es wären Aufnahmen in der Mache und seit dem letzten Auftritt im Carousel ein Mitglied dazugekommen… Spannung und Vorfreude duellieren sich im Dosenstechen!`,
         fee: "",
-        artists: [],
+        artists: [
+            {
+                name: "Sluts",
+                youtube: "https://www.youtube.com/embed/zoPDKxYnWak"
+            },
+            {
+                name: "Die Wehrkraftzersetzer (WKZ)",
+                youtube: "https://www.youtube.com/embed/NQHzIbYWZbg"
+            },
+            {
+                name: "Socke",
+                link: "https://www.instagram.com/socke.band/"
+            }
+        ],
 
     },
 
