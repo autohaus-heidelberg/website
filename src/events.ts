@@ -270,7 +270,7 @@ Fast 40 Jahre Vorspulen…: Pogo Alarm löst die Band Socke seit einigen Monaten
         artists: [
             {
                 name: "Sluts",
-                youtube: "https://www.youtube.com/embed/zoPDKxYnWak"
+                youtube: "https://www.youtube.com/embed/dHS96Wgkw9c"
             },
             {
                 name: "Die Wehrkraftzersetzer (WKZ)",
