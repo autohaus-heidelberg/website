@@ -265,8 +265,11 @@ Sluts, die Unkaputtbaren der ersten Welle, in X-ter Besetzung nun (wieder? wer b
 
 Die Wehrkraftzersetzer (kurz WKZ) gründeten sich, als die Sluts bereits ihre erste Trennung (1982) hinter sich hatten, um 1983 rum und veröffentlichten 1986 ihre LP Echte Punx. Die Ludwigshafener Band wechselten die Besetzung bestimmt so oft wie die Sluts und sind ebenso aktiv.
 
-Fast 40 Jahre Vorspulen…: Pogo Alarm löst die Band Socke seit einigen Monaten regelmäßig in und um Heidelberg aus. Man munkelt, es wären Aufnahmen in der Mache und seit dem letzten Auftritt im Carousel ein Mitglied dazugekommen… Spannung und Vorfreude duellieren sich im Dosenstechen!`,
-        fee: "",
+Fast 40 Jahre Vorspulen…: Pogo Alarm löst die Band Socke seit einigen Monaten regelmäßig in und um Heidelberg aus. Man munkelt, es wären Aufnahmen in der Mache und seit dem letzten Auftritt im Carousel ein Mitglied dazugekommen… Spannung und Vorfreude duellieren sich im Dosenstechen!
+
+Flyer: <a href="https://www.instagram.com/julian.grmn/">@julian.grmn</a>
+`,
+        fee: "10€",
         artists: [
             {
                 name: "Sluts",
@@ -290,6 +293,8 @@ Fast 40 Jahre Vorspulen…: Pogo Alarm löst die Band Socke seit einigen Monaten
         descriptionShort: `Alles dreht sich im Carousel, denn Crocodiles aus San Diego verlassen den Sumpf und touren im November durch Europa inkl. Stopp in Heidelberg! Die Kultband hat doppelten Grund zu feiern, denn neben dem hervorragenden Release Upside Down in Heaven vom letzten Jahr, erschien diesen Sommer eine Neuauflage vom Debut Summer of Hate zum 15. Jubiläum. Seitdem fliegt die Band um Brandon Welchez und Charles Rowell zwischen Space Rock (Spacemen 3), Post-Punk (Echo & The Bunnymen), Noise Pop (Jesus and Mary Chain) und Garage Rock ohne jemals den (Pop-)Song aus den Augen zu verlieren.
 
 Ohne weitere Wortspiele aus der Fauna freuen wir uns, Bird Control aus Berlin als Special Guest begrüßen zu dürfen. Psychedelischen Garage Rock kann man auf dem Erstlingswerk Change The Drug, Keep The Dose hören und mehr von der Band mit Wurzeln in Heidelberg (Mucus 2) soll bald folgen.
+
+Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti</a>
 `,
         fee: "VVK folgt!",
         artists: [
@@ -300,7 +305,7 @@ Ohne weitere Wortspiele aus der Fauna freuen wir uns, Bird Control aus Berlin al
             },
             {
                 name: "Bird Control",
-                bandcamp: "https://birdctrl.bandcamp.com/album/change-the-drug-keep-the-dose"
+                bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=114426192/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/"
             }
         ]
     }
