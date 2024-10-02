@@ -252,7 +252,7 @@ Uns aus der Sommerpause holen werden uns Zyph aus Mannheim, freshe Band, reißen
         img: "/img/woanderskino-1309.jpeg",
         descriptionShort: "Open air kino im Autohaus. Karlstorkino Midnight Madness zeigt Repo Man im Hinterhof. Es geht los bei Anbruch der Dunkelheit. <a href='https://www.karlstorkino.de/programm/repo-man/'>Mehr Infos</a>",
         fee: "Pay what you want",
-        artists: [],
+        artists: []
     },
     {
         id: 'sluts-wkz-socke',
@@ -280,8 +280,28 @@ Fast 40 Jahre Vorspulen…: Pogo Alarm löst die Band Socke seit einigen Monaten
                 name: "Socke",
                 link: "https://www.instagram.com/socke.band/"
             }
-        ],
-
+        ]
     },
+    {
+        id: 'crocodiles_bird-control',
+        date: '2024-11-13T19:00:00',
+        title: "Crocodiles (San Diego) und Bird Control (Berlin)",
+        img: "/img/crocodiles_bird-control.jpg",
+        descriptionShort: `Alles dreht sich im Carousel, denn Crocodiles aus San Diego verlassen den Sumpf und touren im November durch Europa inkl. Stopp in Heidelberg! Die Kultband hat doppelten Grund zu feiern, denn neben dem hervorragenden Release Upside Down in Heaven vom letzten Jahr, erschien diesen Sommer eine Neuauflage vom Debut Summer of Hate zum 15. Jubiläum. Seitdem fliegt die Band um Brandon Welchez und Charles Rowell zwischen Space Rock (Spacemen 3), Post-Punk (Echo & The Bunnymen), Noise Pop (Jesus and Mary Chain) und Garage Rock ohne jemals den (Pop-)Song aus den Augen zu verlieren.
 
+Ohne weitere Wortspiele aus der Fauna freuen wir uns, Bird Control aus Berlin als Special Guest begrüßen zu dürfen. Psychedelischen Garage Rock kann man auf dem Erstlingswerk Change The Drug, Keep The Dose hören und mehr von der Band mit Wurzeln in Heidelberg (Mucus 2) soll bald folgen.
+`,
+        fee: "VVK folgt!",
+        artists: [
+            {
+                name: "Crocodiles",
+                link: "https://linktr.ee/killcrocodiles",
+                youtube: "https://www.youtube.com/embed/eVR7041b7Ko"
+            },
+            {
+                name: "Bird Control",
+                bandcamp: "https://birdctrl.bandcamp.com/album/change-the-drug-keep-the-dose"
+            }
+        ]
+    }
 ]
