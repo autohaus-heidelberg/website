@@ -164,6 +164,10 @@ p Wir sind das Carousel im alten Autohaus.
     p Verantwortlich für den Inhalt dieser Website:
     p Carousel e.V. - Hebelstraße 7 - 69115 Heidelberg
     a(href="mailto:carouselev@gmail.com") carouselev@gmail.com
+    br
+    br
+    router-link(:to="{ name: 'about' }") Mehr
+
 </template>
 
 <style scoped>
