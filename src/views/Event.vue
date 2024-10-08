@@ -6,6 +6,9 @@
     img.event-img(v-if="event.img" :src="event.img")
     p(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     h3(v-if="event.fee") Eintritt: {{ event.fee }}
+    .get-ticket(v-if="event.shopLink")
+        a(:href="event.shopLink")
+            button() Tickets kaufen
     .artist(v-for="artist in event.artists")
         h2 {{ artist.name }}
         a(v-if="artist.link" :href="artist.link") Im Netz
