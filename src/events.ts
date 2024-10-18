@@ -308,5 +308,24 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
                 bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=114426192/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/"
             }
         ]
+    },
+    {
+        id: 'tyvek_exceeded-capacity',
+        date: '2024-11-15T20:00:00',
+        title: "Tyvek (Detroit) und Exceeded Capacity (Heidelberg)",
+        img: "/img/tyvek_exceeded-capacity.jpg",
+        descriptionShort: `Die auffälligste Konstante der Band Tyvek aus Detroit war schon immer der kompromisslose Sound der Aufnahmen. Die Becken zischen, die Gitarren übersteuern, dem Gesang, der einzigen personellen Konstante der Band Kevin Boyer, wird weder Pause noch Headroom gegönnt, während der Bass dem ganzen das nötige Rumpeln verpasst. Lo-Fi wo man hinhört! Stilistisch haben Tyvek dem Grundsound des Garage Punk über die Jahre nie den Rücken gekehrt, wenn auch hier und da Noise und Drone Elemente bis zu No-Wave Saxofon-Anleihen ihren Weg in die meist sehr kompakt gehaltenen Stücke finden. Für die aktuelle Tour ergänzen die Langzeit-Kollaborateure Boyers Shelley Slant, Fred Thomas (beide u.a. von Saturday Looks Good To Me), Emily Roll und Alex Glendening.
+
+Exceeded Capacity heißt die mysteriöse Band um Mitglieder von Røntgen und Novitchok und wird euch ein HC-Punk Brett vor den Latz knallen von dem ihr euch erst nach 10 Minuten Kryotherapie erholen werdet.
+
+Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti</a>
+`,
+        fee: "VVK folgt!",
+        artists: [
+            {
+                name: "Tyvek",
+                bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=4142836287/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/"
+            }
+        ]
     }
 ]
