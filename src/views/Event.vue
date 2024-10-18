@@ -8,7 +8,8 @@
     h3(v-if="event.fee") Eintritt: {{ event.fee }}
     .artist(v-for="artist in event.artists")
         h2 {{ artist.name }}
-        a(v-if="artist.link" :href="artist.link") Im Netz
+        img.artist-img(v-if="artist.image" :src="artist.image")
+        a(v-if="artist.link" :href="artist.link") Website
         p {{ artist.description }}
         .video-container(v-if="artist.youtube")
             iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
@@ -82,6 +83,11 @@ const dateDiff = computed(() => {
     max-height: min(500px, 90vw);
    }
 
+.artist-img {
+    margin: auto;
+    max-width: min(500px, 90vw);
+    max-height: min(500px, 90vw);
+}
 
 .event {
     display: flex;
