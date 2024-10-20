@@ -324,6 +324,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
         artists: [
             {
                 name: "Tyvek",
+                image: "/img/ltd/tyvek_promo.jpg",
                 bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=4142836287/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/"
             }
         ]
