@@ -8,6 +8,8 @@ export type Event = {
     descriptionShort: string,
     descriptionLong?: string,
     fee: string,
+    /* Link to the ticket shop, i.e. https://pretix.eu/carousel/131124Crocodiles/ */
+    shopLink?: string,
     artists: Array<{
         name: string,
         image?: string,
@@ -296,7 +298,8 @@ Ohne weitere Wortspiele aus der Fauna freuen wir uns, Bird Control aus Berlin al
 
 Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti</a>
 `,
-        fee: "VVK folgt!",
+        fee: "15 Euro im VVK",
+        shopLink: "https://pretix.eu/carousel/131124Crocodiles/",
         artists: [
             {
                 name: "Crocodiles",
