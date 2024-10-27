@@ -323,7 +323,8 @@ Exceeded Capacity heißt die mysteriöse Band um Mitglieder von Røntgen und Nov
 
 Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti</a>
 `,
-        fee: "VVK folgt!",
+        fee: "8€ VVK",
+        shopLink: "https://pretix.eu/carousel/15112024tyvek/",
         artists: [
             {
                 name: "Tyvek",
