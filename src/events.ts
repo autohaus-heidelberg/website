@@ -329,7 +329,32 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
             {
                 name: "Tyvek",
                 image: "/img/ltd/tyvek_promo.jpg",
-                bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=4142836287/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/"
+                bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=4142836287/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
+            }
+        ]
+    },
+    {
+        id: 'data-unknown_poo-poo-talks',
+        date: '2024-11-30T20:00:00',
+        title: "Data Unknown (Indianapolis) und Poo Poo Talks (Rom)",
+        img: "/img/data-unknown_poo-poo-talks.jpg",
+        descriptionShort: `Last Call vor 2025! Und dieses Jahr endet mit einem Banger! Nicht einmal, nein, ganze zwei schnittige Bands, driften ins Carousel!
+Zum einen aus der Heimatstadt des rasanten Indy 500, rasen Data Unknown mit nihilistischem Synth Punk und zum anderen aus der Stadt die einst bekannt war für ihre Streitwagenrennen, kommen Poo Poo Talks mit waschechtem Egg Punk di Roma! 
+Kein anderer Jahresabschluss legt so den Turbo ein!
+
+Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti</a>
+`,
+        fee: "10€",
+        artists: [
+            {
+                name: "Data Unknown",
+                bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=1912446176/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
+            },
+            {
+                name: "Poo Poo Talks",
+                description: `Poo Poo Talks are a fast and fun synth garage-rok power trio from Rome that mixes rock 'n' roll, garage, and alt-punk for a high-volume experience. In December 2023, they released a fully self-produced demo on cassette, which, along with their live performances, helped spread their music both in Italy and abroad. 
+Rok is back!`,
+                bandcamp: "https://bandcamp.com/EmbeddedPlayer/album=725028460/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
             }
         ]
     }
