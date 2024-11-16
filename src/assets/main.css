@@ -223,6 +223,14 @@ button:active {
   }
 }
 
+ul {
+list-style-position: inside;
+}
+
+ul li {
+    margin-bottom: 0;
+}
+
 /* UTIL */
 
 .mb-1 {

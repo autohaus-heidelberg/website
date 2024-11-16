@@ -378,76 +378,76 @@ Rok is back!`,
     title: "Yggdrasil",
     img: "/img/yggdrasil.jpg",
     descriptionShort: `Lebe im Jetzt, warte nicht auf morgen;
-pflücke heute die Rosen des Lebens.
-Original: Lev i nuet, vent ikke til i morgen;
-plakk livets roser i dag.
+      pflücke heute die Rosen des Lebens.
+      Original: Lev i nuet, vent ikke til i morgen;
+      plakk livets roser i dag.
 
-Es wird wieder Zeit, dass sich die Tore öffnen!
+      Es wird wieder Zeit, dass sich die Tore öffnen!
 
-Wir werden leider auch nicht jünger, aber wollen auf mindestens ein größeres Stampfen nicht verzichten.
+      Wir werden leider auch nicht jünger, aber wollen auf mindestens ein größeres Stampfen nicht verzichten.
 
-Es wird kalt, und wir laden euch ein, in unsere kleine neue Höhle zu kommen. Es wird kuschelig, es wird warmen Glühwein und Met geben. Draußen wird eine kleine gemütliche Oase für euch gestaltet. Um alle musikalischen Bedürfnisse zu bedienen, wird es zwei Floors geben.
+      Es wird kalt, und wir laden euch ein, in unsere kleine neue Höhle zu kommen. Es wird kuschelig, es wird warmen Glühwein und Met geben. Draußen wird eine kleine gemütliche Oase für euch gestaltet. Um alle musikalischen Bedürfnisse zu bedienen, wird es zwei Floors geben.
 
-Auftakt ist am 6. Dezember 2024 um 21 Uhr. Kommt pünktlich, denn in der Höhle haben nur 199 Wikinger/innen Platz. Der Eintritt kostet 10 Euro und wird an den Carousel e.V. gehen.**
+      Auftakt ist am 6. Dezember 2024 um 21 Uhr. Kommt pünktlich, denn in der Höhle haben nur 199 Wikinger/innen Platz. Der Eintritt kostet 10 Euro und wird an den Carousel e.V. gehen.**
 
-Eine Einladung
+      Eine Einladung
 
-Bringt eure Liebsten mit!  
-Bringt euch ein und schreibt uns, wenn ihr helfen möchtet. Wir brauchen immer Unterstützung.  
-Weitere Infos gibt es in unserer Telegram-Gruppe.  
-Infogruppe: https://t.me/+b1XeoUnQC6A2MDBi
+      Bringt eure Liebsten mit!  
+      Bringt euch ein und schreibt uns, wenn ihr helfen möchtet. Wir brauchen immer Unterstützung.  
+      Weitere Infos gibt es in unserer Telegram-Gruppe.  
+      Infogruppe: <a href=https://t.me/+b1XeoUnQC6A2MDBi>https://t.me/+b1XeoUnQC6A2MDBi</a>
 
-Ein paar Fakten:
-- Es wird farbenfrohe Visuals von Jaime Ramirez und Phasensprung geben.
-- Die Location ist Hebelstraße 7, 69115 Heidelberg – nur 15 Minuten zu Fuß vom Heidelberger Hauptbahnhof entfernt.
-- Eine kleine Spendenkasse (Valhalla of Sound) wird an der Kasse für das nächste Stampfen im Freien 2025 stehen.
-- Verkleidet zu kommen ist total angesagt.
-- Warmer Glühwein und Met werden angeboten. Bringt bitte ggf. eine Tasse mit.
-- Rauchen in der Location ist nicht gestattet. Dafür bauen wir draußen eine Oase für euch auf.
-- Psycare wird vor Ort sein.
-- Ab 18 Jahren – Muttizettel zählen nicht.
-- Die Location ist barrierefrei.
-- Nicht wundern: Der Toilettenwagen steht vor dem Eingang.
-- Eintritt: 10 Euro
-- Die Location bietet Platz für 199 Wikinger/innen. Ggf. wird es einen Ticketlink geben.
+      Ein paar Fakten:
+<ul>
+<li> Es wird farbenfrohe Visuals von Jaime Ramirez und Phasensprung geben.</li>
+<li> Die Location ist Hebelstraße 7, 69115 Heidelberg – nur 15 Minuten zu Fuß vom Heidelberger Hauptbahnhof entfernt.</li>
+<li> Eine kleine Spendenkasse (Valhalla of Sound) wird an der Kasse für das nächste Stampfen im Freien 2025 stehen.</li>
+<li> Verkleidet zu kommen ist total angesagt.</li>
+<li> Warmer Glühwein und Met werden angeboten. Bringt bitte ggf. eine Tasse mit.</li>
+<li> Rauchen in der Location ist nicht gestattet. Dafür bauen wir draußen eine Oase für euch auf.</li>
+<li> Psycare wird vor Ort sein.</li>
+<li> Ab 18 Jahren – Muttizettel zählen nicht.</li>
+<li> Die Location ist barrierefrei.</li>
+<li> Nicht wundern: Der Toilettenwagen steht vor dem Eingang.</li>
+<li> Die Location bietet Platz für 199 Wikinger/innen.</li>
+</ul>
 
-ᛚᛁᚾᛖ ᚢᛈ
-Line up:
+      ᛚᛁᚾᛖ ᚢᛈ
+      Line up:
 
-Main Floor:
+      Main Floor:
 
-22:30 – 00:00 Solė Fía
-https://soundcloud.com/sole-fia
+      22:30 – 00:00 Solė Fía
+      <a href='https://soundcloud.com/sole-fia'>https://soundcloud.com/sole-fia</a>
 
-00:00 – 03:00 Tret.Gold & Kappajota
-https://soundcloud.com/tret-gold
-https://soundcloud.com/djkappajota
-
-03:00 – 05:00 Takttrauma 
-https://soundcloud.com/takttrauma
-
-
-Second Floor:
-
-21: 00 – 23:00 Pfeifenreiter
-https://soundcloud.com/pfeifenreiter
-
-23:00 – 01: 00 Milan Knete
-https://soundcloud.com/kneterich
-
-01:00 – 03: 00 Mak Eye
-https://soundcloud.com/markaraaa
-
-03:00 – 05: 00 Project P with YenkY MC
-https://www.mixcloud.com/projectp/project-p-der-berg-ravt-safe-1/
-
+      00:00 – 03:00 Tret.Gold & Kappajota
+      <a href='https://soundcloud.com/tret-gold'>https://soundcloud.com/tret-gold</a>
+      <a href='https://soundcloud.com/djkappajota'>https://soundcloud.com/djkappajota</a>
+      
+      03:00 – 05:00 Takttrauma 
+      <a href='https://soundcloud.com/takttrauma'>https://soundcloud.com/takttrauma</a>
+      
+      Second Floor:
+      
+      21: 00 – 23:00 Pfeifenreiter
+      <a href='https://soundcloud.com/pfeifenreiter'>https://soundcloud.com/pfeifenreiter</a>
+      
+      23:00 – 01: 00 Milan Knete
+      <a href='https://soundcloud.com/kneterich'>https://soundcloud.com/kneterich</a>
+      
+      01:00 – 03: 00 Mak Eye
+      <a href='https://soundcloud.com/markaraaa'>https://soundcloud.com/markaraaa</a>
+      
+      03:00 – 05: 00 Project P with YenkY MC
+      <a href='https://www.mixcloud.com/projectp/project-p-der-berg-ravt-safe-1/'>https://www.mixcloud.com/projectp/project-p-der-berg-ravt-safe-1/</a>
 
 
-ᚹᛁᚱ ᚠᚱᛟᛇᛖᚾ ᚢᚾᛋ ᚨᚢᚠ ᛇᚢᛉᚺ – ᚨᚢᚠ ᚹᛁᚴᛁᛝᛖᚱᚨᚱᛏ
+      <b>ᚹᛁᚱ ᚠᚱᛟᛇᛖᚾ ᚢᚾᛋ ᚨᚢᚠ ᛇᚢᛉᚺ – ᚨᚢᚠ ᚹᛁᚴᛁᛝᛖᚱᚨᚱᛏ</b>
 
-Wir freuen uns auf euch
-`,
+      Wir freuen uns auf euch
+  `,
     fee: "10€",
-    artists: [],
+    shopLink: 'https://pretix.eu/carousel/24-12-06-yggdrasil/',
+    artists: []
   },
 ];
