@@ -386,7 +386,7 @@ Rok is back!`,
 
       Wir werden leider auch nicht jünger, aber wollen auf mindestens ein größeres Stampfen nicht verzichten.
 
-      Es wird kalt, und wir laden euch ein, in unsere kleine neue Höhle zu kommen. Es wird kuschelig, es wird warmen Glühwein und Met geben. Draußen wird eine kleine gemütliche Oase für euch gestaltet. Um alle musikalischen Bedürfnisse zu bedienen, wird es zwei Floors geben.
+      Es wird kalt, und wir laden euch ein, in unsere kleine neue Höhle zu kommen. Es wird kuschelig, es wird warmen Glühwein und Met geben. Draußen wird eine kleine gemütliche Oase für euch gestaltet.
 
       Auftakt ist am 6. Dezember 2024 um 21 Uhr. Kommt pünktlich, denn in der Höhle haben nur 199 Wikinger/innen Platz. Der Eintritt kostet 10 Euro und wird an den Carousel e.V. gehen.**
 
@@ -415,30 +415,26 @@ Rok is back!`,
       ᛚᛁᚾᛖ ᚢᛈ
       Line up:
 
-      Main Floor:
-
-      22:30 – 00:00 Solė Fía
+      Solė Fía
       <a href='https://soundcloud.com/sole-fia'>https://soundcloud.com/sole-fia</a>
 
-      00:00 – 03:00 Tret.Gold & Kappajota
+      Tret.Gold & Kappajota
       <a href='https://soundcloud.com/tret-gold'>https://soundcloud.com/tret-gold</a>
       <a href='https://soundcloud.com/djkappajota'>https://soundcloud.com/djkappajota</a>
       
-      03:00 – 05:00 Takttrauma 
+      Takttrauma 
       <a href='https://soundcloud.com/takttrauma'>https://soundcloud.com/takttrauma</a>
-      
-      Second Floor:
-      
-      21: 00 – 23:00 Pfeifenreiter
+          
+      Pfeifenreiter
       <a href='https://soundcloud.com/pfeifenreiter'>https://soundcloud.com/pfeifenreiter</a>
       
-      23:00 – 01: 00 Milan Knete
+      Milan Knete
       <a href='https://soundcloud.com/kneterich'>https://soundcloud.com/kneterich</a>
       
-      01:00 – 03: 00 Mak Eye
+      Mak Eye
       <a href='https://soundcloud.com/markaraaa'>https://soundcloud.com/markaraaa</a>
       
-      03:00 – 05: 00 Project P with YenkY MC
+      Project P with YenkY MC
       <a href='https://www.mixcloud.com/projectp/project-p-der-berg-ravt-safe-1/'>https://www.mixcloud.com/projectp/project-p-der-berg-ravt-safe-1/</a>
 
 
