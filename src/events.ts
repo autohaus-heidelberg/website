@@ -374,7 +374,7 @@ Rok is back!`,
   },
   {
     id: "yggdrasil",
-    date: "2024-12-06T21:00:00",
+    date: "2024-12-06T18:00:00",
     title: "Yggdrasil",
     img: "/img/yggdrasil.jpg",
     descriptionShort: `Lebe im Jetzt, warte nicht auf morgen;
