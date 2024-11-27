@@ -388,14 +388,11 @@ Rok is back!`,
 
       Es wird kalt, und wir laden euch ein, in unsere kleine neue Höhle zu kommen. Es wird kuschelig, es wird warmen Glühwein und Met geben. Draußen wird eine kleine gemütliche Oase für euch gestaltet.
 
-      Auftakt ist am 6. Dezember 2024 um 21 Uhr. Kommt pünktlich, denn in der Höhle haben nur 199 Wikinger/innen Platz. Der Eintritt kostet 10 Euro und wird an den Carousel e.V. gehen.**
+      Auftakt ist am 6. Dezember 2024 um 18 Uhr. Kommt pünktlich, denn in der Höhle haben nur 199 Wikinger/innen Platz. Der Eintritt kostet 10 Euro und wird an den Carousel e.V. gehen.**
 
       Eine Einladung
 
       Bringt eure Liebsten mit!  
-      Bringt euch ein und schreibt uns, wenn ihr helfen möchtet. Wir brauchen immer Unterstützung.  
-      Weitere Infos gibt es in unserer Telegram-Gruppe.  
-      Infogruppe: <a href=https://t.me/+b1XeoUnQC6A2MDBi>https://t.me/+b1XeoUnQC6A2MDBi</a>
 
       Ein paar Fakten:
 <ul>
