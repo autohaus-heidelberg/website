@@ -443,4 +443,39 @@ Rok is back!`,
     shopLink: 'https://pretix.eu/carousel/24-12-06-yggdrasil/',
     artists: []
   },
+  {
+    id: "negative_gears",
+    date: "2025-02-07T20:00:00",
+    title: "Negative Gears (Sydney), Galeere (Heidelberg) und Monochrome Lights (Mannheim)",
+    img: "/img/negative_gears.jpeg",
+    descriptionShort: `Um dem kochendheißen australischen Sommer zu entkommen, nistet sich das Aussie-
+Fünfgespann um Negative Gears im Carousel ein. Mit einem Sound der so wavey ist, dass er fast
+aus dem Sand des Bondi-Beaches entsprungen sein könnte. Klingt ein bisschen wie Units oder
+Crisis, wenn sie sich mit Gang Of Four den Neoprenanzug geteilt hätten!
+Als Support sind die Mannheimer Post Punker von Monochrome Lights am Start, die mit düsteren
+Sounds den Winter noch dunkler machen!
+Aber damit nicht genug, auch Heidelberg's Finest Galeere gibt sich die Ehre und heizen euch ein!
+
+Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti</a>
+`,
+    fee: "10€",
+    artists: [
+      {
+        name: "Negative Gears",
+        image: "/img/negative_gears_photo.jpg",
+        bandcamp:
+          "https://bandcamp.com/EmbeddedPlayer/album=3046476883/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=false/",
+      },
+      {
+        name: "Monochrome Lights",
+        image: "/img/monochrome_lights.jpg",
+        bandcamp:
+          "https://bandcamp.com/EmbeddedPlayer/track=2043034640/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      },
+      {
+        name: "Galeere",
+        image: "/img/galeere.jpg"
+      }
+    ],
+  },
 ];
