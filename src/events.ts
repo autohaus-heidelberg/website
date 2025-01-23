@@ -479,23 +479,5 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
     ],
   },
 ,
-  {
-  "id": "test",
-  "date": "2025-03-27T20:00",
-  "title": "test",
-  "descriptionShort": "test",
-  "descriptionLong": "",
-  "fee": "10",
-  "artists": [
-    {
-      "name": "test",
-      "link": "",
-      "description": "",
-      "soundcloud": "",
-      "youtube": "",
-      "bandcamp": "",
-      "image": null
-    }
-  ]
-}
+
 ]
