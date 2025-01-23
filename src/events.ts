@@ -480,4 +480,34 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       }
     ],
   }
+,
+  {
+  "id": "sleeveens",
+  "date": "2025-02-13T20:00",
+  "title": "The Sleeveens (Nashville) und A Silly Walk (Heidelberg",
+  "descriptionShort": "Keine Atempause im Februar Carousel des Rock'n'Roll, denn schon am 13. geht es weiter mit den famosen The Sleeveens aus Nashville, U.S.A.! Klingt zwar eigentlich eher nach Dr. Feelgood und Stiff Little Fingers als nach Johnny Cash, macht euch also auf also auf Turbo gefasst! Als zweiten Trick zaubert der Goldesel die Heidelberger Lieblinge A Silly Walk endlich zum ersten Mal auf die Bühne im Carousel. Seit nunmehr 16 Jahren werden sie vom Ministerium des Garage Rock gefördert, um das Volk gefügig zu machen!\nEs gibt also keine Widerrede, es werden keine Importzölle verhängt: ran den Honigtopf des Rock’n’Rolls!",
+  "descriptionLong": "",
+  "fee": "10",
+  "artists": [
+    {
+      "name": "The Sleeveens",
+      "link": "https://thesleeveens.com/",
+      "description": "When Irish-born Count Vaseline/The Mighty Stef songwriter Stef Murphy met Stiff Little Fingers guitar tech Jamie Mechan in Nashville, Tennessee, it began a musical partnership of the highest order. After cranking out a few tunes at Mechan’s fledgling studio, 302 Sound, the duo started recruiting other musicians. The band was rounded out by drummer Ryan Sweeney (Cheap Time) and Eli Steele (Sweet Knives.) Dubbing themselves The Sleeveens, an Irish term for a trickster, the band got to work. After recording and releasing their highly-touted “Give My Regards To The Dancing Girls” 45rpm single on Sweeney’s Sweet Time Records, they finished off their 11 track debut LP. The quartet were soon approached by longrunning punk label Dirtnap Records (Marked Men, Exploding Hearts) for the album’s 2024 release. The resulting LP is an homage to the kind of classic punk Chiswick, New Rose and Stiff Records were releasing 45 years before The Sleeveens existed. With earworm melodies and screaming guitars, the foursome have crafted one of the best albums of the year. Murphy’s penchant for charmingly brilliant, matter-of-fact lyricism has a similar poetic quality as Mark E. Smith or Jonathan Richman. With expert mastering by Jim Diamond (The White Stripes, The Dirtbombs) to put the finishing touches on the sound, The Sleeveens is a record that is simultaneously uncompromisingly raw and thoughtfully crafted.",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=4109219132/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/d7eb9608b93b236cf2cf996aefa00b2f.webp"
+    },
+    {
+      "name": "A Silly Walk",
+      "link": "https://www.asillywalk.de/",
+      "description": "A Silly Walk (/ə ˈsɪli wɔk/)\n\n(Substantiv, Neutrum)\n\nDefinition von Nischenband. Auch franz. “Une marche stupide”.\n\nGruppe bestehend aus 4 gleichgesinnten Musikanten, die versuchen ein eigenes Genre zu definieren oder aber auch alle Nischen zu bedienen. Hauptsächlich ist es aber eher Punk, Noise und Garage Rock.",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=143617213/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/"
+    }
+  ],
+  "img": "/img/6b0c07c2ec3c60e42d72581791a2fbd7.webp",
+  "shopLink": "https://pretix.eu/carousel/sleeveens/"
+}
 ]
