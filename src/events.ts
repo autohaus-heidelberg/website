@@ -480,23 +480,4 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       }
     ],
   }
-,
-  {
-  "id": "test1245766",
-  "date": "2025-01-03T20:00",
-  "title": "test6",
-  "descriptionShort": "test",
-  "descriptionLong": "",
-  "fee": "10",
-  "artists": [
-    {
-      "name": "yesy",
-      "link": "",
-      "description": "",
-      "soundcloud": "",
-      "youtube": "",
-      "bandcamp": ""
-    }
-  ]
-}
 ]
