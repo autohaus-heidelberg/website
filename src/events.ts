@@ -1,3 +1,5 @@
+// NOTE: do not add a trailing comma or the script will fail
+
 export type Event = {
   // Unique id, this is used in the URL so URLencoded is better
   id: string;
