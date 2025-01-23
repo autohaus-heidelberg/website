@@ -480,5 +480,4 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       }
     ],
   }
-
 ]

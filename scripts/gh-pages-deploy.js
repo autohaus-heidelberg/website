@@ -6,7 +6,7 @@ import  fs from "fs";
     await execa("git", ["checkout", "--orphan", "gh-pages"]);
     // eslint-disable-next-line no-console
     console.log("Building started...");
-    await execa("npm", ["run", "build"]);
+    await execa("npm", ["run", "build-only"]);
     // Understand if it's dist or build folder
     const folderName = fs.existsSync("dist") ? "dist" : "build";
     // Copy the page to 404.html, this way accessing routes directly will work
