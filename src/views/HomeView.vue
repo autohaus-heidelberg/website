@@ -171,6 +171,11 @@ p Wir sind das Carousel im alten Autohaus.
 </template>
 
 <style scoped>
+
+#mce-EMAIL {
+  width: 280px;
+}
+
 .newsletter-form {
   display: flex;
   justify-content: center;
