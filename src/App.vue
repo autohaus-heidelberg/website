@@ -2,17 +2,26 @@
 import { computed } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 
+const router = useRouter();
+
 const route = useRoute();
 const isHome = computed(() => {
-  console.log(route.path)
   return route.path === "/";
 })
+
+function navigateBack() {
+if (window.history.state.back === null) {
+ router.push("/"); //or whichever path you required
+} else {
+ router.back();
+}
+}
 
 </script>
 
 <template lang="pug">
 header
-  a(v-if="!isHome" @click="$router.go(-1)") 
+  a(v-if="!isHome" @click="navigateBack") 
     .header-link 
       //- !--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--
       svg.mr-1(xmlns="http://www.w3.org/2000/svg" fill="var(--link-color)" stroke="var(--link-color)" viewBox="0 0 320 512" height="30")
@@ -40,4 +49,6 @@ header {
 .header-link a {
   margin-top: 0.2rem;
 }
+
+
 </style>

@@ -1,11 +1,11 @@
 <template lang="pug">
 .event
-    h2 {{ date }} Uhr
+    h2.date {{ date }} Uhr
     h1(v-if="showDatediff") {{ dateDiff }}
     h1 {{ event.title }}
     img.event-img(v-if="event.img" :src="event.img")
     p(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
-    h3(v-if="event.fee") Eintritt: {{ event.fee }}
+    h3(v-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
     .get-ticket(v-if="event.shopLink")
         a(:href="event.shopLink")
             button() Tickets kaufen
@@ -22,6 +22,7 @@
         //-     iframe(width="100%", height="166", scrolling="no", frameborder="no", allow="autoplay", :src="artist.soundcloud")
 
 </template>
+
 
 <script lang="ts" setup>
 import { type Event, events } from "../events";
@@ -63,6 +64,7 @@ const dateDiff = computed(() => {
 
 
 <style scoped> 
+
 
 .video-container {
   position: relative;

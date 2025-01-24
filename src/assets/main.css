@@ -28,13 +28,14 @@ time, mark, audio, video {
 :root {
     --desktop-font-size: 1.2rem/1.55;
     --mobile-font-size: 1rem/1.45;
-    --text-color: #2d2d2d;
+}
+    /* --text-color: #2d2d2d;
     --link-color: blue;
     --link-color-alt: darkblue;
     --primary-color: lightsteelblue;
     --secondary-color: aliceblue;
     --tertiary-color: whitesmoke;
-}
+} */
 
 /* Typography */
 body {
@@ -159,9 +160,9 @@ sup { font-size: 80%; vertical-align: top; }
 }
 
 /* Dark mode support */
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) { */
     body {
-        background: #191919;
+        background: var(--background-color);
     }
     input:focus, input:active {
         background-color: var(--text-color);
@@ -179,14 +180,15 @@ sup { font-size: 80%; vertical-align: top; }
     }
     :root {
         --text-color: #fff;
-        --link-color: orange;
-        --link-color-alt: yellow;
-        --primary-color: orange;
+        --link-color: #e0c351;
+        --link-color-alt: #e0c351;
+        --primary-color: #e0c351;
         --primary-color-light: dimvar(--link-color);
         --secondary-color: black;
         --tertiary-color: #2d2d2d;
+        --background-color: #191919;
     }
-}
+/* } */
 
 p {
     white-space: pre-wrap;
@@ -194,21 +196,25 @@ p {
 
 /* Button */
 
-/* CSS */
 button {
-  font-size: 16px;
-  letter-spacing: 2px;
-  text-decoration: none;
-  text-transform: uppercase;
-  color: #000;
-  cursor: pointer;
-  border: 3px solid var(--link-color);
-  padding: 0.25em 0.5em;
-  box-shadow: 1px 1px 0px 0px var(--link-color), 2px 2px 0px 0px var(--link-color), 3px 3px 0px 0px var(--link-color), 4px 4px 0px 0px var(--link-color), 5px 5px 0px 0px var(--link-color);
-  position: relative;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+    font-size: 1em;
+    position: relative;
+    text-decoration: none;
+    /* box-shadow: inset 0 0 0 1px var(--link-color); */
+    min-width: 280px;
+    text-align: center;
+    color: var(--background-color);
+    padding: 1em 1em;
+    background-color: var(--link-color);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    border: 4px var(--background-color);
+    outline: 3px solid var(--background-color);
+    outline-offset: -5px;
+    cursor: pointer;
 }
 
 button:active {
@@ -217,11 +223,6 @@ button:active {
   left: 5px;
 }
 
-@media (min-width: 768px) {
-  button {
-    padding: 0.25em 0.75em;
-  }
-}
 
 ul {
 list-style-position: inside;
@@ -230,6 +231,34 @@ list-style-position: inside;
 ul li {
     margin-bottom: 0;
 }
+
+/* Fonts */
+
+@font-face {
+    font-family: "Limelight";
+    font-weight: 400;
+    font-style: normal;
+    src: url('/fonts/Limelight-Regular.ttf') ;
+  }
+
+
+  @font-face {
+    font-family: "Federo";
+    font-weight: 400;
+    font-style: normal;
+    src: url('/fonts/Federo-Regular.ttf') ;
+  }
+
+h1 {
+    font-family: "Limelight";
+    font-weight: 400;
+}
+
+h2 {
+    font-family: "Federo";
+}
+
+
 
 /* UTIL */
 

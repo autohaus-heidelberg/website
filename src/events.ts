@@ -484,7 +484,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   {
   "id": "sleeveens",
   "date": "2025-02-13T20:00",
-  "title": "The Sleeveens (Nashville) und A Silly Walk (Heidelberg",
+  "title": "The Sleeveens (Nashville) und A Silly Walk (Heidelberg)",
   "descriptionShort": "Keine Atempause im Februar Carousel des Rock'n'Roll, denn schon am 13. geht es weiter mit den famosen The Sleeveens aus Nashville, U.S.A.! Klingt zwar eigentlich eher nach Dr. Feelgood und Stiff Little Fingers als nach Johnny Cash, macht euch also auf also auf Turbo gefasst! Als zweiten Trick zaubert der Goldesel die Heidelberger Lieblinge A Silly Walk endlich zum ersten Mal auf die Bühne im Carousel. Seit nunmehr 16 Jahren werden sie vom Ministerium des Garage Rock gefördert, um das Volk gefügig zu machen!\nEs gibt also keine Widerrede, es werden keine Importzölle verhängt: ran den Honigtopf des Rock’n’Rolls!",
   "descriptionLong": "",
   "fee": "10",

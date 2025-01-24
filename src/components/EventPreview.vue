@@ -3,15 +3,36 @@
 <template lang="pug">
 router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
-        h2(v-if="showDatediff") {{ dateDiff }}
-        h2 {{ date }} 
-        h2 {{ time }} Uhr
-        h2 {{ event.title }}
+        h2.date(v-if="showDatediff") {{ dateDiff }}
+        h2.date {{ date }} 
+        h2.time {{ time }} Uhr
+        h2.title {{ event.title }}
         img.event-img(v-if="event.img" :src="event.img")
-        button.mb-1 Mehr Infos
+        button Mehr Infos
+        .mb-1
+        .mb-1
 </template>
 
 <style scoped>
+
+h2 {
+    margin: 1rem;
+}
+
+.date {
+    font-family: "Federo";
+}
+
+.time {
+    font-family: "Federo";
+
+}
+
+.title {
+    font-family: "Limelight";
+
+}
+
 .event-preview {
     display: flex;
     flex-direction: column;
@@ -59,7 +80,6 @@ import 'dayjs/locale/de';
 import dayjs from "dayjs";
 import { computed } from "vue";
 import { eventHash } from "../utils";
-
 const props = defineProps<{event: Event}>();
 
 dayjs.extend(calendar)
