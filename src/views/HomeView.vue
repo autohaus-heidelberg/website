@@ -70,9 +70,9 @@ onUnmounted(() => {
     img.img-outline(src="/img/logo_outline.svg")
 p Wir sind das Carousel im alten Autohaus.
   br 
-  | Ein Ort für Musik, Kunst, Kultur für alle.
+  | Ein Ort für Musik, Kunst und Kultur für alle.
   br
-  a(href="#about") Mehr erfahren
+  //- a(href="#about") Mehr erfahren
 
 .page-content
   .dates
