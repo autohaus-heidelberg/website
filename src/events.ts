@@ -510,4 +510,15 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/6b0c07c2ec3c60e42d72581791a2fbd7.webp",
   "shopLink": "https://pretix.eu/carousel/sleeveens/"
 }
+,
+  {
+  "id": "test1",
+  "date": "2025-10-12T10:00",
+  "title": "test",
+  "descriptionShort": "test",
+  "descriptionLong": "",
+  "fee": "100",
+  "artists": [],
+  "shopLink": "https://pretix.eu/carousel/test1/"
+}
 ]
