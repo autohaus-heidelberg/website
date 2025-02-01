@@ -510,4 +510,41 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/6b0c07c2ec3c60e42d72581791a2fbd7.webp",
   "shopLink": "https://pretix.eu/carousel/sleeveens/"
 }
+,
+  {
+  "id": "sgatv-zz",
+  "date": "2025-02-21T20:00",
+  "title": "S.G.A.T.V. (Schweiz), Zero Zeroes (Karlsruhe) und Dispo (Leipzig)",
+  "descriptionShort": "Schweizer Synthpunk Supreme, so oder so ähnlich könnte man S.G.A. T.V. beschreiben. Mit einer Mischung aus Punk- Attitüde und Dungeon Synth werden sie das Autohaus aufreiben und euch gewaltig in den halligen Overdrive fahren! Unterstützung bekommen sie von den Karlsruher Hall Of Fame-Punkern ZeroZeroes! Doch damit nicht genug, wir legen den 6. Gang ein und machen mit den rauchenden Rüpeln der Band DISPO den Hattrick komplett!\n\nDJ Aftershow Party mit Pony Coldhand & John Ass!\n\nPoster art: @exx_valdez",
+  "descriptionLong": "",
+  "fee": "10",
+  "artists": [
+    {
+      "name": "S.G.A.T.V.",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3544300794/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
+    },
+    {
+      "name": "Zero Zeroes",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=500494345/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
+    },
+    {
+      "name": "Dispo",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/0uQTXG10xlY?si=E9WHI-irfGmdOH3x",
+      "bandcamp": ""
+    }
+  ],
+  "img": "/img/2718d6f3c4977dafd3b23c2dfd066c42.webp",
+  "shopLink": "https://pretix.eu/carousel/sgatv-zz/"
+}
 ]
