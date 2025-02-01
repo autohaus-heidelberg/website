@@ -512,7 +512,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
 }
 ,
   {
-  "id": "sgatv-zz",
+  "id": "sgatv_zz",
   "date": "2025-02-21T20:00",
   "title": "S.G.A.T.V. (Schweiz), Zero Zeroes (Karlsruhe) und Dispo (Leipzig)",
   "descriptionShort": "Schweizer Synthpunk Supreme, so oder so ähnlich könnte man S.G.A. T.V. beschreiben. Mit einer Mischung aus Punk- Attitüde und Dungeon Synth werden sie das Autohaus aufreiben und euch gewaltig in den halligen Overdrive fahren! Unterstützung bekommen sie von den Karlsruher Hall Of Fame-Punkern ZeroZeroes! Doch damit nicht genug, wir legen den 6. Gang ein und machen mit den rauchenden Rüpeln der Band DISPO den Hattrick komplett!\n\nDJ Aftershow Party mit Pony Coldhand & John Ass!\n\nPoster art: @exx_valdez",
