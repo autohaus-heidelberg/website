@@ -585,6 +585,6 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
     }
   ],
   "img": "/img/7a9f57a04054097fa457ffa401e7f97a.webp",
-  "shopLink": "https://pretix.eu/control/event/carousel/alvilda/"
+  "shopLink": "https://pretix.eu/carousel/alvilda/"
 }
 ]
