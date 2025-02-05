@@ -549,7 +549,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
 }
 ,
   {
-  "id": "alvilda",
+  "id": "alvilda_loosey",
   "date": "2025-02-28T20:00",
   "title": "Alvilda (Paris) mit Loosey (New York) und Aftershow Party mit Punkrock Aerobix!",
   "descriptionShort": "Ein Freitagabend in Heidelberg, Ende Februar. Karneval? Na klar. Hajo und so. Aber wer noch halbwegs bei Verstand ist, lässt die Pappnase zu Hause und geht ins Carousel, wo zwei Bands spielen, die dich daran erinnern, warum du überhaupt angefangen hast, Musik zu lieben: Alvilda und Loosey.\n\nAlvilda. Vier Pariserinnen, die so cool sind, dass selbst der Eiffelturm neidisch guckt. Ihr Sound? Garage-Rock, wie er klingen muss: roh, direkt, und so ansteckend, dass du mitsingst, bevor der Refrain zum zweiten Mal kommt – oder zumindest „la-la-la“ mit französischem Akzent summst. Ihre EP „Négatif“ hat 2021 den Sommer gerettet. Mehr Energie als jede Konfettibombe!\n\nLoosey. New York City. Eine Stadt, die dich entweder frisst oder dir zeigt, wie du zurückbeißen kannst. Loosey hat gebissen. Inspiriert von UK-Glam, Power-Pop und der ersten Punkwelle liefern sie eine Live-Show so unberechenbar wie ein Kamelle-Wurf. Mit zwei gefeierten EPs und der Zusammenarbeit mit Produzent Matt Sweeney arbeiten sie auf ihr Debütalbum 2025 hin.\n\nUnd als ob das nicht alles schon genug für den letzten Tag im Februar wäre, hat der Goldesel-Elferrat auch noch die wunderbaren Isa Lee Libertine & Angie Action a.k.a. Punkrock Aerobix zur After-Show an die Decks gebeten. \n\nSoweit alles klar?",
@@ -584,6 +584,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       "image": "/img/40cd313b9c50c512575376bb296ed49e.webp"
     }
   ],
-  "img": "/img/7a9f57a04054097fa457ffa401e7f97a.webp"
+  "img": "/img/7a9f57a04054097fa457ffa401e7f97a.webp",
+  "shopLink": "https://pretix.eu/control/event/carousel/alvilda/"
 }
 ]
