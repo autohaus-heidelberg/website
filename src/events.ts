@@ -547,4 +547,43 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/2718d6f3c4977dafd3b23c2dfd066c42.webp",
   "shopLink": "https://pretix.eu/carousel/sgatv-zz/"
 }
+,
+  {
+  "id": "alvilda",
+  "date": "2025-02-28T20:00",
+  "title": "Alvilda (Paris) mit Loosey (New York) und Aftershow Party mit Punkrock Aerobix!",
+  "descriptionShort": "Ein Freitagabend in Heidelberg, Ende Februar. Karneval? Na klar. Hajo und so. Aber wer noch halbwegs bei Verstand ist, lässt die Pappnase zu Hause und geht ins Carousel, wo zwei Bands spielen, die dich daran erinnern, warum du überhaupt angefangen hast, Musik zu lieben: Alvilda und Loosey.\n\nAlvilda. Vier Pariserinnen, die so cool sind, dass selbst der Eiffelturm neidisch guckt. Ihr Sound? Garage-Rock, wie er klingen muss: roh, direkt, und so ansteckend, dass du mitsingst, bevor der Refrain zum zweiten Mal kommt – oder zumindest „la-la-la“ mit französischem Akzent summst. Ihre EP „Négatif“ hat 2021 den Sommer gerettet. Mehr Energie als jede Konfettibombe!\n\nLoosey. New York City. Eine Stadt, die dich entweder frisst oder dir zeigt, wie du zurückbeißen kannst. Loosey hat gebissen. Inspiriert von UK-Glam, Power-Pop und der ersten Punkwelle liefern sie eine Live-Show so unberechenbar wie ein Kamelle-Wurf. Mit zwei gefeierten EPs und der Zusammenarbeit mit Produzent Matt Sweeney arbeiten sie auf ihr Debütalbum 2025 hin.\n\nUnd als ob das nicht alles schon genug für den letzten Tag im Februar wäre, hat der Goldesel-Elferrat auch noch die wunderbaren Isa Lee Libertine & Angie Action a.k.a. Punkrock Aerobix zur After-Show an die Decks gebeten. \n\nSoweit alles klar?",
+  "descriptionLong": "",
+  "fee": "15",
+  "artists": [
+    {
+      "name": "Alvilda",
+      "link": "https://linktr.ee/alvildalp",
+      "description": "With their scruffy power pop and contagious freshness, these four Parisians came to attention with their debut EP \"Négatif\", joyfully making us dancing through the summer of 2021. But behind the effortlessly cool façade hide four incredibly hardworking women who have since toured relentlessly, turning their band into a ruthless dancing machine now opening for prestigious acts (The BellRays, The Nomads), before their long-awaited LP comes out in 2024.\n \nAlvilda plays garage rock wonderfully. '60s girl group vocal harmonies backed by a tough punk-y guitar sound with pop flourishes. The songs are so catchy, you start to sing along on the first listen. The French accents lend an extra air of coolness. Their bouncy songs are full of energy and a lot of fun, but also really well executed and sound strikingly authentic like this is some long lost late seventies gem. Alvilda mix ’60s girl group with ’70s Good Vibrations pop punk influences and je t’aime it a lot. It’s insane that these are the first recordings of the band.\nOne smile at a time.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/0WLX5LRif_4",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3747921211/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/abf965b00d38efea9883010871ee3d6a.webp"
+    },
+    {
+      "name": "Loosey",
+      "link": "https://linktr.ee/looseyband",
+      "description": "Loosey play rock’n’roll.  Real, unhinged, beer fueled, sweat soaked, passionate ROCK’N’ROLL. Drawing freely from the traditions of UK Glam and Bovver rock, Australian Hard Rock, classic American Power Pop and first wave Punk, Loosey strive to make rock’n’roll a real, living breathing art form again- free from slick, ironic, industry-plant bullshit and gutless, try-hard, retro-emulation.\nFormed in 2021 in New York City by members of The New York Hounds, Yellow Eyes, and near countless other underground punk and metal bands, Loosey have quickly made a name for themselves with their charismatic and wildly unpredictable live show.  The two highly sought after, self released EPs that followed have only further cemented their reputation for delivering infectious and joyful rock’n’roll like basically no one else can these days.\nAs for what’s next, Loosey has begun work alongside producer Matt Sweeney (Chavez, Zwan, Iggy Pop) on their debut LP for release in 2025, and are planning extensive touring in North America, Europe, and beyond.\nThis is the dawning of LOOSEY.  Get into it.",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=488317698/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/aa55b153592a417642db7d1498aff42c.webp"
+    },
+    {
+      "name": "Punkrock Aerobix",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "",
+      "image": "/img/40cd313b9c50c512575376bb296ed49e.webp"
+    }
+  ],
+  "img": "/img/7a9f57a04054097fa457ffa401e7f97a.webp"
+}
 ]
