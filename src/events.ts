@@ -587,4 +587,34 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/7a9f57a04054097fa457ffa401e7f97a.webp",
   "shopLink": "https://pretix.eu/carousel/alvilda/"
 }
+,
+  {
+  "id": "flamo",
+  "date": "2025-03-09T15:00",
+  "title": "Flathead (Marseille) & Almost Lovers (Brüssel/Lille) - gepflegtes Eskalieren! ",
+  "descriptionShort": "Ach, Sie kuscheln Sonntags auch gerne bei Pfefferminztee mit ihrer Katze unter der 15-Tonnen-Gewichtsdecke und überlegen, ob das Leben nicht vielleicht doch anderswo stattfindet? \nNa dann machen Sie es dieses Mal doch einfach wie wir und pfeffern hurtig die Pantoffeln ins Eck’ und checken dann ganz lässig und mit angezogener Handbremse in Heidelbergs schärfstem Autohaus ein (Ifo-Institut approved).\nIm Carousel lesen Ihnen Flathead und Almost Lovers nämlich nicht nur diskret die (musikalischen) Leviten, nein, Sie erwartet auch kanisterweise bittersüßer Messwein und eine Gemeinde, die Ihresgleichen erst noch finden muss. Wer kann da nein sagen? Ja, wir sicher nicht!\nFlathead (Marseille) – predigen eine neue, rauere Version des Powerpop. So, als hätte man noch etwas Dreck vom Samstag unter den Nägeln. In Deutschland wird ihr neues (self-titled) Album am 6. März auf Wanda Records erscheinen. Und dann wird es kein Halten mehr geben. Mit Mitgliedern ehemaliger Punk-Bands wie Tomy & The Cougars, Pogy & Les Kéfars, La Flemme, The Aggravation und Seppuku sind die fünf Jungs bereit für die ganz große Messe.\nAlmost Lovers aus Brüssel – lassen sich von Bands wie Oasis, Teenage Fan Club und The Nerves inspirieren. Die Gitarren immer nach vorn verkörpern unsere Nostalgiker des triumphalen Britpop dieses Erbe und liefern klassisch britischen Rock, der gleichzeitig zeitlos wirkt – perfekt zu ihren Vokuhila-Frisuren und Vintage-Gesangsharmonien. Almost Lovers haben bereits zwei EPs beim französischen Label Howlin' Banana Records veröffentlicht, die jüngste davon im Dezember 2023. Mit Mitgliedern von Ada Oda, Annabel Lee, Departure Kids und Les Concordes bringen sie eine erfrischende Mischung aus Retro-Charme und modernem Sound.\nUnd wenn Sie sich nach dieser wilden Nacht denken: „Uiuiui, was für eine Verwüstung!“, dann machen Sie’s uns nochmal nach und gehen zum Spogomi! Erst feiern, dann Müll sammeln – der Kreislauf des Lebens!\n",
+  "descriptionLong": "",
+  "fee": "10",
+  "artists": [
+    {
+      "name": "Flathead",
+      "link": "https://linktr.ee/flathead_marseille",
+      "description": "With melodies, guitars, passion, and attitude, FLATHEAD is the 70's style rock supergroup of Marseille, France. United under the same powerpop banner since 2020, a first 4 track EP named \"Sunset Girl\" was released on Madrid label Snap!! Records in October 2022. The 5 boys are ready to conquer the world.\n\nWith members of  late punk bands: Tomy & The Cougars, Pogy & Les Kéfars, La Flemme, The Aggravation, Seppuku.\n\n",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/L5jl64KZQf8?si=OWFvl-5aiYrerKki",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=106785986/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/f055ac9958ceb255fd7ef7d09efd118c.webp"
+    },
+    {
+      "name": "Almost Lovers",
+      "link": "https://www.instagram.com/almostlovers_band",
+      "description": "Almost Lovers revive the spirit of 70s/90s powerpop, like Oasis, Teenage Fan Club and the Nerves as sources of inspiration for their young career. With all guitars forward, these nostalgics of triumphant Britpop assume this heritage by delivering quintessentially English rock, something eternal, which goes with their mullet cuts and vintage vocal harmonies. Almost Lovers have released two EPs on french label Howlin' Banana records, the last one in December 2023.\n\nWith members of Ada Oda, Annabel Lee, Departure Kids, Les Concordes...",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/vKh3yBmOpeg?si=dMOdAZeUwKYsh-7-",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3505187730/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/8c0c99f1aed8027652f07ce830a9c812.webp"
+    }
+  ],
+  "shopLink": "https://pretix.eu/carousel/flamo/"
+}
 ]
