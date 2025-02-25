@@ -589,7 +589,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
 }
 ,
   {
-  "id": "flamo",
+  "id": "flathead-almostlovers",
   "date": "2025-03-09T15:00",
   "title": "Flathead (Marseille) & Almost Lovers (Brüssel/Lille) - gepflegtes Eskalieren! ",
   "descriptionShort": "Ach, Sie kuscheln Sonntags auch gerne bei Pfefferminztee mit ihrer Katze unter der 15-Tonnen-Gewichtsdecke und überlegen, ob das Leben nicht vielleicht doch anderswo stattfindet? \nNa dann machen Sie es dieses Mal doch einfach wie wir und pfeffern hurtig die Pantoffeln ins Eck’ und checken dann ganz lässig und mit angezogener Handbremse in Heidelbergs schärfstem Autohaus ein (Ifo-Institut approved).\nIm Carousel lesen Ihnen Flathead und Almost Lovers nämlich nicht nur diskret die (musikalischen) Leviten, nein, Sie erwartet auch kanisterweise bittersüßer Messwein und eine Gemeinde, die Ihresgleichen erst noch finden muss. Wer kann da nein sagen? Ja, wir sicher nicht!\nFlathead (Marseille) – predigen eine neue, rauere Version des Powerpop. So, als hätte man noch etwas Dreck vom Samstag unter den Nägeln. In Deutschland wird ihr neues (self-titled) Album am 6. März auf Wanda Records erscheinen. Und dann wird es kein Halten mehr geben. Mit Mitgliedern ehemaliger Punk-Bands wie Tomy & The Cougars, Pogy & Les Kéfars, La Flemme, The Aggravation und Seppuku sind die fünf Jungs bereit für die ganz große Messe.\nAlmost Lovers aus Brüssel – lassen sich von Bands wie Oasis, Teenage Fan Club und The Nerves inspirieren. Die Gitarren immer nach vorn verkörpern unsere Nostalgiker des triumphalen Britpop dieses Erbe und liefern klassisch britischen Rock, der gleichzeitig zeitlos wirkt – perfekt zu ihren Vokuhila-Frisuren und Vintage-Gesangsharmonien. Almost Lovers haben bereits zwei EPs beim französischen Label Howlin' Banana Records veröffentlicht, die jüngste davon im Dezember 2023. Mit Mitgliedern von Ada Oda, Annabel Lee, Departure Kids und Les Concordes bringen sie eine erfrischende Mischung aus Retro-Charme und modernem Sound.\nUnd wenn Sie sich nach dieser wilden Nacht denken: „Uiuiui, was für eine Verwüstung!“, dann machen Sie’s uns nochmal nach und gehen zum Spogomi! Erst feiern, dann Müll sammeln – der Kreislauf des Lebens!\n",
@@ -615,6 +615,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       "image": "/img/8c0c99f1aed8027652f07ce830a9c812.webp"
     }
   ],
+  "img": "/img/flathead-almostlovers.jpg",
   "shopLink": "https://pretix.eu/carousel/flamo/"
 }
 ]
