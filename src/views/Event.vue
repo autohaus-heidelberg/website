@@ -71,6 +71,7 @@ const dateDiff = computed(() => {
   position: relative;
   padding-bottom: 56.25%; /* 16:9 */
   height: 0;
+  margin-bottom: 2rem;
 }
 .video-container iframe {
   position: absolute;
