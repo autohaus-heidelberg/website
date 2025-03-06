@@ -1,8 +1,8 @@
 <template lang="pug">
 .event
-    h2.date {{ date }} Uhr
-    h1(v-if="showDatediff") {{ dateDiff }}
-    h1 {{ event.title }}
+    h2.date.accent {{ date }} Uhr
+    h1.accent(v-if="showDatediff") {{ dateDiff }}
+    h1.accent {{ event.title }}
     img.event-img(v-if="event.img" :src="event.img")
     p(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
@@ -11,9 +11,9 @@
         a(:href="event.shopLink")
             button() Tickets kaufen
     .artist(v-for="artist in event.artists")
-        h2 {{ artist.name }}
+        h2.accent {{ artist.name }}
         img.artist-img(v-if="artist.image" :src="artist.image")
-        a(v-if="artist.link" :href="artist.link") Website
+        a(v-if="artist.link" :href="artist.link") Band website
         p {{ artist.description }}
         .video-container(v-if="artist.youtube")
             iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
@@ -94,6 +94,7 @@ const dateDiff = computed(() => {
     margin: auto;
     max-width: min(500px, 90vw);
     max-height: min(500px, 90vw);
+    margin-bottom: 2rem;
 }
 
 .event {

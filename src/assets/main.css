@@ -272,3 +272,8 @@ h2 {
 .mb-1 {
   margin-bottom: 1rem
 }
+
+.accent {
+ color: var(--link-color)
+
+}
