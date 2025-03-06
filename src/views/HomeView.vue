@@ -289,13 +289,13 @@ p Wir sind das Carousel im alten Autohaus.
 
 #logo {
   top: 0;
-  animation: rotation 10s infinite linear;
+  animation: rotation 15s infinite linear;
 }
 #logo2 {
-  animation: rotation2 10s infinite linear;
+  animation: rotation2 15s infinite linear;
 }
 #logo3 {
-  animation: rotation 10s infinite linear;
+  animation: rotation 15s infinite linear;
 }
 
 @keyframes rotation {

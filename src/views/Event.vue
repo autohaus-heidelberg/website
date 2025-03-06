@@ -5,7 +5,8 @@
     h1 {{ event.title }}
     img.event-img(v-if="event.img" :src="event.img")
     p(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
-    h3(v-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
+    h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
+    h3(v-else-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
     .get-ticket(v-if="event.shopLink")
         a(:href="event.shopLink")
             button() Tickets kaufen
