@@ -10,6 +10,7 @@ export type Event = {
   descriptionShort: string;
   descriptionLong?: string;
   fee: string;
+  feeAk?: string;
   /* Link to the ticket shop, i.e. https://pretix.eu/carousel/131124Crocodiles/ */
   shopLink?: string;
   artists: Array<{

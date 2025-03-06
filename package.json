@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
+    "preview": "vite preview --host",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "deploy": "node scripts/gh-pages-deploy.js"
   },
   "dependencies": {
+    "circletype": "^2.3.0",
     "dayjs": "^1.11.11",
     "pinia": "^2.1.7",
     "pug-plain-loader": "^1.1.0",
@@ -20,10 +21,10 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
+    "@types/leaflet": "^1.9.16",
     "@types/node": "^20.12.5",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue-leaflet/vue-leaflet": "^0.10.1",
-    "@types/leaflet": "^1.9.16",
     "@vue/tsconfig": "^0.5.1",
     "execa": "^9.0.2",
     "leaflet": "^1.9.4",

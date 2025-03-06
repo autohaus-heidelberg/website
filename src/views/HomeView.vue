@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import CircleType from "circletype";
 
 const upcoming = computed(() =>
   events
@@ -18,56 +19,52 @@ const upcoming = computed(() =>
 
 const zoom = ref(17);
 
-const img1Current = ref(0);
-const img2Current = ref(1);
-const visibleImage = ref(0);
-const noOfImages = 6;
-
-const imgSrc1 = computed(() => {
-  return `/img/logo_animation/${img1Current.value + 1}.jpg`;
-});
-const imgSrc2 = computed(() => {
-  return `/img/logo_animation/${img2Current.value + 1}.jpg`;
-});
-
-const styleImg1 = computed(() => ({
-  opacity: visibleImage.value === 1 ? 1 : 0,
-}));
-
-const styleImg2 = computed(() => 
-  ({
-    opacity: visibleImage.value === 1 ? 0 : 1
-  })
-);
-
-let intervalId: number | null = null;
+const logo = ref(null);
+const logo2 = ref(null);
+const logo3 = ref(null);
+const logoContainer = ref(null);
 
 onMounted(() => {
-  intervalId = setInterval(() => {
-    if (visibleImage.value === 1) {
-      img2Current.value = (img2Current.value + 2) % noOfImages;
-      visibleImage.value = 2;
-    } else {
-      img1Current.value = (img1Current.value + 2) % noOfImages;
-      visibleImage.value = 1;
-    }
-  }, 2000);
+  createCircleLogo();
 });
 
-onUnmounted(() => {
-  if(intervalId !== null) {
-    clearInterval(intervalId);
-  }
-});
+function createCircleLogo() {
+  const diameter = Math.min(window.screen.width - 100, 600);
+  const magicNumber = 7.06;
+
+  const fontSize = diameter / magicNumber;
+  const fontSize2 = fontSize / 1.5;
+  const fontSize3 = fontSize2 / 1.5;
+
+  logo.value.style.fontSize = `${fontSize}px`;
+
+  logo2.value.style.fontSize = `${fontSize2}px`;
+  logo2.value.style.top = `${(diameter - fontSize2 * magicNumber) / 2}px`;
+
+  logo3.value.style.fontSize = `${fontSize3}px`;
+  logo3.value.style.top = `${(diameter - fontSize3 * magicNumber) / 2}px`;
+  // logo3.value.style.top = `${diameter/2.4}px`;
+
+  logoContainer.value.style.height = `${diameter}px`;
+
+  new CircleType(logo.value).radius(0);
+  new CircleType(logo2.value).radius(0);
+  new CircleType(logo3.value).radius(0);
+}
+
+onUnmounted(() => {});
 </script>
 
 <template lang="pug">
 //- h1 Autohaus Heidelberg
-.header-img
-  .container
-    img.img-animate(:src="imgSrc1", :style="styleImg1") 
-    img.img-animate(:src="imgSrc2", :style="styleImg2") 
-    img.img-outline(src="/img/logo_outline.svg")
+.l-center
+  .logo-container(ref="logoContainer")
+    h1#logo2(ref="logo2") Carousel Carousel Carousel
+    h1#logo3(ref="logo3") Carousel Carousel Carousel
+    h1#logo(ref="logo") Carousel Carousel Carousel
+    //- img.img-animate(:src="imgSrc1", :style="styleImg1") 
+    //- img.img-animate(:src="imgSrc2", :style="styleImg2") 
+    //- img.img-outline(src="/img/logo_outline.svg")
 p Wir sind das Carousel im alten Autohaus.
   br 
   | Ein Ort für Musik, Kunst und Kultur für alle.
@@ -128,11 +125,12 @@ p Wir sind das Carousel im alten Autohaus.
 
   .directions
     h1 Lage
-    p Das Carousel im alten Autohaus befindet sich in der 
+    p Das Carousel im alten Autohaus befindet sich in der
+      |
       |
       a(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Hebelstraße 7
       |
-      | am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die 
+      | am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die
       a(href="https://maps.app.goo.gl/7k4UvxVHtGvHK1NfA") Rudolf-Diesel-Straße
     a.mb-1(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
     .map
@@ -153,7 +151,7 @@ p Wir sind das Carousel im alten Autohaus.
     p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß?
     router-link(:to="{ name: 'pastEvents' }") Hier findet ihr die vergangengen Events
 
-  #about()
+  #about
     h1 Über uns
     p Unser Ziel ist es niederschwellige Angebote zu schaffen für die lokale Kunst- und Kulturszene.
     p Zum einen bieten wir Kunstschaffenden günstige Proberäume und einen Veranstaltungsort
@@ -167,11 +165,9 @@ p Wir sind das Carousel im alten Autohaus.
     br
     br
     router-link(:to="{ name: 'about' }") Mehr
-
 </template>
 
 <style scoped>
-
 #mce-EMAIL {
   width: 280px;
 }
@@ -207,7 +203,6 @@ p Wir sind das Carousel im alten Autohaus.
   object-fit: cover;
   aspect-ratio: 3.57/1;
   margin: 0;
-
 }
 
 .header-img {
@@ -274,6 +269,50 @@ p Wir sind das Carousel im alten Autohaus.
 
   #impressum {
     grid-area: impressum;
+  }
+}
+
+.logo-container {
+  height: 500px;
+  width: 0;
+  color: var(--link-color)
+}
+
+.logo-container > * {
+  position: absolute;
+}
+
+.l-center {
+  display: flex;
+  justify-content: center;
+}
+
+#logo {
+  top: 0;
+  animation: rotation 10s infinite linear;
+}
+#logo2 {
+  animation: rotation2 10s infinite linear;
+}
+#logo3 {
+  animation: rotation 10s infinite linear;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-359deg);
+  }
+}
+
+@keyframes rotation2 {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
   }
 }
 </style>
