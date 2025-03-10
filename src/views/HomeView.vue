@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
 import { events } from "../events";
 import dayjs from "dayjs";
 import EventPreview from "../components/EventPreview.vue";
@@ -25,10 +25,13 @@ const logo3 = ref(null);
 const logoContainer = ref(null);
 
 onMounted(() => {
-  createCircleLogo();
+  // NOTE: if there is no timeout, the font will appear larger, I don't know why
+  // 50 works on what I could test, slower rendering might still make weird circles
+  setTimeout(createCircleLogo, 50)
 });
 
 function createCircleLogo() {
+  console.log(window.screen.width)
   const diameter = Math.min(window.screen.width - 100, 600);
   const magicNumber = 7.06;
 
@@ -52,7 +55,8 @@ function createCircleLogo() {
   new CircleType(logo3.value).radius(0);
 }
 
-onUnmounted(() => {});
+onUnmounted(() => {
+});
 </script>
 
 <template lang="pug">
