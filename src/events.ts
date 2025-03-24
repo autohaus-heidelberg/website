@@ -620,4 +620,45 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/flathead-almostlovers.jpg",
   "shopLink": "https://pretix.eu/carousel/flamo/"
 }
+,
+  {
+  "id": "milk-tv-lemongrab-warm-swords",
+  "date": "2025-04-04T20:00",
+  "title": "Milk TV (Brüssel), Lemongrab (Berlin) und Warm Swords (Leipzig)",
+  "descriptionShort": "Es ist April und der Heidelberger Frühling™ ist in vollem Gange! Doch die Hauptstraß' ist uns zu glatt, wir geben Vollgas auf dem Seitenstreifen mit einem Dreierpack Art-Punk, der dir härter ins Hirn fährt, als jeder Frühjahrsheuschnupfen.\n\nMit dabei sind Milk TV aus der Europastadt Brüssel! Mit Postironie und VHS-Nostalgie und einer Prise Devo, XTC und Sparks, ist man hier auch ohne Antihistamine gewappnet und verlangt nach mehr!\nDie Berlin-Kanadische Kooperation von Lemongrab packen ihre Koffer und bringen sehr viel Post-Punk, etwas Grunge und eine energiegeladene Live Show ins Carousel mit Und nicht nur das, denn die Neuseeland-Frazösisch-Leipziger Truppe Warm Swords passen auch noch ins Gepäck um die Post-Punk Nummer noch einmal auf Links zu drehen, etwas Egg hinzuzufügen und uns mit ordentlich Fahrvergnügen im Kreis drehen wird!\n\nZum krönenden Abschluss gibt es noch ein gehörige Portion Funk-Grooves direkt von der Rille von Hard Boiled Funk auf die Ohren, um das Omelette komplett zu machen!",
+  "descriptionLong": "",
+  "fee": "12",
+  "feeAk": "15",
+  "artists": [
+    {
+      "name": "Milk TV",
+      "link": "https://www.instagram.com/milk.tv.band/",
+      "description": "Milk TV is an \"Art Punk\" trio created in 2017 in Brussels. He draws on playground nostalgia, cheap TV and a healthy dose of post-Reagan cynicism to produce choppy, raucous rock music that makes it sound like Devo, Wire, Xtc and...Primus aren't too far in the rearview mirror.\nWith members of Ropoporose, Brorlab, Phoenician Drive.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/715KwpRYz3g?si=rZ7Cp456JKBTqbrL",
+      "bandcamp": "",
+      "image": "/img/c56f6b45edd465a790e08441e36ab10e.webp"
+    },
+    {
+      "name": "Lemongrab",
+      "link": "https://www.instagram.com/lemongrammm/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=720573584/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true",
+      "image": "/img/3cfba27a95b4671b9e6503c2f97e4dae.webp"
+    },
+    {
+      "name": "Warm Swords",
+      "link": "https://www.instagram.com/warm.swords/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3864379952/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true",
+      "image": "/img/fda19647b39a3a12a4553bb2ab12c038.webp"
+    }
+  ],
+  "img": "/img/06dc84a56bce0873820c1b1eb03871e3.webp",
+  "shopLink": "https://pretix.eu/carousel/milk-tv-lemongrab-warm-swords/"
+}
 ]
