@@ -661,4 +661,36 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/06dc84a56bce0873820c1b1eb03871e3.webp",
   "shopLink": "https://pretix.eu/carousel/milk-tv-lemongrab-warm-swords/"
 }
+,
+  {
+  "id": "snapped-ankles-fatale",
+  "date": "2025-04-15T19:00",
+  "title": "Snapped Ankles (London), Fatale (Heidelberg)",
+  "descriptionShort": "Metropolink‘s Commissary & Autohaus are joining forces for the first time and we are thrilled to present Snapped Ankles from the UK – they will blow the leaves right off your treetops!\n\nHeidelberg's Fatale are on support duties and will hit the first axe into the trunk!\n\nDon‘t miss out.\n\nArtwork by <a href=\"https://www.instagram.com/julian.grmn/\" target=\"self\">@julian.grmn</a>",
+  "descriptionLong": "",
+  "fee": "19,47",
+  "feeAk": "22",
+  "artists": [
+    {
+      "name": "Snapped Ankles",
+      "link": "https://www.instagram.com/snappedankles/",
+      "description": "They came from the trees.\n\nNow settled in fertile east London, Snapped Ankles maintain the feral energy of the forest. Fight or flight. Primal motorik rhythms, the rush of white noise and synth-punk angles; an aural onslaught played out on homemade log synths, electrified guitars and sticks beating hell on taut animal skin.\n\nSnapped Ankles have flourished in the sub-tropical climes of warehouse and squat parties, moving onto performance art collaborations with filmmakers and shows in unlikely locations such as barber shops, games arcades and the forests they once called home. They plough a singular furrow at improbable angles. The woodwose have discovered electricity and they’re not afraid to use it.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/MVbkkyCw66w?si=7zFok4ikcrX4-_S-",
+      "bandcamp": "",
+      "image": "/img/snapped_ankles.jpg"
+    },
+    {
+      "name": "Fatale",
+      "link": "https://www.instagram.com/fatale_hd/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "",
+      "image": ""
+    }
+  ],
+  "img": "/img/snapped_ankles_flyer.jpg",
+  "shopLink": "https://rausgegangen.de/en/events/snapped-ankles-hard-times-furious-dancing-tour-0/"
+}
 ]
