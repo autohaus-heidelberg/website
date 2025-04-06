@@ -669,7 +669,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "descriptionShort": "Metropolink‘s Commissary & Autohaus are joining forces for the first time and we are thrilled to present Snapped Ankles from the UK – they will blow the leaves right off your treetops!\n\nHeidelberg's Fatale are on support duties and will hit the first axe into the trunk!\n\nDon‘t miss out.\n\nArtwork by <a href=\"https://www.instagram.com/julian.grmn/\" target=\"self\">@julian.grmn</a>",
   "descriptionLong": "",
   "fee": "19,47",
-  "feeAk": "22",
+  "feeAk": "20",
   "artists": [
     {
       "name": "Snapped Ankles",
