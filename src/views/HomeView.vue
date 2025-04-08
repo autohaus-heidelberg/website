@@ -7,8 +7,7 @@ import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import CircleType from "circletype";
-
+import CircularLogo from "../components/CircularLogo.vue"
 const upcoming = computed(() =>
   events
     .map((item) => ({ ...item, date_d: dayjs(item.date) }))
@@ -19,53 +18,40 @@ const upcoming = computed(() =>
 
 const zoom = ref(17);
 
-const logo = ref(null);
-const logo2 = ref(null);
-const logo3 = ref(null);
+
 const logoContainer = ref(null);
 
 onMounted(() => {
   // NOTE: if there is no timeout, the font will appear larger, I don't know why
   // 50 works on what I could test, slower rendering might still make weird circles
-  setTimeout(createCircleLogo, 50)
+  setTimeout(setLogoHeight, 50)
+  window.addEventListener("resize", setLogoHeight);
 });
-
-function createCircleLogo() {
-  console.log(window.screen.width)
-  const diameter = Math.min(window.screen.width - 100, 600);
-  const magicNumber = 7.06;
-
-  const fontSize = diameter / magicNumber;
-  const fontSize2 = fontSize / 1.5;
-  const fontSize3 = fontSize2 / 1.5;
-
-  logo.value.style.fontSize = `${fontSize}px`;
-
-  logo2.value.style.fontSize = `${fontSize2}px`;
-  logo2.value.style.top = `${(diameter - fontSize2 * magicNumber) / 2}px`;
-
-  logo3.value.style.fontSize = `${fontSize3}px`;
-  logo3.value.style.top = `${(diameter - fontSize3 * magicNumber) / 2}px`;
-  // logo3.value.style.top = `${diameter/2.4}px`;
-
-  logoContainer.value.style.height = `${diameter}px`;
-
-  new CircleType(logo.value).radius(0);
-  new CircleType(logo2.value).radius(0);
-  new CircleType(logo3.value).radius(0);
-}
 
 onUnmounted(() => {
-});
+  window.removeEventListener("resize", setLogoHeight);
+})
+
+const logoHeight = ref(100);
+
+function setLogoHeight() {
+  const diameter = Math.min(window.screen.width - 100, 600);
+  console.log(diameter);
+  logoHeight.value = diameter;
+  logoContainer.value.style.height = `${diameter}px`;
+
+}
+
 </script>
 
 <template lang="pug">
 //- h1 Autohaus Heidelberg
 .l-center
   .logo-container(ref="logoContainer")
-    h1#logo2(ref="logo2") Carousel Carousel Carousel
-    h1#logo3(ref="logo3") Carousel Carousel Carousel
-    h1#logo(ref="logo") Carousel Carousel Carousel
+    .video
+      video(autoplay loop muted :height="logoHeight")
+        source(src="/header_video.mp4")
+    CircularLogo(:diameter="logoHeight" :key="logoHeight")
     //- img.img-animate(:src="imgSrc1", :style="styleImg1") 
     //- img.img-animate(:src="imgSrc2", :style="styleImg2") 
     //- img.img-outline(src="/img/logo_outline.svg")
@@ -282,8 +268,15 @@ p Wir sind das Carousel im alten Autohaus.
   color: var(--link-color)
 }
 
-.logo-container > * {
-  position: absolute;
+
+
+.video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  filter: brightness(70%);
 }
 
 .l-center {
@@ -291,32 +284,7 @@ p Wir sind das Carousel im alten Autohaus.
   justify-content: center;
 }
 
-#logo {
-  top: 0;
-  animation: rotation 15s infinite linear;
-}
-#logo2 {
-  animation: rotation2 15s infinite linear;
-}
-#logo3 {
-  animation: rotation 15s infinite linear;
-}
 
-@keyframes rotation {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(-359deg);
-  }
-}
 
-@keyframes rotation2 {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(359deg);
-  }
-}
+
 </style>
