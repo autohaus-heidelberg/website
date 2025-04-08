@@ -32,10 +32,10 @@ function createCircleLogo() {
   logo.value.style.fontSize = `${fontSize}px`;
 
   logo2.value.style.fontSize = `${fontSize2}px`;
-  logo2.value.style.top = `${(props.diameter - fontSize2 * magicNumber) / 2}px`;
+  logo2.value.style.top = `${(15 + props.diameter - fontSize2 * magicNumber) / 2}px`;
 
   logo3.value.style.fontSize = `${fontSize3}px`;
-  logo3.value.style.top = `${(props.diameter - fontSize3 * magicNumber) / 2}px`;
+  logo3.value.style.top = `${(15 + props.diameter - fontSize3 * magicNumber) / 2}px`;
   // logo3.value.style.top = `${diameter/2.4}px`;
 
 
@@ -55,7 +55,7 @@ function createCircleLogo() {
 }
 
 #logo {
-  top: 0;
+  top: 15px;
   animation: rotation 15s infinite linear;
 }
 #logo2 {
