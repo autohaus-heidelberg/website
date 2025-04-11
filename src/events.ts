@@ -693,4 +693,35 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/snapped_ankles_flyer.jpg",
   "shopLink": "https://rausgegangen.de/en/events/snapped-ankles-hard-times-furious-dancing-tour-0/"
 }
+,
+  {
+  "id": "wax-head-zuendung",
+  "date": "2025-04-26T20:00",
+  "title": "Wax Head (Manchester, UK) und Zündung (Heidelberg)",
+  "descriptionShort": "EIN ABEND FÜR DEN NACKTMULL\n\nHöchste Zeit, sich mal näher mit dem Nacktmull zu befassen – dieser Ikone der biologischen Gegenkultur. Am 26. April laden wir deshalb Wax Head (UK) und Zündung (HD) als ausgewiesene Experten auf dem Gebiet der Tunnel-Forschung ins Carousel ein. Forscherinnen und Entdecker aufgepasst – das wird ein unterirdisch guter Abend!\nEben noch mit den Wartungsarbeiten am tropfenden Eurostar-Tunnel beauftragt, haben  Wax Head aus Manchester mal ganz locker nebenbei ihre neueste Single „Terminal Sinker“ über Sour Grapes Records an die Oberfläche gepusht. Ein Sound, der uns alle schaufeln lässt – Repeat-Taste gedrückt, und Oma Ernas Gemüsebeet ist ruckzuck auf links gedreht. Aktuelle #1 der Nacktmull-Playlist.\nUnd wenn’s im sogenannten Heidelberger Untergrund mal wieder was zu sprengen gibt, sind Zündung natürlich ganz vorne mit dabei – die Lunte so kurz wie ihre Gitarrenriffs. Bei ihrer Show tauchst du garantiert nur zum Luftschnappen auf. Nacktmull-certified!",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Wax Head",
+      "link": "https://www.instagram.com/waxhead.band/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/NQrvD_YKE3Q?si=X8s5m3Qlup8uel8c",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2395743865/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/b8955052aa9608f1fa4ffb03aa3b2f9a.webp"
+    },
+    {
+      "name": "Zündung",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/INcHWWMnMBg?si=e2iXpB4CAxlPmEH_",
+      "bandcamp": ""
+    }
+  ],
+  "img": "/img/bf010160c648bc7114f1332c2879389c.webp",
+  "shopLink": "https://pretix.eu/carousel/wax-head-zuendung/"
+}
 ]
