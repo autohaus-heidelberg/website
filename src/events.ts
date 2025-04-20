@@ -724,4 +724,34 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/bf010160c648bc7114f1332c2879389c.webp",
   "shopLink": "https://pretix.eu/carousel/wax-head-zuendung/"
 }
+,
+  {
+  "id": "condor-chemical-threat",
+  "date": "2025-05-06T19:00",
+  "title": "Condor (Oi! aus Frankreich) und Chemical Threat (Rhineline Hardcore)",
+  "descriptionShort": "Okay, okay, wir legen nochmal nach und starten mit einem Oberhammer in den Mai. Condor um Max Smadja von Rixe fegen an diesem Dienstagabend bei ihrem einzigen Tourstopp in Westdeutschland einmal über die Bühne des Carousel. Smadja hat die Stücke auf den beiden Cassingles (oder gesammelt als Singles auf Beach Impediment) zwar alleine eingehämmert, wird auf der Tour allerdings u.a. von Mitgliedern der Savageheads unterstützt. 80er Punk mit deutlichem Oi-Einschlag und sehr hohe Drehzahl werden serviert.\nDynamik und Spannungsbogen haben wir für diesen Termin ignoriert und fangen gleich mit Hardcore Punk Geschmacksrichtung hart und schnell an: Chemical Threat von STTW Records bringen den Rhineline Hardcore an den Neckar.",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Condor",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1256621441/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true"
+    },
+    {
+      "name": "Chemical Threat",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=461990999/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true"
+    }
+  ],
+  "img": "/img/29fd96a9138d131d041ef227d7248874.webp",
+  "shopLink": "https://pretix.eu/carousel/condor-chemical-threat/"
+}
 ]
