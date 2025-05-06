@@ -222,6 +222,36 @@ p Wir sind das Carousel im alten Autohaus.
   max-width: 75ch;
 }
 
+
+
+.logo-container {
+  height: 500px;
+  width: 0;
+  color: var(--link-color)
+}
+
+
+
+.video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  filter: brightness(70%);
+}
+
+.video > video {
+    max-width: 100vw;
+
+}
+
+.l-center {
+  display: flex;
+  justify-content: center;
+}
+
+
 @media screen and (min-width: 150ch) {
   .page-content {
     display: grid;
@@ -261,30 +291,5 @@ p Wir sind das Carousel im alten Autohaus.
     grid-area: impressum;
   }
 }
-
-.logo-container {
-  height: 500px;
-  width: 0;
-  color: var(--link-color)
-}
-
-
-
-.video {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  filter: brightness(70%);
-}
-
-.l-center {
-  display: flex;
-  justify-content: center;
-}
-
-
-
 
 </style>
