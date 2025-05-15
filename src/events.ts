@@ -787,7 +787,8 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       "description": "Up the Autohaus Punx!",
       "soundcloud": "",
       "youtube": "",
-      "bandcamp": ""
+      "bandcamp": "",
+      "image": "/img/muddux.jpg"
     }
   ],
   "img": "/img/50c5776d2823ff60a38670d8363259dc.webp",
