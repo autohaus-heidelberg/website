@@ -754,4 +754,43 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/29fd96a9138d131d041ef227d7248874.webp",
   "shopLink": "https://pretix.eu/carousel/condor-chemical-threat/"
 }
+,
+  {
+  "id": "mitraille-neat-mentals-muddux",
+  "date": "2025-05-30T20:00",
+  "title": "Mitraille (Garage Punk, Antwerpen), Neat Mentals (Punk Rock, Stuttgart) und MudDux (Autohaus)",
+  "descriptionShort": "Am 1. Tag nach Christi Himmelfahrt ist im Carousel die Hölle los! Eine heilige Dreifaltigkeit des Punk Rock bringt euch zum Tanzen, als wäre der Boden aus Lava. Denn aus Antwerpen, über gut ausgeleuchtete Autobahnen direkt nach Heidelberg ins Autohaus, fahren Mitraille ihren nervösen Garage Punk vor, bis ihr euch vor Power Pop Hooks und Garage-Hymnen nicht mehr retten könnt! Auch davor gibt es Punk Rock ohne Geschwindigkeitsbegrenzung aus Stuttgart mit den Neat Mentals. Das Ganze wird von MudDux eröffnet. Zu einem Drittel Mexikanisch, einem Drittel Irisch und einem Drittel Yankee sind die Inhouse Punx musikalisch dem Punkrock der 90er nicht fremd. Also packt eure Matschhosen ein und kommt am 30. Mai zur Punkrock Prozession ins Autohaus gedriftet!",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Mitraille",
+      "link": "https://www.instagram.com/mitrailleband/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/7aiO9kCkAEY?si=uN0DsC2nsV2Tc2Eo",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1855328498/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/7d13e58571ad5f5d2de4899b5b0fad75.webp"
+    },
+    {
+      "name": "Neat Mentals",
+      "link": "https://www.instagram.com/neatmentals/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/_uVplWgB6zc",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3857505738/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true"
+    },
+    {
+      "name": "MudDux",
+      "link": "",
+      "description": "Up the Autohaus Punx!",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": ""
+    }
+  ],
+  "img": "/img/50c5776d2823ff60a38670d8363259dc.webp",
+  "shopLink": "https://pretix.eu/carousel/mitraille-neat-mentals-muddux/"
+}
 ]
