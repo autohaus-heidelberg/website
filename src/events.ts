@@ -794,4 +794,35 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/50c5776d2823ff60a38670d8363259dc.webp",
   "shopLink": "https://pretix.eu/carousel/mitraille-neat-mentals-muddux/"
 }
+,
+  {
+  "id": "dccross",
+  "date": "2025-06-12T19:00",
+  "title": "Rückwärts in den Sonnenuntergang – D.C Cross (AUS) & The Long Strange Trip (Autohaus)",
+  "descriptionShort": "Aus Australien kommt einer zu uns, der Gitarre spielt und klingt wie ein UFO-Absturz im Outback: D.C Cross. Mit seiner „Ecstatic Guitar“ streunt er irgendwo zwischen John Fahey, Elizabeth Cotten und Nick Drake umher. Der Mensch kann natürlich auch Fahrrad fahren, rückwärts versteht sich, wie in seinem neuesten Video „International Bury the Hatchet Day“ beneidenswert zu bestaunen ist. \nAll das hat er auf sein neuestes Album „Glookies Guit“ gepresst. Ein Vinyl gewordener, ungewöhnlich wohltuender Sonnenstich! \nBevor Cross sich durchs Raum-Zeit-Kontinuum zupft, gibt es warmen Asphalt mit The Long Strange Trip. Musik wie ein rostiger Chevy vor der Bowlingbahn. Wir sehen uns bei ner kalten Coke an der Bar vom Carousel.",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "Frei",
+  "artists": [
+    {
+      "name": "D.C Cross",
+      "link": "https://www.instagram.com/d.ccross/",
+      "description": "Darren D.C Cross is an instrumental ecstatic guitarist.\n\nIn the tradition of Leo Kottke, John Fahey, Nick Drake, Elizabeth Cotton and Mississipi John Hurt but forging a unique Australian perspective on the genre. Open guitar tunings to conjure light and shade and bring the spirit.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/RoHUsuQtj_c",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3020950765/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/310c924c76c4c891023276357d898dd2.webp"
+    },
+    {
+      "name": "The Long Strange Trip",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": ""
+    }
+  ],
+  "img": "/img/7e82dd96fa8658bd0a0cf514ce2c04c5.webp",
+  "shopLink": "https://pretix.eu/carousel/dccross/"
+}
 ]
