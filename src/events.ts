@@ -823,4 +823,34 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   ],
   "img": "/img/7e82dd96fa8658bd0a0cf514ce2c04c5.webp"
 }
+,
+  {
+  "id": "skullcult-socke",
+  "date": "2025-06-21T20:00",
+  "title": "Skull Cult (Synth/Garage Punk aus Indiana) + Socke (Autohaus)",
+  "descriptionShort": "Skull Cult klingt nach einer schwarzen Katze.\n\nEiner schwarzen, leicht verwahrlosten buckligen Katze, die dir eine scheuert, sobald du weg schaust – und dabei wild in die Tasten eines Synthesizers hakt. Die Synth-Punk-Band aus Indiana liefert bissige Riffs, schrammelig, schnell und mit ordentlich Krallen. Kein Wunder also, dass die neue Skull Cult EP „Can’t you see what I mean?“ von genau so einem Stubentiger geziert wird. \n\nAm 21.06. machen Skull Cult Halt bei uns im Autohaus!\n\n\nEin weiser Mensch sagte einmal:\n\n„Socke lässt dich schwitzen wie Omas Wollsocken an einem Sommertag.“\n\nWas könnte also besser zum Sommeranfang passen als Socke als Opener für Skull Cult?\n\nDie Autohaus Originals haben jetzt sogar einen Synthesizer im Gepäck – und liefern auch sonst den ein oder anderen Überraschungseffekt. Die Debüt EP der Band, \"Schlechte Luft EP\", gibt es seit Februar auf Bandcamp!\n\n\nSkull Cult + Socke gibt's am Samstag 21.06 im Carousel. 20 Uhr Einlass, 21 Uhr Musik.\n\n12€ an der Abendkasse und 10€ im Vorverkauf.\n\n\nViel Spaß!",
+  "descriptionLong": "",
+  "fee": "12",
+  "feeAk": "10",
+  "artists": [
+    {
+      "name": "Skull Cult",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://skullcultusa.bandcamp.com/album/new-mutilator"
+    },
+    {
+      "name": "Socke",
+      "link": "",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://socke.bandcamp.com/album/schlechte-luft-ep"
+    }
+  ],
+  "img": "/img/dbb58f5e198b7808ec1ee0d1fbb8fa09.webp",
+  "shopLink": "https://pretix.eu/carousel/skullcult-socke/"
+}
 ]
