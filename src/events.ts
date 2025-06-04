@@ -759,7 +759,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "id": "mitraille-neat-mentals-muddux",
   "date": "2025-05-30T20:00",
   "title": "Mitraille (Garage Punk, Antwerpen), Neat Mentals (Punk Rock, Stuttgart) und MudDux (Autohaus)",
-  "descriptionShort": "Am 1. Tag nach Christi Himmelfahrt ist im Carousel die Hölle los! Eine heilige Dreifaltigkeit des Punk Rock bringt euch zum Tanzen, als wäre der Boden aus Lava. Denn aus Antwerpen, über gut ausgeleuchtete Autobahnen direkt nach Heidelberg ins Autohaus, fahren Mitraille ihren nervösen Garage Punk vor, bis ihr euch vor Power Pop Hooks und Garage-Hymnen nicht mehr retten könnt! Auch davor gibt es Punk Rock ohne Geschwindigkeitsbegrenzung aus Stuttgart mit den Neat Mentals. Das Ganze wird von MudDux eröffnet. Zu einem Drittel Mexikanisch, einem Drittel Irisch und einem Drittel Yankee sind die Inhouse Punx musikalisch dem Punkrock der 90er nicht fremd. Also packt eure Matschhosen ein und kommt am 30. Mai zur Punkrock Prozession ins Autohaus gedriftet!",
+  "descriptionShort": "Am 1. Tag nach Christi Himmelfahrt ist im Carousel die Hölle los! Eine heilige Dreifaltigkeit des Punk Rock bringt euch zum Tanzen, als wäre der Boden aus Lava. Denn aus Antwerpen, über gut ausgeleuchtete Autobahnen direkt nach Heidelberg ins Autohaus, fahren Mitraille ihren nervösen Garage Punk vor, bis ihr euch vor Power Pop Hooks und Garage-Hymnen nicht mehr retten könnt! Auch davor gibt es Punk Rock ohne Geschwindigkeitsbegrenzung aus Stuttgart mit den Neat Mentals. Das Ganze wird von MudDux eröffnet. Zu einem Drittel Mexikanisch, einem Drittel Irisch und einem Drittel Yankee sind die Inhouse Punx musikalisch dem Punkrock der 90er nicht fremd. Also packt eure Matschhosen ein und kommt am 30. Mai zur Punkrock Prozession ins Autohaus gedriftet!\n\nArtwork by <a href=\"https://www.instagram.com/julianvonsocke/\" target=\"self\">@julianvonsocke</a>",
   "descriptionLong": "",
   "fee": "10",
   "feeAk": "12",
@@ -828,10 +828,10 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "id": "skullcult-socke",
   "date": "2025-06-21T20:00",
   "title": "Skull Cult (Synth/Garage Punk aus Indiana) + Socke (Autohaus)",
-  "descriptionShort": "Skull Cult klingt nach einer schwarzen Katze.\n\nEiner schwarzen, leicht verwahrlosten buckligen Katze, die dir eine scheuert, sobald du weg schaust – und dabei wild in die Tasten eines Synthesizers hakt. Die Synth-Punk-Band aus Indiana liefert bissige Riffs, schrammelig, schnell und mit ordentlich Krallen. Kein Wunder also, dass die neue Skull Cult EP „Can’t you see what I mean?“ von genau so einem Stubentiger geziert wird. \n\nAm 21.06. machen Skull Cult Halt bei uns im Autohaus!\n\n\nEin weiser Mensch sagte einmal:\n\n„Socke lässt dich schwitzen wie Omas Wollsocken an einem Sommertag.“\n\nWas könnte also besser zum Sommeranfang passen als Socke als Opener für Skull Cult?\n\nDie Autohaus Originals haben jetzt sogar einen Synthesizer im Gepäck – und liefern auch sonst den ein oder anderen Überraschungseffekt. Die Debüt EP der Band, \"Schlechte Luft EP\", gibt es seit Februar auf Bandcamp!\n\n\nSkull Cult + Socke gibt's am Samstag 21.06 im Carousel. 20 Uhr Einlass, 21 Uhr Musik.\n\n12€ an der Abendkasse und 10€ im Vorverkauf.\n\n\nViel Spaß!",
+  "descriptionShort": "Skull Cult klingt nach einer schwarzen Katze.\nEiner schwarzen, leicht verwahrlosten buckligen Katze, die dir eine scheuert, sobald du weg schaust – und dabei wild in die Tasten eines Synthesizers hakt. Die Synth-Punk-Band aus Indiana liefert bissige Riffs, schrammelig, schnell und mit ordentlich Krallen. Kein Wunder also, dass die neue Skull Cult EP „Can’t you see what I mean?“ von genau so einem Stubentiger geziert wird. \n\nAm 21.06. machen Skull Cult Halt bei uns im Autohaus!\n\nEin weiser Mensch sagte einmal:\n„Socke lässt dich schwitzen wie Omas Wollsocken an einem Sommertag.“\nWas könnte also besser zum Sommeranfang passen als Socke als Opener für Skull Cult?\n\nDie Autohaus Originals haben jetzt sogar einen Synthesizer im Gepäck – und liefern auch sonst den ein oder anderen Überraschungseffekt. Die Debüt EP der Band, \"Schlechte Luft EP\", gibt es seit Februar auf Bandcamp!\n\n\nSkull Cult + Socke gibt's am Samstag 21.06 im Carousel. 20 Uhr Einlass, 21 Uhr Musik.\n\nArtwork by <a href=\"https://www.instagram.com/julianvonsocke/\" target=\"self\">@julianvonsocke</a>",
   "descriptionLong": "",
-  "fee": "12",
-  "feeAk": "10",
+  "fee": "10",
+  "feeAk": "12",
   "artists": [
     {
       "name": "Skull Cult",
@@ -839,7 +839,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       "description": "",
       "soundcloud": "",
       "youtube": "",
-      "bandcamp": "https://skullcultusa.bandcamp.com/album/new-mutilator"
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1874672911/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
     },
     {
       "name": "Socke",
@@ -847,39 +847,10 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
       "description": "",
       "soundcloud": "",
       "youtube": "",
-      "bandcamp": "https://socke.bandcamp.com/album/schlechte-luft-ep"
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3954145444/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/"
     }
   ],
   "img": "/img/dbb58f5e198b7808ec1ee0d1fbb8fa09.webp",
   "shopLink": "https://pretix.eu/carousel/skullcult-socke/"
-}
-,
-  {
-  "id": "skullcult-socke",
-  "date": "2025-06-21T20:00",
-  "title": "Skull Cult (Synth/Garage Punk aus Indiana) + Socke (Autohaus)",
-  "descriptionShort": "Skull Cult klingt nach einer schwarzen Katze.\n\nEiner schwarzen, leicht verwahrlosten buckligen Katze, die dir eine scheuert, sobald du weg schaust – und dabei wild in die Tasten eines Synthesizers hakt. Die Synth-Punk-Band aus Indiana liefert bissige Riffs, schrammelig, schnell und mit ordentlich Krallen. Kein Wunder also, dass die neue Skull Cult EP „Can’t you see what I mean?“ von genau so einem Stubentiger geziert wird. \n\nAm 21.06. machen Skull Cult Halt bei uns im Autohaus!\n\n\nEin weiser Mensch sagte einmal:\n\n„Socke lässt dich schwitzen wie Omas Wollsocken an einem Sommertag.“\n\nWas könnte also besser zum Sommeranfang passen als Socke als Opener für Skull Cult?\n\nDie Autohaus Originals haben jetzt sogar einen Synthesizer im Gepäck – und liefern auch sonst den ein oder anderen Überraschungseffekt. Die Debüt EP der Band, \"Schlechte Luft EP\", gibt es seit Februar auf Bandcamp!\n\n\nSkull Cult + Socke gibt's am Samstag 21.06 im Carousel. 20 Uhr Einlass, 21 Uhr Musik.\n\n12€ an der Abendkasse und 10€ im Vorverkauf.\n\n\nViel Spaß!",
-  "descriptionLong": "",
-  "fee": "12",
-  "feeAk": "10",
-  "artists": [
-    {
-      "name": "Skull Cult",
-      "link": "",
-      "description": "",
-      "soundcloud": "",
-      "youtube": "",
-      "bandcamp": "https://skullcultusa.bandcamp.com/album/new-mutilator"
-    },
-    {
-      "name": "Socke",
-      "link": "",
-      "description": "",
-      "soundcloud": "",
-      "youtube": "",
-      "bandcamp": "https://socke.bandcamp.com/album/schlechte-luft-ep"
-    }
-  ],
-  "img": "/img/55c35e08cbe048f344a19f1f1b30c03a.webp"
 }
 ]
