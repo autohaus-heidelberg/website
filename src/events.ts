@@ -853,4 +853,36 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/dbb58f5e198b7808ec1ee0d1fbb8fa09.webp",
   "shopLink": "https://pretix.eu/carousel/skullcult-socke/"
 }
+,
+  {
+  "id": "digger-wannabe",
+  "date": "2025-06-25T19:00",
+  "title": "Digger & The Pussycats (Melbourne, Australien) und New York Wannabes (Darmstadt)",
+  "descriptionShort": "Garage’s not dead und nirgendwo trifft das so zu, wie in Down Under! Mit Vollgas aus Melbourne, zeigt das Duo um Digger And The Pussycats, dass auch ein Zweitakter schnurren kann wie ein V8! So heißt es im Song “Motorbike”: “I got a new motorbike, someone took it away. Took it for a ride, on a sunny day.” und damit passen sie wie die Faust auf’s Auge in die benzingeschwängerten Hallen des Carousels. Apropos Hall: mit dabei sind die New York Wannabes aus Darmstadt, die mit trashigem Surfpunksound auch den letzten Kolbenfresser auf Hochtouren bringt!",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Digger & The Pussycats",
+      "link": "https://www.facebook.com/diggerandthe",
+      "description": "Melbourne's Digger & The Pussycats are hitting the road across Europe in June 2025. For the first time in five years, their European fans will have the chance to see Sam and Andy belt out their hits in festivals and clubs across Germany, France, Spain and the Benelux.\n\nConsidered one of Australia’s most exciting music exports, Digger &\nThe Pussycats having built a reputation across a 20-year career as a live\nband that leave every ounce of sweat on the stage. Combining a myriad\nof musical styles ranging from 60’s garage-punk right through to blues\nand party rock and roll, the band has won over audiences in both\nhemispheres through relentless touring and their prolific catalogue of\nreleases - including 5 x LPs, 14 x 7” singles and a split 10”.\nThroughout their long career, the band has extensively toured Europe, USA, and Asia. Even now, they love to play shows in both tiny clubs and massive festivals, always keeping their true ambition clear: to entertain 100% of the time.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/l0UAk4MFRsE",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=4200899689/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/0d9ff80175efffb8defc5a532b2c565a.webp"
+    },
+    {
+      "name": "New York Wannabes",
+      "link": "https://www.facebook.com/newyorkwannabes/",
+      "description": "From the trink halles and back courts of Darmstadt, the NEW YORK WANNABES unique sounds are for sure to rape your mind and fill it up with their bluesy sleaze that oozes Rock n Roll out of your ears.\nWhile Ms. Sue's tribal drums pound like a million jack booted feet, Mr. Lucky slinks, slithers and blasts his raw guitar sound like a ice cold puck aimed straight at your kisser.\nIt's a NEW YORK WANNABE world, live in it...and if your feet are not tapping, go see a fucking podiatrist",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/zd1HawvKBVk",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3286667062/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/6326abfd5ff0963a6228d438802b6c85.webp"
+    }
+  ],
+  "img": "/img/2aebfda4a7b4403c33a211beb9a1b267.webp",
+  "shopLink": "https://pretix.eu/carousel/digger-wannabe/"
+}
 ]
