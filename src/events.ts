@@ -858,7 +858,7 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "id": "digger-wannabe",
   "date": "2025-06-25T19:00",
   "title": "Digger & The Pussycats (Melbourne, Australien) und New York Wannabes (Darmstadt)",
-  "descriptionShort": "Garage’s not dead und nirgendwo trifft das so zu, wie in Down Under! Mit Vollgas aus Melbourne, zeigt das Duo um Digger And The Pussycats, dass auch ein Zweitakter schnurren kann wie ein V8! So heißt es im Song “Motorbike”: “I got a new motorbike, someone took it away. Took it for a ride, on a sunny day.” und damit passen sie wie die Faust auf’s Auge in die benzingeschwängerten Hallen des Carousels. Apropos Hall: mit dabei sind die New York Wannabes aus Darmstadt, die mit trashigem Surfpunksound auch den letzten Kolbenfresser auf Hochtouren bringt!",
+  "descriptionShort": "Garage’s not dead und nirgendwo trifft das so zu, wie in Down Under! Mit Vollgas aus Melbourne, zeigt das Duo um Digger And The Pussycats, dass auch ein Zweitakter schnurren kann wie ein V8! So heißt es im Song “Motorbike”: “I got a new motorbike, someone took it away. Took it for a ride, on a sunny day.” und damit passen sie wie die Faust auf’s Auge in die benzingeschwängerten Hallen des Carousels. Apropos Hall: mit dabei sind die New York Wannabes aus Darmstadt, die mit trashigem Surfpunksound auch den letzten Kolbenfresser auf Hochtouren bringt!\n\nFlyer artwork: <a href=\"https://www.instagram.com/elmoper/\" target=\"blank\">Gerardo Meen</a>",
   "descriptionLong": "",
   "fee": "10",
   "feeAk": "12",
