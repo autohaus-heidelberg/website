@@ -885,4 +885,27 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/2aebfda4a7b4403c33a211beb9a1b267.webp",
   "shopLink": "https://pretix.eu/carousel/digger-wannabe/"
 }
+,
+  {
+  "id": "escape-schule",
+  "date": "2025-06-28T20:00",
+  "title": "Escape-Ism (LA) und Knabenschule (HD/Halle)",
+  "descriptionShort": "Im Land der kaputten Brücken und Dauerbaustellen gibt’s außer dem Erdbeermond nur noch zwei echte Lichtblicke. Die beiden Deutschland-Gigs von Escape-ism. Einer davon im Autohaus! \n\nEscape-ism klingt wie der Sound, den man hört, wenn man zu lange wach war: Garage Gospel für verlorene Seelen mit Ian Svenonius, bekannt aus Nation of Ulysses und Chain & the Gang. Und wenn der raunt: „If you feel like rockin’, but you think it’s a sin“ – dann weißt du: Das hier ist keine Show. Das ist Beichte, Rückfall und Offenbarung in einem.\n\n\nAber erstmal reißen Knabenschule alle Masken vom Gesicht und zerren an den Nerven wie ein Stromausfall im Kopf. Punk mit Narben. Kein Retro, kein Revival, sondern echter Schmutz. Wie Madenkleber unterm Schuh und Jesus nach drei Tagen in der Höhle: wütend, wach und hungrig.\n\nCarousel im Autohaus Heidelberg. 28/06/25.\nEinlass: 20:00 Uhr, Beginn: 21:00 Uhr.\nFlyer von Prints of Persia.\n",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Escape-Ism",
+      "link": "https://www.instagram.com/escape_ism_official?igsh=Nm15dHhxc3Myc3Fh",
+      "description": "Escape-ism is the Found-Sound-Dream-Drama starring Ian Svenonius & Sandi Denton",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/eZUZSJcyc1g",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3245658334/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/3db5240b4cdb1a09df167333338e2fe1.webp"
+    }
+  ],
+  "img": "/img/2cae90cb80b6668c361c45501b8fee09.webp",
+  "shopLink": "https://pretix.eu/carousel/escape-schule/"
+}
 ]
