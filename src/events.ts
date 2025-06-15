@@ -930,4 +930,34 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   ],
   "img": "/img/4fdfbb5a8e18f805426ecc12560bc3fd.webp"
 }
+,
+  {
+  "id": "alien-nosejob",
+  "date": "2025-07-02T19:00",
+  "title": "Alien Nosejob (Australien) und City Boys (Autohaus)",
+  "descriptionShort": "Jake Robertson aus Down Under war das Bandgeschäft irgendwann zu arg und hat bei den Eggsellenten Ausmuteants einen Schlussstrich gezogen. Neben Aktivitäten bei anderen Gruppen wie den großartigsten Hierophants und Living Eyes hat er weiterhin eigene Musik im stillen Kämmerlein produziert, fernab vom Bandbiz. Folgerichtig nannte er das Projekt Alien Nosejob und haute unter dem Namen einen Banger nach dem anderen raus. Sein Gitarrenspiel so quirlig wie ein Wallaby zickzackt zwischen Devo-Core, Garage Rock oder aber immer wieder irgendwo dazwischen bzw. abseits der Genrekonventionen. Ganz selten gibt er sich einen Ruck und spannt seine Friendz für eine Tour ein. Zufälligerweise spielen seine Buddies auf der Europatour ‘25 z.B. auch Saxofon, wir können also gespannt sein, wie die nächste Gestalt des “Shapeshifter of Rock” klingen wird…\n\n\nAls die Jogginghose eines Morgens erwachte, fand sie sich in einem Proberaum zu einer Schrammelband verwandelt. Die Band City Boys besteht nun seit 1915 und schaffte es in dieser Zeit unfassbare 3 Veröffentlichungen auf den “Markt” zu bringen und nun soll schon die 4. folgen…\n",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Alien Nosejob",
+      "link": "https://www.instagram.com/alien_nosejob/",
+      "description": "Alien Nosejob began as the brainchild of Jake Robertson—an Australian musical polymath known for his work with acts like Ausmuteants, Frowning Clouds, Smarts, and School Damage. Originally conceived as a solo project to sidestep the complexities of managing a full band, Alien Nosejob has since evolved into a full-fledged four-piece force, delivering its eclectic sounds from down under to stages across the world.\nWith a prolific discography spanning a dozen releases, Alien Nosejob refuses to be pigeonholed. From the lo-fi bedroom punk and new-wave stylings of Paint It Clear, to the raw, unrelenting hardcore of Once Again The Present Becomes The Past, to the uncannily AC/DC-inspired riffs of Stained Glass, and the cheekily genre-defying Buffet of Love, the project showcases Robertson's uncanny knack for shape-shifting between styles while maintaining a cohesive artistic identity.\nNow on tour as a full band, Alien Nosejob’s live performances bring to life the variety and inventiveness of one of rock’s premier home-recording auteurs. Whether you're drawn in by curiosity about kangaroo-related trivia or the effects of jet lag on Australian musicians, you'll stay for the infectious energy and undeniable hits that have cemented Alien Nosejob as one of the most distinctive voices in modern rock.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/oHg3h6meBmU?si=6ZbpIHShfzRkVl1m\"",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3984847071/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/32a471cedefa775bf986b8202524fb2d.webp"
+    },
+    {
+      "name": "City Boys",
+      "link": "https://city-boys.bandcamp.com/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/hpMjJ-4r-iM?si=M1GacJ450D-1uaZl",
+      "bandcamp": ""
+    }
+  ],
+  "img": "/img/c3061cc8285afa09fbaa5207d062b1a9.webp"
+}
 ]
