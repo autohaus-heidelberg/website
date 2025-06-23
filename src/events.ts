@@ -940,4 +940,36 @@ Flyer: <a href="https://www.instagram.com/joey.controlletti/">@joey.controlletti
   "img": "/img/c3061cc8285afa09fbaa5207d062b1a9.webp",
   shopLink: "https://pretix.eu/carousel/alien-nosejob/"
 }
+,
+  {
+  "id": "coeur-a-lindex-exceeded-capacity",
+  "date": "2025-07-04T20:00",
+  "title": "Cœur à l'Index (Brüssel) und Exceeded Capacity (Autohaus)",
+  "descriptionShort": "Adieu Minette lautet der Titel der im Herbst erschienenen LP von Cœur à l’Index auf La Vida Es Un Mus. Aber halt, wenn auch das Label vermuten lässt, dass es sich hier um eine harte Street- oder Oi! Punk Band handelt, präsentiert die Scheibe acht zuckersüß anmutende Power Pop Nummern (zum Teil mit Gesangsharmonien wie geschlagene Double Crème auf einer luftigen Waffel). Wie der Titel, angelehnt an das Stück des französischen Chansonniers Renaud, lässt auch der Bandname eine deutliche Affinität zum Pop vermuten, schließlich trällerte die Belgierin Muriel Anfang der 80er\n\nWoh-woh-woh, la petite fille si complexe\nWoh-woh-woh, t'a mis son cœur à l'index\n\nmit Italo Pop Synthies unterlegt. Aber nicht alles ist Pop, schließlich sitzt Pogy von Pogy et les Kéfars (erinnert ihr euch an den Auftritt von vor zweieinhalb Jahren in der Leitstelle?) hinter den Trommeln und gibt dem Ganzen Edge.\n\nWir freuen uns außerdem darauf, bei Exceeded Capacity ins Schwitzen zu kommen. Sei es durch die unzähligen Akkordwechsel, der drängenden Delivery der Vocals oder die fulminanten Tempos der Songs. Wir halten Fächer und Riechsalz parat.\n\nFlyer artwork by <a href=\"https://www.instagram.com/joey.controlletti/\" target=\"blank\">Joey Controlletti</a>.",
+  "descriptionLong": "",
+  "fee": "10",
+  "feeAk": "12",
+  "artists": [
+    {
+      "name": "Cœur à l'Index",
+      "link": "https://linktr.ee/coeuralindex",
+      "description": "In January 2023 out of nowhere came a perfectly formed and amazing four track demo from Brussels’ CŒUR À L’INDEX. Now they follow it up with an 8 track album for La Vida Es Un Mus. CŒUR À L’INDEX deal in a sound that will make your knees weak and heart melt from the very first note to the last. Fragile pop songs for people who love C86 as much as they love power pop and punk, but who also have a soft spot for French Chanson from the 60’s onwards. An instant sugar rush with a bubblegum flavour of a band bought up on a diet of GIRLS AT OUR BEST, DOLLY MIXTURE and CHIN CHIN but also ELLI ET JACNO, LOUISE FERRON or RENAUD from who they lifted their album tittle. Part of a new wave of bands like ALVILDA and RIBBON STAGE their debut LP has bounce, it’s upbeat and it’s the perfect calling card.",
+      "soundcloud": "",
+      "youtube": "https://www.youtube.com/embed/PyohO0wNQfY",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1449194627/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+      "image": "/img/d1042dfc874f207a3dafffffea8c11d3.webp"
+    },
+    {
+      "name": "Exceeded Capacity",
+      "link": "https://www.instagram.com/exceeded.capacity/",
+      "description": "",
+      "soundcloud": "",
+      "youtube": "",
+      "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3584448742/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true",
+      "image": "/img/e78d6415efe326266668e5dfa47835ff.webp"
+    }
+  ],
+  "img": "/img/ebff8893e1132cdba5b17eae78d45c87.webp",
+  "shopLink": "https://pretix.eu/carousel/coeur-a-lindex-exceeded-capacity/"
+}
 ]
