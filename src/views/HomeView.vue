@@ -8,12 +8,28 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import CircularLogo from "../components/CircularLogo.vue"
+
+
 const upcoming = computed(() =>
   events
     .map((item) => ({ ...item, date_d: dayjs(item.date) }))
     // Only show dates that are newer than yesterday
     .filter((item) => item.date_d.isAfter(dayjs().subtract(1, "day")))
     .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
+);
+
+const upComingHighlights = computed(() => {
+  // NOTE: we restrict the large events to 3 or the first one without image. Other events are show in the smaller overview
+return upcoming.value.reduce((acc, event) => {
+  if (acc.length < 3 && event.img) {
+    acc.push(event);
+  }
+  return acc;
+}, []);
+})
+
+const upComingSmall = computed(() => 
+  upcoming.value.filter(item => !upComingHighlights.value.some(up => up.id === item.id))
 );
 
 const zoom = ref(17);
@@ -65,8 +81,14 @@ p Wir sind das Carousel im alten Autohaus.
     h1 Termine
     .empty(v-if="upcoming.length === 0")
       p Aktuell gibt es keine anstehenden Events.
-    .event.mb-1(v-else, v-for="event in upcoming", :key="event.id")
+    .event.mb-1(v-else, v-for="event in upComingHighlights", :key="event.id")
       EventPreview(:event="event")
+
+    .events-small
+      template(v-for="ev in upComingSmall" :key="ev.id")
+        .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
+        router-link(:to="{name: 'event', params: { id: encodeURI(ev.id) }}")
+          label {{ev.title}}
 
   .content
     .newsletter
@@ -170,6 +192,29 @@ p Wir sind das Carousel im alten Autohaus.
   height: 3em
 }
 
+.events-small {
+    margin-top: 1rem;
+
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+
+    font-weight: 900;
+    font-size: clamp(1.6rem, 3vw, 4rem);
+
+    align-items: center;
+    grid-gap: 0.5rem;
+    border: 0.5rem solid;
+    background-color: var(--text-color);
+
+}
+
+.events-small > * {
+  padding: 1rem;
+  background-color: var(--background-color);
+  height: 100%;
+  width: 100%;
+}
+
 .newsletter-form {
   display: flex;
   justify-content: center;
@@ -227,7 +272,7 @@ p Wir sind das Carousel im alten Autohaus.
 
 .page-content {
   margin: auto;
-  max-width: 95vw;
+  max-width: min(95vw, 2048px);
 }
 
 

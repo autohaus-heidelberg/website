@@ -69,7 +69,7 @@ position: relative;
  	hyphens: auto; 
     height: 100%;
     width: 100%;
-    font-size:  clamp(2rem, 3.4vw, 4.5rem);
+    font-size:  clamp(2rem, 3.1vw, 4rem);
     font-stretch: 125%;
     font-weight: 900;
 }
