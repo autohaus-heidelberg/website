@@ -36,7 +36,6 @@ const logoHeight = ref(100);
 
 function setLogoHeight() {
   const diameter = Math.min(window.screen.width - 100, 600);
-  console.log(diameter);
   logoHeight.value = diameter;
   logoContainer.value.style.height = `${diameter}px`;
 
@@ -48,16 +47,16 @@ function setLogoHeight() {
 //- h1 Autohaus Heidelberg
 .l-center
   .logo-container(ref="logoContainer")
-    .video
-      video(autoplay loop muted :height="logoHeight")
-        source(src="/header_video.mp4")
+    //- .video
+    //-   video(autoplay loop muted :height="logoHeight")
+    //-     source(src="/header_video.mp4")
     CircularLogo(:diameter="logoHeight" :key="logoHeight")
     //- img.img-animate(:src="imgSrc1", :style="styleImg1") 
     //- img.img-animate(:src="imgSrc2", :style="styleImg2") 
     //- img.img-outline(src="/img/logo_outline.svg")
 p Wir sind das Carousel im alten Autohaus.
   br 
-  | Ein Ort für Musik, Kunst und Kultur für alle.
+  | Ein gemeinnütziger Verein zur Förderung von Livemusik und allem was dazu gehört. 
   br
   //- a(href="#about") Mehr erfahren
 
@@ -72,7 +71,7 @@ p Wir sind das Carousel im alten Autohaus.
   .content
     .newsletter
       h1 Newsletter
-      p Abonniere den Newsletter um updates über anstehende Konzerte und Veranstaltungen zu erhalten. Wir senden dir meistens einen Newsletter im Monat über die anstehenden Veranstaltungen und eine Erinnerung am Tag der Veranstaltung.
+      p Abonniere den Newsletter um updates über anstehende Konzerte und Veranstaltungen zu erhalten. 
       .newsletter-form
         #mc_embed_shell
           //- link(href="//cdn-images.mailchimp.com/embedcode/classic-061523.css", rel="stylesheet", type="text/css")
@@ -117,10 +116,11 @@ p Wir sind das Carousel im alten Autohaus.
     .directions
       h1 Lage
       p Das Carousel im alten Autohaus befindet sich in der
-        |
-        |
+        br
+        br
         a(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Hebelstraße 7
-        |
+        br
+        br
         | am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die 
         a(href="https://maps.app.goo.gl/7k4UvxVHtGvHK1NfA") Rudolf-Diesel-Straße
       a.mb-1(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
@@ -140,13 +140,19 @@ p Wir sind das Carousel im alten Autohaus.
     .past-events
       h1 Vergangene Events
       p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß?
-      router-link(:to="{ name: 'pastEvents' }") Hier findet ihr die vergangengen Events
+      router-link(:to="{ name: 'pastEvents' }") 
+        button Vergangenge Events
 
     #about
       h1 Über uns
-      p Unser Ziel ist es niederschwellige Angebote zu schaffen für die lokale Kunst- und Kulturszene.
-      p Zum einen bieten wir Kunstschaffenden günstige Proberäume und einen Veranstaltungsort
-      p Zum anderen bieten wir Kunstinteressierten günstige Konzerte und Events
+      p Wir sind ein gemeinnütziger Verein, getragen von ehrenamtlicher Arbeit. 
+      p Unser Ziel ist die Förderung von Livemusik in Heidelberg.  
+
+    //- #anfragen
+    //-   h1 Anfragen
+    //-   p Für anfragen verwendet bitte unser Anfragenformular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen. 
+    //-   router-link(:to="{ name: 'requests' }")
+    //-     button Anfragenformular 
 
     #impressum
       h1 Impressum
@@ -160,7 +166,8 @@ p Wir sind das Carousel im alten Autohaus.
 
 <style scoped>
 #mce-EMAIL {
-  width: 280px;
+  width: 100%;
+  height: 3em
 }
 
 .newsletter-form {
@@ -220,7 +227,7 @@ p Wir sind das Carousel im alten Autohaus.
 
 .page-content {
   margin: auto;
-  max-width: 75ch;
+  max-width: 95vw;
 }
 
 
@@ -253,11 +260,11 @@ p Wir sind das Carousel im alten Autohaus.
 }
 
 
-@media screen and (min-width: 150ch) {
+@media screen and (min-width: 800px) {
   .page-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    max-width: 200ch;
+    max-width: 2048;
     grid-gap: 1rem;
     column-gap: 3rem;
     grid-template-areas:

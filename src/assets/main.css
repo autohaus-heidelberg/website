@@ -16,7 +16,6 @@ time, mark, audio, video {
     padding: 0;
     border: 0;
     font-size: 100%;
-    font: inherit;
     vertical-align: baseline;
 }
 
@@ -28,14 +27,27 @@ time, mark, audio, video {
 :root {
     --desktop-font-size: 1.2rem/1.55;
     --mobile-font-size: 1rem/1.45;
-}
+    }
     /* --text-color: #2d2d2d;
     --link-color: blue;
     --link-color-alt: darkblue;
     --primary-color: lightsteelblue;
     --secondary-color: aliceblue;
     --tertiary-color: whitesmoke;
-} */
+
+
+/* Fonts */
+
+@font-face {
+    font-family: "Geologica";
+    font-weight: 400;
+    font-style: normal;
+    src: url('/fonts/geologica/Geologica-VariableFont_CRSV,SHRP,slnt,wght.ttf') ;
+    font-weight: 125 950;
+    font-stretch: 75% 125%;
+  }
+
+
 
 /* Typography */
 body {
@@ -43,10 +55,11 @@ body {
     margin: 0 auto;
     padding: 0 0.5rem;
     text-align: center;
+    font-family: "Geologica";
+    /* font-size: 1.5vw; */
+    font-size:  clamp(1rem, 1.5vw, 2rem);
+    font-weight: 600;
     padding-bottom: 5rem;
-}
-body, input {
-    font: var(--desktop-font-size) -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto, Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 h1,h2,h3,h4,h5,h6,p,blockquote,dl,img,figure {
@@ -75,13 +88,11 @@ blockquote, q {
     background: var(--secondary-color);
     border-left: 10px solid var(--primary-color);
     display: block;
-    font-family: "Georgia", serif;
     padding: 1rem;
 }
 blockquote p:first-child { margin-top: 0; }
 blockquote p:last-child { margin-bottom: 0; }
 cite {
-    font-family: "Georgia", serif;
     font-style: italic;
     font-weight: bold;
     margin-top: 1rem;
@@ -179,14 +190,14 @@ sup { font-size: 80%; vertical-align: top; }
         background-color: var(--primary-color-light);
     }
     :root {
-        --text-color: #fff;
-        --link-color: #e0c351;
-        --link-color-alt: #e0c351;
-        --primary-color: #e0c351;
+        --text-color: black;
+        --link-color: black;
+        --link-color-alt: black;
+        --primary-color: black;
         --primary-color-light: dimvar(--link-color);
-        --secondary-color: black;
-        --tertiary-color: #2d2d2d;
-        --background-color: #191919;
+        --secondary-color: white;
+        --tertiary-color: white;
+        --background-color: white;
     }
 /* } */
 
@@ -197,7 +208,7 @@ p {
 /* Button */
 
 button {
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     letter-spacing: 0.4em;
     font-size: 1em;
     position: relative;
@@ -206,13 +217,13 @@ button {
     min-width: 280px;
     text-align: center;
     color: var(--background-color);
-    padding: 1em 1em;
+    padding: 0.7em 0.7em;
     background-color: var(--link-color);
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
-    border: 4px var(--background-color);
-    outline: 3px solid var(--background-color);
+    border: none;
+    outline: none;
     outline-offset: -5px;
     cursor: pointer;
 }
@@ -239,30 +250,14 @@ ul li {
     margin-bottom: 0;
 }
 
-/* Fonts */
-
-@font-face {
-    font-family: "Limelight";
-    font-weight: 400;
-    font-style: normal;
-    src: url('/fonts/Limelight-Regular.ttf') ;
-  }
-
-
-  @font-face {
-    font-family: "Federo";
-    font-weight: 400;
-    font-style: normal;
-    src: url('/fonts/Federo-Regular.ttf') ;
-  }
 
 h1 {
-    font-family: "Limelight";
+    font-family: "Geologica";
     font-weight: 400;
 }
 
 h2 {
-    font-family: "Federo";
+    font-family: "Geologica";
 }
 
 
@@ -273,7 +268,16 @@ h2 {
   margin-bottom: 1rem
 }
 
+.mr-1 {
+    margin-right: 1rem;
+}
+
 .accent {
  color: var(--link-color)
 
+}
+
+.flex-row {
+    display: flex;
+    flex-direction: row;
 }

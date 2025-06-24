@@ -51,7 +51,7 @@ function createCircleLogo() {
 
 .circular-logo > * {
   position: absolute;
-
+  font-weight: 900;
 }
 
 #logo {

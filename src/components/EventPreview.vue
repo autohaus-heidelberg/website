@@ -3,68 +3,113 @@
 <template lang="pug">
 router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
-        h2.date(v-if="showDatediff") {{ dateDiff }}
-        h2.date {{ date }} 
-        h2.time {{ time }} Uhr
-        h2.title {{ event.title }}
-        img.event-img(v-if="event.img" :src="event.img")
-        button Mehr Infos
-        .mb-1
-        .mb-1
+        .title(v-resize-text) {{ event.title }}
+        .date()
+            .date(v-resize-text="{ratio: 2}")  
+                span {{ date.format("dddd")  }} 
+                span {{ date.format('DD') }}.
+                span {{ date.format('MMMM') }} 
+                span {{ date.format('YYYY') }} 
+                span {{ time }}
+        .date-diff(ref="dateContainer")
+            .side-date-content(ref="dateContent") 
+                div(v-resize-text={ratio: 2}) {{ dateDiff }} 
+        .event-img
+            img.img(v-if="event.img" :src="event.img")
+        //- button Mehr
 </template>
 
 <style scoped>
 
 h2 {
-    margin: 1rem;
+    margin: 0;
 }
 
+.date-diff {
+    /* transform: rotate(90deg); */
+    grid-area: date-diff;
+   font-weight: 900;
+    font-size: clamp(2.5rem, 3.5vw, 4rem);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.side-date-content {
+/* transform: rotate(90deg); */
+position: relative;
+  writing-mode: vertical-rl;
+}
+
+
 .date {
-    font-family: "Federo";
+    grid-area: date;
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    font-weight: 900;
+    font-size: clamp(1.6rem, 3vw, 4rem)
 }
 
 .time {
-    font-family: "Federo";
-
+    font-family: "Geologica";
+    grid-area: time;
+ 
 }
 
-.title {
-    font-family: "Limelight";
 
+.title {
+    font-family: "Geologica";
+    grid-area: title;
+    /* text-align: justify; */
+ 	hyphens: auto; 
+    height: 100%;
+    width: 100%;
+    font-size:  clamp(2rem, 3.4vw, 4.5rem);
+    font-stretch: 125%;
+    font-weight: 900;
 }
 
 .event-preview {
-    display: flex;
+    display: grid;
     flex-direction: column;
     align-items: center;
+    grid-gap: 0.5rem;
+       border: 0.5rem solid;
+    background-color: var(--text-color);
+    grid-template-columns: 2fr 1fr;
+   grid-template-areas: "title date"
+   "img date-diff"; 
+   margin-left: 1rem;
+   margin-right: 1rem;
+   transform: rotate(1deg);
+}
+
+.event-preview > div {
+    background-color: white;
 }
 
 .event-img {
-    max-width: min(500px, 90vw);
-    max-height: min(500px, 90vw);
+    grid-area: img;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
-.border {
-    /* border: 3px dashed; */
-    /* border-radius: 2rem; */
-    padding: 0.5rem;
+.img {
+        max-height: min(900px, 90vw);
 
-background-image: linear-gradient(90deg, silver 50%, transparent 50%), linear-gradient(90deg, silver 50%, transparent 50%), linear-gradient(0deg, silver 50%, transparent 50%), linear-gradient(0deg, silver 50%, transparent 50%);
-background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
-background-size: 15px 3px, 15px 3px, 3px 15px, 3px 15px;
-background-position: left top, right bottom, left bottom, right top;
-animation: border-dance 1s infinite linear;
+
 }
 
-@keyframes border-dance {
-0% {
-    background-position: left top, right bottom, left bottom, right top;
-}
 
-100% {
-    background-position: left 15px top, right 15px bottom, left bottom 15px, right top 15px;
-}
-}
+
+
 </style>
 
 <script lang="ts" setup>
@@ -78,7 +123,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import 'dayjs/locale/de';
 import dayjs from "dayjs";
-import { computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { eventHash } from "../utils";
 const props = defineProps<{event: Event}>();
 
@@ -92,7 +137,7 @@ dayjs.extend(updateLocale)
 const localeList = dayjs.Ls;
 dayjs.updateLocale('de', {
   calendar: {
-    sameDay: '[Heute um] LT',
+    sameDay: '[Heute] HH:mm',
     nextDay: '[Morgen!]'
   }
 })
@@ -107,7 +152,7 @@ dayjs.locale('de')
 
 const date = computed(() => {
     const date = dayjs(props.event.date).locale('de');
-    return date.format("dddd - DD/MM/YYYY"); 
+    return date
 })
 
 const time = computed(() => {
@@ -115,6 +160,7 @@ const time = computed(() => {
 })
 
 const showDatediff = computed(() => {
+    return true;
     return dayjs(props.event.date).diff(dayjs(), "day") < 7;
 })
 
