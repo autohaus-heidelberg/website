@@ -84,11 +84,13 @@ p Wir sind das Carousel im alten Autohaus.
     .event.mb-1(v-else, v-for="event in upComingHighlights", :key="event.id")
       EventPreview(:event="event")
 
-    .events-small
-      template(v-for="ev in upComingSmall" :key="ev.id")
-        .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
-        router-link(:to="{name: 'event', params: { id: encodeURI(ev.id) }}")
-          label {{ev.title}}
+    template(v-if="upComingSmall.length > 0")
+      h1 Noch mehr
+      .events-small-container()
+        .events-small(v-for="ev in upComingSmall" :key="ev.id")
+          .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
+          router-link(:to="{name: 'event', params: { id: encodeURI(ev.id) }}")
+            label {{ev.title}}
 
   .content
     .newsletter
@@ -192,8 +194,9 @@ p Wir sind das Carousel im alten Autohaus.
   height: 3em
 }
 
+
+
 .events-small {
-    margin-top: 1rem;
 
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -204,7 +207,11 @@ p Wir sind das Carousel im alten Autohaus.
     align-items: center;
     grid-gap: 0.5rem;
     border: 0.5rem solid;
+  margin-top: -0.5rem;
     background-color: var(--text-color);
+
+
+  transform: rotate(1deg);
 
 }
 

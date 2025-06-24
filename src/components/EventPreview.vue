@@ -6,8 +6,8 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
         .title(v-resize-text) {{ event.title }}
         .date()
             .date(v-resize-text="{ratio: 2}")  
-                span {{ date.format("dddd")  }} 
-                span {{ date.format('DD') }}.
+                span {{ date.format("dd")  }}. 
+                span {{ date.format('DD') }}
                 span {{ date.format('MMMM') }} 
                 span {{ date.format('YYYY') }} 
                 span {{ time }}
@@ -39,6 +39,8 @@ h2 {
 .side-date-content {
 /* transform: rotate(90deg); */
 position: relative;
+margin-top: 1rem;
+margin-bottom: 1rem;
   writing-mode: vertical-rl;
 }
 
@@ -65,6 +67,7 @@ position: relative;
 .title {
     font-family: "Geologica";
     grid-area: title;
+    word-break: break-word;
     /* text-align: justify; */
  	hyphens: auto; 
     height: 100%;
