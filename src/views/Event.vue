@@ -48,7 +48,7 @@ dayjs.locale('de')
 
 const date = computed(() => {
     const date = dayjs(event.value?.date).locale('de');
-    return date.format("dddd - DD/MM/YYYY - HH")
+    return date.format("dddd - DD/MM/YYYY - HH:mm")
   
     }
     )
