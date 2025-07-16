@@ -46,8 +46,8 @@
                 "link": "https://www.instagram.com/kueken_band/",
                 "description": "K\u00dcKEN \u2013 Die Neue Punkrockhoffnung aus Hamburg !!!\r\nTreibender schneller 77er / KBD-Punkrock, der ordentlich in den Arsch kickt. Eing\u00e4ngige, leicht angepisste Vocals. Dreckige, knarzende, bis zum Anschlag aufgedrehte Gitarren. Und fast jeder Song von ihrer auf Bachelor Records erschienen, selbstbetitelten LP, kann ohne weiteres als ein Hit durchgehen. - Trust-Zine",
                 "soundcloud": "",
-                "youtube": "<iframe width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/eX0dWWlN6Os?si=7LgoaLIiZqONzTqk\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
-                "bandcamp": "<iframe style=\"border: 0; width: 100%; height: 120px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=2579645783/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/\" seamless><a href=\"https://kueken.bandcamp.com/album/s-t-iii\">s/t (III) by K\u00dcKEN</a></iframe>",
+                "youtube": "https://www.youtube.com/embed/eX0dWWlN6Os?si=7LgoaLIiZqONzTqk",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2579645783/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
                 "image": ""
             },
             {
@@ -55,8 +55,8 @@
                 "link": "https://solderintoface.com/",
                 "description": "two-piece with sometimes three, sometimes four, sometimes seven members",
                 "soundcloud": "",
-                "youtube": "<iframe width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/uhTPM4ENmY8?si=cDHNymvM_EHMtl4y\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe>",
-                "bandcamp": "<iframe style=\"border: 0; width: 100%; height: 120px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=1103978408/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/\" seamless><a href=\"https://solder.bandcamp.com/album/trying-world-2\">TRYING WORLD by SOLDER</a></iframe>",
+                "youtube": "https://www.youtube.com/embed/uhTPM4ENmY8?si=cDHNymvM_EHMtl4y",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1103978408/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
                 "image": ""
             },
             {
@@ -66,7 +66,7 @@
                 "soundcloud": "",
                 "youtube": "",
                 "bandcamp": "",
-                "image": ""
+                "image": "/img/58b2dea7-84d8-4023-9ea5-2f6b590f5d29.jpeg"
             }
         ]
     },
