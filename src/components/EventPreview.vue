@@ -8,7 +8,7 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
             .date(v-resize-text="{ratio: 2}")  
                 span {{ date.format("dd")  }}. 
                 span {{ date.format('DD') }}
-                span {{ date.format('MMMM') }} 
+                span {{ date.format('MMM') }} 
                 span {{ date.format('YYYY') }} 
                 span {{ time }}
         .date-diff(ref="dateContainer")
@@ -65,6 +65,9 @@ margin-bottom: 1rem;
 
 
 .title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-family: "Geologica";
     grid-area: title;
     word-break: break-word;
