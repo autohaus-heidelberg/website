@@ -31,6 +31,37 @@
         ]
     },
     {
+        "id": "rowdy-gba",
+        "date": "2025-08-27T17:00:00+00:00",
+        "title": "Rowdy (US) & Game Boy Advance (LPZG)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Anders als bei Roddy Piper kommt bei der Band Rowdy wenigstens eine Person aus Schottland, aber die Signature Moves hitten auch hier hart! Glasgow meets Texas, Goldie Dawn meets Hex Dispensers und Golden Boys. Das auf Drunken Sailor erschienene Debut Album der Band um Rebecca Whitley nimmt schlechte Laune in den Sleeper Hold, also kann es am 27. August im Carousel nur hei\u00dfen: get in the ring!\r\n\r\nAls very special guest begr\u00fc\u00dfen wir Game Boy Advance aus Leipzig! Sehr jung, experimentell, psychedelic lo-fi Post-Punk, \u2026 wir k\u00f6nnen uns selbst nicht sicher sein, was uns erwartet.\r\n\r\nAlso kommt zum Bergfest ins Carousel, alles andere sind Showk\u00e4mpfe!",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/rowdy-gba/",
+        "img": "",
+        "artists": [
+            {
+                "name": "Rowdy",
+                "link": "https://rowdyraw.bandcamp.com/",
+                "description": "\u201cIf you like your punk welded together with\r\niron clad rock and roll impulse and low\r\nbrow swagger then get rowdy on\r\nimmediately\" (Jonah Falco)",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2739337330/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/cb1a3996-8066-4cc4-921f-c8979543b1e2.jpeg"
+            },
+            {
+                "name": "Game Boy Advance",
+                "link": "https://gameboyadvance.bandcamp.com/",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=3007557571/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/fc2909b5-1705-4c68-abc5-080fee451f6e.jpeg"
+            }
+        ]
+    },
+    {
         "id": "kueken-solder",
         "date": "2025-07-25T18:00:00+00:00",
         "title": "K\u00fcken (Hamburg) & Solder (AUS) & The Junktones (Eppelheim)",
