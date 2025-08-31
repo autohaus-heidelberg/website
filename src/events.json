@@ -1,5 +1,36 @@
 [
     {
+        "id": "blitzer-lovebomb",
+        "date": "2025-09-21T17:00:00+00:00",
+        "title": "Blitzer (Leipsick) & Lovebomb (Hildesheim)",
+        "fee": "",
+        "feeAk": "",
+        "descriptionShort": "Not just aNoThEr, but the number one garage noise-creature crawling out of Leipsick(!)\u2019s fertile swamps: Blitzer. Imagine a sunset beach where you want to crack a beer and chill, now mix that with swamp gas, mud bubbles, and stinky riffs \u2014 that\u2019s their home turf.\r\n\r\nCome Sunday 21.09 to Carousel, surf the \"dumb wave\", get deliciously lost in wobbling vocals, catchy riffs (yes, guitar and bass!!), and hold on tight for drumming that\u2019s both fast and suspiciously intelligent.\r\n\r\nSomewhere between swamp, river, and jungle lurks a crocodile named Lovebomb. When the armor starts rattling, the sound hits you dizzy \u2014 legs shaking, head spinning, grinning like you fell into the muck on purpose.\r\n\r\nStart 7 PM\r\nMusic 8 PM\r\n\r\nEntry 8-15 \u20ac\r\n\r\n----------------------\r\nDiscrimatory behaviour not tolerated, assholes stay home!",
+        "descriptionLong": "",
+        "shopLink": "",
+        "img": "/img/1cdc1855-4337-48ed-82aa-e74a91fbdf03.jpeg",
+        "artists": [
+            {
+                "name": "Blitzer",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3347704244/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Lovebomb",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=859912016/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "loneaires-borninmay",
         "date": "2025-09-20T17:30:00+00:00",
         "title": "Lone Aires EP Release Show (Dreampop/ Shoegaze) + Borninmay (Postpunk/ Bedroom-Pop)",
