@@ -1,5 +1,45 @@
 [
     {
+        "id": "narkose-ambulanz-luckyloose",
+        "date": "2025-09-27T18:00:00+00:00",
+        "title": "Narkose (Deutschpunk, Ruhrgebiet), Ambulanz (Synth Punk, Leipzig) und Lucky Loose (Garage Surf aus Dresden)",
+        "fee": "12",
+        "feeAk": "15",
+        "descriptionShort": "Mehr Infos folgen..",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/narkose-ambulanz-luckyloose/",
+        "img": "/img/74a0b69a-0f91-4d2e-985b-5b7d90fb204e.jpeg",
+        "artists": [
+            {
+                "name": "Narkose",
+                "link": "",
+                "description": "Narkose steht seit 2023 f\u00fcr aggressiven, d\u00fcsteren und kritischen Deutschpunk aus NRW. Eine Band aus dem Ruhrgebiet, gegr\u00fcndet von vier Atzen, die Einfl\u00fcsse aus Hardcore, Post-Punk und Deutschpunk kombiniert. Narkose \u00fcberzeugt mit intensiven, mitrei\u00dfenden Live-Shows, schnellem, einpr\u00e4gsamem Sound und harten, teils \u00fcberspitzten Texten. Das Debut-Album \u201e\u00dcberleben-Koexistenz\u201c erschien im Herbst 2024 auf Bretford Records. Auf dem Album befinden sich 13 rohe und st\u00fcrmische Tracks mit einer Gesamtspielzeit von 27 Minuten. Rasende Instrumentals sowie Texte zwischen Frustration und Wahnsinn definieren den Stil dieses Tontr\u00e4gers. Bei dem Album handelt es sich um eine DIY-Produktion, erm\u00f6glicht durch intensive Mithilfe verschiedener Gestalten aus NRW\u00b4s Hardcore und Punkszene.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/w0C-IKALmCA",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2256029838/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/037a1109-cd47-4560-a286-abe9807f671e.jpeg"
+            },
+            {
+                "name": "Ambulanz",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=65713326/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Lucky Loose",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2238051576/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "mm-2025-09-15",
         "date": "2025-09-25T19:00:00+00:00",
         "title": "Kino: Midnight Madness",
