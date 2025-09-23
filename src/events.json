@@ -1,5 +1,36 @@
 [
     {
+        "id": "fungas-zyph",
+        "date": "2025-10-07T17:00:00+00:00",
+        "title": "Fungas (Psych-Garage aus Australien) und Zyph (Punk aus Mannheim)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Und wieder geht\u2019s nach Down Under, diesmal mit Fungas! Und das klingt tats\u00e4chlich wie eine Mischung aus psylocibingeschw\u00e4ngertem Psych mit einer Prise postironischem Distickstoffmonoxid, dazu noch etwas Synth und fertig ist das Spa\u00dfgas! \r\nErschienen ist das neue Album \u201eIntelligence 1\u201c auf dem Mannheimer Label Erste Theke Tontr\u00e4ger und damit schlie\u00dft sich der Kreis, denn dazu gibt\u2019s Mannheim\u2019s finest Punk Sensation: ZYPH, die mit LoFi-Speed das Carousel zum Tempodrom machen! \r\nTrotz Herbst wird euch mal wieder eingeheizt, als ob der Hochsommer niemals enden w\u00fcrde!",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/fungas-zyph/",
+        "img": "/img/f00ce613-e461-43d9-aec7-e3943cc83b17.png",
+        "artists": [
+            {
+                "name": "Fungas",
+                "link": "https://fungas.bandcamp.com/",
+                "description": "\u2018Fungas' craft infuses deep elements of psych, punk, and garage, consistently diversifying their tone to all those that choose to engage in their psychedelic sound-bath. Fungas's energetic live shows continue to encapsulate their new art madness with constant rhythmic changes stylised with experimental sounds of mellotron, trip percussion and lots of delay.\u2019",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/GGuwx_ejRew?si=dv1hPFqNjqeoSyII",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=353275410/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/e04100e6-65c9-45eb-b264-b9caff6c1bae.jpeg"
+            },
+            {
+                "name": "Zyph",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "narkose-ambulanz-luckyloose",
         "date": "2025-09-27T18:00:00+00:00",
         "title": "Narkose (Deutschpunk, Ruhrgebiet), Ambulanz (Synth Punk, Leipzig) und Lucky Loose (Garage Surf aus Dresden)",
