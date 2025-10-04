@@ -1,36 +1,5 @@
 [
     {
-        "id": "JayGlizzer",
-        "date": "2025-10-17T18:00:00+00:00",
-        "title": "Jeremy Jay (Indie Pop aus London) & Glizzer (Synth Pop aus Mannheim)",
-        "fee": "12",
-        "feeAk": "15",
-        "descriptionShort": "Direkt aus seiner Wahlheimat London meldet sich Jeremy Jay zur Visite im Carousel und liefert dabei den melancholischen Sound zum herbstlichen Roadtrip. Zu internationalem Erfolg kam er in den sp\u00e4ten Aughts durch mehrere anerkannte Ver\u00f6ffentlichungen bei Calvin Johnsons Label K Records. Assoziativ findet der Roadtrip allerdings in einer v\u00f6llig anderen Karre als der von Beat Happening statt. Ein Toyota Celica oder Honda Prelude, City Pop im Radio ohne aber die elektrische Gitarre mit R\u00f6hrenamp zu vergessen und los geht die Reise. Quer durch Indie Pop, Rock, Synth Pop und immer sch\u00f6n durch die Bandmaschine geschliffen.\r\nBeim Mannheimer Synth Pop Duo Glizzer werden die Fenster ebenso runtergefahren und in den Sonnenuntergang bei sommerlichen Temperaturen gecruised.",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/JayGlizzer/",
-        "img": "/img/f99266e6-0545-429a-90da-be879e041246.png",
-        "artists": [
-            {
-                "name": "Jeremy Jay",
-                "link": "https://gothraxx.bandcamp.com/music",
-                "description": "Indie Pop mit leichter Retro-Note, aus dem K Records Umfeld",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/U2FSgCHAi9A?si=G9pI390ocKzQFoSY",
-                "bandcamp": "",
-                "image": "/img/da9aacc8-d779-4075-9b9a-7afd3375e986.jpeg"
-            },
-            {
-                "name": "Glizzer",
-                "link": "https://glizzer.bandcamp.com/track/cocktails",
-                "description": "Synthpop aus Mannheim",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/4pf1mKnArBs?si=ZNIP8H-mpeqixgoY",
-                "bandcamp": "",
-                "image": "/img/12e35e39-96b5-4f1e-b52e-efad098fc335.jpeg"
-            }
-        ]
-    },
-    {
         "id": "jeremyjay-glizzer",
         "date": "2025-10-17T18:00:00+00:00",
         "title": "Jeremy Jay (Indie Pop aus London) & Glizzer (Synth Pop aus Mannheim)",
