@@ -1,5 +1,45 @@
 [
     {
+        "id": "nevver-atticstories-apartfromus",
+        "date": "2025-11-14T18:00:00+00:00",
+        "title": "Nevver (Heidelberg) + Attic Stories (Karlsruhe) + Apart From Us (Frankfurt)",
+        "fee": "12",
+        "feeAk": "15",
+        "descriptionShort": "Green Day, Blink-182, Billy Talent - wer sehnt sich nicht nach der pre Internet-Apokalypsen-Zeit gef\u00fcllt von Skater*innen in gestreiften Shirts? Auch wenn die meisten von uns nie auf der High School waren und auch nie eine ganz so filmreife Tennie Love Story durchgemacht haben, sitz das Netzstrumpf-Ich mit Schachbrettmuster Vans tief in uns. \r\nDiese drei Bands holen uns zur\u00fcck in die Bilderbuch 2000er und stehen doch mit ihrer Musik mitten im Jetzt: Apart From Us aus Frankfurt, Attic Stories aus Karlsruhe und die frisch (neu-)gegr\u00fcndeten Nevver liefern genau diesen gef\u00fchlsintensiven und energievollen Sound und machen live unfassbar viel Spa\u00df.\r\nDreifach Pop Punk im Carousel, don't miss!",
+        "descriptionLong": "",
+        "shopLink": "",
+        "img": "/img/5d2d1835-3602-4e1e-990d-3b643ada4ee8.png",
+        "artists": [
+            {
+                "name": "Nevver",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/HRz_wlKlgWI?si=xIxoq_iUeSeDhTtj",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Attic Stories",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/cuZKiqI3IG4?si=Eb_KeWO9J8LcAST1\" title",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Apart From Us",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/NAwENP6XDIs?si=F3OXJmw430zWdpKP",
+                "bandcamp": "",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "jeremyjay-glizzer",
         "date": "2025-10-17T18:00:00+00:00",
         "title": "Jeremy Jay (Indie Pop aus London) & Glizzer (Synth Pop aus Mannheim)",
