@@ -1,5 +1,45 @@
 [
     {
+        "id": "pathwalker-lifespark-oneverypage",
+        "date": "2025-12-05T19:00:00+00:00",
+        "title": "Last Breath of the Year - Pathwalker / Lifespark. / On Every Page",
+        "fee": "12",
+        "feeAk": "15",
+        "descriptionShort": "Pathwalker - Lifespark - On Every Page",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/pathwalker-lifespark-oneverypage/",
+        "img": "/img/75daef85-8343-4b2f-a413-5288c7301b59.png",
+        "artists": [
+            {
+                "name": "Pathwalker",
+                "link": "https://www.instagram.com/pathwalkerband",
+                "description": "Pathwalker aus Mannheim/Heidelberg verbinden wuchtigen Metalcore mit klarer Haltung. Ihre Songs sind ein Aufschrei gegen Hass, Ungleichheit und Gleichg\u00fcltigkeit, und gleichzeitig ein Bekenntnis zu Hoffnung, Gemeinschaft und Verantwortung. Mit ihrem Deb\u00fctalbum A Safe Place To Life (2023) setzt die Band ein starkes Zeichen: Wir sind nicht allein! Live \u00fcberzeugt das Quartett mit mitrei\u00dfender Leidenschaft und macht sich seit 2020 mit energiegeladenen Auftritten in Clubs und auf Festivals deutschlandweit\u00a0einen\u00a0Namen.",
+                "soundcloud": "https://soundcloud.com/user-565195029",
+                "youtube": "https://www.youtube.com/embed/2NY55lM67P8?si=_ypZRJyGn7i6_IX4",
+                "bandcamp": "https://www.pathwalker-band.com",
+                "image": "/img/fdef66a4-2640-4ba2-836a-00a9574d3f0c.png"
+            },
+            {
+                "name": "Lifespark",
+                "link": "https://www.instagram.com/lifespark.band",
+                "description": "Lifespark - in two words: Beautiful Anger, since 2018.\r\nEmo Pop Rock from Koblenz, that sets a counterpoint to worry and hopelessness with positive and life-affirming lyrics. The four guys radiate a joy of music, that you simply can't resist, not on record and especially not live. Always present: catchy hooks that make it impossible not to sing along and brutal breakdowns that make the mosh pit open up all by itself.\r\nTheir electrifying live shows are a testament to their commitment to creating an unforgettable experience for their fans. Lifespark believes that the most important thing at any show is to leave the audience with a smile on their face.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/FaL0IOryAmk?si=uxfl3ngp8gk4kLuh",
+                "bandcamp": "",
+                "image": "/img/54b3e7de-5c22-4b96-8c6e-76f62e052859.jpeg"
+            },
+            {
+                "name": "On Every Page",
+                "link": "https://www.instagram.com/on_every_page",
+                "description": "Melodic Metalcore from Giessen, Germany\r\n\r\nON EVERY PAGE geben einer Generation eine Stimme, die zwischen Krisen, Kontrollverlust und kollektiver Ersch\u00f6pfung aufgewachsen ist. Der Soundtrack dazu: ein intensiver Mix aus melodischem Metalcore, soul-lastigem Clean-Gesang und wuchtigen Gutturals \u2013 irgendwo zwischen August Burns Red, Annisokay und einem Hauch Bullet for My Valentine, aber mit ganz eigenem Tonfall.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/R02-COJ5ZyA?si=m5B_CgEsx6uh6ukf",
+                "bandcamp": "",
+                "image": "/img/28e1594d-2750-4f5d-b4ad-37027d64ebca.png"
+            }
+        ]
+    },
+    {
         "id": "nevver-atticstories-apartfromus",
         "date": "2025-11-14T18:00:00+00:00",
         "title": "Nevver (Heidelberg) + Attic Stories (Karlsruhe) + Apart From Us (Frankfurt)",
