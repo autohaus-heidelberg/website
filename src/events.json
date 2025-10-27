@@ -1,5 +1,36 @@
 [
     {
+        "id": "dana-mondaze",
+        "date": "2025-12-11T18:00:00+00:00",
+        "title": "Dana (Psych Punk, Ohio) & Mondaze (Heavy Shoegaze, Italien)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Ist nat\u00fcrlich ein Bluff:\r\n\r\nBevor der Weihnachtsmann wieder die Wirtschaft ankurbelt, wird im Autohaus noch mal richtig gezockt. Wo einst Gebrauchtwagenpreise verhandelt wurden, ist heute Showdown.\r\n\r\nLinks: DANA aus Ohio. Theremin, Saxophon, ein Blick, der sagt: Wir haben nichts zu verlieren.\r\nRechts: MONDAZE aus Italien. Ruhig, konzentriert, Nebel im Haar, Delay im Herzen.\r\n\r\nDANA als Erste: Clean Living. Ein wilder Bluff aus Noise und Hoffnung, Avant-Garage irgendwo zwischen Dada und Rock\u2019n\u2019Roll.\r\nMONDAZE sehen\u2019s und erh\u00f6hen mit Driving Out the Weeds. Langsamer Beat, schwere Gitarre, Melancholie als W\u00e4hrung.\r\nDANA kontert mit einem Schrei, MONDAZE antworten mit einem Hall.\r\n\r\nDie Eins\u00e4tze steigen: Theremin gegen Gitarre. Saxophon gegen Feedback. Schwei\u00df gegen Stille.\r\nDann legt einer alles hin: den letzten Ton, den letzten Blick, das letzte bisschen Novemberlicht.\r\n\r\nDas hier wird kein T\u00dcV-Termin. Das ist das letzte Spiel vor dem Winter.\r\n\r\nEinlass 19 Uhr \u00b7 Beginn 20 Uhr\r\n\r\nFlyer art <a href=\"https://www.instagram.com/joey.controlletti/\" target=\"blank\">Joey Controlletti</a>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/dana-mondaze/",
+        "img": "/img/d9a5e406-8380-4cca-8b04-bc140c3d1cfb.jpeg",
+        "artists": [
+            {
+                "name": "Dana",
+                "link": "https://www.danabandohio.com/",
+                "description": "While self-described by the Pere Ubu-coined term \"avant-garage\", it's hard to put a finger on DANA. The controlled chaos of the enduring project, formed by singer/theremin player Madeline Jackson in 2015, oscillates between genres. Offering a marriage of populist rock impulses with Dadaist proclivities, DANA contains multitudes (and curiously no one named Dana). With a live show that's full of mystique and menace, both equal parts seductive and unhinged; DANA lives to push the envelope of sonic manipulation and offer an experience not soon forgotten.\r\n\r\nFollowing the release of late 2019's Glowing Auras and Black Money and its subsequent shelving of Spring 2020 touring plans, the band took their show on the road again just as soon as they could. Having spent the last four years extensviley touring North America, DANA is once again ready to commit their particular brand of weirdo rock n' roll to vinyl with the release of Clean Living; their self-produced and self-released third studio album this June.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/psVCF7FfExc?si=0yi-AOiNgQ8xhuXs",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=4136986374/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/13fc8db5-ff87-4a28-b63a-2a316ceeeb97.jpeg"
+            },
+            {
+                "name": "Mondaze",
+                "link": "",
+                "description": "Formed in Faenza in 2016, Mondaze debuted with the demo Healing Dreams in 2018. In 2021, they released Late Bloom, an immersive album blending fuzz-heavy shoegaze, grunge immediacy, downtempo melancholy, and a raw hardcore edge. In 2024, they return with Linger, exploring alienation through a more mature sound, balancing ethereal melodies and intense walls of noise.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/TtQEFt3HLdQ?si=8atXMaKUqOnQs7fd",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3831730536/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/fbfb618b-b4b4-40c9-be35-6cb3c17ef49d.jpeg"
+            }
+        ]
+    },
+    {
         "id": "pathwalker-lifespark-oneverypage",
         "date": "2025-12-05T19:00:00+00:00",
         "title": "Last Breath of the Year - Pathwalker / Lifespark. / On Every Page",
@@ -35,7 +66,7 @@
                 "soundcloud": "",
                 "youtube": "https://www.youtube.com/embed/R02-COJ5ZyA?si=m5B_CgEsx6uh6ukf",
                 "bandcamp": "",
-                "image": "/img/e3e09fd7-456e-4871-8425-5e7c26ffe2e1.jpeg"
+                "image": "/img/4dd2c3e9-dcbf-48ae-bc43-7bef5434ba38.jpeg"
             }
         ]
     },
