@@ -52,6 +52,37 @@
         "artists": []
     },
     {
+        "id": "bluezero-watchingbuildingsgrow",
+        "date": "2025-11-27T18:00:00+00:00",
+        "title": "Blue Zero (Bay Area Post-Punk) und Watching Buildings Grow (Dream Pop aus Karlsruhe)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Ende November hauen wir noch einen raus, denn Blue Zero aus Oakland kommen ins Carousel! Es handelt sich dabei allerdings weder um ein zuckerfreies Erfrischungsgetr\u00e4nk noch um eine emissionsfreie Automobilstudie (da w\u00e4ren wir wieder beim Thema) von Mercedes-Benz. Das Quartett um Chris Natividad (Marbled Eye) und Lauren Melton (u.a. Sucker) pr\u00e4sentieren 2024 auf ihrem Debut \u201ccolor shade blue\u201d an Shoegaze grenzenden Post-Punk mit zero Schn\u00f6rkel, aber der genau richtig dosierten Menge an Reverb und Delay sowie Noise und Gesangsharmonien. \r\n\r\nBevor uns die Wall Of Sound aus Oakland frontal erwischt, geht\u2019s noch etwas vertr\u00e4umter mit Watching Buildings Grow aus Karlsruhe zu. Dream Pop mit vielen m\u00e4andernden Gitarrenparts und Pop Hooks und das alles in der m\u00f6glichst unaufgeregten Art und Weise.\r\n\r\nAuf keinen Fall verpassen!",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/bluezero-watchingbuildingsgrow/",
+        "img": "/img/fc222404-3be7-4181-a82d-c5d9c0f3998a.png",
+        "artists": [
+            {
+                "name": "Blue Zero",
+                "link": "https://www.instagram.com/blue__zero/",
+                "description": "The Bay Area has long been a fertile landscape for arty DIY rock innovators to fashion together some of the best music to come out of the US- the local musicians pushing the boundaries of pop and counterculture aesthetics. In the middle of this creative oasis you\u2019ll find multi-instrumentalist songwriter Chris Natividad making iridescent waves with his many projects including Marbled Eye, Public Interest, Aluminum, and now- Blue Zero. What started as a few outlier demos cultivated in Chris\u2019 studio has now fully bloomed into a live band featuring members Lauren Melton of SUCKER and Rick Altieri of Blue Ocean, and a forthcoming LP titled Colder Shade Blue. The songs on the record harmoniously tow the line of warm and meditative artrock and fuzzy, damaged grunge a l\u00e0 Lily\u2019s, Sonic Youth, and My Bloody Valentine. While Blue Zero pays homage to their predecessors, the music is wholly unique with its mesmerizing big hooks and blown-out radiating psychedelic atmosphere- a tonal yin yang.\r\n\r\nWith Blue Zero, Natividad effortlessly escapes the asymmetric and angular guitar stylings of his other projects on Colder Shade Blue. The songs are layered with natural and loose guitar riffs- alternating clean jangle and fried fuzz leads. These guitar parts are intentional and calculated, but never over-played, while the dialed-in and punchy rhythm section paves the way for the memorable vocal melodies and velvety choruses. Songs like \u201cLemon Year\u201d and \u201cFortress\u201d are more pop-forward with sugary, head bobbing melodies, while \u201cScar\u201d and \u201cGone Again\u201d have a more melancholic, heady quality that pulls you in and under. To say the least, this is an idiosyncratic and diverse rock n roll artifact. The instrumentation was performed solely by Natividad, however the expansive sound of the record was captured by Chris\u2019 longtime friend and collaborator engineer Andrew Oswald resulting in a glowing and powerful wall of sound. Blue Zero\u2019s Colder Shade Blue is an energetic, dynamic and shimmering river of tasteful arrangements and deeply stylized songs that will wash over the listener with continuous, tranquil, and ecstatic reverberation.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/NWXsFrlru2g",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1629873841/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/3ca0a156-d7c7-4848-bdd4-cb2010094c61.jpeg"
+            },
+            {
+                "name": "Watching Buildings Grow",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=317615706/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true",
+                "image": "/img/02335288-f902-4c66-990d-b0d78a5004dd.jpeg"
+            }
+        ]
+    },
+    {
         "id": "kino_201125",
         "date": "2025-11-20T20:00:00+00:00",
         "title": "Kino: Midnight Madness",
