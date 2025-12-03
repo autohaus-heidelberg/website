@@ -1,5 +1,63 @@
 [
     {
+        "id": "wunderbar",
+        "date": "2025-12-19T18:00:00+00:00",
+        "title": "komparse\r\nlukas herbertson\r\ndie unsichtbaren St\u00e4dte\r\nbeach towel",
+        "fee": "10",
+        "feeAk": "10",
+        "descriptionShort": "Das Carousel l\u00e4dt ein zur besinnlichen, vorweihnachtlichen WUNDER BAR.\r\n\r\nJauchzet, frohlocket, auf, preiset die Tage,\r\nr\u00fchmet, was heute der H\u00f6chste getan!\r\nLasset das Zagen, verbannet die Klage,\r\nstimmet voll Jauchzen und Fr\u00f6hlichkeit an!",
+        "descriptionLong": "",
+        "shopLink": "",
+        "img": "/img/2c5fad25-5fa2-4971-a0f2-95ebc3117d60.jpeg",
+        "artists": [
+            {
+                "name": "komparse",
+                "link": "https://www.instagram.com/komparseband/",
+                "description": "Kirmes hits aus K\u00f6ln",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "B\u00e4r",
+                "link": "https://baer-artpop.com/",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/vFLmGRy2Was?si=0asNjktp7zNFXctl",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Beach Towel",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://youtube.com/embed/hQjNV-fDMaU",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Die unsichtbaren St\u00e4dte",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Lukas Herbertson",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "pathwalker-lifespark-oneverypage",
         "date": "2025-12-05T19:00:00+00:00",
         "title": "Last Breath of the Year - Pathwalker / Lifespark. / On Every Page",
