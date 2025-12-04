@@ -2,7 +2,7 @@
     {
         "id": "wunderbar",
         "date": "2025-12-19T18:00:00+00:00",
-        "title": "komparse | jako b\u00e4r | lukas herbertson | die unsichtbaren St\u00e4dte | beach towel",
+        "title": "komparse | jako b\u00e4r | lukas herbertson | beach towel | die unsichtbaren St\u00e4dte",
         "fee": "10",
         "feeAk": "10",
         "descriptionShort": "Das Carousel l\u00e4dt ein zur besinnlichen, vorweihnachtlichen WUNDER BAR.\r\n\r\nJauchzet, frohlocket, auf, preiset die Tage,\r\nr\u00fchmet, was heute der H\u00f6chste getan!\r\nLasset das Zagen, verbannet die Klage,\r\nstimmet voll Jauchzen und Fr\u00f6hlichkeit an!",
@@ -15,7 +15,7 @@
                 "link": "https://www.instagram.com/komparseband/",
                 "description": "Kirmes hits aus K\u00f6ln",
                 "soundcloud": "",
-                "youtube": "",
+                "youtube": "https://www.youtube.com/embed/Bxl51KJQ5a4?si=R64idbKElYF8gFHx",
                 "bandcamp": "",
                 "image": ""
             },
@@ -48,8 +48,8 @@
             },
             {
                 "name": "Lukas Herbertson",
-                "link": "",
-                "description": "",
+                "link": "https://www.youtube.com/@lukasherbertson",
+                "description": "traurige musik f\u00fcr lustige menschen.",
                 "soundcloud": "",
                 "youtube": "",
                 "bandcamp": "",
