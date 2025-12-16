@@ -93,6 +93,12 @@ margin-bottom: 1rem;
    margin-left: 1rem;
    margin-right: 1rem;
    transform: rotate(1deg);
+  transition: all 0.2s;
+  }
+
+.event-preview:hover {
+    transform: rotate(2deg) scale(1.02);
+
 }
 
 .event-preview > div {
