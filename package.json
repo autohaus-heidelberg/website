@@ -12,6 +12,7 @@
     "deploy": "node scripts/gh-pages-deploy.js"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "circletype": "^2.3.0",
     "dayjs": "^1.11.11",
     "pinia": "^2.1.7",
