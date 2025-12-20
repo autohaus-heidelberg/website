@@ -1,12 +1,13 @@
 import { api } from './api'
 import { type Artist } from './events'
+import type { PaginatedResponse } from '@/types/api'
 
 export const artistService = {
   /**
-   * Get all artists
+   * Get all artists (paginated)
    */
-  async getAll(): Promise<Artist[]> {
-    return api.get<Artist[]>('/api/artists/')
+  async getAll(): Promise<PaginatedResponse<Artist>> {
+    return api.get<PaginatedResponse<Artist>>('/api/artists/')
   },
 
   /**

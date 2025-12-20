@@ -1,4 +1,5 @@
-import { api } from './api'
+import { api, API_BASE_URL } from './api'
+import type { PaginatedResponse } from '@/types/api'
 
 export interface Artist {
   id?: number
@@ -33,10 +34,10 @@ export interface Event {
 
 export const eventService = {
   /**
-   * Get all events
+   * Get all events (paginated)
    */
-  async getAll(): Promise<Event[]> {
-    return api.get<Event[]>('/api/events/')
+  async getAll(): Promise<PaginatedResponse<Event>> {
+    return api.get<PaginatedResponse<Event>>('/api/events/')
   },
 
   /**
@@ -79,5 +80,25 @@ export const eventService = {
    */
   async uploadImage(id: string, file: File): Promise<Event> {
     return api.uploadFile<Event>(`/api/events/${id}/`, file, 'image')
+  },
+
+  /**
+   * Start SSE stream for syncing from git
+   * Returns URL for EventSource to connect to
+   */
+  getSyncFromGitUrl(): string {
+    const token = localStorage.getItem('access_token')
+    return `${API_BASE_URL}/events/sync/?token=${token}`
+  },
+
+  /**
+   * Start SSE stream for writing events to website
+   * @param eventIds - Array of event IDs to write
+   * Returns URL for EventSource to connect to
+   */
+  getWriteToWebsiteUrl(eventIds: string[]): string {
+    const token = localStorage.getItem('access_token')
+    const ids = eventIds.join(',')
+    return `${API_BASE_URL}/events/write-to-website?event_ids=${ids}&token=${token}`
   },
 }

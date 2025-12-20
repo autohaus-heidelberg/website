@@ -2,12 +2,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { eventService, type Event } from '@/services'
+import type { PaginatedResponse } from '@/types/api'
 
 const router = useRouter()
-const events = ref<Event[]>([])
+const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
+
+const events = computed(() => eventsData.value?.results || [])
 
 const filteredEvents = computed(() => {
   if (!searchQuery.value) return events.value
@@ -25,7 +28,7 @@ async function loadEvents() {
   error.value = ''
 
   try {
-    events.value = await eventService.getAll()
+    eventsData.value = await eventService.getAll()
   } catch (e: any) {
     error.value = e.message || 'Failed to load events'
   } finally {
@@ -38,7 +41,11 @@ async function deleteEvent(event: Event) {
 
   try {
     await eventService.delete(event.id)
-    events.value = events.value.filter(e => e.id !== event.id)
+    // Remove from local data
+    if (eventsData.value) {
+      eventsData.value.results = eventsData.value.results.filter(e => e.id !== event.id)
+      eventsData.value.count--
+    }
   } catch (e: any) {
     alert('Failed to delete event: ' + e.message)
   }
@@ -74,7 +81,7 @@ onMounted(() => {
   .loading(v-if="isLoading") Loading events...
   .error(v-else-if="error") {{ error }}
 
-  .events-container(v-else-if="filteredEvents.length")
+  .events-container(v-else-if="filteredEvents.length > 0")
     .event-card(v-for="event in filteredEvents" :key="event.id")
       .event-header
         .event-id {{ event.id }}
@@ -141,16 +148,7 @@ h2 {
   border-color: #667eea;
 }
 
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: transform 0.2s, box-shadow 0.2s;
-  white-space: nowrap;
-}
+
 
 .btn-primary:hover {
   transform: translateY(-2px);

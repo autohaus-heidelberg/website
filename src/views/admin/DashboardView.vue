@@ -10,12 +10,12 @@ const isLoading = ref(true)
 
 onMounted(async () => {
   try {
-    const [events, artists] = await Promise.all([
+    const [eventsData, artistsData] = await Promise.all([
       eventService.getAll(),
       artistService.getAll()
     ])
-    eventsCount.value = events.length
-    artistsCount.value = artists.length
+    eventsCount.value = eventsData.count
+    artistsCount.value = artistsData.count
   } catch (e) {
     console.error('Failed to load stats:', e)
   } finally {

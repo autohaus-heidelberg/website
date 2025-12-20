@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
 
-const API_BASE_URL =  'https://content.hopfner.cc/'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://content.hopfner.cc/'
 
 class ApiClient {
   private client: AxiosInstance

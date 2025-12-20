@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { eventService, artistService, type Event, type Artist } from '@/services'
+import type { PaginatedResponse } from '@/types/api'
 
 const props = defineProps<{
   id?: string
@@ -23,14 +24,15 @@ const form = ref<Partial<Event>>({
   artist_ids: []
 })
 
-const artists = ref<Artist[]>([])
+const artistsData = ref<PaginatedResponse<Artist> | null>(null)
+const artists = computed(() => artistsData.value?.results || [])
 const isLoading = ref(false)
 const error = ref('')
 const imageFile = ref<File | null>(null)
 
 async function loadArtists() {
   try {
-    artists.value = await artistService.getAll()
+    artistsData.value = await artistService.getAll()
   } catch (e: any) {
     console.error('Failed to load artists:', e)
   }

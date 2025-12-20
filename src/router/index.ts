@@ -50,7 +50,7 @@ const router = createRouter({
       path: '/admin',
       name: 'admin',
       component: () => import('../views/admin/AdminLayout.vue'),
-      meta: { requiresAuth: true, requiresWebsiteGroup: true },
+      meta: { requiresAuth: true, requiresWebsiteGroup: false },
       children: [
         {
           path: '',
@@ -88,6 +88,11 @@ const router = createRouter({
           name: 'admin-artist-edit',
           component: () => import('../views/admin/artists/ArtistFormView.vue'),
           props: true
+        },
+        {
+          path: 'sync',
+          name: 'admin-sync',
+          component: () => import('../views/admin/EventSyncView.vue')
         }
       ]
     }

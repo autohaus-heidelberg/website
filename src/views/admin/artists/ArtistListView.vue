@@ -2,12 +2,15 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { artistService, type Artist } from '@/services'
+import type { PaginatedResponse } from '@/types/api'
 
 const router = useRouter()
-const artists = ref<Artist[]>([])
+const artistsData = ref<PaginatedResponse<Artist> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
+
+const artists = computed(() => artistsData.value?.results || [])
 
 const filteredArtists = computed(() => {
   if (!searchQuery.value) return artists.value
@@ -24,7 +27,7 @@ async function loadArtists() {
   error.value = ''
 
   try {
-    artists.value = await artistService.getAll()
+    artistsData.value = await artistService.getAll()
   } catch (e: any) {
     error.value = e.message || 'Failed to load artists'
   } finally {
@@ -37,7 +40,11 @@ async function deleteArtist(artist: Artist) {
 
   try {
     await artistService.delete(artist.id!)
-    artists.value = artists.value.filter(a => a.id !== artist.id)
+    // Remove from local data
+    if (artistsData.value) {
+      artistsData.value.results = artistsData.value.results.filter(a => a.id !== artist.id)
+      artistsData.value.count--
+    }
   } catch (e: any) {
     alert('Failed to delete artist: ' + e.message)
   }
