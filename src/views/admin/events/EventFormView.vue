@@ -36,6 +36,7 @@ const form = ref<Partial<Event>>({
   fee: '',
   feeAk: '',
   shopLink: '',
+  helferpadLink: '',
   artistOrder: '',
   artist_ids: []
 })
@@ -46,6 +47,8 @@ const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const isCreatingShopLink = ref(false)
 const shopLinkSuccess = ref('')
+const isCreatingHelferpad = ref(false)
+const helferpadSuccess = ref('')
 const previewArtists = ref<Artist[]>([])
 const loadingArtists = ref(false)
 
@@ -161,6 +164,61 @@ async function createShopLink() {
     error.value = e.message || 'Failed to create shop link'
   } finally {
     isCreatingShopLink.value = false
+  }
+}
+
+async function createHelferpad() {
+  // Validate required fields
+  if (!form.value.id) {
+    error.value = 'Event ID is required to create Helferpad'
+    return
+  }
+
+  isCreatingHelferpad.value = true
+  error.value = ''
+  helferpadSuccess.value = ''
+
+  try {
+    // If event is new (not editing), save it first
+    if (!isEditing) {
+      if (!form.value.title) {
+        error.value = 'Event Title is required before creating Helferpad'
+        return
+      }
+      if (!form.value.date) {
+        error.value = 'Event Date is required before creating Helferpad'
+        return
+      }
+      if (!form.value.descriptionShort) {
+        error.value = 'Short Description is required before creating Helferpad'
+        return
+      }
+
+      // Prepare data for submission
+      const { image, image_url, artists, ...formData } = form.value
+      formData.date = new Date(form.value.date!).toISOString()
+
+      await eventService.create(formData)
+
+      // Upload image if provided
+      if (imageFile.value) {
+        await eventService.uploadImage(formData.id!, imageFile.value)
+      }
+    }
+
+    // Create the Helferpad
+    const result = await eventService.createHelferpad(form.value.id!)
+    form.value.helferpadLink = result.helferpadLink
+    helferpadSuccess.value = 'Helferpad created successfully!'
+
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      helferpadSuccess.value = ''
+    }, 3000)
+  } catch (e: any) {
+    error.value = e.message || 'Failed to create Helferpad'
+  } finally {
+    isCreatingHelferpad.value = false
   }
 }
 
@@ -322,6 +380,23 @@ onMounted(async () => {
               | {{ isCreatingShopLink ? 'Creating...' : 'Create Pretix Shop Link' }}
             .field-hint Benötigt: Event ID, Title, Date und Fee (muss eine Zahl sein)
           .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
+
+        .form-group
+          label(for="helferpadLink") Helferpad Link
+          input#helferpadLink(
+            v-model="form.helferpadLink"
+            type="url"
+            placeholder="https://..."
+          )
+          .shop-link-actions
+            button.btn-shop-link(
+              type="button"
+              @click="createHelferpad"
+              :disabled="isCreatingHelferpad"
+            )
+              | {{ isCreatingHelferpad ? 'Creating...' : 'Create Helferpad' }}
+            .field-hint Benötigt: Event ID
+          .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
         .form-group
           label Artist Selection

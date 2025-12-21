@@ -3,12 +3,6 @@
   h1 Event Synchronization
 
   .actions.mb-2
-    button.btn-primary(
-      @click="handleSyncFromGit"
-      :disabled="isSyncing || isWriting"
-    )
-      span(v-if="!isSyncing") Sync from Git
-      span(v-else) Syncing...
 
     button.btn-primary(
       @click="handleWriteToWebsite"
@@ -16,6 +10,8 @@
     )
       span(v-if="!isWriting") Write to Website ({{ selectedEvents.length }} selected)
       span(v-else) Writing...
+
+  EventSyncLog(:logs="logs")
 
   .event-list.mb-2
     h2 Events
@@ -46,7 +42,14 @@
     .empty-state(v-else)
       p No events found in the database.
 
-  EventSyncLog(:logs="logs")
+
+  button.btn-primary(
+    @click="handleSyncFromGit"
+    :disabled="isSyncing || isWriting"
+  )
+    span(v-if="!isSyncing") Sync from Git ( Diesen Button nur benutzen wenn ihr wisst was ihr tut)
+    span(v-else) Syncing...
+
 </template>
 
 <script setup lang="ts">
@@ -234,23 +237,23 @@ h2 {
 }
 
 .btn-primary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   font-size: 1rem;
   font-weight: 600;
   border: 0.25rem solid black;
-  background-color: white;
+  background: black;
+  color: white;
   cursor: pointer;
   transition: filter 0.2s;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.2em;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: black;
-  color: white;
+  filter: brightness(120%);
 }
 
 .btn-primary:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 

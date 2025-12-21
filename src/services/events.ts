@@ -26,6 +26,7 @@ export interface Event {
   fee?: string
   feeAk?: string
   shopLink?: string
+  helferpadLink?: string
   artistOrder?: string
   artists: Artist[]
   artist_ids?: number[]
@@ -73,6 +74,13 @@ export const eventService = {
    */
   async cloneToPretix(id: string): Promise<{ shopLink: string }> {
     return api.post<{ shopLink: string }>(`/api/events/${id}/clone_to_pretix/`)
+  },
+
+  /**
+   * Create Helferpad for event
+   */
+  async createHelferpad(id: string): Promise<{ helferpadLink: string }> {
+    return api.post<{ helferpadLink: string }>(`/api/events/${id}/create_helferpad/`)
   },
 
   /**

@@ -84,30 +84,32 @@ async function handleLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FFFFFF;
 }
 
 .login-container {
   background: white;
   padding: 3rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border: 0.5rem solid #000000;
   width: 100%;
   max-width: 420px;
+  transform: rotate(1deg);
 }
 
 h1 {
   margin-bottom: 0.5rem;
   text-align: center;
-  font-size: 2rem;
-  color: #333;
+  font-size: 200%;
+  color: #000000;
+  font-weight: 900;
 }
 
 .subtitle {
   text-align: center;
-  color: #666;
+  color: #000000;
   margin-bottom: 2rem;
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .login-form {
@@ -125,64 +127,67 @@ h1 {
 label {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #333;
+  color: #000000;
 }
 
 input {
-  padding: 0.875rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
+  width: 100%;
+  height: 3em;
+  padding: 0.5rem;
+  border: solid #000000;
   font-size: 1rem;
-  transition: border-color 0.2s;
 }
 
 input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #000000;
 }
 
 input:disabled {
-  background: #f5f5f5;
+  background: #FFFFFF;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .error {
-  color: #d32f2f;
+  color: #000000;
   font-size: 0.9rem;
   padding: 0.75rem;
-  background: #ffebee;
-  border-radius: 6px;
-  border-left: 4px solid #d32f2f;
+  background: #FFFFFF;
+  border: 0.25rem solid #000000;
 }
 
 .btn-primary {
-  padding: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  padding: 0.7em;
+  background: #000000;
+  color: #FFFFFF;
   border: none;
-  border-radius: 6px;
   font-size: 1rem;
   font-weight: 600;
+  letter-spacing: 0.4em;
+  min-width: 280px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: filter 0.2s, transform 0.1s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  filter: brightness(120%);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.99);
 }
 
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 .back-link {
   display: block;
   text-align: center;
   margin-top: 1.5rem;
-  color: #667eea;
+  color: #000000;
   text-decoration: none;
   font-size: 0.95rem;
 }

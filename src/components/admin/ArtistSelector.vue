@@ -31,8 +31,14 @@ const error = ref('')
 const modalForm = ref({
   name: '',
   description: '',
-  link: ''
+  link: '',
+  youtube: '',
+  soundcloud: '',
+  bandcamp: ''
 })
+
+const imageFile = ref<File | null>(null)
+const imagePreview = ref<string | null>(null)
 
 const selectedArtists = computed(() => {
   return orderedArtistIds.value
@@ -98,8 +104,13 @@ function openModal() {
   modalForm.value = {
     name: '',
     description: '',
-    link: ''
+    link: '',
+    youtube: '',
+    soundcloud: '',
+    bandcamp: ''
   }
+  imageFile.value = null
+  imagePreview.value = null
   error.value = ''
   showModal.value = true
 }
@@ -107,6 +118,19 @@ function openModal() {
 function closeModal() {
   showModal.value = false
   error.value = ''
+}
+
+function handleImageChange(e: Event & { target: HTMLInputElement }) {
+  if (e.target.files && e.target.files[0]) {
+    imageFile.value = e.target.files[0]
+
+    // Create preview for the new image
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(imageFile.value)
+  }
 }
 
 async function handleQuickAdd() {
@@ -122,10 +146,21 @@ async function handleQuickAdd() {
     const newArtist = await artistService.create({
       name: modalForm.value.name.trim(),
       description: modalForm.value.description.trim(),
-      link: modalForm.value.link.trim()
+      link: modalForm.value.link.trim(),
+      youtube: modalForm.value.youtube.trim(),
+      soundcloud: modalForm.value.soundcloud.trim(),
+      bandcamp: modalForm.value.bandcamp.trim()
     })
 
-    allArtists.value.push(newArtist)
+    // Upload image if provided
+    if (imageFile.value && newArtist.id) {
+      await artistService.uploadImage(newArtist.id, imageFile.value)
+      // Refresh the artist to get the image_url
+      const updatedArtist = await artistService.getById(newArtist.id)
+      allArtists.value.push(updatedArtist)
+    } else {
+      allArtists.value.push(newArtist)
+    }
 
     if (newArtist.id) {
       addArtist(newArtist.id)
@@ -226,6 +261,40 @@ onMounted(() => {
             v-model="modalForm.link"
             type="url"
             placeholder="https://..."
+          )
+
+        .form-group
+          label(for="artist-youtube") YouTube
+          input#artist-youtube(
+            v-model="modalForm.youtube"
+            type="url"
+            placeholder="https://youtube.com/..."
+          )
+
+        .form-group
+          label(for="artist-soundcloud") SoundCloud
+          input#artist-soundcloud(
+            v-model="modalForm.soundcloud"
+            type="url"
+            placeholder="https://soundcloud.com/..."
+          )
+
+        .form-group
+          label(for="artist-bandcamp") Bandcamp
+          input#artist-bandcamp(
+            v-model="modalForm.bandcamp"
+            type="url"
+            placeholder="https://...bandcamp.com"
+          )
+
+        .form-group
+          label(for="artist-image") Artist Image
+          .image-preview(v-if="imagePreview")
+            img(:src="imagePreview" alt="Artist image preview")
+          input#artist-image(
+            type="file"
+            accept="image/*"
+            @change="handleImageChange"
           )
 
         .error(v-if="error") {{ error }}
@@ -471,6 +540,20 @@ h3 {
   outline: none;
   background: black;
   color: white;
+}
+
+.modal-content .image-preview {
+  margin-bottom: 1rem;
+  border: 0.25rem solid black;
+  padding: 1rem;
+  background: white;
+}
+
+.modal-content .image-preview img {
+  max-width: 100%;
+  max-height: 200px;
+  display: block;
+  margin: 0 auto;
 }
 
 .error {
