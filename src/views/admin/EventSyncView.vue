@@ -7,15 +7,15 @@
       @click="handleSyncFromGit"
       :disabled="isSyncing || isWriting"
     )
-      span(v-if="!isSyncing") 🔄 Sync from Git
-      span(v-else) ⏳ Syncing...
+      span(v-if="!isSyncing") Sync from Git
+      span(v-else) Syncing...
 
     button.btn-primary(
       @click="handleWriteToWebsite"
       :disabled="isSyncing || isWriting || selectedEvents.length === 0"
     )
-      span(v-if="!isWriting") 📝 Write to Website ({{ selectedEvents.length }} selected)
-      span(v-else) ⏳ Writing...
+      span(v-if="!isWriting") Write to Website ({{ selectedEvents.length }} selected)
+      span(v-else) Writing...
 
   .event-list.mb-2
     h2 Events
@@ -216,11 +216,15 @@ function formatDate(dateStr: string): string {
 h1 {
   font-size: 2rem;
   margin-bottom: 2rem;
+  font-weight: 900;
+  color: black;
 }
 
 h2 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
+  font-weight: 900;
+  color: black;
 }
 
 .actions {
@@ -232,17 +236,17 @@ h2 {
 .btn-primary {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
-  font-weight: bold;
-  border: 2px solid #333;
+  font-weight: 600;
+  border: 0.25rem solid black;
   background-color: white;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: filter 0.2s;
+  letter-spacing: 0.1em;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #333;
+  background-color: black;
   color: white;
-  transform: translateY(-2px);
 }
 
 .btn-primary:disabled {
@@ -260,8 +264,8 @@ h2 {
 
 .select-all-container {
   padding: 1rem;
-  background-color: #f0f0f0;
-  border: 2px solid #333;
+  background-color: white;
+  border: 0.25rem solid black;
 }
 
 .checkbox-label {
@@ -269,7 +273,7 @@ h2 {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .checkbox-label input[type="checkbox"] {
@@ -280,7 +284,7 @@ h2 {
 
 .table-container {
   overflow-x: auto;
-  border: 2px solid #333;
+  border: 0.25rem solid black;
 }
 
 .event-table {
@@ -290,7 +294,7 @@ h2 {
 }
 
 .event-table thead {
-  background-color: #333;
+  background-color: black;
   color: white;
 }
 
@@ -298,11 +302,13 @@ h2 {
 .event-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 0.125rem solid black;
+  font-weight: 600;
 }
 
 .event-table tbody tr:hover {
-  background-color: #f9f9f9;
+  background-color: black;
+  color: white;
 }
 
 .event-table tbody tr:last-child td {
@@ -337,14 +343,15 @@ h2 {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #666;
-  border: 2px solid #333;
-  background-color: #f9f9f9;
+  color: black;
+  border: 0.25rem solid black;
+  background-color: white;
 }
 
 .loading p,
 .empty-state p {
   margin: 0;
   font-size: 1.1rem;
+  font-weight: 600;
 }
 </style>

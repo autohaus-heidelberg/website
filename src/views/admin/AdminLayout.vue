@@ -24,19 +24,14 @@ function handleLogout() {
 
     .admin-nav-links
       router-link.nav-link(to="/admin" exact-active-class="active")
-        span.icon 📊
         span Dashboard
       router-link.nav-link(to="/admin/events" active-class="active")
-        span.icon 🎵
         span Events
       router-link.nav-link(to="/admin/artists" active-class="active")
-        span.icon 🎤
         span Artists
       router-link.nav-link(to="/admin/sync" active-class="active")
-        span.icon 🔄
         span Event Sync
       router-link.nav-link(to="/")
-        span.icon 🌐
         span Public Site
 
   main.admin-content
@@ -47,17 +42,17 @@ function handleLogout() {
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: white;
 }
 
 .admin-nav {
   width: 280px;
-  background: #1a1f36;
-  color: white;
+  background: white;
+  color: black;
   padding: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  border-right: 0.5rem solid black;
   position: fixed;
   height: 100vh;
   overflow-y: auto;
@@ -65,17 +60,14 @@ function handleLogout() {
 
 .admin-nav-header {
   padding: 2rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 0.5rem solid black;
 }
 
 .admin-nav-header h1 {
   font-size: 1.5rem;
   margin-bottom: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 900;
+  color: black;
 }
 
 .user-info {
@@ -83,15 +75,14 @@ function handleLogout() {
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: white;
+  border: 0.25rem solid black;
 }
 
 .username {
   font-size: 0.95rem;
   font-weight: 600;
-  color: white;
+  color: black;
 }
 
 .user-groups {
@@ -103,26 +94,23 @@ function handleLogout() {
 .group {
   font-size: 0.75rem;
   padding: 0.25rem 0.5rem;
-  background: rgba(102, 126, 234, 0.2);
-  border-radius: 4px;
-  color: #a5b4fc;
+  background: black;
+  color: white;
 }
 
 .btn-logout {
   padding: 0.625rem;
-  background: rgba(239, 68, 68, 0.1);
-  color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 6px;
+  background: black;
+  color: white;
+  border: 0.25rem solid black;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s;
 }
 
 .btn-logout:hover {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fecaca;
+  filter: brightness(120%);
 }
 
 .admin-nav-links {
@@ -138,26 +126,23 @@ function handleLogout() {
   align-items: center;
   gap: 0.875rem;
   padding: 0.875rem 1rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: black;
   text-decoration: none;
-  border-radius: 8px;
   transition: all 0.2s;
-  font-weight: 500;
-}
-
-.nav-link .icon {
-  font-size: 1.25rem;
+  font-weight: 600;
+  border: 0.25rem solid white;
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: black;
   color: white;
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: black;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  border: 0.25rem solid black;
+  transform: rotate(-1deg);
 }
 
 .admin-content {

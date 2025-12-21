@@ -105,6 +105,7 @@ onMounted(() => {
         type="url"
         placeholder="https://..."
       )
+      .field-hint Link: muss ein vollständiger link sein, also zb: https://www.duckduckgo.com
 
     .form-row
       .form-group
@@ -114,6 +115,7 @@ onMounted(() => {
           type="url"
           placeholder="https://soundcloud.com/..."
         )
+        .field-hint Soundcloud: funktioniert nicht
 
       .form-group
         label(for="youtube") YouTube
@@ -122,6 +124,7 @@ onMounted(() => {
           type="url"
           placeholder="https://youtube.com/..."
         )
+        .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
 
     .form-group
       label(for="bandcamp") Bandcamp
@@ -130,6 +133,7 @@ onMounted(() => {
         type="url"
         placeholder="https://bandcamp.com/..."
       )
+      .field-hint Bandcamp URL: muss der embedded link sein, z.B: https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/
 
     .form-group
       label(for="image") Artist Image
@@ -138,7 +142,7 @@ onMounted(() => {
         accept="image/*"
         @change="handleImageChange"
       )
-      .field-hint Recommended: Square image, at least 500x500px
+      .field-hint Bild: wird resized
 
     .error(v-if="error") {{ error }}
 
@@ -155,8 +159,7 @@ onMounted(() => {
 .artist-form-view {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 0.5rem solid black;
   max-width: 700px;
 }
 
@@ -169,8 +172,9 @@ onMounted(() => {
 
 h2 {
   font-size: 1.75rem;
-  color: #1a1f36;
+  color: black;
   margin: 0;
+  font-weight: 900;
 }
 
 .artist-form {
@@ -194,79 +198,78 @@ h2 {
 label {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #333;
+  color: black;
 }
 
 input, textarea {
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 0.25rem solid black;
   font-size: 1rem;
   font-family: inherit;
-  transition: border-color 0.2s;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
 }
 
 input:focus, textarea:focus {
   outline: none;
-  border-color: #667eea;
+  background: black;
+  color: white;
 }
 
 .field-hint {
   font-size: 0.85rem;
-  color: #666;
+  color: black;
 }
 
 .error {
-  color: #d32f2f;
+  color: black;
   font-size: 0.95rem;
   padding: 0.875rem;
-  background: #ffebee;
-  border-radius: 8px;
-  border-left: 4px solid #d32f2f;
+  background: white;
+  border: 0.25rem solid black;
 }
 
 .form-actions {
   display: flex;
   gap: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 0.25rem solid black;
 }
 
 .btn-primary, .btn-secondary, .btn-cancel {
   padding: 0.875rem 1.75rem;
-  border: none;
-  border-radius: 8px;
+  border: 0.25rem solid black;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   font-size: 1rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: filter 0.2s;
+  letter-spacing: 0.2em;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: black;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  filter: brightness(120%);
 }
 
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 .btn-secondary, .btn-cancel {
-  background: #f0f0f0;
-  color: #333;
+  background: white;
+  color: black;
 }
 
 .btn-secondary:hover, .btn-cancel:hover {
-  background: #e0e0e0;
+  background: black;
+  color: white;
 }
 
 @media (max-width: 768px) {

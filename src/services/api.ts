@@ -103,12 +103,12 @@ class ApiClient {
     return response.data
   }
 
-  // File upload
+  // File upload (uses PATCH for updating existing resources)
   async uploadFile<T>(url: string, file: File, fieldName: string = 'image'): Promise<T> {
     const formData = new FormData()
     formData.append(fieldName, file)
 
-    const response = await this.client.post<T>(url, formData, {
+    const response = await this.client.patch<T>(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

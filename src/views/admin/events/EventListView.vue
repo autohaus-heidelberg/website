@@ -76,7 +76,7 @@ onMounted(() => {
         type="text"
         placeholder="Search events..."
       )
-      router-link.btn-primary(to="/admin/events/create") ➕ Create Event
+      router-link.btn-primary(to="/admin/events/create") Create Event
 
   .loading(v-if="isLoading") Loading events...
   .error(v-else-if="error") {{ error }}
@@ -96,7 +96,7 @@ onMounted(() => {
       .event-footer
         .event-meta
           span.fee(v-if="event.fee") {{ event.fee }}
-          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") 🎫 Tickets
+          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") Tickets
 
         .event-actions
           router-link.btn-edit(:to="`/admin/events/${event.id}`") Edit
@@ -110,8 +110,7 @@ onMounted(() => {
 .event-list-view {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 0.5rem solid black;
 }
 
 .header {
@@ -125,8 +124,9 @@ onMounted(() => {
 
 h2 {
   font-size: 1.75rem;
-  color: #1a1f36;
+  color: black;
   margin: 0;
+  font-weight: 900;
 }
 
 .header-actions {
@@ -137,34 +137,42 @@ h2 {
 
 .search-input {
   padding: 0.625rem 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 0.25rem solid black;
   font-size: 0.95rem;
   min-width: 250px;
+  font-weight: 600;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #667eea;
+  background: black;
+  color: white;
 }
 
-
+.btn-primary {
+  padding: 0.7em;
+  background: black;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  transition: filter 0.2s;
+}
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  filter: brightness(120%);
 }
 
 .loading, .error, .empty {
   padding: 3rem;
   text-align: center;
-  color: #666;
+  color: black;
 }
 
 .error {
-  color: #d32f2f;
-  background: #ffebee;
-  border-radius: 8px;
+  color: black;
+  background: white;
+  border: 0.5rem solid black;
 }
 
 .events-container {
@@ -174,14 +182,13 @@ h2 {
 
 .event-card {
   padding: 1.5rem;
-  border: 2px solid #f0f0f0;
-  border-radius: 12px;
+  border: 0.25rem solid black;
   transition: all 0.2s;
+  transform: rotate(0.5deg);
 }
 
 .event-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  transform: rotate(-0.5deg);
 }
 
 .event-header {
@@ -194,21 +201,23 @@ h2 {
 .event-id {
   font-family: 'Courier New', monospace;
   font-size: 0.875rem;
-  color: #666;
-  background: #f5f5f5;
+  color: black;
+  background: white;
   padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  border: 0.125rem solid black;
 }
 
 .event-date {
   font-size: 0.875rem;
-  color: #666;
+  color: black;
+  font-weight: 600;
 }
 
 .event-title {
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
-  color: #1a1f36;
+  color: black;
+  font-weight: 900;
 }
 
 .event-artists {
@@ -221,10 +230,9 @@ h2 {
 .artist {
   font-size: 0.875rem;
   padding: 0.375rem 0.75rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  color: #667eea;
-  border-radius: 6px;
-  font-weight: 500;
+  background: black;
+  color: white;
+  font-weight: 600;
 }
 
 .event-footer {
@@ -234,7 +242,7 @@ h2 {
   flex-wrap: wrap;
   gap: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 0.25rem solid black;
 }
 
 .event-meta {
@@ -245,13 +253,14 @@ h2 {
 
 .fee {
   font-weight: 600;
-  color: #667eea;
+  color: black;
 }
 
 .shop-link {
-  color: #10b981;
+  color: black;
   text-decoration: none;
   font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .shop-link:hover {
@@ -265,26 +274,25 @@ h2 {
 
 .btn-edit, .btn-delete {
   padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 6px;
+  border: 0.25rem solid black;
   cursor: pointer;
   text-decoration: none;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: opacity 0.2s;
+  font-weight: 600;
+  transition: filter 0.2s;
 }
 
 .btn-edit {
-  background: #2196f3;
-  color: white;
+  background: white;
+  color: black;
 }
 
 .btn-delete {
-  background: #f44336;
+  background: black;
   color: white;
 }
 
 .btn-edit:hover, .btn-delete:hover {
-  opacity: 0.85;
+  filter: brightness(120%);
 }
 </style>

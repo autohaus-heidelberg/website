@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { eventService, artistService, type Event, type Artist } from '@/services'
-import type { PaginatedResponse } from '@/types/api'
+import { eventService } from '@/services'
+import type { Event } from '@/services'
+import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 
 const props = defineProps<{
   id?: string
@@ -24,18 +25,19 @@ const form = ref<Partial<Event>>({
   artist_ids: []
 })
 
-const artistsData = ref<PaginatedResponse<Artist> | null>(null)
-const artists = computed(() => artistsData.value?.results || [])
 const isLoading = ref(false)
 const error = ref('')
 const imageFile = ref<File | null>(null)
+const imagePreview = ref<string | null>(null)
+const isCreatingShopLink = ref(false)
+const shopLinkSuccess = ref('')
 
-async function loadArtists() {
-  try {
-    artistsData.value = await artistService.getAll()
-  } catch (e: any) {
-    console.error('Failed to load artists:', e)
-  }
+function handleIdInput(e: Event) {
+  const target = e.target as HTMLInputElement
+  // Only allow A-Z, a-z, 0-9, and hyphen (-)
+  const sanitized = target.value.replace(/[^A-Za-z0-9-]/g, '')
+  form.value.id = sanitized
+  target.value = sanitized
 }
 
 async function loadEvent() {
@@ -49,15 +51,84 @@ async function loadEvent() {
       date: event.date.substring(0, 16),
       artist_ids: event.artists.map(a => a.id!)
     }
+    // Set image preview if there's an existing image
+    if (event.image_url) {
+      imagePreview.value = event.image_url
+    }
   } catch (e: any) {
     error.value = 'Failed to load event'
   }
 }
 
-function handleImageChange(e: InputEvent) {
-  const target = e.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    imageFile.value = target.files[0]
+function handleImageChange(e: Event & { target: HTMLInputElement }) {
+  if (e.target.files && e.target.files[0]) {
+    imageFile.value = e.target.files[0]
+
+    // Create preview for the new image
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string
+    }
+    reader.readAsDataURL(imageFile.value)
+  }
+}
+
+async function createShopLink() {
+  // Validate required fields for Pretix
+  if (!form.value.id) {
+    error.value = 'Event ID is required to create shop link'
+    return
+  }
+  if (!form.value.title) {
+    error.value = 'Event Title is required to create shop link'
+    return
+  }
+  if (!form.value.date) {
+    error.value = 'Event Date is required to create shop link'
+    return
+  }
+  if (!form.value.fee) {
+    error.value = 'Entry Fee is required to create shop link'
+    return
+  }
+
+  isCreatingShopLink.value = true
+  error.value = ''
+  shopLinkSuccess.value = ''
+
+  try {
+    // If event is new (not editing), save it first
+    if (!isEditing) {
+      if (!form.value.descriptionShort) {
+        error.value = 'Short Description is required before creating shop link'
+        return
+      }
+
+      // Prepare data for submission
+      const { image, image_url, artists, ...formData } = form.value
+      formData.date = new Date(form.value.date!).toISOString()
+
+      await eventService.create(formData)
+
+      // Upload image if provided
+      if (imageFile.value) {
+        await eventService.uploadImage(formData.id!, imageFile.value)
+      }
+    }
+
+    // Create the Pretix shop
+    const result = await eventService.cloneToPretix(form.value.id!)
+    form.value.shopLink = result.shopLink
+    shopLinkSuccess.value = 'Shop link created successfully!'
+
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      shopLinkSuccess.value = ''
+    }, 3000)
+  } catch (e: any) {
+    error.value = e.message || 'Failed to create shop link'
+  } finally {
+    isCreatingShopLink.value = false
   }
 }
 
@@ -71,22 +142,29 @@ async function handleSubmit() {
   error.value = ''
 
   try {
+    // Prepare data for submission
+    const { image, image_url, artists, ...formData } = form.value
+
     // Format date to ISO
-    const formData = {
-      ...form.value,
-      date: new Date(form.value.date!).toISOString()
-    }
+    formData.date = new Date(form.value.date!).toISOString()
 
     if (isEditing) {
+      // For editing, only send fields that can be updated (exclude image and image_url)
       await eventService.update(props.id!, formData)
-    } else {
-      await eventService.create(formData)
-    }
 
-    // TODO: Handle image upload separately if needed
-    // if (imageFile.value) {
-    //   await eventService.uploadImage(form.value.id!, imageFile.value)
-    // }
+      // Handle image upload separately if a new image was selected
+      if (imageFile.value) {
+        await eventService.uploadImage(props.id!, imageFile.value)
+      }
+    } else {
+      // For creation, send all data
+      await eventService.create(formData)
+
+      // Upload image after creation if provided
+      if (imageFile.value) {
+        await eventService.uploadImage(formData.id!, imageFile.value)
+      }
+    }
 
     router.push('/admin/events')
   } catch (e: any) {
@@ -97,7 +175,6 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
-  await loadArtists()
   await loadEvent()
 })
 </script>
@@ -117,8 +194,10 @@ onMounted(async () => {
           required
           :disabled="isEditing"
           placeholder="e.g., event-2025-12-31"
+          @input="handleIdInput"
         )
         .field-hint Unique identifier (cannot be changed after creation)
+        .field-hint Erlaubte Zeichen: A-Z, a-z, 0-9 und - (keine underscores _)
 
       .form-group
         label(for="date") Date & Time *
@@ -144,6 +223,7 @@ onMounted(async () => {
         required
         placeholder="Brief description for listings"
       )
+      .field-hint Beschreibung (akzeptiert html)
 
     .form-group
       label(for="descriptionLong") Long Description
@@ -152,21 +232,24 @@ onMounted(async () => {
         rows="6"
         placeholder="Detailed description"
       )
+      .field-hint Lange Beschreibung, kann aktuell weggelassen werden
 
     .form-row
       .form-group
-        label(for="fee") Entry Fee
+        label(for="fee") VVK Preis
         input#fee(
           v-model="form.fee"
-          placeholder="e.g., 10€"
+          placeholder="e.g., 10"
         )
+        .field-hint Fee muss eine Zahl sein (z.B. 10 für 10€)
 
       .form-group
-        label(for="feeAk") AK Fee
+        label(for="feeAk") AK Preis
         input#feeAk(
           v-model="form.feeAk"
-          placeholder="e.g., 8€"
+          placeholder="e.g., 8"
         )
+        .field-hint Fee muss eine Zahl sein (z.B. 8 für 8€)
 
     .form-group
       label(for="shopLink") Ticket Shop Link
@@ -175,33 +258,34 @@ onMounted(async () => {
         type="url"
         placeholder="https://..."
       )
+      .shop-link-actions
+        button.btn-shop-link(
+          type="button"
+          @click="createShopLink"
+          :disabled="isCreatingShopLink"
+        )
+          | {{ isCreatingShopLink ? 'Creating...' : 'Create Pretix Shop Link' }}
+        .field-hint Benötigt: Event ID, Title, Date und Fee (muss eine Zahl sein)
+      .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
 
     .form-group
-      label(for="artists") Artists
-      .artist-select
-        label.artist-option(v-for="artist in artists" :key="artist.id")
-          input(
-            type="checkbox"
-            :value="artist.id"
-            v-model="form.artist_ids"
-          )
-          span {{ artist.name }}
-
-    .form-group
-      label(for="artistOrder") Artist Order (optional)
-      input#artistOrder(
-        v-model="form.artistOrder"
-        placeholder="Comma-separated artist IDs in order"
+      label Artist Selection
+      ArtistSelector(
+        v-model="form.artist_ids"
+        v-model:artistOrder="form.artistOrder"
       )
-      .field-hint Controls the display order of artists
 
     .form-group
       label(for="image") Event Image
+      .image-preview(v-if="imagePreview")
+        img(:src="imagePreview" alt="Event image preview")
+        .preview-label {{ imageFile ? 'Neues Bild (wird hochgeladen)' : 'Aktuelles Bild' }}
       input#image(
         type="file"
         accept="image/*"
         @change="handleImageChange"
       )
+      .field-hint Bild: wird resized auf 1000x1000px
 
     .error(v-if="error") {{ error }}
 
@@ -218,8 +302,7 @@ onMounted(async () => {
 .event-form-view {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 0.5rem solid black;
   max-width: 900px;
 }
 
@@ -232,8 +315,9 @@ onMounted(async () => {
 
 h2 {
   font-size: 1.75rem;
-  color: #1a1f36;
+  color: black;
   margin: 0;
+  font-weight: 900;
 }
 
 .event-form {
@@ -257,114 +341,144 @@ h2 {
 label {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #333;
+  color: black;
 }
 
 input, textarea {
   padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 0.25rem solid black;
   font-size: 1rem;
   font-family: inherit;
-  transition: border-color 0.2s;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
 }
 
 input:focus, textarea:focus {
   outline: none;
-  border-color: #667eea;
+  background: black;
+  color: white;
 }
 
 input:disabled {
-  background: #f5f5f5;
+  background: white;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .field-hint {
   font-size: 0.85rem;
-  color: #666;
+  color: black;
 }
 
-.artist-select {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
+.image-preview {
+  margin-bottom: 1rem;
+  border: 0.25rem solid black;
   padding: 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  background: white;
+}
+
+.image-preview img {
+  max-width: 100%;
   max-height: 300px;
-  overflow-y: auto;
+  display: block;
+  margin: 0 auto;
 }
 
-.artist-option {
+.preview-label {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: black;
+}
+
+.shop-link-actions {
+  margin-top: 0.75rem;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 6px;
-  transition: background 0.2s;
 }
 
-.artist-option:hover {
-  background: rgba(102, 126, 234, 0.05);
+.btn-shop-link {
+  padding: 0.75rem 1.5rem;
+  border: 0.25rem solid black;
+  background: white;
+  color: black;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+  align-self: flex-start;
 }
 
-.artist-option input[type="checkbox"] {
-  width: auto;
-  cursor: pointer;
+.btn-shop-link:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-shop-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.success-message {
+  color: black;
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  background: #d4edda;
+  border: 0.25rem solid black;
+  margin-top: 0.5rem;
 }
 
 .error {
-  color: #d32f2f;
+  color: black;
   font-size: 0.95rem;
   padding: 0.875rem;
-  background: #ffebee;
-  border-radius: 8px;
-  border-left: 4px solid #d32f2f;
+  background: white;
+  border: 0.25rem solid black;
 }
 
 .form-actions {
   display: flex;
   gap: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 0.25rem solid black;
 }
 
 .btn-primary, .btn-secondary, .btn-cancel {
   padding: 0.875rem 1.75rem;
-  border: none;
-  border-radius: 8px;
+  border: 0.25rem solid black;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
   font-size: 1rem;
-  font-weight: 500;
-  transition: all 0.2s;
+  font-weight: 600;
+  transition: filter 0.2s;
+  letter-spacing: 0.2em;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: black;
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  filter: brightness(120%);
 }
 
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 .btn-secondary, .btn-cancel {
-  background: #f0f0f0;
-  color: #333;
+  background: white;
+  color: black;
 }
 
 .btn-secondary:hover, .btn-cancel:hover {
-  background: #e0e0e0;
+  background: black;
+  color: white;
 }
 
 @media (max-width: 768px) {

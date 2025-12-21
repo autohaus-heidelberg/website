@@ -30,18 +30,16 @@ onMounted(async () => {
 
   .stats-grid(v-if="!isLoading")
     .stat-card
-      .stat-icon 🎵
       .stat-info
         .stat-value {{ eventsCount }}
         .stat-label Events
-      router-link.stat-link(to="/admin/events") Manage Events →
+      router-link.stat-link(to="/admin/events") Manage Events
 
     .stat-card
-      .stat-icon 🎤
       .stat-info
         .stat-value {{ artistsCount }}
         .stat-label Artists
-      router-link.stat-link(to="/admin/artists") Manage Artists →
+      router-link.stat-link(to="/admin/artists") Manage Artists
 
   .loading(v-else) Loading stats...
 
@@ -49,10 +47,8 @@ onMounted(async () => {
     h3 Quick Actions
     .actions-grid
       router-link.action-btn(to="/admin/events/create")
-        span.icon ➕
         span Create New Event
       router-link.action-btn(to="/admin/artists/create")
-        span.icon ➕
         span Create New Artist
 </template>
 
@@ -64,7 +60,8 @@ onMounted(async () => {
 h2 {
   margin-bottom: 2rem;
   font-size: 2rem;
-  color: #1a1f36;
+  color: black;
+  font-weight: 900;
 }
 
 .stats-grid {
@@ -77,21 +74,16 @@ h2 {
 .stat-card {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 0.5rem solid black;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s;
+  transform: rotate(1deg);
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.stat-icon {
-  font-size: 3rem;
+  transform: rotate(-1deg);
 }
 
 .stat-info {
@@ -100,47 +92,48 @@ h2 {
 
 .stat-value {
   font-size: 2.5rem;
-  font-weight: 700;
-  color: #667eea;
+  font-weight: 900;
+  color: black;
   line-height: 1;
   margin-bottom: 0.5rem;
 }
 
 .stat-label {
   font-size: 1rem;
-  color: #666;
-  font-weight: 500;
+  color: black;
+  font-weight: 600;
 }
 
 .stat-link {
-  color: #667eea;
+  color: black;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
-  transition: color 0.2s;
+  transition: filter 0.2s;
 }
 
 .stat-link:hover {
-  color: #764ba2;
+  filter: brightness(80%);
 }
 
 .loading {
   padding: 3rem;
   text-align: center;
-  color: #666;
+  color: black;
 }
 
 .quick-actions {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 0.5rem solid black;
+  transform: rotate(-1deg);
 }
 
 h3 {
   margin-bottom: 1.5rem;
-  color: #1a1f36;
+  color: black;
   font-size: 1.25rem;
+  font-weight: 900;
 }
 
 .actions-grid {
@@ -154,20 +147,15 @@ h3 {
   align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: black;
   color: white;
   text-decoration: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: transform 0.2s, box-shadow 0.2s;
+  font-weight: 600;
+  transition: filter 0.2s;
+  letter-spacing: 0.2em;
 }
 
 .action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.action-btn .icon {
-  font-size: 1.25rem;
+  filter: brightness(120%);
 }
 </style>

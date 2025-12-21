@@ -65,7 +65,7 @@ onMounted(() => {
         type="text"
         placeholder="Search artists..."
       )
-      router-link.btn-primary(to="/admin/artists/create") ➕ Create Artist
+      router-link.btn-primary(to="/admin/artists/create") Create Artist
 
   .loading(v-if="isLoading") Loading artists...
   .error(v-else-if="error") {{ error }}
@@ -74,17 +74,17 @@ onMounted(() => {
     .artist-card(v-for="artist in filteredArtists" :key="artist.id")
       .artist-image(v-if="artist.image_url")
         img(:src="artist.image_url" :alt="artist.name")
-      .artist-placeholder(v-else) 🎤
+      .artist-placeholder(v-else)
 
       .artist-content
         h3.artist-name {{ artist.name }}
         p.artist-description(v-if="artist.description") {{ artist.description }}
 
         .artist-links(v-if="artist.link || artist.soundcloud || artist.youtube || artist.bandcamp")
-          a.link(v-if="artist.link" :href="artist.link" target="_blank") 🌐 Website
-          a.link(v-if="artist.soundcloud" :href="artist.soundcloud" target="_blank") 🎵 SoundCloud
-          a.link(v-if="artist.youtube" :href="artist.youtube" target="_blank") ▶️ YouTube
-          a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") 🎸 Bandcamp
+          a.link(v-if="artist.link" :href="artist.link" target="_blank") Website
+          a.link(v-if="artist.soundcloud" :href="artist.soundcloud" target="_blank") SoundCloud
+          a.link(v-if="artist.youtube" :href="artist.youtube" target="_blank") YouTube
+          a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") Bandcamp
 
       .artist-actions
         router-link.btn-edit(:to="`/admin/artists/${artist.id}`") Edit
@@ -97,8 +97,7 @@ onMounted(() => {
 .artist-list-view {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 0.5rem solid black;
 }
 
 .header {
@@ -112,8 +111,9 @@ onMounted(() => {
 
 h2 {
   font-size: 1.75rem;
-  color: #1a1f36;
+  color: black;
   margin: 0;
+  font-weight: 900;
 }
 
 .header-actions {
@@ -124,43 +124,43 @@ h2 {
 
 .search-input {
   padding: 0.625rem 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
+  border: 0.25rem solid black;
   font-size: 0.95rem;
   min-width: 250px;
+  font-weight: 600;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #667eea;
+  background: black;
+  color: white;
 }
 
 .btn-primary {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: black;
   color: white;
   text-decoration: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: transform 0.2s, box-shadow 0.2s;
+  font-weight: 600;
+  transition: filter 0.2s;
   white-space: nowrap;
+  letter-spacing: 0.2em;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  filter: brightness(120%);
 }
 
 .loading, .error, .empty {
   padding: 3rem;
   text-align: center;
-  color: #666;
+  color: black;
 }
 
 .error {
-  color: #d32f2f;
-  background: #ffebee;
-  border-radius: 8px;
+  color: black;
+  background: white;
+  border: 0.5rem solid black;
 }
 
 .artists-grid {
@@ -170,22 +170,21 @@ h2 {
 }
 
 .artist-card {
-  border: 2px solid #f0f0f0;
-  border-radius: 12px;
+  border: 0.25rem solid black;
   overflow: hidden;
   transition: all 0.2s;
+  transform: rotate(0.5deg);
 }
 
 .artist-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  transform: rotate(-0.5deg);
 }
 
 .artist-image {
   width: 100%;
   height: 200px;
   overflow: hidden;
-  background: #f5f5f5;
+  background: white;
 }
 
 .artist-image img {
@@ -200,8 +199,8 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  font-size: 4rem;
+  background: white;
+  border-bottom: 0.25rem solid black;
 }
 
 .artist-content {
@@ -211,12 +210,13 @@ h2 {
 .artist-name {
   font-size: 1.25rem;
   margin-bottom: 0.75rem;
-  color: #1a1f36;
+  color: black;
+  font-weight: 900;
 }
 
 .artist-description {
   font-size: 0.95rem;
-  color: #666;
+  color: black;
   margin-bottom: 1rem;
   line-height: 1.5;
   display: -webkit-box;
@@ -234,49 +234,48 @@ h2 {
 
 .link {
   font-size: 0.85rem;
-  color: #667eea;
+  color: white;
   text-decoration: none;
   padding: 0.25rem 0.5rem;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 4px;
+  background: black;
+  font-weight: 600;
 }
 
 .link:hover {
-  background: rgba(102, 126, 234, 0.2);
+  filter: brightness(120%);
 }
 
 .artist-actions {
   display: flex;
   gap: 0.75rem;
   padding: 1rem 1.5rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 0.25rem solid black;
 }
 
 .btn-edit, .btn-delete {
   flex: 1;
   padding: 0.625rem 1rem;
-  border: none;
-  border-radius: 6px;
+  border: 0.25rem solid black;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: opacity 0.2s;
+  font-weight: 600;
+  transition: filter 0.2s;
 }
 
 .btn-edit {
-  background: #2196f3;
-  color: white;
+  background: white;
+  color: black;
 }
 
 .btn-delete {
-  background: #f44336;
+  background: black;
   color: white;
 }
 
 .btn-edit:hover, .btn-delete:hover {
-  opacity: 0.85;
+  filter: brightness(120%);
 }
 
 @media (max-width: 768px) {
