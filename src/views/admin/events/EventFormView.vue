@@ -1,9 +1,25 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { eventService } from '@/services'
-import type { Event } from '@/services'
+import { eventService, artistService } from '@/services'
+import type { Event, Artist } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
+import EventDisplay from '@/components/EventDisplay.vue'
+
+// Import TinyMCE components (must be before Editor import)
+import 'tinymce/tinymce'
+import 'tinymce/icons/default/icons'
+import 'tinymce/themes/silver/theme'
+import 'tinymce/models/dom/model'
+import 'tinymce/skins/ui/oxide/skin.css'
+
+// Import plugins
+import 'tinymce/plugins/lists'
+import 'tinymce/plugins/link'
+import 'tinymce/plugins/code'
+import 'tinymce/plugins/quickbars'
+
+import Editor from '@tinymce/tinymce-vue'
 
 const props = defineProps<{
   id?: string
@@ -17,7 +33,6 @@ const form = ref<Partial<Event>>({
   date: '',
   title: '',
   descriptionShort: '',
-  descriptionLong: '',
   fee: '',
   feeAk: '',
   shopLink: '',
@@ -31,6 +46,23 @@ const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const isCreatingShopLink = ref(false)
 const shopLinkSuccess = ref('')
+const previewArtists = ref<Artist[]>([])
+const loadingArtists = ref(false)
+
+// TinyMCE configuration
+const editorConfig = {
+  license_key: 'gpl',
+  height: 300,
+  menubar: false,
+  plugins: 'lists link code quickbars',
+  toolbar: false,
+  quickbars_selection_toolbar: 'bold italic underline strikethrough | forecolor backcolor | link | blocks | bullist numlist | hr | removeformat | code',
+  content_style: 'body { font-family: inherit; font-size: 14px; }',
+  branding: false,
+  promotion: false,
+  skin: false,
+  content_css: false,
+}
 
 function handleIdInput(e: Event) {
   const target = e.target as HTMLInputElement
@@ -174,6 +206,37 @@ async function handleSubmit() {
   }
 }
 
+// Watch artist_ids and fetch full artist data for preview
+watch(() => form.value.artist_ids, async (newArtistIds) => {
+  if (!newArtistIds || newArtistIds.length === 0) {
+    previewArtists.value = []
+    return
+  }
+
+  loadingArtists.value = true
+  try {
+    const artistPromises = newArtistIds.map(id => artistService.getById(id))
+    previewArtists.value = await Promise.all(artistPromises)
+  } catch (e) {
+    console.error('Failed to load artists for preview:', e)
+    previewArtists.value = []
+  } finally {
+    loadingArtists.value = false
+  }
+}, { deep: true })
+
+// Create preview event object from form data
+const previewEvent = computed(() => {
+  return {
+    ...form.value,
+    image_url: imagePreview.value || undefined,
+    img: imagePreview.value || undefined,
+    artists: previewArtists.value,
+    descriptionShort: form.value.descriptionShort || '',
+    title: form.value.title || 'Untitled Event',
+  } as Event
+})
+
 onMounted(async () => {
   await loadEvent()
 })
@@ -181,121 +244,122 @@ onMounted(async () => {
 
 <template lang="pug">
 .event-form-view
-  .form-header
-    h2 {{ isEditing ? 'Edit Event' : 'Create Event' }}
-    router-link.btn-cancel(to="/admin/events") Cancel
+  .form-container
+    .form-section
+      .form-header
+        h2 {{ isEditing ? 'Edit Event' : 'Create Event' }}
+        router-link.btn-cancel(to="/admin/events") Cancel
 
-  form.event-form(@submit.prevent="handleSubmit")
-    .form-row
-      .form-group
-        label(for="id") Event ID *
-        input#id(
-          v-model="form.id"
-          required
-          :disabled="isEditing"
-          placeholder="e.g., event-2025-12-31"
-          @input="handleIdInput"
-        )
-        .field-hint Unique identifier (cannot be changed after creation)
-        .field-hint Erlaubte Zeichen: A-Z, a-z, 0-9 und - (keine underscores _)
+      form.event-form(@submit.prevent="handleSubmit")
+        .form-row
+          .form-group
+            label(for="id") Event ID *
+            input#id(
+              v-model="form.id"
+              required
+              :disabled="isEditing"
+              placeholder="e.g., event-2025-12-31"
+              @input="handleIdInput"
+            )
+            .field-hint Unique identifier (cannot be changed after creation)
+            .field-hint Erlaubte Zeichen: A-Z, a-z, 0-9 und - (keine underscores _)
 
-      .form-group
-        label(for="date") Date & Time *
-        input#date(
-          v-model="form.date"
-          type="datetime-local"
-          required
-        )
+          .form-group
+            label(for="date") Date & Time *
+            input#date(
+              v-model="form.date"
+              type="datetime-local"
+              required
+            )
 
-    .form-group
-      label(for="title") Title *
-      input#title(
-        v-model="form.title"
-        required
-        placeholder="Event name"
-      )
+        .form-group
+          label(for="title") Title *
+          input#title(
+            v-model="form.title"
+            required
+            placeholder="Event name"
+          )
 
-    .form-group
-      label(for="descriptionShort") Short Description *
-      textarea#descriptionShort(
-        v-model="form.descriptionShort"
-        rows="3"
-        required
-        placeholder="Brief description for listings"
-      )
-      .field-hint Beschreibung (akzeptiert html)
+        .form-group
+          label(for="descriptionShort") Short Description *
+          Editor(
+            v-model="form.descriptionShort"
+            :init="editorConfig"
+            licenseKey="gpl"
+          )
+          .field-hint Rich text editor for event description
 
-    .form-group
-      label(for="descriptionLong") Long Description
-      textarea#descriptionLong(
-        v-model="form.descriptionLong"
-        rows="6"
-        placeholder="Detailed description"
-      )
-      .field-hint Lange Beschreibung, kann aktuell weggelassen werden
+        .form-row
+          .form-group
+            label(for="fee") VVK Preis
+            input#fee(
+              v-model="form.fee"
+              placeholder="e.g., 10"
+            )
+            .field-hint Fee muss eine Zahl sein (z.B. 10 für 10€)
 
-    .form-row
-      .form-group
-        label(for="fee") VVK Preis
-        input#fee(
-          v-model="form.fee"
-          placeholder="e.g., 10"
-        )
-        .field-hint Fee muss eine Zahl sein (z.B. 10 für 10€)
+          .form-group
+            label(for="feeAk") AK Preis
+            input#feeAk(
+              v-model="form.feeAk"
+              placeholder="e.g., 8"
+            )
+            .field-hint Fee muss eine Zahl sein (z.B. 8 für 8€)
 
-      .form-group
-        label(for="feeAk") AK Preis
-        input#feeAk(
-          v-model="form.feeAk"
-          placeholder="e.g., 8"
-        )
-        .field-hint Fee muss eine Zahl sein (z.B. 8 für 8€)
+        .form-group
+          label(for="shopLink") Ticket Shop Link
+          input#shopLink(
+            v-model="form.shopLink"
+            type="url"
+            placeholder="https://..."
+          )
+          .shop-link-actions
+            button.btn-shop-link(
+              type="button"
+              @click="createShopLink"
+              :disabled="isCreatingShopLink"
+            )
+              | {{ isCreatingShopLink ? 'Creating...' : 'Create Pretix Shop Link' }}
+            .field-hint Benötigt: Event ID, Title, Date und Fee (muss eine Zahl sein)
+          .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
 
-    .form-group
-      label(for="shopLink") Ticket Shop Link
-      input#shopLink(
-        v-model="form.shopLink"
-        type="url"
-        placeholder="https://..."
-      )
-      .shop-link-actions
-        button.btn-shop-link(
-          type="button"
-          @click="createShopLink"
-          :disabled="isCreatingShopLink"
-        )
-          | {{ isCreatingShopLink ? 'Creating...' : 'Create Pretix Shop Link' }}
-        .field-hint Benötigt: Event ID, Title, Date und Fee (muss eine Zahl sein)
-      .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
+        .form-group
+          label Artist Selection
+          ArtistSelector(
+            v-model="form.artist_ids"
+            v-model:artistOrder="form.artistOrder"
+          )
 
-    .form-group
-      label Artist Selection
-      ArtistSelector(
-        v-model="form.artist_ids"
-        v-model:artistOrder="form.artistOrder"
-      )
+        .form-group
+          label(for="image") Event Image
+          .image-preview(v-if="imagePreview")
+            img(:src="imagePreview" alt="Event image preview")
+            .preview-label {{ imageFile ? 'Neues Bild (wird hochgeladen)' : 'Aktuelles Bild' }}
+          input#image(
+            type="file"
+            accept="image/*"
+            @change="handleImageChange"
+          )
+          .field-hint Bild: wird resized auf 1000x1000px
 
-    .form-group
-      label(for="image") Event Image
-      .image-preview(v-if="imagePreview")
-        img(:src="imagePreview" alt="Event image preview")
-        .preview-label {{ imageFile ? 'Neues Bild (wird hochgeladen)' : 'Aktuelles Bild' }}
-      input#image(
-        type="file"
-        accept="image/*"
-        @change="handleImageChange"
-      )
-      .field-hint Bild: wird resized auf 1000x1000px
+        .error(v-if="error") {{ error }}
 
-    .error(v-if="error") {{ error }}
+        .form-actions
+          button.btn-primary(
+            type="submit"
+            :disabled="isLoading"
+          )
+            | {{ isLoading ? 'Saving...' : (isEditing ? 'Update Event' : 'Create Event') }}
+          router-link.btn-secondary(to="/admin/events") Cancel
 
-    .form-actions
-      button.btn-primary(
-        type="submit"
-        :disabled="isLoading"
-      )
-        | {{ isLoading ? 'Saving...' : (isEditing ? 'Update Event' : 'Create Event') }}
-      router-link.btn-secondary(to="/admin/events") Cancel
+    .preview-section
+      .preview-header
+        h3 Live Preview
+        .loading-indicator(v-if="loadingArtists") Loading artists...
+      .preview-content
+        EventDisplay(:event="previewEvent" v-if="form.title")
+        .preview-empty(v-else)
+          p Fill in the form to see preview
 </template>
 
 <style scoped>
@@ -303,7 +367,67 @@ onMounted(async () => {
   background: white;
   padding: 2rem;
   border: 0.5rem solid black;
-  max-width: 900px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.form-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  border-right: 0.25rem solid black;
+  padding-right: 2rem;
+}
+
+.preview-section {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  padding-left: 2rem;
+}
+
+.preview-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.25rem solid black;
+}
+
+.preview-header h3 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: black;
+  margin: 0;
+}
+
+.loading-indicator {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: black;
+  margin-top: 0.5rem;
+}
+
+.preview-content {
+  /* EventDisplay component has its own styles */
+}
+
+.preview-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+  border: 0.25rem solid black;
+  background: white;
+}
+
+.preview-empty p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: black;
+  margin: 0;
 }
 
 .form-header {
@@ -482,6 +606,23 @@ input:disabled {
 }
 
 @media (max-width: 768px) {
+  .form-container {
+    grid-template-columns: 1fr;
+  }
+
+  .form-section {
+    border-right: none;
+    border-bottom: 0.25rem solid black;
+    padding-right: 0;
+    padding-bottom: 2rem;
+  }
+
+  .preview-section {
+    position: static;
+    padding-left: 0;
+    padding-top: 2rem;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
   }

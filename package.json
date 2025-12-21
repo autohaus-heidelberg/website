@@ -12,11 +12,13 @@
     "deploy": "node scripts/gh-pages-deploy.js"
   },
   "dependencies": {
+    "@tinymce/tinymce-vue": "^6.3.0",
     "axios": "^1.13.2",
     "circletype": "^2.3.0",
     "dayjs": "^1.11.11",
     "pinia": "^2.1.7",
     "pug-plain-loader": "^1.1.0",
+    "tinymce": "^8.3.1",
     "vue": "^3.4.21",
     "vue-draggable-plus": "^0.6.0",
     "vue-router": "^4.3.0"
