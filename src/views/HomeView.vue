@@ -192,7 +192,15 @@ p Wir sind das Carousel im alten Autohaus.
 #mce-EMAIL {
   width: 100%;
   height: 3em;
+  padding: 0.5rem;
+  border: solid #000000;
+  font-size: 1rem;
   margin-bottom: 1rem;
+}
+
+#mce-EMAIL:focus {
+  outline: none;
+  border-color: #000000;
 }
 
 #mc-embedded-subscribe {
