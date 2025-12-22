@@ -20,7 +20,7 @@ const upcoming = computed(() =>
 
 const upComingHighlights = computed(() => {
   // NOTE: we restrict the large events to 3 or the first one without image. Other events are show in the smaller overview
-return upcoming.value.reduce((acc, event) => {
+return upcoming.value.reduce<typeof upcoming.value>((acc, event) => {
   if (acc.length < 3 && event.img) {
     acc.push(event);
   }
@@ -35,7 +35,7 @@ const upComingSmall = computed(() =>
 const zoom = ref(17);
 
 
-const logoContainer = ref(null);
+const logoContainer = ref<HTMLElement | null>(null);
 
 onMounted(() => {
   // NOTE: if there is no timeout, the font will appear larger, I don't know why
@@ -51,6 +51,7 @@ onUnmounted(() => {
 const logoHeight = ref(100);
 
 function setLogoHeight() {
+  if (!logoContainer.value) return;
   const diameter = Math.min(window.screen.width - 100, 600);
   logoHeight.value = diameter;
   logoContainer.value.style.height = `${diameter}px`;

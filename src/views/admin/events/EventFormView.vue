@@ -95,9 +95,10 @@ async function loadEvent() {
   }
 }
 
-function handleImageChange(e: Event & { target: HTMLInputElement }) {
-  if (e.target.files && e.target.files[0]) {
-    imageFile.value = e.target.files[0]
+function handleImageChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    imageFile.value = target.files[0]
 
     // Create preview for the new image
     const reader = new FileReader()

@@ -8,9 +8,9 @@
 import { onMounted, onUnmounted, ref } from "vue";
 import CircleType from "circletype";
 
-const logo = ref(null);
-const logo2 = ref(null);
-const logo3 = ref(null);
+const logo = ref<HTMLElement | null>(null);
+const logo2 = ref<HTMLElement | null>(null);
+const logo3 = ref<HTMLElement | null>(null);
 
 const props = defineProps<{
     diameter: number
@@ -22,6 +22,7 @@ onMounted(() => {
 })
 
 function createCircleLogo() {
+  if (!logo.value || !logo2.value || !logo3.value) return;
 
   const magicNumber = 7.06;
 
