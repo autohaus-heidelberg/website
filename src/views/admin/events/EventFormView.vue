@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { eventService, artistService } from '@/services'
-import type { Event, Artist } from '@/services'
+import type { Event as AppEvent, Artist } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 
@@ -28,7 +28,7 @@ const props = defineProps<{
 const router = useRouter()
 const isEditing = !!props.id
 
-const form = ref<Partial<Event>>({
+const form = ref<Partial<AppEvent>>({
   id: '',
   date: '',
   title: '',
