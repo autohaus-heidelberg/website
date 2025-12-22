@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { artistService } from '@/services'
 import type { Artist } from '@/services'
+import ArtistFormFields from '@/components/admin/ArtistFormFields.vue'
 
 interface Props {
   modelValue?: number[]
@@ -238,64 +239,22 @@ onMounted(() => {
     .modal-content(@click.stop)
       h2 Quick Add Artist
       form(@submit.prevent="handleQuickAdd")
-        .form-group
-          label(for="artist-name") Artist Name *
-          input#artist-name(
-            v-model="modalForm.name"
-            type="text"
-            required
-            placeholder="Band or artist name"
-          )
-
-        .form-group
-          label(for="artist-description") Description
-          textarea#artist-description(
-            v-model="modalForm.description"
-            rows="3"
-            placeholder="About the artist..."
-          )
-
-        .form-group
-          label(for="artist-link") Website
-          input#artist-link(
-            v-model="modalForm.link"
-            type="url"
-            placeholder="https://..."
-          )
-
-        .form-group
-          label(for="artist-youtube") YouTube
-          input#artist-youtube(
-            v-model="modalForm.youtube"
-            type="url"
-            placeholder="https://youtube.com/..."
-          )
-
-        .form-group
-          label(for="artist-soundcloud") SoundCloud
-          input#artist-soundcloud(
-            v-model="modalForm.soundcloud"
-            type="url"
-            placeholder="https://soundcloud.com/..."
-          )
-
-        .form-group
-          label(for="artist-bandcamp") Bandcamp
-          input#artist-bandcamp(
-            v-model="modalForm.bandcamp"
-            type="url"
-            placeholder="https://...bandcamp.com"
-          )
-
-        .form-group
-          label(for="artist-image") Artist Image
-          .image-preview(v-if="imagePreview")
-            img(:src="imagePreview" alt="Artist image preview")
-          input#artist-image(
-            type="file"
-            accept="image/*"
-            @change="handleImageChange"
-          )
+        ArtistFormFields(
+          v-model="modalForm"
+          :compact="true"
+          id-prefix="quick-add"
+        )
+          template(#image-field)
+            .form-group
+              label(for="quick-add-image") Artist Image
+              .image-preview(v-if="imagePreview")
+                img(:src="imagePreview" alt="Artist image preview")
+              input#quick-add-image(
+                type="file"
+                accept="image/*"
+                @change="handleImageChange"
+              )
+              .field-hint Bild: wird resized
 
         .error(v-if="error") {{ error }}
 

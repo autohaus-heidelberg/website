@@ -2,6 +2,11 @@
 .event-sync
   h1 Event Synchronization
 
+  .error-banner(v-if="sseError")
+    .error-content
+      strong SSE Connection Error:
+      |  {{ sseError }}
+
   .actions.mb-2
 
     button.btn-primary(
@@ -53,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { eventService, type Event } from '@/services/events'
 import { useEventSource } from '@/composables/useEventSource'
 import EventSyncLog from '@/components/admin/EventSyncLog.vue'
@@ -64,7 +69,7 @@ const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const selectedEvents = ref<string[]>([])
 const isLoadingEvents = ref(false)
 
-const { logs, connect, disconnect, clearLogs } = useEventSource()
+const { logs, error: sseError, connect, disconnect, clearLogs, clearError } = useEventSource()
 const isSyncing = ref(false)
 const isWriting = ref(false)
 
@@ -110,6 +115,7 @@ function handleSyncFromGit() {
 
   isSyncing.value = true
   clearLogs()
+  clearError()
 
   const url = eventService.getSyncFromGitUrl()
 
@@ -143,6 +149,15 @@ function handleSyncFromGit() {
       alert(`Sync failed: ${data.message}`)
     }
   })
+
+  // Watch for SSE connection errors
+  const stopWatching = watch(sseError, (newError) => {
+    if (newError) {
+      isSyncing.value = false
+      alert(`Connection error during sync: ${newError}`)
+      stopWatching()
+    }
+  })
 }
 
 function handleWriteToWebsite() {
@@ -158,6 +173,7 @@ function handleWriteToWebsite() {
 
   isWriting.value = true
   clearLogs()
+  clearError()
 
   const url = eventService.getWriteToWebsiteUrl(selectedEvents.value)
 
@@ -202,6 +218,15 @@ function handleWriteToWebsite() {
       alert(`Write failed: ${data.message}`)
     }
   })
+
+  // Watch for SSE connection errors
+  const stopWatching = watch(sseError, (newError) => {
+    if (newError) {
+      isWriting.value = false
+      alert(`Connection error during write: ${newError}`)
+      stopWatching()
+    }
+  })
 }
 
 function formatDate(dateStr: string): string {
@@ -228,6 +253,18 @@ h2 {
   margin-bottom: 1rem;
   font-weight: 900;
   color: black;
+}
+
+.error-banner {
+  background: #f8d7da;
+  border: 0.25rem solid #721c24;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+}
+
+.error-content {
+  color: #721c24;
 }
 
 .actions {

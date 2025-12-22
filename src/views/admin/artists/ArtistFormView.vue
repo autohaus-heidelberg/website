@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { artistService, type Artist } from '@/services'
+import ArtistFormFields from '@/components/admin/ArtistFormFields.vue'
 
 const props = defineProps<{
   id?: string
@@ -82,67 +83,16 @@ onMounted(() => {
     router-link.btn-cancel(to="/admin/artists") Cancel
 
   form.artist-form(@submit.prevent="handleSubmit")
-    .form-group
-      label(for="name") Artist Name *
-      input#name(
-        v-model="form.name"
-        required
-        placeholder="Band or artist name"
-      )
-
-    .form-group
-      label(for="description") Description
-      textarea#description(
-        v-model="form.description"
-        rows="5"
-        placeholder="About the artist..."
-      )
-
-    .form-group
-      label(for="link") Website
-      input#link(
-        v-model="form.link"
-        type="url"
-        placeholder="https://..."
-      )
-      .field-hint Link: muss ein vollständiger link sein, also zb: https://www.duckduckgo.com
-
-    .form-row
-      .form-group
-        label(for="soundcloud") SoundCloud
-        input#soundcloud(
-          v-model="form.soundcloud"
-          type="url"
-          placeholder="https://soundcloud.com/..."
-        )
-        .field-hint Soundcloud: funktioniert nicht
-
-      .form-group
-        label(for="youtube") YouTube
-        input#youtube(
-          v-model="form.youtube"
-          type="url"
-          placeholder="https://youtube.com/..."
-        )
-        .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
-
-    .form-group
-      label(for="bandcamp") Bandcamp
-      input#bandcamp(
-        v-model="form.bandcamp"
-        type="url"
-        placeholder="https://bandcamp.com/..."
-      )
-      .field-hint Bandcamp URL: muss der embedded link sein, z.B: https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/
-
-    .form-group
-      label(for="image") Artist Image
-      input#image(
-        type="file"
-        accept="image/*"
-        @change="handleImageChange"
-      )
-      .field-hint Bild: wird resized
+    ArtistFormFields(v-model="form")
+      template(#image-field)
+        .form-group
+          label(for="image") Artist Image
+          input#image(
+            type="file"
+            accept="image/*"
+            @change="handleImageChange"
+          )
+          .field-hint Bild: wird resized
 
     .error(v-if="error") {{ error }}
 

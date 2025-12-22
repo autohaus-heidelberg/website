@@ -11,10 +11,12 @@ export function useEventSource() {
   const logs = ref<SSELogEntry[]>([])
   const isConnected = ref(false)
   const isLoading = ref(false)
+  const error = ref<string | null>(null)
   let eventSource: EventSource | null = null
 
   const connect = (url: string, eventHandlers: Record<string, (data: any) => void>) => {
     disconnect() // Close any existing connection
+    error.value = null
 
     eventSource = new EventSource(url)
     isConnected.value = true
@@ -44,8 +46,19 @@ export function useEventSource() {
       })
     })
 
-    eventSource.onerror = (error) => {
-      console.error('SSE error:', error)
+    eventSource.onerror = (err) => {
+      console.error('SSE error:', err)
+      const errorMessage = 'SSE connection error: The connection to the server was lost or timed out. The operation may have been interrupted.'
+      error.value = errorMessage
+
+      // Add error to logs
+      logs.value.push({
+        timestamp: new Date().toLocaleTimeString('de-DE'),
+        event: 'error',
+        message: errorMessage,
+        data: err
+      })
+
       isLoading.value = false
       disconnect()
     }
@@ -64,6 +77,10 @@ export function useEventSource() {
     logs.value = []
   }
 
+  const clearError = () => {
+    error.value = null
+  }
+
   onUnmounted(() => {
     disconnect()
   })
@@ -72,8 +89,10 @@ export function useEventSource() {
     logs,
     isConnected,
     isLoading,
+    error,
     connect,
     disconnect,
-    clearLogs
+    clearLogs,
+    clearError
   }
 }
