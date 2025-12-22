@@ -95,7 +95,7 @@ onMounted(() => {
 
       .event-footer
         .event-meta
-          span.fee(v-if="event.fee") {{ event.fee }}
+          span.fee(v-if="event.fee") {{ event.fee }} €
           a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") Tickets
 
         .event-actions

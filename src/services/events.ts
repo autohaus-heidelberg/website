@@ -77,6 +77,14 @@ export const eventService = {
   },
 
   /**
+   * Create Pretix shop without creating an event
+   * Accepts minimal data: id, title, date, fee
+   */
+  async createPretixShop(data: { id: string; title: string; date: string; fee: string }): Promise<{ shopLink: string }> {
+    return api.post<{ shopLink: string }>('/api/pretix/create-shop/', data)
+  },
+
+  /**
    * Create Helferpad for event
    */
   async createHelferpad(id: string): Promise<{ helferpadLink: string }> {
