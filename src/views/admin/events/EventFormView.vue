@@ -286,7 +286,7 @@ const previewEvent = computed(() => {
     artists: previewArtists.value,
     descriptionShort: form.value.descriptionShort || '',
     title: form.value.title || 'Untitled Event',
-  } as Event
+  } as AppEvent
 })
 
 onMounted(async () => {
