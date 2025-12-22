@@ -1,8 +1,9 @@
 <template lang="pug">
 .past-events
   h1 Vergangene Events
-  .event.mb-1(v-for="event in upcoming" :key="event.id")
-    EventPreview(:event="event")
+  .events-grid
+    .event(v-for="event in upcoming" :key="event.id")
+      EventPreview(:event="event")
 
 </template>
 
@@ -25,7 +26,21 @@ const upcoming = computed(() =>
 
 <style scoped>
 .past-events {
-  max-width: 75ch;
+  max-width: min(95vw, 2048px);
   margin: auto;
+  padding: 1rem;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 500px));
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.event {
+  display: flex;
+  justify-content: center;
 }
 </style>

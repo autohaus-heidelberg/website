@@ -29,7 +29,7 @@ h2 {
     /* transform: rotate(90deg); */
     grid-area: date-diff;
    font-weight: 900;
-    font-size: clamp(2.5rem, 3.5vw, 4rem);
+    font-size: 2.5rem;
     height: 100%;
     display: flex;
     align-items: center;
@@ -47,14 +47,14 @@ margin-bottom: 1rem;
 
 .date {
     grid-area: date;
-    display: flex; 
+    display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
     height: 100%;
     width: 100%;
     font-weight: 900;
-    font-size: clamp(1.6rem, 3vw, 4rem)
+    font-size: 1.6rem;
 }
 
 .time {
@@ -72,10 +72,10 @@ margin-bottom: 1rem;
     grid-area: title;
     word-break: break-word;
     /* text-align: justify; */
- 	hyphens: auto; 
+ 	hyphens: auto;
     height: 100%;
     width: 100%;
-    font-size:  clamp(2rem, 3.1vw, 4rem);
+    font-size: 2rem;
     font-stretch: 125%;
     font-weight: 900;
 }
@@ -85,16 +85,24 @@ margin-bottom: 1rem;
     flex-direction: column;
     align-items: center;
     grid-gap: 0.5rem;
-       border: 0.5rem solid;
+    border: 0.5rem solid;
     background-color: var(--text-color);
     grid-template-columns: 2fr 1fr;
    grid-template-areas: "title date"
-   "img date-diff"; 
+   "img date-diff";
    margin-left: 1rem;
    margin-right: 1rem;
    transform: rotate(1deg);
   transition: all 0.2s;
+  min-width: 300px;
+  max-width: 500px;
   }
+
+@media screen and (max-width: 768px) {
+  .event-preview {
+    max-width: 100%;
+  }
+}
 
 .event-preview:hover {
     transform: rotate(2deg) scale(1.02);
@@ -111,16 +119,46 @@ margin-bottom: 1rem;
     align-items: center;
     justify-content: center;
     height: 100%;
+    width: 100%;
+    overflow: hidden;
+      aspect-ratio: 1 / 1.6180 ;
 }
 
 .img {
-        max-height: min(900px, 90vw);
-
-
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
+/* Regular screens (tablets and small desktops) */
+@media screen and (min-width: 768px) {
+  .title {
+    font-size: 2.5rem;
+  }
 
+  .date {
+    font-size: 2rem;
+  }
 
+  .date-diff {
+    font-size: 3rem;
+  }
+}
+
+/* Large screens (large desktops and 4K) */
+@media screen and (min-width: 1200px) {
+  .title {
+    font-size: 3rem;
+  }
+
+  .date {
+    font-size: 2.4rem;
+  }
+
+  .date-diff {
+    font-size: 3.5rem;
+  }
+}
 
 </style>
 
