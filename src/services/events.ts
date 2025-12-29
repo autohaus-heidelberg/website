@@ -33,6 +33,13 @@ export interface Event {
   artist_count?: number
 }
 
+export interface HelferpadEventData {
+  title: string
+  date: string  // ISO format
+  fee?: string
+  shopLink?: string
+}
+
 export const eventService = {
   /**
    * Get all events (paginated)
@@ -87,8 +94,8 @@ export const eventService = {
   /**
    * Create Helferpad for event
    */
-  async createHelferpad(id: string): Promise<{ helferpadLink: string }> {
-    return api.post<{ helferpadLink: string }>(`/api/events/${id}/create_helferpad/`)
+  async createHelferpad(id: string, eventData: HelferpadEventData): Promise<{ helferpadLink: string }> {
+    return api.post<{ helferpadLink: string }>(`/api/events/${id}/create_helferpad/`, eventData)
   },
 
   /**

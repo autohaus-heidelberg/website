@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { eventService, artistService } from '@/services'
-import type { Event as AppEvent, Artist } from '@/services'
+import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 
@@ -200,8 +200,16 @@ async function createHelferpad() {
       }
     }
 
-    // Create the Helferpad
-    const result = await eventService.createHelferpad(form.value.id!)
+    // Prepare event data for helferpad
+    const helferpadData: HelferpadEventData = {
+      title: form.value.title || '',
+      date: form.value.date ? new Date(form.value.date).toISOString() : new Date().toISOString(),
+      fee: form.value.fee,
+      shopLink: form.value.shopLink
+    }
+
+    // Create the Helferpad with event data
+    const result = await eventService.createHelferpad(form.value.id!, helferpadData)
     form.value.helferpadLink = result.helferpadLink
     helferpadSuccess.value = 'Helferpad created successfully!'
 
