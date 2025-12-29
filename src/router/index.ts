@@ -93,6 +93,11 @@ const router = createRouter({
           path: 'sync',
           name: 'admin-sync',
           component: () => import('../views/admin/EventSyncView.vue')
+        },
+        {
+          path: 'settings',
+          name: 'admin-settings',
+          component: () => import('../views/admin/settings/SettingsView.vue')
         }
       ]
     }

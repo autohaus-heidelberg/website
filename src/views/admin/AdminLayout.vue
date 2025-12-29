@@ -31,6 +31,8 @@ function handleLogout() {
         span Artists
       router-link.nav-link(to="/admin/sync" active-class="active")
         span Event Sync
+      router-link.nav-link(to="/admin/settings" active-class="active")
+        span Settings
       router-link.nav-link(to="/")
         span Public Site
 
