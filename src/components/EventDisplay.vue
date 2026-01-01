@@ -4,7 +4,7 @@
     h1.accent(v-if="showDatediff") {{ dateDiff }}
     h1.accent {{ event.title }}
     img.event-img(v-if="imageUrl" :src="imageUrl")
-    p(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
+    p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
     h3(v-else-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
     .get-ticket(v-if="event.shopLink")
@@ -92,6 +92,10 @@ const dateDiff = computed(() => {
     max-width: min(500px, 90vw);
     max-height: min(500px, 90vw);
     margin-bottom: 2rem;
+}
+
+.description :deep(p) {
+  margin: 0 !important;
 }
 
 .event {

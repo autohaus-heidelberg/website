@@ -5,6 +5,7 @@ import { eventService, artistService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
+import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
 
 // Import TinyMCE components (must be before Editor import)
 import 'tinymce/tinymce'
@@ -27,6 +28,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const isEditing = !!props.id
+const activeTab = ref('details')
 
 const form = ref<Partial<AppEvent>>({
   id: '',
@@ -304,139 +306,155 @@ onMounted(async () => {
 
 <template lang="pug">
 .event-form-view
-  .form-container
-    .form-section
-      .form-header
-        h2 {{ isEditing ? 'Edit Event' : 'Create Event' }}
-        router-link.btn-cancel(to="/admin/events") Cancel
+  .form-header
+    h2 {{ isEditing ? 'Edit Event' : 'Create Event' }}
+    router-link.btn-cancel(to="/admin/events") Cancel
 
-      form.event-form(@submit.prevent="handleSubmit")
-        .form-row
+  .event-tabs(v-if="isEditing")
+    button.tab(
+      :class="{ active: activeTab === 'details' }"
+      @click="activeTab = 'details'"
+      type="button"
+    ) Event Details
+    button.tab(
+      :class="{ active: activeTab === 'checklist' }"
+      @click="activeTab = 'checklist'"
+      type="button"
+    ) Checklist
+
+  .tab-content(v-show="activeTab === 'details'")
+    .form-container
+      .form-section
+        form.event-form(@submit.prevent="handleSubmit")
+          .form-row
+            .form-group
+              label(for="id") Event ID *
+              input#id(
+                v-model="form.id"
+                required
+                :disabled="isEditing"
+                placeholder="e.g., event-2025-12-31"
+                @input="handleIdInput"
+              )
+              .field-hint Unique identifier (cannot be changed after creation)
+              .field-hint Erlaubte Zeichen: A-Z, a-z, 0-9 und - (keine underscores _)
+
+            .form-group
+              label(for="date") Date & Time *
+              input#date(
+                v-model="form.date"
+                type="datetime-local"
+                required
+              )
+
           .form-group
-            label(for="id") Event ID *
-            input#id(
-              v-model="form.id"
+            label(for="title") Title *
+            input#title(
+              v-model="form.title"
               required
-              :disabled="isEditing"
-              placeholder="e.g., event-2025-12-31"
-              @input="handleIdInput"
+              placeholder="Event name"
             )
-            .field-hint Unique identifier (cannot be changed after creation)
-            .field-hint Erlaubte Zeichen: A-Z, a-z, 0-9 und - (keine underscores _)
 
           .form-group
-            label(for="date") Date & Time *
-            input#date(
-              v-model="form.date"
-              type="datetime-local"
-              required
+            label(for="descriptionShort") Short Description *
+            Editor(
+              v-model="form.descriptionShort"
+              :init="editorConfig"
+              licenseKey="gpl"
             )
+            .field-hint Rich text editor for event description
 
-        .form-group
-          label(for="title") Title *
-          input#title(
-            v-model="form.title"
-            required
-            placeholder="Event name"
-          )
+          .form-row
+            .form-group
+              label(for="fee") VVK Preis
+              input#fee(
+                v-model="form.fee"
+                placeholder="e.g., 10"
+              )
+              .field-hint Fee muss eine Zahl sein (z.B. 10 für 10€)
 
-        .form-group
-          label(for="descriptionShort") Short Description *
-          Editor(
-            v-model="form.descriptionShort"
-            :init="editorConfig"
-            licenseKey="gpl"
-          )
-          .field-hint Rich text editor for event description
-
-        .form-row
-          .form-group
-            label(for="fee") VVK Preis
-            input#fee(
-              v-model="form.fee"
-              placeholder="e.g., 10"
-            )
-            .field-hint Fee muss eine Zahl sein (z.B. 10 für 10€)
+            .form-group
+              label(for="feeAk") AK Preis
+              input#feeAk(
+                v-model="form.feeAk"
+                placeholder="e.g., 8"
+              )
+              .field-hint Fee muss eine Zahl sein (z.B. 8 für 8€)
 
           .form-group
-            label(for="feeAk") AK Preis
-            input#feeAk(
-              v-model="form.feeAk"
-              placeholder="e.g., 8"
+            label(for="shopLink") Ticket Shop Link
+            input#shopLink(
+              v-model="form.shopLink"
+              type="url"
+              placeholder="https://..."
             )
-            .field-hint Fee muss eine Zahl sein (z.B. 8 für 8€)
+            .shop-link-actions
+              button.btn-shop-link(
+                type="button"
+                @click="createShopLink"
+                :disabled="isCreatingShopLink"
+              )
+                | {{ isCreatingShopLink ? 'Creating...' : 'Create Pretix Shop Link' }}
+              .field-hint Benötigt: Event ID, Title, Date und Fee (muss eine Zahl sein). Erstellt keinen Event in der Datenbank.
+            .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
 
-        .form-group
-          label(for="shopLink") Ticket Shop Link
-          input#shopLink(
-            v-model="form.shopLink"
-            type="url"
-            placeholder="https://..."
-          )
-          .shop-link-actions
-            button.btn-shop-link(
-              type="button"
-              @click="createShopLink"
-              :disabled="isCreatingShopLink"
+          .form-group
+            label(for="helferpadLink") Helferpad Link
+            input#helferpadLink(
+              v-model="form.helferpadLink"
+              type="url"
+              placeholder="https://..."
             )
-              | {{ isCreatingShopLink ? 'Creating...' : 'Create Pretix Shop Link' }}
-            .field-hint Benötigt: Event ID, Title, Date und Fee (muss eine Zahl sein). Erstellt keinen Event in der Datenbank.
-          .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
+            .shop-link-actions
+              button.btn-shop-link(
+                type="button"
+                @click="createHelferpad"
+                :disabled="isCreatingHelferpad"
+              )
+                | {{ isCreatingHelferpad ? 'Creating...' : 'Create Helferpad' }}
+              .field-hint Benötigt: Event ID
+            .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
-        .form-group
-          label(for="helferpadLink") Helferpad Link
-          input#helferpadLink(
-            v-model="form.helferpadLink"
-            type="url"
-            placeholder="https://..."
-          )
-          .shop-link-actions
-            button.btn-shop-link(
-              type="button"
-              @click="createHelferpad"
-              :disabled="isCreatingHelferpad"
+          .form-group
+            label Artist Selection
+            ArtistSelector(
+              v-model="form.artist_ids"
+              v-model:artistOrder="form.artistOrder"
             )
-              | {{ isCreatingHelferpad ? 'Creating...' : 'Create Helferpad' }}
-            .field-hint Benötigt: Event ID
-          .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
-        .form-group
-          label Artist Selection
-          ArtistSelector(
-            v-model="form.artist_ids"
-            v-model:artistOrder="form.artistOrder"
-          )
+          .form-group
+            label(for="image") Event Image
+            .image-preview(v-if="imagePreview")
+              img(:src="imagePreview" alt="Event image preview")
+              .preview-label {{ imageFile ? 'Neues Bild (wird hochgeladen)' : 'Aktuelles Bild' }}
+            input#image(
+              type="file"
+              accept="image/*"
+              @change="handleImageChange"
+            )
+            .field-hint Bild: wird resized auf 1000x1000px
 
-        .form-group
-          label(for="image") Event Image
-          .image-preview(v-if="imagePreview")
-            img(:src="imagePreview" alt="Event image preview")
-            .preview-label {{ imageFile ? 'Neues Bild (wird hochgeladen)' : 'Aktuelles Bild' }}
-          input#image(
-            type="file"
-            accept="image/*"
-            @change="handleImageChange"
-          )
-          .field-hint Bild: wird resized auf 1000x1000px
+          .error(v-if="error") {{ error }}
 
-        .error(v-if="error") {{ error }}
+          .form-actions
+            button.btn-primary(
+              type="submit"
+              :disabled="isLoading"
+            )
+              | {{ isLoading ? 'Saving...' : (isEditing ? 'Update Event' : 'Create Event') }}
+            router-link.btn-secondary(to="/admin/events") Cancel
 
-        .form-actions
-          button.btn-primary(
-            type="submit"
-            :disabled="isLoading"
-          )
-            | {{ isLoading ? 'Saving...' : (isEditing ? 'Update Event' : 'Create Event') }}
-          router-link.btn-secondary(to="/admin/events") Cancel
+      .preview-section
+        .preview-header
+          h3 Live Preview
+          .loading-indicator(v-if="loadingArtists") Loading artists...
+        .preview-content
+          EventDisplay(:event="previewEvent" v-if="form.title")
+          .preview-empty(v-else)
+            p Fill in the form to see preview
 
-    .preview-section
-      .preview-header
-        h3 Live Preview
-        .loading-indicator(v-if="loadingArtists") Loading artists...
-      .preview-content
-        EventDisplay(:event="previewEvent" v-if="form.title")
-        .preview-empty(v-else)
-          p Fill in the form to see preview
+  .tab-content(v-if="isEditing" v-show="activeTab === 'checklist'")
+    EventChecklistTab(:eventId="props.id")
 </template>
 
 <style scoped>
@@ -446,6 +464,52 @@ onMounted(async () => {
   border: 0.5rem solid black;
   max-width: 100%;
   width: 100%;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 0.25rem solid black;
+}
+
+.event-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 0.25rem solid black;
+  padding-bottom: 0;
+}
+
+.tab {
+  padding: 0.875rem 1.75rem;
+  border: 0.25rem solid black;
+  border-bottom: none;
+  background: white;
+  color: black;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+  bottom: -0.25rem;
+}
+
+.tab:hover {
+  background: black;
+  color: white;
+}
+
+.tab.active {
+  background: black;
+  color: white;
+  border-bottom: 0.25rem solid black;
+}
+
+.tab-content {
+  display: block;
 }
 
 .form-container {
@@ -505,13 +569,6 @@ onMounted(async () => {
   font-weight: 600;
   color: black;
   margin: 0;
-}
-
-.form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
 }
 
 h2 {

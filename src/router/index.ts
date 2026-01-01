@@ -98,6 +98,22 @@ const router = createRouter({
           path: 'settings',
           name: 'admin-settings',
           component: () => import('../views/admin/settings/SettingsView.vue')
+        },
+        {
+          path: 'checklist-templates',
+          name: 'admin-checklist-templates',
+          component: () => import('../views/admin/checklist-templates/ChecklistTemplateListView.vue')
+        },
+        {
+          path: 'checklist-templates/create',
+          name: 'admin-checklist-template-create',
+          component: () => import('../views/admin/checklist-templates/ChecklistTemplateFormView.vue')
+        },
+        {
+          path: 'checklist-templates/:id',
+          name: 'admin-checklist-template-edit',
+          component: () => import('../views/admin/checklist-templates/ChecklistTemplateFormView.vue'),
+          props: true
         }
       ]
     }
