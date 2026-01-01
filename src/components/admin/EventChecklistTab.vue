@@ -327,6 +327,7 @@ h3 {
 .checklist-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .checklist-table thead {
@@ -366,7 +367,7 @@ h3 {
 }
 
 .name-cell {
-  width: 35%;
+  width: 45%;
 }
 
 .stage-cell {
@@ -378,12 +379,12 @@ h3 {
 }
 
 .modified-cell {
-  width: 15%;
+  width: 10%;
   font-size: 0.85rem;
 }
 
 .editor-cell {
-  width: 10%;
+  width: 5%;
   font-size: 0.85rem;
 }
 

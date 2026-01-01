@@ -281,3 +281,8 @@ h2 {
     display: flex;
     flex-direction: row;
 }
+
+/* Mobile Menu Body Scroll Lock */
+body.menu-open {
+    overflow: hidden;
+}

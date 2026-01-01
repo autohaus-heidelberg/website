@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { eventService, artistService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
@@ -27,6 +27,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const isEditing = !!props.id
 const activeTab = ref('details')
 
@@ -301,6 +302,12 @@ const previewEvent = computed(() => {
 
 onMounted(async () => {
   await loadEvent()
+
+  // Check for tab query parameter and set active tab
+  const tabParam = route.query.tab as string
+  if (tabParam && ['details', 'checklist'].includes(tabParam)) {
+    activeTab.value = tabParam
+  }
 })
 </script>
 
