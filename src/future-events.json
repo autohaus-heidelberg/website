@@ -1,1 +1,14 @@
-[]
+[
+    {
+        "id": "mm-260108",
+        "date": "2026-08-01T18:00:00+00:00",
+        "title": "Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<div class=\"SmallVeranstaltungText\" style=\"padding-top: 5px;\">\n<p>Grotesk, underground, Punk! Bei unserer n&auml;chsten Vorstellung geht's richtig ans Eingemachte. Wir tauchen ab in die Untiefen des deutschen Hardcore-Kinos, doch statt stumpfem Splatter-Spa&szlig; und verquerem Eingeweide-Geschmodder (was trotzdem nicht zu kurz kommen wird) wollen wir uns diesmal durch eine beispiellos nihilistische Brille mit dem Tod besch&auml;ftigen. Es wird amateurhaft, unheimlich, hoffnungslos, lustig, gothic, punkig, blutig, barbarisch, brutal &ndash; kurz: so richtig underground, von einem Regisseur, der in den sp&auml;ten 80ern fernab von kuscheligen Wim-Wenders-Filmen die Grenzen der menschlichen Perversion auf der Leinwand auslotete.</p>\n</div>",
+        "descriptionLong": "",
+        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3383073475",
+        "img": "/img/9ee17346-8376-44fd-a0c4-67f91af48fed.jpeg",
+        "artists": []
+    }
+]
