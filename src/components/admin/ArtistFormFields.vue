@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Artist } from '@/services'
+import { convertToYouTubeEmbed, convertToBandcampEmbed } from '@/utils'
 
 interface Props {
   modelValue: Partial<Artist>
@@ -42,12 +43,20 @@ const soundcloud = computed({
 
 const youtube = computed({
   get: () => props.modelValue.youtube || '',
-  set: (value) => emit('update:modelValue', { ...props.modelValue, youtube: value })
+  set: (value) => {
+    // Automatically convert standard YouTube URLs to embed format
+    const embedUrl = convertToYouTubeEmbed(value)
+    emit('update:modelValue', { ...props.modelValue, youtube: embedUrl })
+  }
 })
 
 const bandcamp = computed({
   get: () => props.modelValue.bandcamp || '',
-  set: (value) => emit('update:modelValue', { ...props.modelValue, bandcamp: value })
+  set: async (value) => {
+    // Automatically convert standard Bandcamp URLs to embed format
+    const embedUrl = await convertToBandcampEmbed(value)
+    emit('update:modelValue', { ...props.modelValue, bandcamp: embedUrl })
+  }
 })
 
 // Helper for unique IDs
@@ -103,7 +112,7 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
         type="url"
         placeholder="https://youtube.com/..."
       )
-      .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
+      .field-hint YouTube URL: Paste any YouTube URL (e.g., https://www.youtube.com/watch?v=dWRCooFKk3c or https://youtu.be/dWRCooFKk3c). Will be automatically converted to embed format.
 
   template(v-if="compact")
     .form-group
@@ -114,7 +123,7 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
         type="url"
         placeholder="https://youtube.com/..."
       )
-      .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
+      .field-hint YouTube URL: Paste any YouTube URL (e.g., https://www.youtube.com/watch?v=dWRCooFKk3c or https://youtu.be/dWRCooFKk3c). Will be automatically converted to embed format.
 
     .form-group
       label(:for="makeId('soundcloud')") SoundCloud
@@ -134,7 +143,7 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
       type="url"
       placeholder="https://bandcamp.com/..."
     )
-    .field-hint Bandcamp URL: muss der embedded link sein, z.B: https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/
+    .field-hint Bandcamp URL: Paste any Bandcamp album or track URL (e.g., https://artistname.bandcamp.com/album/album-name). Will attempt to auto-convert to embed format.
 
   slot(name="image-field")
 </template>
