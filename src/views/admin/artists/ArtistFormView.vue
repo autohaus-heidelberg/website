@@ -52,16 +52,19 @@ async function handleSubmit() {
   error.value = ''
 
   try {
+    let artistId: number
+
     if (isEditing) {
       await artistService.update(Number(props.id), form.value)
+      artistId = Number(props.id)
     } else {
-      await artistService.create(form.value)
+      const artist = await artistService.create(form.value)
+      artistId = artist.id!
     }
 
-    // TODO: Handle image upload separately if needed
-    // if (imageFile.value) {
-    //   await artistService.uploadImage(artist.id!, imageFile.value)
-    // }
+    if (imageFile.value) {
+      await artistService.uploadImage(artistId, imageFile.value)
+    }
 
     router.push('/admin/artists')
   } catch (e: any) {
