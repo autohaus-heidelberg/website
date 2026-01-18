@@ -167,6 +167,8 @@ watch(isMobileMenuOpen, (isOpen) => {
   gap: 0.5rem;
   padding: 1.5rem;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .nav-link {

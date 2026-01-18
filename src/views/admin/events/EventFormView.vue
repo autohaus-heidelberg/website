@@ -467,9 +467,9 @@ onMounted(async () => {
 <style scoped>
 .event-form-view {
   background: white;
-  padding: 2rem;
   border: 0.5rem solid black;
   max-width: 100%;
+  padding: 2rem;
   width: 100%;
 }
 
@@ -747,6 +747,10 @@ input:disabled {
 }
 
 @media (max-width: 768px) {
+  .event-form-view {
+    border: none;
+  }
+
   .form-container {
     grid-template-columns: 1fr;
   }
