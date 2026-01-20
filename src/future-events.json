@@ -1,5 +1,36 @@
 [
     {
+        "id": "fuller-Soulscraper",
+        "date": "2026-02-06T18:00:00+00:00",
+        "title": "Fuller (Fr\u00e4nkisch Tour de Force) & Soulscraper (Punk LU)",
+        "fee": "12",
+        "feeAk": "10",
+        "descriptionShort": "Seid ihr schonmal aus einer Cessna 175 gesprungen, mit nichts anderem auf dem R\u00fccken als eurer treuen 1965er Fender Jazzmaster? Wir auch nicht, aber wir glauben es f\u00fchlt sich ungef\u00e4hr so an, wie Fuller klingt. Brachial laut und roh, als w\u00fcrde man gerade mit 200 Sachen durch eine Zirruswolke sausen, ohne sich aber auch nur einen Millimeter zu bewegen. Mit Ex-Mitgliedern von Bands wie Heim, Akne Kid Joe, 52Hertz und Naivs brettert Fuller rein, als h\u00e4tte man den Fallschirm zuhause gelassen!\r\n Doch damit nicht genug: Ludwigshafen\u2019s (am Rhein!) Punk Sensation Soulscraper ist auch am Start und setzen auch auf Riffs, die lauter dr\u00f6hnen als eine 747 auf der Startbahn West!\r\nDa kann man nur noch sagen buy the Ticket, take the ride, boarding beginnt!",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/fuller-Soulscraper/",
+        "img": "/img/8359e533-d769-4711-bbeb-2c11e2c71077.png",
+        "artists": [
+            {
+                "name": "Fuller",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 470px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=4186149619/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://fuller-band.bandcamp.com/album/same-ep\">Same Ep. by FULLER</a></iframe>",
+                "image": "/img/df5a7b70-efbf-4c8b-9292-ec6e937dd8e9.jpeg"
+            },
+            {
+                "name": "Soulscraper",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 470px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=3198108327/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://soulscraperband.bandcamp.com/album/elegant-knives\">Elegant Knives by soulscraper</a></iframe>",
+                "image": "/img/6d3a6d2e-f920-4b37-8391-75aa12559006.jpeg"
+            }
+        ]
+    },
+    {
         "id": "2026-01-24-AP",
         "date": "2026-01-24T14:00:00+00:00",
         "title": "Solar Punk: Body, Society and Environment beyond Calamity",
