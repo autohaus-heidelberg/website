@@ -13,10 +13,12 @@ export function useEventSource() {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
   let eventSource: EventSource | null = null
+  let hasCompleted = false  // Track if we received a completion event
 
   const connect = (url: string, eventHandlers: Record<string, (data: any) => void>) => {
     disconnect() // Close any existing connection
     error.value = null
+    hasCompleted = false
 
     eventSource = new EventSource(url)
     isConnected.value = true
@@ -33,13 +35,20 @@ export function useEventSource() {
         const messageEvent = event as MessageEvent
         const data = JSON.parse(messageEvent.data)
 
-        // Add to logs
-        logs.value.push({
-          timestamp: new Date().toLocaleTimeString('de-DE'),
-          event: eventType,
-          message: data.message,
-          data
-        })
+        // Add to logs (skip heartbeat events to reduce noise)
+        if (eventType !== 'heartbeat') {
+          logs.value.push({
+            timestamp: new Date().toLocaleTimeString('de-DE'),
+            event: eventType,
+            message: data.message,
+            data
+          })
+        }
+
+        // Track completion events
+        if (eventType.includes('complete') || eventType.includes('error')) {
+          hasCompleted = true
+        }
 
         // Call custom handler
         eventHandlers[eventType](data)
@@ -48,16 +57,21 @@ export function useEventSource() {
 
     eventSource.onerror = (err) => {
       console.error('SSE error:', err)
-      const errorMessage = 'SSE connection error: The connection to the server was lost or timed out. The operation may have been interrupted.'
-      error.value = errorMessage
 
-      // Add error to logs
-      logs.value.push({
-        timestamp: new Date().toLocaleTimeString('de-DE'),
-        event: 'error',
-        message: errorMessage,
-        data: err
-      })
+      // Only treat as error if we haven't already completed successfully
+      // EventSource fires onerror when connection closes, even after successful completion
+      if (!hasCompleted && isConnected.value) {
+        const errorMessage = 'SSE connection error: The connection to the server was lost or timed out. The operation may have been interrupted.'
+        error.value = errorMessage
+
+        // Add error to logs
+        logs.value.push({
+          timestamp: new Date().toLocaleTimeString('de-DE'),
+          event: 'error',
+          message: errorMessage,
+          data: err
+        })
+      }
 
       isLoading.value = false
       disconnect()

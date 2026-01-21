@@ -15,7 +15,7 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
             .side-date-content(ref="dateContent") 
                 div(v-resize-text={ratio: 2}) {{ dateDiff }} 
         .event-img
-            img.img(v-if="event.img" :src="event.img")
+            img.img(v-if="event.img" :src="event.img" crossorigin="anonymous")
         //- button Mehr
 </template>
 

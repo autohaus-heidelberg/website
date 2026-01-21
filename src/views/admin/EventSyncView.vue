@@ -64,6 +64,7 @@ import { useEventSource } from '@/composables/useEventSource'
 import EventSyncLog from '@/components/admin/EventSyncLog.vue'
 import type { PaginatedResponse } from '@/types/api'
 import dayjs from 'dayjs'
+import websiteEvents from '@/events.json'
 
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const selectedEvents = ref<string[]>([])
@@ -94,8 +95,11 @@ async function loadEvents() {
   try {
     isLoadingEvents.value = true
     eventsData.value = await eventService.getAll()
-    // Select all by default
-    selectedEvents.value = events.value.map(e => e.id)
+    // Select only events that are currently in events.json by default
+    const websiteEventIds = new Set(websiteEvents.map(e => e.id))
+    selectedEvents.value = events.value
+      .filter(e => websiteEventIds.has(e.id))
+      .map(e => e.id)
   } catch (error) {
     console.error('Failed to load events:', error)
     alert('Failed to load events. Please check your connection.')
@@ -131,6 +135,9 @@ function handleSyncFromGit() {
     },
     event_sync: (data) => {
       console.log('Event synced:', data)
+    },
+    heartbeat: (data) => {
+      console.log('Heartbeat:', data)
     },
     sync_complete: (data) => {
       console.log('Sync complete:', data)

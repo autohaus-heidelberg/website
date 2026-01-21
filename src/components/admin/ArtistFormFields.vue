@@ -93,47 +93,46 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
     )
     .field-hint Link: muss ein vollständiger link sein, also zb: https://www.duckduckgo.com
 
-  .form-row(v-if="!compact")
-    .form-group
-      label(:for="makeId('soundcloud')") SoundCloud
-      input(
-        :id="makeId('soundcloud')"
-        v-model="soundcloud"
-        type="url"
-        placeholder="https://soundcloud.com/..."
-      )
-      .field-hint Soundcloud: funktioniert nicht
+  //- .form-row(v-if="!compact")
+  //-   .form-group
+  //-     label(:for="makeId('soundcloud')") SoundCloud
+  //-     input(
+  //-       :id="makeId('soundcloud')"
+  //-       v-model="soundcloud"
+  //-       type="url"
+  //-       placeholder="https://soundcloud.com/..."
+  //-     )
+  //-     .field-hint Soundcloud: funktioniert nicht
 
-    .form-group
-      label(:for="makeId('youtube')") YouTube
-      input(
-        :id="makeId('youtube')"
-        v-model="youtube"
-        type="url"
-        placeholder="https://youtube.com/..."
-      )
-      .field-hint YouTube URL: Paste any YouTube URL (e.g., https://www.youtube.com/watch?v=dWRCooFKk3c or https://youtu.be/dWRCooFKk3c). Will be automatically converted to embed format.
+    //- .form-group
+    //-   label(:for="makeId('youtube')") YouTube
+    //-   input(
+    //-     :id="makeId('youtube')"
+    //-     v-model="youtube"
+    //-     type="url"
+    //-     placeholder="https://youtube.com/..."
+    //-   )
+    //-   .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
 
-  template(v-if="compact")
-    .form-group
-      label(:for="makeId('youtube')") YouTube
-      input(
-        :id="makeId('youtube')"
-        v-model="youtube"
-        type="url"
-        placeholder="https://youtube.com/..."
-      )
-      .field-hint YouTube URL: Paste any YouTube URL (e.g., https://www.youtube.com/watch?v=dWRCooFKk3c or https://youtu.be/dWRCooFKk3c). Will be automatically converted to embed format.
+  .form-group
+    label(:for="makeId('youtube')") YouTube
+    input(
+      :id="makeId('youtube')"
+      v-model="youtube"
+      type="url"
+      placeholder="https://youtube.com/..."
+    )
+    .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
 
-    .form-group
-      label(:for="makeId('soundcloud')") SoundCloud
-      input(
-        :id="makeId('soundcloud')"
-        v-model="soundcloud"
-        type="url"
-        placeholder="https://soundcloud.com/..."
-      )
-      .field-hint Soundcloud: funktioniert nicht
+    //- .form-group
+    //-   label(:for="makeId('soundcloud')") SoundCloud
+    //-   input(
+    //-     :id="makeId('soundcloud')"
+    //-     v-model="soundcloud"
+    //-     type="url"
+    //-     placeholder="https://soundcloud.com/..."
+    //-   )
+    //-   .field-hint Soundcloud: funktioniert nicht
 
   .form-group
     label(:for="makeId('bandcamp')") Bandcamp

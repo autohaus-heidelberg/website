@@ -209,7 +209,11 @@ p Wir sind das Carousel im alten Autohaus.
   height: 3em;
 }
 
-
+.event {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .events-small {
 

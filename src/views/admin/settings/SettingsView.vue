@@ -77,7 +77,15 @@ async function handleSave() {
   .tab-content(v-show="activeTab === 'helferpad'")
     .section-description
       p Default content that appears in new Helferpad documents
-
+      p.replacements-title Available placeholders:
+      ul.replacements-list(v-pre)
+        li #[code {{Eventname}}] - Event title
+        li #[code {{EventDate}}] - Event start date/time (German timezone)
+        li #[code {{EventGetIn}}] - Event start minus 3 hours (German timezone)
+        li #[code {{EventSoundCheck}}] - Event start minus 2 hours (German timezone)
+        li #[code {{EventDinner}}] - Event start minus 1 hour (German timezone)
+        li #[code {{EntranceFee}}] - AK price (or [TBA] if not set)
+        li #[code {{EventLink}}] - Link to event website 
     form.setting-form(@submit.prevent="handleSave")
       .form-group
         label(for="helferpad-content") Default Content
@@ -162,6 +170,30 @@ async function handleSave() {
 .section-description p {
   color: black;
   margin: 0;
+}
+
+.replacements-title {
+  margin-top: 1rem !important;
+  font-weight: 600;
+}
+
+.replacements-list {
+  margin: 0.5rem 0 0 0;
+  padding-left: 1.5rem;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.replacements-list li {
+  margin-bottom: 0.25rem;
+}
+
+.replacements-list code {
+  background: #f3f4f6;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid #e5e7eb;
+  font-family: monospace;
+  font-size: 0.8125rem;
 }
 
 .setting-form {

@@ -3,7 +3,7 @@
     h2.date.accent {{ date }} Uhr
     h1.accent(v-if="showDatediff") {{ dateDiff }}
     h1.accent {{ event.title }}
-    img.event-img(v-if="imageUrl" :src="imageUrl")
+    img.event-img(v-if="imageUrl" :src="imageUrl" crossorigin="anonymous")
     p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
     h3(v-else-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
@@ -12,7 +12,7 @@
             button() Tickets kaufen
     .artist(v-for="artist in event.artists")
         h2.accent {{ artist.name }}
-        img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)")
+        img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)" crossorigin="anonymous")
         a(v-if="artist.link" :href="artist.link") Band website
         p {{ artist.description }}
         .video-container(v-if="artist.youtube")
