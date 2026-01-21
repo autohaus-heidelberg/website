@@ -59,75 +59,26 @@ export function convertToYouTubeEmbed(url: string): string {
 }
 
 /**
- * Converts a standard Bandcamp URL to an embed URL
- * Attempts to extract the album/track ID from the page HTML
- * Falls back to returning original URL if conversion fails
+ * Extracts the Bandcamp EmbeddedPlayer URL from embed HTML or returns the URL if already valid
+ * Accepts:
+ * - Direct EmbeddedPlayer URLs
+ * - Iframe embed code from Bandcamp's share dialog
  */
-export async function convertToBandcampEmbed(url: string): Promise<string> {
-    if (!url) return url;
-    
-    url = url.trim();
-    
-    // Already an embed URL
-    if (url.includes('EmbeddedPlayer')) {
-        return url;
+export function extractBandcampEmbedUrl(input: string): string | null {
+    if (!input) return null;
+
+    input = input.trim();
+
+    // Already a direct EmbeddedPlayer URL
+    if (input.startsWith('https://bandcamp.com/EmbeddedPlayer/')) {
+        return input;
     }
-    
-    try {
-        const urlObj = new URL(url);
-        
-        // Check if it's a valid Bandcamp URL
-        if (!urlObj.hostname.includes('bandcamp.com')) {
-            return url;
-        }
-        
-        // Determine if it's an album or track
-        let type: 'album' | 'track' | null = null;
-        if (urlObj.pathname.includes('/album/')) {
-            type = 'album';
-        } else if (urlObj.pathname.includes('/track/')) {
-            type = 'track';
-        } else {
-            return url; // Not an album or track URL
-        }
-        
-        // Try to fetch the page and extract the ID
-        try {
-            const response = await fetch(url);
-            const html = await response.text();
-            
-            // Method 1: Look for album/track ID in meta tags
-            const metaMatch = html.match(/property="og:video"[^>]+content="[^"]*\/(album|track)=(\d+)/);
-            if (metaMatch) {
-                const id = metaMatch[2];
-                return `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/`;
-            }
-            
-            // Method 2: Look for tralbum data in JavaScript
-            const tralbumMatch = html.match(/data-tralbum="(\d+)"/);
-            if (tralbumMatch) {
-                const id = tralbumMatch[1];
-                return `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/`;
-            }
-            
-            // Method 3: Look for embed code in the page
-            const embedMatch = html.match(/EmbeddedPlayer\/(album|track)=(\d+)/);
-            if (embedMatch) {
-                const id = embedMatch[2];
-                return `https://bandcamp.com/EmbeddedPlayer/${type}=${id}/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/`;
-            }
-            
-        } catch (fetchError) {
-            // CORS error or network issue - fall back to original URL
-            console.warn('Failed to fetch Bandcamp page:', fetchError);
-            return url;
-        }
-        
-    } catch (e) {
-        // Invalid URL
-        return url;
+
+    // Try to extract src from iframe embed code
+    const srcMatch = input.match(/src=["'](https:\/\/bandcamp\.com\/EmbeddedPlayer\/[^"']+)["']/);
+    if (srcMatch) {
+        return srcMatch[1];
     }
-    
-    // If all methods failed, return original URL
-    return url;
+
+    return null;
 }

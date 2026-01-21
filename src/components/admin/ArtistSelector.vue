@@ -238,7 +238,7 @@ onMounted(() => {
         .drag-handle ⋮⋮
         .artist-name {{ getArtistById(id)?.name }}
         .artist-actions
-          router-link.btn-edit(:to="`/admin/artists/${id}/edit`") Edit
+          router-link.btn-edit(:to="`/admin/artists/${id}`") Edit
           button.btn-remove(
             type="button"
             @click="removeArtist(id)"

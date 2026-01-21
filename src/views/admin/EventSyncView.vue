@@ -22,7 +22,7 @@
     h2 Events
     .select-all-container.mb-1
       label.checkbox-label
-        input(type="checkbox" v-model="selectAll" @change="toggleSelectAll")
+        input(type="checkbox" v-model="selectAll")
         span Select All ({{ events.length }} events)
 
     .table-container(v-if="events.length > 0")
@@ -106,10 +106,6 @@ async function loadEvents() {
   } finally {
     isLoadingEvents.value = false
   }
-}
-
-function toggleSelectAll() {
-  selectAll.value = !selectAll.value
 }
 
 function handleSyncFromGit() {

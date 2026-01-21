@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Artist } from '@/services'
-import { convertToYouTubeEmbed, convertToBandcampEmbed } from '@/utils'
+import { convertToYouTubeEmbed, extractBandcampEmbedUrl } from '@/utils'
 
 interface Props {
   modelValue: Partial<Artist>
@@ -52,10 +52,10 @@ const youtube = computed({
 
 const bandcamp = computed({
   get: () => props.modelValue.bandcamp || '',
-  set: async (value) => {
-    // Automatically convert standard Bandcamp URLs to embed format
-    const embedUrl = await convertToBandcampEmbed(value)
-    emit('update:modelValue', { ...props.modelValue, bandcamp: embedUrl })
+  set: (value) => {
+    // Extract embed URL from pasted iframe code or direct URL
+    const embedUrl = extractBandcampEmbedUrl(value)
+    emit('update:modelValue', { ...props.modelValue, bandcamp: embedUrl || value })
   }
 })
 
@@ -122,7 +122,7 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
       type="url"
       placeholder="https://youtube.com/..."
     )
-    .field-hint YouTube URL: muss ein youtube embed link sein, dafuer auf dem youtube video auf SHARE klicken, dann EMBED und dann den link bei src, ohne den tracker kopieren. z.B: https://www.youtube.com/embed/dWRCooFKk3c
+    .field-hint YouTube URL: muss ein youtube embed link sein, direkte youtube video links werden automatisch umgewandelt
 
     //- .form-group
     //-   label(:for="makeId('soundcloud')") SoundCloud
@@ -136,13 +136,13 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
 
   .form-group
     label(:for="makeId('bandcamp')") Bandcamp
-    input(
+    textarea(
       :id="makeId('bandcamp')"
       v-model="bandcamp"
-      type="url"
-      placeholder="https://bandcamp.com/..."
+      rows="3"
+      placeholder="Paste Bandcamp embed code here..."
     )
-    .field-hint Bandcamp URL: Paste any Bandcamp album or track URL (e.g., https://artistname.bandcamp.com/album/album-name). Will attempt to auto-convert to embed format.
+    .field-hint Muss ein Bandcamp EmbeddedPlayer link sein: Gehe zum Track/Album auf Bandcamp, klicke auf Share/Embed -> Embed this track -> Select a style, dann  kopiere den iframe-Code und füge ihn hier ein. 
 
   slot(name="image-field")
 </template>
