@@ -181,6 +181,14 @@ watch(() => props.modelValue, (newValue) => {
   }
 }, { deep: true })
 
+// Watch for artistOrder changes (handles case where event loads after artists)
+watch(() => props.artistOrder, (newOrder) => {
+  if (newOrder && allArtists.value.length > 0) {
+    const orderIds = newOrder.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+    orderedArtistIds.value = orderIds.filter(id => allArtists.value.some(a => a.id === id))
+  }
+})
+
 onMounted(() => {
   loadArtists()
 })
