@@ -237,10 +237,12 @@ onMounted(() => {
       )
         .drag-handle ⋮⋮
         .artist-name {{ getArtistById(id)?.name }}
-        button.btn-remove(
-          type="button"
-          @click="removeArtist(id)"
-        ) Remove
+        .artist-actions
+          router-link.btn-edit(:to="`/admin/artists/${id}/edit`") Edit
+          button.btn-remove(
+            type="button"
+            @click="removeArtist(id)"
+          ) Remove
 
   .modal(v-if="showModal" @click.self="closeModal")
     .modal-backdrop
@@ -390,6 +392,11 @@ h3 {
   color: white;
 }
 
+.artist-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .drag-handle {
   font-size: 1.5rem;
   cursor: grab;
@@ -411,6 +418,7 @@ h3 {
   color: inherit;
 }
 
+.btn-edit,
 .btn-remove {
   padding: 0.375rem 0.75rem;
   background: white;
@@ -419,19 +427,23 @@ h3 {
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
+  text-decoration: none;
 }
 
+.btn-edit:hover,
 .btn-remove:hover {
   background: black;
   color: white;
 }
 
+.selected-item:hover .btn-edit,
 .selected-item:hover .btn-remove {
   background: white;
   color: black;
   border-color: white;
 }
 
+.selected-item:hover .btn-edit:hover,
 .selected-item:hover .btn-remove:hover {
   background: black;
   color: white;
@@ -596,7 +608,7 @@ h3 {
     grid-template-rows: auto auto;
   }
 
-  .btn-remove {
+  .artist-actions {
     grid-column: 1 / -1;
     margin-top: 0.5rem;
   }
