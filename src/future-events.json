@@ -16,7 +16,7 @@
                 "description": "",
                 "soundcloud": "",
                 "youtube": "",
-                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 470px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=4186149619/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://fuller-band.bandcamp.com/album/same-ep\">Same Ep. by FULLER</a></iframe>",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=4186149619/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
                 "image": "/img/df5a7b70-efbf-4c8b-9292-ec6e937dd8e9.jpeg"
             },
             {
@@ -25,7 +25,7 @@
                 "description": "",
                 "soundcloud": "",
                 "youtube": "",
-                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 470px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=3198108327/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://soulscraperband.bandcamp.com/album/elegant-knives\">Elegant Knives by soulscraper</a></iframe>",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3198108327/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
                 "image": "/img/6d3a6d2e-f920-4b37-8391-75aa12559006.jpeg"
             }
         ]
