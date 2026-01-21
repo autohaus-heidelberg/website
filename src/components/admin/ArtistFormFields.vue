@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Artist } from '@/services'
+import { convertToYouTubeEmbed, convertToBandcampEmbed } from '@/utils'
 
 interface Props {
   modelValue: Partial<Artist>
@@ -42,12 +43,20 @@ const soundcloud = computed({
 
 const youtube = computed({
   get: () => props.modelValue.youtube || '',
-  set: (value) => emit('update:modelValue', { ...props.modelValue, youtube: value })
+  set: (value) => {
+    // Automatically convert standard YouTube URLs to embed format
+    const embedUrl = convertToYouTubeEmbed(value)
+    emit('update:modelValue', { ...props.modelValue, youtube: embedUrl })
+  }
 })
 
 const bandcamp = computed({
   get: () => props.modelValue.bandcamp || '',
-  set: (value) => emit('update:modelValue', { ...props.modelValue, bandcamp: value })
+  set: async (value) => {
+    // Automatically convert standard Bandcamp URLs to embed format
+    const embedUrl = await convertToBandcampEmbed(value)
+    emit('update:modelValue', { ...props.modelValue, bandcamp: embedUrl })
+  }
 })
 
 // Helper for unique IDs
@@ -133,7 +142,7 @@ const makeId = (field: string) => `${props.idPrefix}-${field}`
       type="url"
       placeholder="https://bandcamp.com/..."
     )
-    .field-hint Bandcamp URL: muss der embedded link sein, z.B: https://bandcamp.com/EmbeddedPlayer/album=2131561424/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/
+    .field-hint Bandcamp URL: Paste any Bandcamp album or track URL (e.g., https://artistname.bandcamp.com/album/album-name). Will attempt to auto-convert to embed format.
 
   slot(name="image-field")
 </template>
