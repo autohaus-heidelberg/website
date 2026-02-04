@@ -31,6 +31,37 @@
         ]
     },
     {
+        "id": "meltingpalms-glizzer",
+        "date": "2026-02-14T19:00:00+00:00",
+        "title": "Melting Palms (Hamburg) & Glizzer (Mannheim)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Diesen Valentinstag gibt es ein Konzert zum dahinschmelzen! Melting Palms geben sich die Ehre und vers\u00fc\u00dfen euren Abend mit Psych-Shoegaze, bei dem auch die l\u00e4ngste Praline der Welt den Aggregatszustand von fest zu fl\u00fcssig \u00e4ndert!\r\nAls Support ist Glizzer aus Mannheim dabei, die mit Synthesizern das Carousel zum funkeln bringen.\r\nCute Date Idea: einfach auf das Konzert kommen! Der Erfolg in der Liebe ist garantiert*!\r\n\r\n*Wir k\u00f6nnen f\u00fcr den Erfolg nicht garantieren...",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/meltingpalms-glizzer/",
+        "img": "/img/980ef1f9-d334-4051-a9d4-af3c4819f06c.png",
+        "artists": [
+            {
+                "name": "Melting Palms",
+                "link": "https://meltingpalms.bandcamp.com/album/head-in-the-clouds",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 470px;\" src=\"https://bandcamp.com/EmbeddedPlayer/album=1680840955/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://meltingpalms.bandcamp.com/album/head-in-the-clouds\">Head In The Clouds by Melting Palms</a></iframe>",
+                "image": "/img/f22a6fec-5036-4e70-b9de-10ac4955d526.jpeg"
+            },
+            {
+                "name": "Glizzer",
+                "link": "https://glizzer.bandcamp.com/track/cocktails",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 442px;\" src=\"https://bandcamp.com/EmbeddedPlayer/track=2273029120/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://glizzer.bandcamp.com/track/cocktails\">Cocktails by Glizzer</a></iframe>",
+                "image": "/img/5d357c76-36bd-408d-89f5-67b2c96965ae.jpeg"
+            }
+        ]
+    },
+    {
         "id": "fuller-soulscraper",
         "date": "2026-02-06T19:00:00+00:00",
         "title": "Fuller (Fr\u00e4nkisch Tour de Force) & Soulscraper (Punk LU)",
