@@ -42,6 +42,15 @@
         "img": "/img/980ef1f9-d334-4051-a9d4-af3c4819f06c.png",
         "artists": [
             {
+                "name": "Glizzer",
+                "link": "https://glizzer.bandcamp.com/track/cocktails",
+                "description": "Synthpop aus Mannheim",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/4pf1mKnArBs?si=ZNIP8H-mpeqixgoY",
+                "bandcamp": "",
+                "image": "/img/12e35e39-96b5-4f1e-b52e-efad098fc335.jpeg"
+            },
+            {
                 "name": "Melting Palms",
                 "link": "https://meltingpalms.bandcamp.com/album/head-in-the-clouds",
                 "description": "",
@@ -49,15 +58,6 @@
                 "youtube": "",
                 "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1680840955/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
                 "image": "/img/f22a6fec-5036-4e70-b9de-10ac4955d526.jpeg"
-            },
-            {
-                "name": "Glizzer",
-                "link": "https://glizzer.bandcamp.com/track/cocktails",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "<iframe style=\"border: 0; width: 350px; height: 442px;\" src=\"https://bandcamp.com/EmbeddedPlayer/track=2273029120/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/\" seamless><a href=\"https://glizzer.bandcamp.com/track/cocktails\">Cocktails by Glizzer</a></iframe>",
-                "image": "/img/5d357c76-36bd-408d-89f5-67b2c96965ae.jpeg"
             }
         ]
     },
