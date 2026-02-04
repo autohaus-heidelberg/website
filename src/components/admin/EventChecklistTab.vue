@@ -95,9 +95,11 @@ async function updateItemStatus(item: ChecklistInstanceItem, newStatus: Checklis
   item.status = newStatus
 
   try {
-    await checklistInstanceService.updateStatus(item.id!, newStatus)
-    // Reload to get updated modified time and editor
-    await loadChecklistItems()
+    const updatedItem = await checklistInstanceService.updateStatus(item.id!, newStatus)
+    // Merge server response (modified time, editor) into existing item
+    item.modified = updatedItem.modified
+    item.edited_by = updatedItem.edited_by
+    item.edited_by_username = updatedItem.edited_by_username
   } catch (e: any) {
     // Revert on error
     item.status = oldStatus

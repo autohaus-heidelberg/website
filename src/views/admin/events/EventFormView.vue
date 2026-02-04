@@ -28,7 +28,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const route = useRoute()
-const isEditing = !!props.id
+const isEditing = ref(!!props.id)
 const activeTab = ref('details')
 
 const form = ref<Partial<AppEvent>>({
@@ -137,7 +137,7 @@ async function createShopLink() {
 
   try {
     // If event already exists, use the old endpoint
-    if (isEditing) {
+    if (isEditing.value) {
       const result = await eventService.cloneToPretix(form.value.id!)
       form.value.shopLink = result.shopLink
     } else {
@@ -175,9 +175,11 @@ async function createHelferpad() {
   error.value = ''
   helferpadSuccess.value = ''
 
+  const wasNewEvent = !isEditing.value
+
   try {
     // If event is new (not editing), save it first
-    if (!isEditing) {
+    if (!isEditing.value) {
       if (!form.value.title) {
         error.value = 'Event Title is required before creating Helferpad'
         return
@@ -201,6 +203,9 @@ async function createHelferpad() {
       if (imageFile.value) {
         await eventService.uploadImage(formData.id!, imageFile.value)
       }
+
+      // Mark as editing since the event now exists
+      isEditing.value = true
     }
 
     // Prepare event data for helferpad
@@ -214,7 +219,7 @@ async function createHelferpad() {
     // Create the Helferpad with event data
     const result = await eventService.createHelferpad(form.value.id!, helferpadData)
     form.value.helferpadLink = result.helferpadLink
-    helferpadSuccess.value = 'Helferpad created successfully!'
+    helferpadSuccess.value = wasNewEvent ? 'Event and Helferpad created successfully!' : 'Helferpad created successfully!'
 
     // Clear success message after 3 seconds
     setTimeout(() => {
@@ -243,13 +248,13 @@ async function handleSubmit() {
     // Format date to ISO
     formData.date = new Date(form.value.date!).toISOString()
 
-    if (isEditing) {
+    if (isEditing.value) {
       // For editing, only send fields that can be updated (exclude image and image_url)
-      await eventService.update(props.id!, formData)
+      await eventService.update(form.value.id!, formData)
 
       // Handle image upload separately if a new image was selected
       if (imageFile.value) {
-        await eventService.uploadImage(props.id!, imageFile.value)
+        await eventService.uploadImage(form.value.id!, imageFile.value)
       }
     } else {
       // For creation, send all data
@@ -420,6 +425,7 @@ onMounted(async () => {
               )
                 | {{ isCreatingHelferpad ? 'Creating...' : 'Create Helferpad' }}
               .field-hint Benötigt: Event ID
+              .field-hint(v-if="!isEditing") Erstellt auch den Event in der Datenbank.
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
           .form-group
