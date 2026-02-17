@@ -40,6 +40,37 @@
         ]
     },
     {
+        "id": "goldcup-knabenschule",
+        "date": "2026-03-03T18:00:00+00:00",
+        "title": "Gold Cup (Manchester) & Knabenschule (HD/Halle)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "In den italienischen Alpen finden gegenw\u00e4rtig die 25. olympischen Winterspiele statt und auch im Carousel dreht sich diesmal alles um den olympischen Gedanken: \u201eDabeisein ist alles!\u201c. Diesmal mit Gold Cup, der Punk-Sensation aus Mad Manchester, ein Sound der einem so durch die Ohren saust, dass selbst beim Biathlon m\u00e4chtig Zielwasser getrunken werden muss! Ihr neues Album \u201eThe Piss Has Been Taken\u201c sagt eigentlich schon alles.\r\nDoch damit nicht genug, auf dem Weg zum Siegertreppchen geben die Burschen der Knabenschule den Startschuss ab. Synthpunk, der gef\u00e4hrlicher ist als ein Skeletonschlitten mit 145 im Eiskanal.\r\nAlso: nicht ausrutschen und euer Sportabzeichen mitbringen.\r\n\r\n(Teilnahmeurkunden werden auch akzeptiert!)",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/goldcup-knabenschule/",
+        "img": "/img/ffd42d77-2dec-4d99-836a-28170eeaf22f.jpeg",
+        "artists": [
+            {
+                "name": "Gold Cup",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/6Q5rjVq0e_I",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=56929309/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Knabenschule",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/8nEfa9UKHyA",
+                "bandcamp": "",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "bandsupporter-contest26",
         "date": "2026-02-21T18:00:00+00:00",
         "title": "Bandsupporter Contest 2026 - Vorrunde",
@@ -50,36 +81,5 @@
         "shopLink": "https://www.ztix.de/search?q=bandsupporter",
         "img": "/img/48ab3e79-9ede-4d84-bd3b-ee4c75b879f2.png",
         "artists": []
-    },
-    {
-        "id": "meltingpalms-glizzer",
-        "date": "2026-02-14T19:00:00+00:00",
-        "title": "Melting Palms (Hamburg) & Glizzer (Mannheim)",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "Diesen Valentinstag gibt es ein Konzert zum dahinschmelzen! Melting Palms geben sich die Ehre und vers\u00fc\u00dfen euren Abend mit Psych-Shoegaze, bei dem auch die l\u00e4ngste Praline der Welt den Aggregatszustand von fest zu fl\u00fcssig \u00e4ndert!\r\nAls Support ist Glizzer aus Mannheim dabei, die mit Synthesizern das Carousel zum funkeln bringen.\r\nCute Date Idea: einfach auf das Konzert kommen! Der Erfolg in der Liebe ist garantiert*!\r\n\r\n*Wir k\u00f6nnen f\u00fcr den Erfolg nicht garantieren...",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/meltingpalms-glizzer/",
-        "img": "/img/980ef1f9-d334-4051-a9d4-af3c4819f06c.png",
-        "artists": [
-            {
-                "name": "Melting Palms",
-                "link": "https://meltingpalms.bandcamp.com/album/head-in-the-clouds",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/9Hwix_v9_mU",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1680840955/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/f22a6fec-5036-4e70-b9de-10ac4955d526.jpeg"
-            },
-            {
-                "name": "Glizzer",
-                "link": "https://glizzer.bandcamp.com/track/cocktails",
-                "description": "Synthpop aus Mannheim",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/4pf1mKnArBs?si=ZNIP8H-mpeqixgoY",
-                "bandcamp": "",
-                "image": "/img/12e35e39-96b5-4f1e-b52e-efad098fc335.jpeg"
-            }
-        ]
     }
 ]
