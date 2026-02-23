@@ -1,5 +1,27 @@
 [
     {
+        "id": "260411-saxophones",
+        "date": "2026-04-11T17:00:00+00:00",
+        "title": "Enjoy Jazz - The Saxophones",
+        "fee": "18,60",
+        "feeAk": "22",
+        "descriptionShort": "<p>Enjoy Jazz in Kooperation mit Musikzimmer</p>",
+        "descriptionLong": "",
+        "shopLink": "https://enjoyjazz.reservix.de/tickets-the-saxophones-in-heidelberg-carousel-am-11-4-2026/e2499803",
+        "img": "/img/6cd547cd-1040-4551-8a87-4944eaa95f2d.jpeg",
+        "artists": [
+            {
+                "name": "The Saxophones",
+                "link": "",
+                "description": "Das Duo The Saxophones, bestehend aus dem Ehepaar Alexi Erenkov und Alison Alderdice, macht hauchzarten Retro-Kammerpop, der Elemente aus der Exotica der 1950er Jahre, Art-Noir, West Coast Folk und Smooth Jazz vereint.\n\nGegr\u00fcndet Mitte der 2000er Jahre in der kalifornischen Bay Area, hinterfragen The Saxophones auf ihrem aktuellen vierten Album \u201eNo Time For Poetry\u201c auf subtile Weise den aktuellen Zustand der Welt und ihren Platz darin \u2013 eine Momentaufnahme pers\u00f6nlicher und politischer Reflexionen zwischen ironischer Resignation und vagem Optimismus.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/Ufv1c0rhHYk",
+                "bandcamp": "",
+                "image": "/img/866e0b22-f3a1-4dd1-9e0e-ce164cb524b7.jpeg"
+            }
+        ]
+    },
+    {
         "id": "sexverbot-dustsucker",
         "date": "2026-03-20T19:00:00+00:00",
         "title": "Sexverbot + \u00d6PNV + Dustsuck!er",
