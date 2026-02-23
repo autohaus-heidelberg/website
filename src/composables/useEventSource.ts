@@ -58,23 +58,28 @@ export function useEventSource() {
     eventSource.onerror = (err) => {
       console.error('SSE error:', err)
 
-      // Only treat as error if we haven't already completed successfully
-      // EventSource fires onerror when connection closes, even after successful completion
-      if (!hasCompleted && isConnected.value) {
-        const errorMessage = 'SSE connection error: The connection to the server was lost or timed out. The operation may have been interrupted.'
-        error.value = errorMessage
+      // Delay to allow any buffered SSE events (e.g. write_complete) to be processed
+      // before deciding whether this is a real error. The browser can queue onerror at
+      // the same time as the final event when the server closes the connection.
+      setTimeout(() => {
+        // Only treat as error if we haven't already completed successfully
+        // EventSource fires onerror when connection closes, even after successful completion
+        if (!hasCompleted && isConnected.value) {
+          const errorMessage = 'SSE connection error: The connection to the server was lost or timed out. The operation may have been interrupted.'
+          error.value = errorMessage
 
-        // Add error to logs
-        logs.value.push({
-          timestamp: new Date().toLocaleTimeString('de-DE'),
-          event: 'error',
-          message: errorMessage,
-          data: err
-        })
-      }
+          // Add error to logs
+          logs.value.push({
+            timestamp: new Date().toLocaleTimeString('de-DE'),
+            event: 'error',
+            message: errorMessage,
+            data: err
+          })
+        }
 
-      isLoading.value = false
-      disconnect()
+        isLoading.value = false
+        disconnect()
+      }, 300)
     }
   }
 
