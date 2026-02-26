@@ -62,6 +62,46 @@
         ]
     },
     {
+        "id": "peitschen-laxisme-fatale",
+        "date": "2026-03-14T19:00:00+00:00",
+        "title": "Sonne, Licht und Punkrock mit Peitschen (K\u00f6ln), Laxisme (Leipzig) und Fatale (Heidelberg)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Mit dem Ende des saisonal bedingten Vitamin D Mangels in Sicht bietet der Goldesel am 14. M&auml;rz im Carousel die einmalige Gelegenheit, die abgelegte Schlappheit hinter euch zu lassen und die wiederentdeckte Kraft zu b&uuml;ndeln und zu kanalisieren.<br>Es wurden weder Kosten noch M&uuml;hen gescheut um dieses Ereignis zu erm&ouml;glichen denn nachdem unsere lokale Post-Punk Sensation Fatale den Abend noch mit vergleichsweise wohldosierten Tempospitzen und Melodien, so s&uuml;&szlig; wie spanischer Brandy, gekonnt er&ouml;ffneten und eure Gelenke aufgew&auml;rmt sowie Muskeln gelockert wurden folgen zwei hochdosierte Programmpunkte. Ge&uuml;bte Enthusiasten des Punkparketts k&ouml;nnen sich freuen wenn die Garage Rocker Peitschen aus K&ouml;ln die Kr&auml;fte ihrerseits mit den Punks von Laxisme aus Leipzig b&uuml;ndeln um uns zu zeigen, dass es ein Leben nach dem Grau und der Lethargie gibt. Achtung: Es besteht die Gefahr des hochdosierten Zappelns bis zur Hypervitaminose!<br>Aber keine Sorge: F&uuml;r die schonende Entgiftung steht euch unser geschultes Personal an der Theke zur Verf&uuml;gung.<br>Also kommt vorbei und lasst euch nicht die Chance entgehen, an diesem Abend die Sinne zu sch&auml;rfen und euren K&ouml;rper f&uuml;r die folgende hellere Jahresh&auml;lfte zu st&auml;rken!</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/peitschen-laxisme-fatale/",
+        "img": "/img/c89892dc-9edd-4657-999a-68594dd67ffc.jpeg",
+        "artists": [
+            {
+                "name": "Peitschen",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Laxisme",
+                "link": "",
+                "description": "Laxisme sind eine Band aus Leipzig, aber so einiges mehr als nur die franz\u00f6sichen Texte provoziert hier Vergleiche zu jener gewissen Brut an franz\u00f6sischen Bands, die diesen speziellen Mix aus geradlinigem und ultraeing\u00e4ngigem Garage- und Post Punk mit einer subtilen Spur von Oi! spielen, wie wir es so \u00e4hnlich auch von Bands wie Telecult, Distance, Stalled Minds, Nightwatchers, Litovsk oder fr\u00fchen Bleakness geh\u00f6rt haben, wobei sich gleicherma\u00dfen aber auch diverse st\u00e4rker Garage-orientierte Euro-Bands wie die Belgier Mitraille, Pedigree und Itches; Achterlicht aus den Niederlanden und die Italiener Dadar und Shitty Life stellenweise als Vergleiche anbieten. Also ja, nichts bahnbrechendes oder neues zu h\u00f6ren hier, aber die einfache Formel hat nach wie vor eine hohe Durchschlagkraft wenn sie kompetent umgesetzt wird und die Pr\u00e4sentation hier ist von erster G\u00fcte - dargeboten mit exzellentem Drive und Energie, ein wenig von einer '77er Kante und eine Reihe von zertifizierten Killertunes wie Grand Cerveaux und 7 Secondes machen die Sache perfekt.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=918315151/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Fatale",
+                "link": "https://www.instagram.com/fatale_hd/",
+                "description": "Post-Punk/Rock band from Heidelberg (Germany)",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/xAxnE_zvgXQ",
+                "bandcamp": "",
+                "image": "/img/a6be23e7-debc-4a6a-9592-e1fd252b8d3f.jpeg"
+            }
+        ]
+    },
+    {
         "id": "goldcup-knabenschule",
         "date": "2026-03-03T18:00:00+00:00",
         "title": "Gold Cup (Manchester) & Knabenschule (HD/Halle)",
