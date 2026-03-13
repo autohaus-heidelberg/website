@@ -140,6 +140,18 @@ async function handleQuickAdd() {
     return
   }
 
+  const youtube = modalForm.value.youtube.trim()
+  if (youtube && !youtube.startsWith('https://www.youtube.com/embed/')) {
+    error.value = 'YouTube URL could not be converted. Please paste a standard YouTube link (e.g. https://www.youtube.com/watch?v=...) or the embed URL directly.'
+    return
+  }
+
+  const bandcamp = modalForm.value.bandcamp.trim()
+  if (bandcamp && !bandcamp.startsWith('https://bandcamp.com/EmbeddedPlayer')) {
+    error.value = 'Bandcamp URL is invalid. Please paste the full iframe embed code from Bandcamp\'s Share/Embed dialog.'
+    return
+  }
+
   isLoading.value = true
   error.value = ''
 
