@@ -755,6 +755,7 @@ input:disabled {
 @media (max-width: 768px) {
   .event-form-view {
     border: none;
+    padding: 0px;
   }
 
   .form-container {

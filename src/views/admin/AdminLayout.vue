@@ -103,7 +103,8 @@ watch(isMobileMenuOpen, (isOpen) => {
   border-right: 0.5rem solid black;
   position: fixed;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-nav-header {
@@ -167,7 +168,8 @@ watch(isMobileMenuOpen, (isOpen) => {
   gap: 0.5rem;
   padding: 1.5rem;
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
   min-height: 0;
 }
 
