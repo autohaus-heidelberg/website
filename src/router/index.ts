@@ -114,6 +114,11 @@ const router = createRouter({
           name: 'admin-checklist-template-edit',
           component: () => import('../views/admin/checklist-templates/ChecklistTemplateFormView.vue'),
           props: true
+        },
+        {
+          path: 'newsletter',
+          name: 'admin-newsletter',
+          component: () => import('../views/admin/NewsletterAdmin.vue')
         }
       ]
     }

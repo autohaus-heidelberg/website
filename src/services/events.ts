@@ -106,6 +106,13 @@ export const eventService = {
   },
 
   /**
+   * Send newsletter via Rapidmail
+   */
+  async sendNewsletter(subject: string, html_content: string): Promise<{ success: boolean }> {
+    return api.post<{ success: boolean }>('/api/newsletter/send/', { subject, html_content })
+  },
+
+  /**
    * Start SSE stream for syncing from git
    * Returns URL for EventSource to connect to
    */

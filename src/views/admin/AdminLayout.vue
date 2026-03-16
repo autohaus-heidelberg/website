@@ -79,6 +79,8 @@ watch(isMobileMenuOpen, (isOpen) => {
         span Settings
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
         span Checklist Templates
+      router-link.nav-link(to="/admin/newsletter" active-class="active" @click="handleNavigation")
+        span Newsletter
       router-link.nav-link(to="/" @click="handleNavigation")
         span Public Site
 
