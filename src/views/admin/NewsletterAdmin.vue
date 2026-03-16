@@ -11,7 +11,7 @@ const title = ref('')
 const content = ref('')
 const isGenerating = ref(false)
 const isSending = ref(false)
-const sendSuccess = ref(false)
+const sendSuccess = ref<'test' | 'live' | null>(null)
 const error = ref('')
 
 function getNextWeekRange(): { start: dayjs.Dayjs; end: dayjs.Dayjs } {
@@ -74,7 +74,7 @@ function buildNewsletterHtml(events: Event[]): string {
 async function generateProposal() {
   isGenerating.value = true
   error.value = ''
-  sendSuccess.value = false
+  sendSuccess.value = null
 
   try {
     const { start, end } = getNextWeekRange()
@@ -106,15 +106,15 @@ async function generateProposal() {
   }
 }
 
-async function sendNewsletter() {
+async function sendNewsletter(test = false) {
   if (!title.value || !content.value) return
   isSending.value = true
   error.value = ''
-  sendSuccess.value = false
+  sendSuccess.value = null
 
   try {
-    await eventService.sendNewsletter(title.value, content.value)
-    sendSuccess.value = true
+    await eventService.sendNewsletter(title.value, content.value, test)
+    sendSuccess.value = test ? 'test' : 'live'
   } catch (e: any) {
     error.value = 'Fehler beim Versenden: ' + (e?.message || e)
   } finally {
@@ -137,7 +137,8 @@ async function sendNewsletter() {
       | Nächste Woche: {{ getNextWeekRange().start.format('DD.MM.') }} – {{ getNextWeekRange().end.format('DD.MM.YYYY') }}
 
   .error-message(v-if="error") {{ error }}
-  .success-message(v-if="sendSuccess") Newsletter erfolgreich versendet!
+  .success-message(v-if="sendSuccess === 'test'") Test-Newsletter erfolgreich versendet!
+  .success-message(v-if="sendSuccess === 'live'") Newsletter erfolgreich versendet!
 
   .form-section
     .field
@@ -157,8 +158,12 @@ async function sendNewsletter() {
       )
 
   .send-section(v-if="title && content")
+    button.btn-test(
+      @click="sendNewsletter(true)"
+      :disabled="isSending || isGenerating"
+    ) {{ isSending ? 'Wird versendet...' : 'Test versenden' }}
     button.btn-send(
-      @click="sendNewsletter"
+      @click="sendNewsletter(false)"
       :disabled="isSending || isGenerating"
     ) {{ isSending ? 'Wird versendet...' : 'Newsletter jetzt versenden' }}
 
@@ -281,7 +286,36 @@ async function sendNewsletter() {
 }
 
 .send-section {
+  display: flex;
+  gap: 1rem;
   margin-bottom: 3rem;
+}
+
+.btn-test {
+  padding: 0.7em 1.5em;
+  background: white;
+  color: black;
+  border: 0.25rem dashed black;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-test:hover:not(:disabled) {
+  background: #eee;
+}
+
+.btn-test:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.btn-test:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-send {
