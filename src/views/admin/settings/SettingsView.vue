@@ -86,6 +86,8 @@ async function handleSave() {
         li #[code {{EventDinner}}] - Event start minus 1 hour (German timezone)
         li #[code {{EntranceFee}}] - AK price (or [TBA] if not set)
         li #[code {{EventLink}}] - Link to event website 
+        li #[code {{EntranceShifts}}] - Einlass schichten (start zum Event start Date, anderthalb stunden schichten) 
+        li #[code {{BarShifts}}] - Bar schichten  (start zum Event start Date, anderthalb stunden schichten) 
     form.setting-form(@submit.prevent="handleSave")
       .form-group
         label(for="helferpad-content") Default Content
