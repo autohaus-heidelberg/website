@@ -16,11 +16,7 @@ const error = ref('')
 
 function getNextWeekRange(): { start: dayjs.Dayjs; end: dayjs.Dayjs } {
   const today = dayjs()
-  const dayOfWeek = today.day() // 0=Sun, 1=Mon, ..., 6=Sat
-  const daysToNextMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek
-  const nextMonday = today.add(daysToNextMonday, 'day').startOf('day')
-  const nextSunday = nextMonday.add(6, 'day').endOf('day')
-  return { start: nextMonday, end: nextSunday }
+  return { start: today, end: today.add(7, 'days').endOf('day') }
 }
 
 function getOrderedArtists(event: Event): Artist[] {
