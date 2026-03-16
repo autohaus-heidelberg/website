@@ -22,6 +22,18 @@
         ]
     },
     {
+        "id": "mm-260326",
+        "date": "2026-03-26T19:00:00+00:00",
+        "title": "Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<div class=\"col-xs-12 col-sm-12 col-md-8 col-lg-7\">\n<div class=\"SmallVeranstaltungCredits\" style=\"padding-bottom: 2px;\"><strong>jp. Original mit deutschen Untertiteln | <a class=\"Credits\" href=\"https://karlstorkino.de/index.php?RUBRIK=4&amp;Document=40&amp;FSK=16\">FSK: 16</a>.</strong></div>\n<div class=\"SmallVeranstaltungText\" style=\"padding-top: 5px;\">\n<p><span data-olk-copy-source=\"MessageBody\">Midnight Madness kommt aus der K&auml;ltepause zur&uuml;ck und dieses Mal wird es wild und bunt. </span></p>\n<p><span data-olk-copy-source=\"MessageBody\">Wir gehen mit Euch in das Land der aufgehenden Sonne. Ein 70er Jahre Kultklassiker irgendwo zwischen Horror und Kom&ouml;die, zwischen Kitsch und Experimentalfilm. Bewusstseinserweiternd und anarchisch zugleich.... Auf jeden Fall wird es schwer zu erkl&auml;ren, was man gerade gesehen hat. Oder wie die New York Times beschreibt: &bdquo;Delirant, geistesgest&ouml;rt, ausgeflippt oder einfach nur gone, baby, gone&ldquo;</span></p>\n</div>\n</div>",
+        "descriptionLong": "",
+        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3460984318",
+        "img": "/img/36f31a92-b907-4f26-8e76-cc096e031d04.jpeg",
+        "artists": []
+    },
+    {
         "id": "sexverbot-dustsucker",
         "date": "2026-03-20T19:00:00+00:00",
         "title": "Sexverbot + \u00d6PNV + Dustsuck!er",
