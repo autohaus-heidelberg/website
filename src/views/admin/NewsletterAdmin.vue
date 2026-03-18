@@ -63,6 +63,7 @@ function buildNewsletterHtml(events: Event[]): string {
   }
 
   html += `<p><a href="https://altesauto.haus">Zur Homepage</a></p>\n`
+  html += `<p style="font-size: 0.85em; color: #666;">Du möchtest keine Newsletter mehr erhalten? <a href="{%link_unsubscribe}">Hier abmelden</a></p>\n`
 
   return html
 }
