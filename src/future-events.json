@@ -71,6 +71,37 @@
         ]
     },
     {
+        "id": "fruittones-electricjugs",
+        "date": "2026-04-02T18:00:00+00:00",
+        "title": "Fruit Tones (UK) & Electric Jugs (DE)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>H&auml;tte der Goldesel diese Show f&uuml;r den 1. April angek&uuml;ndigt, h&auml;ttet ihr es eh nicht geglaubt. Also haben wir sie einfach auf den 2. April gelegt. <br>Die Witze sind durch &ndash; jetzt wird wieder eingeschenkt.</p>\n<p>Ein Abend f&uuml;r Bier-Connaisseure und die, die es noch werden wollen. Serviert wird ungefiltert, leicht tr&uuml;b und mit nachhaltiger Wirkung. <br><br>Zum Einstieg: <strong>Electric Jugs</strong>, Garage-Punk-Duo aus Aschaffenburg, direkt aus der Kanne. Antrunk: warm, roh, ein bisschen digital, mit ordentlich Druck auf der Leitung. <br><br>Im Hauptgang: <strong>Fruit Tones</strong> aus Manchester. Gereift irgendwo zwischen Baumwollfabrik und Drive-In-Film, abgef&uuml;llt als &bdquo;Easy Peelers&ldquo;. In der Nase: Zitrus. Am Gaumen: ordentlich s&uuml;&szlig;, fast ein bisschen klebrig &ndash; und hinten raus wie eine warme Dose Victoria Bitter. <br><br>Na, wenn das mal nicht lecker wird!&nbsp;</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/fruittones-electricjugs/",
+        "img": "/img/402ebff1-fd91-4301-823a-629b4e568ee1.jpeg",
+        "artists": [
+            {
+                "name": "Fruit Tones",
+                "link": "",
+                "description": "Ready to lick, easy peel everything! The magnificient party rock and rollers FRUIT TONES with a juicy collection dozen oranges rollin' out of newest PEEL SESSIONS, haha! The day of rock and roll debauchery and endless gluttony is HERE! Manchesters fruit market kingpins did it again and this is the best record for naked bike parties or notoric nighmare sprees you can imagine.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=46826544/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/5d2f005f-d2c6-4bf9-87d6-2c191dfa2ebe.jpeg"
+            },
+            {
+                "name": "Electric Jugs",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=1598798186/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/18d8112f-6ea7-4bfb-83ad-fb49ebf5a416.jpeg"
+            }
+        ]
+    },
+    {
         "id": "mm-260326",
         "date": "2026-03-26T19:00:00+00:00",
         "title": "Kino: Midnight Madness",
