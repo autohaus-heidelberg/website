@@ -57,8 +57,36 @@
         "descriptionShort": "<p>Kommen drei Bands ins Carousel. Kein Witz, denn am 18. April packen Dirk and the Seconds aus Leipzig, Shocktroopers aus Aschaffenburg und Fatale aus Heidelberg ihre Koffer und zerhacken unsere kollektive graue Masse mit Endlos-Hooks-Und-Soul Garage Punk, thrashigem Crust und wavigem H&uuml;pf Post Punk. Holt es euch und kommt gut ausgeschlafen ab 20 Uhr ins Autohaus in der Kern-Weststadt!</p>",
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/dirkandtheseconds-shocktroopers-fatale/",
-        "img": "",
-        "artists": []
+        "img": "/img/4642904e-df50-4177-a2e4-60a6d1592a51.png",
+        "artists": [
+            {
+                "name": "Dirk and the Seconds",
+                "link": "https://www.instagram.com/dirkandtheseconds/",
+                "description": "5 People meet in Leipzig with passion for some good music like Radioactivity, The Marked Men and of course MC5. Born and raised in the eastern Germoney, now Dirk And The Seconds overcome the world.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3776838163/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/7f78b18b-d14f-472f-b77f-35dccfad8c8d.png"
+            },
+            {
+                "name": "Shocktroopers",
+                "link": "https://www.instagram.com/shocktroopersfromhell/",
+                "description": "Mad metalpunk maniax spewing bullshit and delivering high speed teutonic steel!",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3686585423/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/6b5d963e-7122-48d5-8484-25779c046e99.jpeg"
+            },
+            {
+                "name": "Fatale",
+                "link": "https://www.instagram.com/fatale_hd/",
+                "description": "Post-Punk from Heidelberg (Germany)",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/xAxnE_zvgXQ",
+                "bandcamp": "",
+                "image": "/img/0f712831-e76a-46a5-9264-6e5d2bf45935.jpeg"
+            }
+        ]
     },
     {
         "id": "260411-saxophones",
