@@ -1,5 +1,36 @@
 [
     {
+        "id": "iwan-nostyle",
+        "date": "2026-07-10T18:00:00+00:00",
+        "title": "IWAN2",
+        "fee": "10",
+        "feeAk": "10",
+        "descriptionShort": "<p>iWAN2 &ndash; ohne scheiss<br>Das zweite Musical von Iwan NoStyle<br>Mach dich bereit f&uuml;r einen Abend, der irgendwo zwischen Genie und Wahnsinn<br>wohnt &ndash; und sich dort ziemlich wohlf&uuml;hlt.<br>Nach dem ersten konzeptuellen Schlag in die Magengrube (Schallplatte 2018) und<br>einer EP in 2019 &ndash; in einem Monat aus dem Nichts gezimmert &ndash; kehrt Iwan zur&uuml;ck.<br>Nicht leiser, nicht vern&uuml;nftiger, sondern&hellip; freier. Und genau da f&auml;ngt das Problem<br>an.<br>iWAN2 &ndash; ohne scheiss erz&auml;hlt die Geschichte eines Mannes, der alles hat, was<br>man nicht braucht: zu viel Bier, zu viele Gedanken, zu wenig Plan. Frauen?<br>Schwierig. Struktur? Fehlanzeige. Sinn? Wird gesucht &ndash; vermutlich zwischen dem<br>dritten und sechsten Getr&auml;nk.<br>Zum Gl&uuml;ck gibt es Harry. Kumpel, Unterst&uuml;tzer, vielleicht die letzte Stimme der<br>Vernunft&hellip; oder einfach nur jemand, der laut genug &bdquo;wird schon&ldquo; ruft. Doch was<br>als freundschaftliche Lebenshilfe beginnt, nimmt Wendungen, die man eher nicht<br>im Selbsthilfe-Ratgeber findet. &Uuml;berraschend? Ja. Gesund? Eher nicht.<br>Musikalisch wird das Ganze von Iwans Band &bdquo;Die Kartoffeln&ldquo; getragen &ndash;<br>unterst&uuml;tzt von der Feuerwehrmann-Kapelle (Bl&auml;ser-Trio) und diversen<br>Gastmusikern, die dem Chaos eine Richtung geben&hellip; oder es zumindest<br>versuchen.<br>Und jetzt wird&rsquo;s pers&ouml;nlich &ndash; und leicht klebrig am Tresen:<br>Exklusive Premiere eines brandneuen Songs, gewidmet Iwans absoluter<br>Lieblingskneipe &bdquo;Fandango&ldquo; in Heidelberg-Rohrbach.<br>Ein musikalischer Liebesbrief an lange N&auml;chte, schiefe Gespr&auml;che, klebrige B&ouml;den<br>und diese eine letzte Runde, die immer eskaliert. Man munkelt: Wer den Song h&ouml;rt,<br>steht pl&ouml;tzlich mit einem Bier in der Hand da, egal ob er wollte oder nicht.<br>Und als w&auml;re das nicht genug:<br>Premiere der Punkband &bdquo;Bockwurst&ldquo; &ndash; roh, laut, wahrscheinlich fettig.<br>Live-Support von &bdquo;Sturmfrei Kollektiv&ldquo; &amp; &bdquo;Saufdruck&ldquo; &ndash; die Namen sagen alles,<br>was du wissen musst, oder du liest weiter.<br>Aftershow mit DJ NoSet &ndash; Tanzfl&auml;che garantiert, Erinnerung optional<br>Was dich erwartet?<br>Ein Abend voller Widerspr&uuml;che:<br>Gechillt und exzessiv.<br>Tiefgr&uuml;ndig und komplett dr&uuml;ber.<br>Zum Mitsingen, Mitf&uuml;hlen, Mitabst&uuml;rzen.<br>Oder kurz gesagt:<br>Ein bunter Abend. Verr&uuml;ckt. Anders. NoStyle eben.<br>Komm vorbei.<br>Oder bereue es sp&auml;ter. Ohne Scheiss.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/iwan-nostyle/",
+        "img": "/img/1a67023d-4505-4158-b9d4-46d5e7d6859d.png",
+        "artists": [
+            {
+                "name": "IWAN NOSTYLE",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/j4qZPMLOHoo",
+                "bandcamp": "",
+                "image": "/img/78a93f9d-f22e-4808-9d24-233f94559487.png"
+            },
+            {
+                "name": "Saufdruck",
+                "link": "",
+                "description": "Nussgew\u00fcrzes Haus- und Hofkapelle Saufdruck bereichert dein nussgew\u00fcrztes\nNussgericht mit Blockpunk und Fassbier.\nAllergiker Hinweis: Kann Spuren enthalten.\nDas Feuilleton meint: \"Saufdruck. Schon der Name spaltet. Saufdruck ist damit\neine Band mit Spaltpotential, die vielleicht gerade deswegen gro\u00dfes Interesse\nweckt.\nMusikalisch ist es weitgehend echter Punk mit genrespezifisch hohem\nmusikalischem Niveau und wortwitzigen deutschsprachigen Texten zu\nAlltagsthemen. Ein Konzertbesuch lohnt sich in jedem Fall und bleibt, wenn man\nnicht zu viel des angebotenen Kaltgetr\u00e4nks konsumiert, als unvergessliches\nErgebnis in \u00fcberwiegend guter Erinnerung.\n4 von 5 Sternie.\"",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "lemongrab-socke-invertida-rocket2",
         "date": "2026-05-09T18:00:00+00:00",
         "title": "Lemongrab + Socke + Invertida + Rocket 2",
@@ -107,37 +138,6 @@
                 "youtube": "https://www.youtube.com/embed/Ufv1c0rhHYk",
                 "bandcamp": "",
                 "image": "/img/866e0b22-f3a1-4dd1-9e0e-ce164cb524b7.jpeg"
-            }
-        ]
-    },
-    {
-        "id": "fruittones-electricjugs",
-        "date": "2026-04-02T18:00:00+00:00",
-        "title": "Fruit Tones (UK) & Electric Jugs (DE)",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p>H&auml;tte der Goldesel diese Show f&uuml;r den 1. April angek&uuml;ndigt, h&auml;ttet ihr es eh nicht geglaubt. Also haben wir sie einfach auf den 2. April gelegt. <br>Die Witze sind durch &ndash; jetzt wird wieder eingeschenkt.</p>\n<p>Ein Abend f&uuml;r Bier-Connaisseure und die, die es noch werden wollen. Serviert wird ungefiltert, leicht tr&uuml;b und mit nachhaltiger Wirkung. <br><br>Zum Einstieg: <strong>Electric Jugs</strong>, Garage-Punk-Duo aus Aschaffenburg, direkt aus der Kanne. Antrunk: warm, roh, ein bisschen digital, mit ordentlich Druck auf der Leitung. <br><br>Im Hauptgang: <strong>Fruit Tones</strong> aus Manchester. Gereift irgendwo zwischen Baumwollfabrik und Drive-In-Film, abgef&uuml;llt als &bdquo;Easy Peelers&ldquo;. In der Nase: Zitrus. Am Gaumen: ordentlich s&uuml;&szlig;, fast ein bisschen klebrig &ndash; und hinten raus wie eine warme Dose Victoria Bitter. <br><br>Na, wenn das mal nicht lecker wird!&nbsp;<br><br>Flyer art by <a href=\"https://www.instagram.com/joey.controlletti/\" target=\"_blank\" rel=\"noopener\">Joey Controlletti</a></p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/fruittones-electricjugs/",
-        "img": "/img/402ebff1-fd91-4301-823a-629b4e568ee1.jpeg",
-        "artists": [
-            {
-                "name": "Fruit Tones",
-                "link": "",
-                "description": "Ready to lick, easy peel everything! The magnificient party rock and rollers FRUIT TONES with a juicy collection dozen oranges rollin' out of newest PEEL SESSIONS, haha! The day of rock and roll debauchery and endless gluttony is HERE! Manchesters fruit market kingpins did it again and this is the best record for naked bike parties or notoric nighmare sprees you can imagine.",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=46826544/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/5d2f005f-d2c6-4bf9-87d6-2c191dfa2ebe.jpeg"
-            },
-            {
-                "name": "Electric Jugs",
-                "link": "",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=1598798186/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/18d8112f-6ea7-4bfb-83ad-fb49ebf5a416.jpeg"
             }
         ]
     }
