@@ -426,12 +426,14 @@ onMounted(() => {
               )
             .col-amount
               input.amount-input(
+                v-if="source.endsWith('_cash')"
                 v-model="getRevenue(source).change_money"
                 type="number"
                 step="0.01"
                 min="0"
                 placeholder="0.00"
               )
+              span.no-field(v-else) —
             .col-amount
               input.amount-input(
                 v-model="getRevenue(source).fees"
@@ -600,12 +602,47 @@ onMounted(() => {
 
     //- ── Ergebnis Tab ──
     .tab-content(v-if="activeTab === 'ergebnis'")
-      .result-summary
-        .result-row
+
+      //- Einnahmen-Aufschlüsselung
+      h3.section-title Einnahmen
+      .result-detail
+        template(v-for="rev in revenues" :key="rev.source")
+          .detail-row(v-if="revenueNet(rev) !== 0")
+            span {{ REVENUE_SOURCE_LABELS[rev.source] }}
+            span.amount {{ formatCurrency(revenueNet(rev)) }}
+        .detail-row.detail-total
           span Summe Einnahmen
           strong.positive {{ formatCurrency(totalRevenue) }}
-        .result-row
+
+      //- Wareneinsatz-Aufschlüsselung
+      h3.section-title Wareneinsatz
+      .result-detail
+        template(v-for="(items, group) in inventoryBySupplier" :key="group")
+          .detail-row(v-if="groupInventoryValue(items) !== 0")
+            span {{ group }}
+            span.amount -{{ formatCurrency(groupInventoryValue(items)) }}
+        .detail-row.detail-total
+          span Summe Wareneinsatz
+          strong.negative {{ formatCurrency(totalInventoryValue) }}
+
+      //- Ausgaben-Aufschlüsselung
+      h3.section-title Ausgaben
+      .result-detail
+        template(v-for="exp in expenses" :key="exp.description")
+          .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
+            span {{ exp.description || '(ohne Bezeichnung)' }}
+            span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+        .detail-row.detail-total
           span Summe Ausgaben
+          strong.negative {{ formatCurrency(totalExpenses) }}
+
+      //- Gesamtergebnis
+      .result-summary
+        .result-row
+          span Einnahmen
+          strong.positive {{ formatCurrency(totalRevenue) }}
+        .result-row
+          span − Ausgaben
           strong.negative {{ formatCurrency(totalExpenses) }}
         .result-row
           span Pfandrückgabe
@@ -998,6 +1035,12 @@ h2 {
   font-weight: 600;
 }
 
+.no-field {
+  color: #999;
+  text-align: center;
+  display: block;
+}
+
 .col-desc, .col-from, .col-action, .col-pct {
   font-size: 0.9rem;
 }
@@ -1141,9 +1184,40 @@ h2 {
 
 /* ── Result ── */
 
+.result-detail {
+  border: 0.25rem solid black;
+  margin-bottom: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row .amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.detail-total {
+  background: black;
+  color: white;
+  font-size: 0.95rem;
+  border-bottom: none;
+}
+
 .result-summary {
   border: 0.25rem solid black;
   margin-bottom: 2rem;
+  margin-top: 1.5rem;
 }
 
 .result-row {
