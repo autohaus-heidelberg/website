@@ -166,6 +166,34 @@ const totalDepositValue = computed(() => {
   )
 })
 
+function stockValue(entry: InventoryEntry, beverage: BeverageItem): number {
+  const upc = beverage.units_per_crate || 1
+  const afterCrates = parseFloat(entry.quantity_after || '0') / upc
+  return afterCrates * parseFloat(beverage.purchase_price || '0')
+}
+
+function stockDepositValue(entry: InventoryEntry, beverage: BeverageItem): number {
+  const upc = beverage.units_per_crate || 1
+  const afterCrates = parseFloat(entry.quantity_after || '0') / upc
+  return afterCrates * parseFloat(beverage.deposit || '0')
+}
+
+const totalStockValue = computed(() => {
+  return Object.values(inventoryBySupplier.value).reduce(
+    (sum, items) => sum + items.reduce(
+      (s, { beverage, entry }) => s + stockValue(entry, beverage), 0
+    ), 0
+  )
+})
+
+const totalStockDepositValue = computed(() => {
+  return Object.values(inventoryBySupplier.value).reduce(
+    (sum, items) => sum + items.reduce(
+      (s, { beverage, entry }) => s + stockDepositValue(entry, beverage), 0
+    ), 0
+  )
+})
+
 // ── Computed: Expenses ───────────────────────────────────────────
 
 const totalExpenses = computed(() => {
@@ -519,6 +547,13 @@ onMounted(() => {
           strong {{ formatCurrency(groupInventoryValue(items)) }}
 
       .grand-total
+        div
+          span Bestandswert (Danach):
+          strong {{ formatCurrency(totalStockValue) }}
+        div
+          span Pfandwert Bestand:
+          strong {{ formatCurrency(totalStockDepositValue) }}
+        div.separator
         div
           span Wareneinsatz gesamt:
           strong {{ formatCurrency(totalInventoryValue) }}
@@ -1097,6 +1132,11 @@ h2 {
 .grand-total > div, .grand-total > span {
   display: flex;
   justify-content: space-between;
+}
+
+.grand-total .separator {
+  border-top: 1px solid rgba(255,255,255,0.3);
+  margin: 0.25rem 0;
 }
 
 /* ── Result ── */
