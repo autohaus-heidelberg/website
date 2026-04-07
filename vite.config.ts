@@ -12,5 +12,14 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://content.hopfner.cc',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
   }
 })

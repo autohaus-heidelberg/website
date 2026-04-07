@@ -114,6 +114,34 @@ const router = createRouter({
           name: 'admin-checklist-template-edit',
           component: () => import('../views/admin/checklist-templates/ChecklistTemplateFormView.vue'),
           props: true
+        },
+        // Accounting routes
+        {
+          path: 'beverages',
+          name: 'admin-beverages',
+          component: () => import('../views/admin/accounting/BeverageListView.vue')
+        },
+        {
+          path: 'beverages/create',
+          name: 'admin-beverage-create',
+          component: () => import('../views/admin/accounting/BeverageFormView.vue')
+        },
+        {
+          path: 'beverages/:id',
+          name: 'admin-beverage-edit',
+          component: () => import('../views/admin/accounting/BeverageFormView.vue'),
+          props: true
+        },
+        {
+          path: 'accounting',
+          name: 'admin-accounting',
+          component: () => import('../views/admin/accounting/AccountingListView.vue')
+        },
+        {
+          path: 'accounting/:eventId',
+          name: 'admin-accounting-detail',
+          component: () => import('../views/admin/accounting/AccountingView.vue'),
+          props: true
         }
       ]
     }

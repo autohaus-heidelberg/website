@@ -79,6 +79,13 @@ watch(isMobileMenuOpen, (isOpen) => {
         span Settings
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
         span Checklist Templates
+
+      .nav-divider
+      router-link.nav-link(to="/admin/accounting" active-class="active" @click="handleNavigation")
+        span Abrechnung
+      router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
+        span Getränke
+
       router-link.nav-link(to="/" @click="handleNavigation")
         span Public Site
 
@@ -193,6 +200,12 @@ watch(isMobileMenuOpen, (isOpen) => {
   color: white;
   border: 0.25rem solid black;
   transform: rotate(-1deg);
+}
+
+.nav-divider {
+  height: 0.25rem;
+  background: black;
+  margin: 0.5rem 0;
 }
 
 .admin-content {
