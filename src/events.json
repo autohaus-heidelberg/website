@@ -89,6 +89,37 @@
         ]
     },
     {
+        "id": "fivebucks-poopootalks",
+        "date": "2026-05-07T18:00:00+00:00",
+        "title": "Five Bucks & Poo Poo Talks - Garage and Egg Punk from Italy",
+        "fee": "8",
+        "feeAk": "10",
+        "descriptionShort": "<p>Als unsere Freunde aus Italien um eine Haltem&ouml;glichkeit in Heidelberg f&uuml;r ihre Euopaptour bitteten, konnten wir einfach nicht \"no\". Hier also nun zweimal garage und egg Punk, alles sch&ouml;n selber gemacht. Die beiden Bands sind eng befreundet und tief verwurzelt in der lebendigen italienischen Punk Szene. Zur Stunde erscheint ihre gemeinsame Split LP auf Wild Honey Records, die dar&uuml;ber frei &uuml;bersetzt schreiben:</p>\n<p>\"W&auml;hrend ein Gro&szlig;teil des heutigen Garage Punk noch immer um Australien zirkuliert, hat sich in Italien still und heimlich eine ganz eigene DIY Str&ouml;mung entwickelt. In Kellern, Jugendh&auml;user und DIY B&uuml;hnen formt eine neue Generation junger Bands die Sprache des Punk neu, getrieben von Instinkt, Ironie und einer v&ouml;lligen Verachtung f&uuml;r Perfektion. Manche nennen das Ganze schlicht ROK.</p>\n<p>Mit dieser 12\"-Split-LP, die am 20. April 2026 erscheint, f&auml;ngt Wild Honey Records einen Ausschnitt dieser Szene ein und bringt zwei ihrer unberechenbarsten neuen Stimmen zusammen: Five Bucks und Poo Poo Talks, beide mit ihrem offiziellen Deb&uuml;t.\"</p>\n<p>--------------</p>\n<p>\"While much of today&rsquo;s garage-punk conversation still orbits around Australia, Italy has been quietly building its own restless, DIY undercurrent. Across basements, social centres and makeshift stages, a new wave of young bands is reshaping the language of punk with instinct, irony and a complete disregard for polish. Some have started calling it simply ROK.<br><br>With this 12\" split LP, out April 20th, 2026, Wild Honey Records captures a fragment of that world, pairing two of its most unpredictable new voices: Five Bucks and Poo Poo Talks, both making their official debut.\"</p>\n<p>Wild Honey Records</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/fivebucks-poopootalks/",
+        "img": "/img/4f97b91a-8cae-4bcf-ad9e-32ce83155fa1.png",
+        "artists": [
+            {
+                "name": "Five Bucks",
+                "link": "",
+                "description": "\"Five Bucks started in 2022 as the bedroom project of Jekke, piecing together punk-leaning songs, cheap recordings and the occasional \u201cstupid sci-fi keyboard\u201d into something deliberately unsteady yet strangely coherent. What began as a solitary experiment soon evolved into a full band, pushing that same deconstructed approach into a louder, more volatile dimension. Their sound now moves between fractured synth-punk, warped garage hooks and a kind of controlled collapse that never quite falls apart.\" - Wild Honey Records",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3737398312/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/81076c0b-dbd1-4005-b24c-614ac6db08bd.jpeg"
+            },
+            {
+                "name": "Poo Poo Talks",
+                "link": "",
+                "description": "\"Poo Poo Talks, from Rome, operate with a sharper edge. Rooted in egg punk absurdism, their music thrives on repetition, immediacy and a gleeful rejection of taste. Self-described as \u201cpoo poo music for pee pee people\u201d, they blur the line between joke and intent, turning stripped-down structures into something oddly confrontational and addictive.\" - Wild Honey Records",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=926410838/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/e08c421b-5aec-422e-821d-c0728259eb7e.jpeg"
+            }
+        ]
+    },
+    {
         "id": "beachtowel-release",
         "date": "2026-04-25T18:00:00+00:00",
         "title": "Beach Towel - Die unsichtbaren St\u00e4dte - Marla Moya",
