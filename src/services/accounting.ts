@@ -1,3 +1,4 @@
+import { api } from '@/services/api'
 import type { PaginatedResponse } from '@/types/api'
 import type {
   BeverageItem,
@@ -7,49 +8,15 @@ import type {
   ExpenseEntry,
   AccountingSplit,
   AccountingSummary,
+  Purchase,
+  StockEntry,
 } from '@/types/accounting'
 
-// ── LocalStorage helpers ────────────────────────────────────────
-// Daten werden im Browser gespeichert, bis das Backend die
-// Endpoints bereitstellt. Dann einfach diesen Service austauschen.
-
-const STORAGE_KEYS = {
-  beverages: 'accounting_beverages',
-  accountings: 'accounting_events',
-  revenues: 'accounting_revenues',
-  inventory: 'accounting_inventory',
-  expenses: 'accounting_expenses',
-  splits: 'accounting_splits',
-  nextId: 'accounting_next_id',
-} as const
-
-function getStore<T>(key: string): T[] {
-  try {
-    return JSON.parse(localStorage.getItem(key) || '[]')
-  } catch {
-    return []
-  }
-}
-
-function setStore<T>(key: string, data: T[]): void {
-  localStorage.setItem(key, JSON.stringify(data))
-}
-
-function nextId(): number {
-  const current = parseInt(localStorage.getItem(STORAGE_KEYS.nextId) || '1', 10)
-  localStorage.setItem(STORAGE_KEYS.nextId, String(current + 1))
-  return current
-}
-
-function paginate<T>(items: T[]): PaginatedResponse<T> {
-  return { count: items.length, next: null, previous: null, results: items }
-}
-
-// delay to simulate async
-const tick = () => new Promise<void>(r => setTimeout(r, 0))
-
 // ── Seed-Daten: Standard-Getränke ──────────────────────────────
-// Werden einmalig beim ersten Laden angelegt, wenn noch keine da sind.
+// Werden über /api/drinks/ verwaltet.
+// Die Daten hier dienen als Referenz für das initiale Befüllen
+// via Django-Management-Command oder Admin-UI.
+
 const SEED_BEVERAGES: Omit<BeverageItem, 'id' | 'created_at' | 'updated_at'>[] = [
   { name: 'Kurpfalz hell',              supplier_group: 'Bier',     purchase_price: '20.00', selling_price: null, deposit: '3.10',  units_per_crate: 20, sort_order: 1,  is_active: true },
   { name: 'Faust Pils',                 supplier_group: 'Bier',     purchase_price: '19.00', selling_price: null, deposit: '3.10',  units_per_crate: 20, sort_order: 2,  is_active: true },
@@ -82,71 +49,35 @@ const SEED_BEVERAGES: Omit<BeverageItem, 'id' | 'created_at' | 'updated_at'>[] =
   { name: 'Pfeffi',                     supplier_group: 'Spirituosen', purchase_price: '4.99',  selling_price: null, deposit: '0.00', units_per_crate: 1, sort_order: 34, is_active: true },
 ]
 
-function seedBeveragesIfEmpty(): void {
-  const existing = getStore<BeverageItem>(STORAGE_KEYS.beverages)
-  if (existing.length > 0) return
-  const now = new Date().toISOString()
-  const seeded = SEED_BEVERAGES.map(b => ({
-    ...b,
-    id: nextId(),
-    created_at: now,
-    updated_at: now,
-  }))
-  setStore(STORAGE_KEYS.beverages, seeded)
-}
-
-seedBeveragesIfEmpty()
-
 // ── Beverage Items ──────────────────────────────────────────────
 
 export const beverageService = {
   async getAll(): Promise<PaginatedResponse<BeverageItem>> {
-    await tick()
-    return paginate(getStore<BeverageItem>(STORAGE_KEYS.beverages))
+    return api.get<PaginatedResponse<BeverageItem>>('/api/drinks/')
   },
 
   async getById(id: number): Promise<BeverageItem> {
-    await tick()
-    const item = getStore<BeverageItem>(STORAGE_KEYS.beverages).find(b => b.id === id)
-    if (!item) throw new Error('Getränk nicht gefunden')
-    return item
+    return api.get<BeverageItem>(`/api/drinks/${id}/`)
   },
 
   async create(item: Partial<BeverageItem>): Promise<BeverageItem> {
-    await tick()
-    const all = getStore<BeverageItem>(STORAGE_KEYS.beverages)
-    const newItem: BeverageItem = {
-      id: nextId(),
-      name: item.name || '',
-      supplier_group: item.supplier_group || '',
-      purchase_price: item.purchase_price || '0.00',
-      selling_price: item.selling_price || null,
-      deposit: item.deposit || '0.00',
-      units_per_crate: item.units_per_crate ?? 24,
-      sort_order: item.sort_order ?? 0,
-      is_active: item.is_active ?? true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-    all.push(newItem)
-    setStore(STORAGE_KEYS.beverages, all)
-    return newItem
+    return api.post<BeverageItem>('/api/drinks/', item)
   },
 
   async update(id: number, item: Partial<BeverageItem>): Promise<BeverageItem> {
-    await tick()
-    const all = getStore<BeverageItem>(STORAGE_KEYS.beverages)
-    const idx = all.findIndex(b => b.id === id)
-    if (idx === -1) throw new Error('Getränk nicht gefunden')
-    all[idx] = { ...all[idx], ...item, updated_at: new Date().toISOString() }
-    setStore(STORAGE_KEYS.beverages, all)
-    return all[idx]
+    return api.patch<BeverageItem>(`/api/drinks/${id}/`, item)
   },
 
   async delete(id: number): Promise<void> {
-    await tick()
-    const all = getStore<BeverageItem>(STORAGE_KEYS.beverages).filter(b => b.id !== id)
-    setStore(STORAGE_KEYS.beverages, all)
+    await api.delete(`/api/drinks/${id}/`)
+  },
+
+  async seedIfEmpty(): Promise<void> {
+    const { results } = await this.getAll()
+    if (results.length > 0) return
+    for (const beverage of SEED_BEVERAGES) {
+      await this.create(beverage)
+    }
   },
 }
 
@@ -154,46 +85,32 @@ export const beverageService = {
 
 export const accountingService = {
   async getAll(): Promise<PaginatedResponse<EventAccounting>> {
-    await tick()
-    return paginate(getStore<EventAccounting>(STORAGE_KEYS.accountings))
+    return api.get<PaginatedResponse<EventAccounting>>('/api/abrechnungen/')
   },
 
-  async getByEvent(eventId: string): Promise<EventAccounting> {
-    await tick()
-    const item = getStore<EventAccounting>(STORAGE_KEYS.accountings).find(a => a.event === eventId)
-    if (!item) throw new Error('Keine Abrechnung für dieses Event')
-    return item
+  async getById(id: number): Promise<EventAccounting> {
+    return api.get<EventAccounting>(`/api/abrechnungen/${id}/`)
+  },
+
+  async getByEvent(eventId: string): Promise<EventAccounting | null> {
+    const { results } = await this.getAll()
+    return results.find(a => a.event === eventId) ?? null
   },
 
   async create(data: Partial<EventAccounting>): Promise<EventAccounting> {
-    await tick()
-    const all = getStore<EventAccounting>(STORAGE_KEYS.accountings)
-    const newItem: EventAccounting = {
-      id: nextId(),
-      event: data.event || '',
-      status: data.status || 'draft',
-      notes: data.notes || '',
-      deposit_return: data.deposit_return || '0.00',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }
-    all.push(newItem)
-    setStore(STORAGE_KEYS.accountings, all)
-    return newItem
+    return api.post<EventAccounting>('/api/abrechnungen/', data)
   },
 
   async update(id: number, data: Partial<EventAccounting>): Promise<EventAccounting> {
-    await tick()
-    const all = getStore<EventAccounting>(STORAGE_KEYS.accountings)
-    const idx = all.findIndex(a => a.id === id)
-    if (idx === -1) throw new Error('Abrechnung nicht gefunden')
-    all[idx] = { ...all[idx], ...data, updated_at: new Date().toISOString() }
-    setStore(STORAGE_KEYS.accountings, all)
-    return all[idx]
+    return api.put<EventAccounting>(`/api/abrechnungen/${id}/`, data)
+  },
+
+  async delete(id: number): Promise<void> {
+    await api.delete(`/api/abrechnungen/${id}/`)
   },
 
   async getSummary(_id: number): Promise<AccountingSummary> {
-    await tick()
+    // Summary is computed on the frontend from loaded data
     return {
       total_revenue: '0', total_revenue_by_group: [],
       total_expenses: '0', total_inventory_value_before: '0',
@@ -203,132 +120,178 @@ export const accountingService = {
   },
 
   // ── Revenues ──
+  // Revenues are stored as nested objects within the Abrechnung.
+  // To update, send the full accounting object via PUT.
 
   async getRevenues(accountingId: number): Promise<RevenueEntry[]> {
-    await tick()
-    return getStore<RevenueEntry>(STORAGE_KEYS.revenues).filter(r => r.accounting === accountingId)
+    const accounting = await this.getById(accountingId)
+    return accounting.revenues ?? []
   },
 
   async saveRevenue(accountingId: number, entry: Partial<RevenueEntry>): Promise<RevenueEntry> {
-    await tick()
-    const all = getStore<RevenueEntry>(STORAGE_KEYS.revenues)
-    if (entry.id) {
-      const idx = all.findIndex(r => r.id === entry.id)
-      if (idx !== -1) { all[idx] = { ...all[idx], ...entry }; setStore(STORAGE_KEYS.revenues, all); return all[idx] }
+    const accounting = await this.getById(accountingId)
+    const revenues = [...(accounting.revenues ?? [])]
+    const idx = entry.id ? revenues.findIndex(r => r.id === entry.id) : -1
+    if (idx !== -1) {
+      revenues[idx] = { ...revenues[idx], ...entry } as RevenueEntry
+    } else {
+      revenues.push({
+        accounting: accountingId,
+        source: entry.source || 'bar_cash',
+        total: entry.total || '0.00',
+        change_money: entry.change_money || '0.00',
+        fees: entry.fees || '0.00',
+      } as RevenueEntry)
     }
-    const newEntry: RevenueEntry = {
-      id: nextId(),
-      accounting: accountingId,
-      source: entry.source || 'bar_cash',
-      total: entry.total || '0.00',
-      change_money: entry.change_money || '0.00',
-      fees: entry.fees || '0.00',
-    }
-    all.push(newEntry)
-    setStore(STORAGE_KEYS.revenues, all)
-    return newEntry
+    const updated = await this.update(accountingId, { revenues })
+    const saved = (updated.revenues ?? []).find(r => r.source === entry.source)
+    return saved ?? revenues[revenues.length - 1]
   },
 
-  async deleteRevenue(_accountingId: number, entryId: number): Promise<void> {
-    await tick()
-    setStore(STORAGE_KEYS.revenues, getStore<RevenueEntry>(STORAGE_KEYS.revenues).filter(r => r.id !== entryId))
+  async deleteRevenue(accountingId: number, entryId: number): Promise<void> {
+    const accounting = await this.getById(accountingId)
+    const revenues = (accounting.revenues ?? []).filter(r => r.id !== entryId)
+    await this.update(accountingId, { revenues })
   },
 
   // ── Inventory ──
 
   async getInventory(accountingId: number): Promise<InventoryEntry[]> {
-    await tick()
-    return getStore<InventoryEntry>(STORAGE_KEYS.inventory).filter(i => i.accounting === accountingId)
+    const accounting = await this.getById(accountingId)
+    return accounting.inventory_entries ?? []
   },
 
   async saveInventory(accountingId: number, entry: Partial<InventoryEntry>): Promise<InventoryEntry> {
-    await tick()
-    const all = getStore<InventoryEntry>(STORAGE_KEYS.inventory)
-    if (entry.id) {
-      const idx = all.findIndex(i => i.id === entry.id)
-      if (idx !== -1) { all[idx] = { ...all[idx], ...entry }; setStore(STORAGE_KEYS.inventory, all); return all[idx] }
+    const accounting = await this.getById(accountingId)
+    const entries = [...(accounting.inventory_entries ?? [])]
+    const idx = entry.id ? entries.findIndex(i => i.id === entry.id) : -1
+    if (idx !== -1) {
+      entries[idx] = { ...entries[idx], ...entry } as InventoryEntry
+    } else {
+      entries.push({
+        accounting: accountingId,
+        beverage_item: entry.beverage_item || 0,
+        quantity_before: entry.quantity_before || '0',
+        quantity_after: entry.quantity_after || '0',
+      } as InventoryEntry)
     }
-    const newEntry: InventoryEntry = {
-      id: nextId(),
-      accounting: accountingId,
-      beverage_item: entry.beverage_item || 0,
-      quantity_before: entry.quantity_before || '0',
-      quantity_after: entry.quantity_after || '0',
-    }
-    all.push(newEntry)
-    setStore(STORAGE_KEYS.inventory, all)
-    return newEntry
+    const updated = await this.update(accountingId, { inventory_entries: entries })
+    return (updated.inventory_entries ?? [])[entries.length - 1]
   },
 
   async saveAllInventory(accountingId: number, entries: Partial<InventoryEntry>[]): Promise<InventoryEntry[]> {
-    await tick()
-    const results: InventoryEntry[] = []
-    for (const entry of entries) {
-      results.push(await this.saveInventory(accountingId, entry))
-    }
-    return results
+    const inventory_entries = entries.map(e => ({
+      accounting: accountingId,
+      beverage_item: e.beverage_item || 0,
+      quantity_before: e.quantity_before || '0',
+      quantity_after: e.quantity_after || '0',
+    })) as InventoryEntry[]
+    const updated = await this.update(accountingId, { inventory_entries })
+    return updated.inventory_entries ?? []
   },
 
   // ── Expenses ──
 
   async getExpenses(accountingId: number): Promise<ExpenseEntry[]> {
-    await tick()
-    return getStore<ExpenseEntry>(STORAGE_KEYS.expenses).filter(e => e.accounting === accountingId)
+    const accounting = await this.getById(accountingId)
+    return accounting.expenses ?? []
   },
 
   async saveExpense(accountingId: number, entry: Partial<ExpenseEntry>): Promise<ExpenseEntry> {
-    await tick()
-    const all = getStore<ExpenseEntry>(STORAGE_KEYS.expenses)
-    if (entry.id) {
-      const idx = all.findIndex(e => e.id === entry.id)
-      if (idx !== -1) { all[idx] = { ...all[idx], ...entry }; setStore(STORAGE_KEYS.expenses, all); return all[idx] }
+    const accounting = await this.getById(accountingId)
+    const expenses = [...(accounting.expenses ?? [])]
+    const idx = entry.id ? expenses.findIndex(e => e.id === entry.id) : -1
+    if (idx !== -1) {
+      expenses[idx] = { ...expenses[idx], ...entry } as ExpenseEntry
+    } else {
+      expenses.push({
+        accounting: accountingId,
+        description: entry.description || '',
+        amount: entry.amount || '0.00',
+        notes: entry.notes || '',
+        paid_from: entry.paid_from || 'bar_cash',
+      } as ExpenseEntry)
     }
-    const newEntry: ExpenseEntry = {
-      id: nextId(),
-      accounting: accountingId,
-      description: entry.description || '',
-      amount: entry.amount || '0.00',
-      notes: entry.notes || '',
-      paid_from: entry.paid_from || 'bar_cash',
-      is_paid_out: entry.is_paid_out ?? false,
-    }
-    all.push(newEntry)
-    setStore(STORAGE_KEYS.expenses, all)
-    return newEntry
+    const updated = await this.update(accountingId, { expenses })
+    return (updated.expenses ?? [])[expenses.length - 1]
   },
 
-  async deleteExpense(_accountingId: number, entryId: number): Promise<void> {
-    await tick()
-    setStore(STORAGE_KEYS.expenses, getStore<ExpenseEntry>(STORAGE_KEYS.expenses).filter(e => e.id !== entryId))
+  async deleteExpense(accountingId: number, entryId: number): Promise<void> {
+    const accounting = await this.getById(accountingId)
+    const expenses = (accounting.expenses ?? []).filter(e => e.id !== entryId)
+    await this.update(accountingId, { expenses })
   },
 
   // ── Splits ──
 
   async getSplits(accountingId: number): Promise<AccountingSplit[]> {
-    await tick()
-    return getStore<AccountingSplit>(STORAGE_KEYS.splits).filter(s => s.accounting === accountingId)
+    const accounting = await this.getById(accountingId)
+    return accounting.splits ?? []
   },
 
   async saveSplit(accountingId: number, entry: Partial<AccountingSplit>): Promise<AccountingSplit> {
-    await tick()
-    const all = getStore<AccountingSplit>(STORAGE_KEYS.splits)
-    if (entry.id) {
-      const idx = all.findIndex(s => s.id === entry.id)
-      if (idx !== -1) { all[idx] = { ...all[idx], ...entry }; setStore(STORAGE_KEYS.splits, all); return all[idx] }
+    const accounting = await this.getById(accountingId)
+    const splits = [...(accounting.splits ?? [])]
+    const idx = entry.id ? splits.findIndex(s => s.id === entry.id) : -1
+    if (idx !== -1) {
+      splits[idx] = { ...splits[idx], ...entry } as AccountingSplit
+    } else {
+      splits.push({
+        accounting: accountingId,
+        participant_name: entry.participant_name || '',
+        share_percentage: entry.share_percentage || '0',
+      } as AccountingSplit)
     }
-    const newEntry: AccountingSplit = {
-      id: nextId(),
-      accounting: accountingId,
-      participant_name: entry.participant_name || '',
-      share_percentage: entry.share_percentage || '0',
-    }
-    all.push(newEntry)
-    setStore(STORAGE_KEYS.splits, all)
-    return newEntry
+    const updated = await this.update(accountingId, { splits })
+    return (updated.splits ?? [])[splits.length - 1]
   },
 
-  async deleteSplit(_accountingId: number, entryId: number): Promise<void> {
-    await tick()
-    setStore(STORAGE_KEYS.splits, getStore<AccountingSplit>(STORAGE_KEYS.splits).filter(s => s.id !== entryId))
+  async deleteSplit(accountingId: number, entryId: number): Promise<void> {
+    const accounting = await this.getById(accountingId)
+    const splits = (accounting.splits ?? []).filter(s => s.id !== entryId)
+    await this.update(accountingId, { splits })
+  },
+}
+
+// ── Purchases (Wareneingänge / Einkäufe) ────────────────────────
+
+export const purchaseService = {
+  async getAll(): Promise<PaginatedResponse<Purchase>> {
+    return api.get<PaginatedResponse<Purchase>>('/api/purchases/')
+  },
+
+  async getById(id: number): Promise<Purchase> {
+    return api.get<Purchase>(`/api/purchases/${id}/`)
+  },
+
+  async create(data: Partial<Purchase>): Promise<Purchase> {
+    return api.post<Purchase>('/api/purchases/', data)
+  },
+
+  async update(id: number, data: Partial<Purchase>): Promise<Purchase> {
+    return api.put<Purchase>(`/api/purchases/${id}/`, data)
+  },
+
+  async delete(id: number): Promise<void> {
+    await api.delete(`/api/purchases/${id}/`)
+  },
+}
+
+// ── Stock (Bestandsübersicht) ───────────────────────────────────
+
+export const stockService = {
+  async getAll(): Promise<StockEntry[]> {
+    return api.get<StockEntry[]>('/api/drinks/stock/')
+  },
+
+  async hasDraft(): Promise<boolean> {
+    const [acc, pur] = await Promise.all([
+      accountingService.getAll(),
+      purchaseService.getAll(),
+    ])
+    return (
+      acc.results.some(a => a.status === 'draft') ||
+      pur.results.some(p => p.status === 'draft')
+    )
   },
 }

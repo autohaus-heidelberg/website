@@ -85,6 +85,10 @@ watch(isMobileMenuOpen, (isOpen) => {
         span Abrechnung
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
         span Getränke
+      router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
+        span Einkäufe
+      router-link.nav-link(to="/admin/stock" active-class="active" @click="handleNavigation")
+        span Bestand
 
       router-link.nav-link(to="/" @click="handleNavigation")
         span Public Site

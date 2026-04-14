@@ -139,13 +139,15 @@ function inventoryConsumption(entry: InventoryEntry): number {
 function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const consumedCrates = inventoryConsumption(entry) / upc
-  return consumedCrates * parseFloat(beverage.purchase_price || '0')
+  const price = parseFloat(entry.snapshot_purchase_price || beverage.purchase_price || '0')
+  return consumedCrates * price
 }
 
 function inventoryDepositValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const consumedCrates = inventoryConsumption(entry) / upc
-  return consumedCrates * parseFloat(beverage.deposit || '0')
+  const deposit = parseFloat(entry.snapshot_deposit || beverage.deposit || '0')
+  return consumedCrates * deposit
 }
 
 function groupInventoryValue(items: { beverage: BeverageItem; entry: InventoryEntry }[]): number {
@@ -169,13 +171,15 @@ const totalDepositValue = computed(() => {
 function stockValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const afterCrates = parseFloat(entry.quantity_after || '0') / upc
-  return afterCrates * parseFloat(beverage.purchase_price || '0')
+  const price = parseFloat(entry.snapshot_purchase_price || beverage.purchase_price || '0')
+  return afterCrates * price
 }
 
 function stockDepositValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const afterCrates = parseFloat(entry.quantity_after || '0') / upc
-  return afterCrates * parseFloat(beverage.deposit || '0')
+  const deposit = parseFloat(entry.snapshot_deposit || beverage.deposit || '0')
+  return afterCrates * deposit
 }
 
 const totalStockValue = computed(() => {
@@ -274,18 +278,14 @@ async function loadData() {
 
     try {
       const acc = await accountingService.getByEvent(props.eventId)
+      if (!acc) throw new Error('not found')
       accounting.value = acc
 
-      const [revData, invData, expData, splData] = await Promise.all([
-        accountingService.getRevenues(acc.id!),
-        accountingService.getInventory(acc.id!),
-        accountingService.getExpenses(acc.id!),
-        accountingService.getSplits(acc.id!),
-      ])
-      revenues.value = revData
-      inventory.value = invData
-      expenses.value = expData
-      splits.value = splData
+      // Nested data is included in the accounting response
+      revenues.value = acc.revenues ?? []
+      inventory.value = acc.inventory_entries ?? []
+      expenses.value = acc.expenses ?? []
+      splits.value = acc.splits ?? []
     } catch {
       // No accounting yet — create one
       accounting.value = await accountingService.create({

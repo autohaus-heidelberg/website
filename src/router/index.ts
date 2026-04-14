@@ -142,6 +142,29 @@ const router = createRouter({
           name: 'admin-accounting-detail',
           component: () => import('../views/admin/accounting/AccountingView.vue'),
           props: true
+        },
+        // Purchase routes
+        {
+          path: 'purchases',
+          name: 'admin-purchases',
+          component: () => import('../views/admin/accounting/PurchaseListView.vue')
+        },
+        {
+          path: 'purchases/create',
+          name: 'admin-purchase-create',
+          component: () => import('../views/admin/accounting/PurchaseFormView.vue')
+        },
+        {
+          path: 'purchases/:id',
+          name: 'admin-purchase-edit',
+          component: () => import('../views/admin/accounting/PurchaseFormView.vue'),
+          props: true
+        },
+        // Stock route
+        {
+          path: 'stock',
+          name: 'admin-stock',
+          component: () => import('../views/admin/accounting/StockView.vue')
         }
       ]
     }
