@@ -8,6 +8,8 @@ export interface BeverageItem {
   units_per_crate: number
   sort_order: number
   is_active: boolean
+  portions_per_bottle?: number | null
+  selling_price_portion?: string | null
   created_at?: string
   updated_at?: string
 }

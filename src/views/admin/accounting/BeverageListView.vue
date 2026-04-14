@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { beverageService } from '@/services'
 import type { BeverageItem } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
+
+const router = useRouter()
 
 const beveragesData = ref<PaginatedResponse<BeverageItem> | null>(null)
 const isLoading = ref(false)
@@ -91,15 +94,17 @@ onMounted(() => {
           .col-price Pfand
           .col-actions
 
-        .table-row(v-for="item in items" :key="item.id")
-          .col-name {{ item.name }}
+        .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }" @click="router.push(`/admin/beverages/${item.id}`)")
+          .col-name
+            span {{ item.name }}
+            span.portion-info(v-if="item.portions_per_bottle") {{ item.portions_per_bottle }}x {{ formatPrice(item.selling_price_portion) }}
           .col-crate {{ item.units_per_crate || 1 }}er
           .col-price {{ formatPrice(item.purchase_price) }}
           .col-price {{ formatPrice(item.selling_price) }}
           .col-price {{ formatPrice(item.deposit) }}
           .col-actions
             router-link.btn-edit(:to="`/admin/beverages/${item.id}`") ✎
-            button.btn-delete(@click="deleteBeverage(item)") ✕
+            button.btn-delete(@click.stop="deleteBeverage(item)") ✕
 
   .empty(v-else) Keine Getränke gefunden
 </template>
@@ -190,28 +195,29 @@ h2 {
   width: 100%;
 }
 
-.table-header {
-  display: grid;
-  grid-template-columns: 1fr 50px 90px 90px 90px 70px;
-  gap: 1.25rem;
-  padding: 0.5rem 1rem;
-  font-weight: 900;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-bottom: 0.25rem solid black;
-}
-
+.table-header,
 .table-row {
   display: grid;
   grid-template-columns: 1fr 50px 90px 90px 90px 70px;
   gap: 1.25rem;
   padding: 0.5rem 1rem;
-  align-items: center;
+}
+
+.table-header {
+  border-bottom: 0.25rem solid black;
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-row {
   border-bottom: 1px solid black;
+  align-items: center;
   font-weight: 600;
   font-size: 0.875rem;
   transition: background 0.1s;
+  cursor: pointer;
 }
 
 .col-crate {
@@ -233,6 +239,13 @@ h2 {
 
 .col-name {
   font-weight: 600;
+}
+
+.portion-info {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #666;
 }
 
 .col-price {

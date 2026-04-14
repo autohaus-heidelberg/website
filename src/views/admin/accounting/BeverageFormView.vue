@@ -20,6 +20,8 @@ const form = ref<Partial<BeverageItem>>({
   units_per_crate: 24,
   sort_order: 0,
   is_active: true,
+  portions_per_bottle: null,
+  selling_price_portion: '',
 })
 
 const isLoading = ref(false)
@@ -156,6 +158,30 @@ onMounted(() => {
         )
         .hint z.B. 24 für einen 24er-Kasten, 6 für einen Sixpack
 
+      .form-group
+        label(for="portions_per_bottle") Portionen pro Flasche
+        input#portions_per_bottle(
+          v-model.number="form.portions_per_bottle"
+          type="number"
+          min="1"
+          placeholder="leer = 1:1 Abgabe"
+        )
+        .hint Nur bei Ausschank (z.B. 3 Becher aus 0,7L Flasche)
+
+      .form-group
+        label(for="selling_price_portion") VK pro Portion
+        .input-with-unit
+          input#selling_price_portion(
+            v-model="form.selling_price_portion"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+          )
+          span.unit €
+        .hint Verkaufspreis pro Becher/Glas
+
+    .form-row
       .form-group
         label(for="sort_order") Sortierung
         input#sort_order(

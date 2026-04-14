@@ -275,6 +275,12 @@ export const purchaseService = {
   async delete(id: number): Promise<void> {
     await api.delete(`/api/purchases/${id}/`)
   },
+
+  async scanReceipt(imageFile: File): Promise<{ items: any[], raw: string }> {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    return api.post<{ items: any[], raw: string }>('/api/purchases/scan/', formData)
+  },
 }
 
 // ── Stock (Bestandsübersicht) ───────────────────────────────────

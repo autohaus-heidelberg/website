@@ -84,7 +84,8 @@ class ApiClient {
 
   // POST request
   async post<T>(url: string, data?: any): Promise<T> {
-    const response = await this.client.post<T>(url, data)
+    const config = data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {}
+    const response = await this.client.post<T>(url, data, config)
     return response.data
   }
 

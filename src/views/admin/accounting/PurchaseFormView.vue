@@ -27,6 +27,52 @@ const error = ref('')
 
 const activeBeverages = computed(() => beverages.value.filter(b => b.is_active))
 
+const isScanning = ref(false)
+const scanError = ref('')
+
+async function scanReceipt(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  isScanning.value = true
+  scanError.value = ''
+  error.value = ''
+
+  try {
+    const result = await purchaseService.scanReceipt(file)
+    // Clear existing items
+    form.value.items = []
+    itemCrates.value = []
+    itemLoose.value = []
+
+    for (const scanned of (result.items ?? [])) {
+      const matchedBev = scanned.drink_id
+        ? beverages.value.find(b => b.id === scanned.drink_id)
+        : null
+      const bev = matchedBev || activeBeverages.value[0]
+      const upc = bev?.units_per_crate || 1
+      const crates = scanned.quantity_crates || 0
+      const unitPrice = scanned.unit_price?.toString() || bev?.purchase_price || '0.00'
+      const totalPrice = (parseFloat(unitPrice) * crates).toFixed(2)
+
+      form.value.items!.push({
+        beverage_item: bev?.id ?? 0,
+        quantity: crates * upc,
+        unit_price: unitPrice,
+        total_price: totalPrice,
+      })
+      itemCrates.value.push(crates)
+      itemLoose.value.push(0)
+    }
+  } catch (e: any) {
+    scanError.value = e.response?.data?.error || e.message || 'Scan fehlgeschlagen'
+  } finally {
+    isScanning.value = false
+    input.value = ''  // Reset file input
+  }
+}
+
 const computedTotal = computed(() => {
   return (form.value.items ?? [])
     .reduce((sum, item) => sum + parseFloat(item.total_price || '0'), 0)
@@ -175,6 +221,12 @@ onMounted(() => {
         textarea#notes(v-model="form.notes" rows="2")
 
     h3.section-title Positionen
+    .scan-area
+      label.btn-scan(:class="{ scanning: isScanning }")
+        input(type="file" accept="image/*" capture="environment" @change="scanReceipt" hidden)
+        | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
+      span.scan-hint Foto von Kassenbon/Rechnung → AI füllt Positionen aus
+    .error-msg(v-if="scanError") {{ scanError }}
     .items-header
       span.col-bev Getränk
       span.col-crates Kisten
@@ -314,6 +366,39 @@ h2 {
   margin: 2rem 0 1rem;
   border-bottom: 0.25rem solid black;
   padding-bottom: 0.5rem;
+}
+
+.scan-area {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.btn-scan {
+  display: inline-block;
+  padding: 0.625rem 1.25rem;
+  background: black;
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 0.25rem solid black;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.btn-scan:hover {
+  filter: brightness(130%);
+}
+
+.btn-scan.scanning {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.scan-hint {
+  font-size: 0.8rem;
+  color: #666;
 }
 
 .items-header,
