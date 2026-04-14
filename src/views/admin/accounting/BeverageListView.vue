@@ -98,8 +98,8 @@ onMounted(() => {
           .col-price {{ formatPrice(item.selling_price) }}
           .col-price {{ formatPrice(item.deposit) }}
           .col-actions
-            router-link.btn-edit(:to="`/admin/beverages/${item.id}`") Bearbeiten
-            button.btn-delete(@click="deleteBeverage(item)") Löschen
+            router-link.btn-edit(:to="`/admin/beverages/${item.id}`") ✎
+            button.btn-delete(@click="deleteBeverage(item)") ✕
 
   .empty(v-else) Keine Getränke gefunden
 </template>
@@ -187,27 +187,30 @@ h2 {
 }
 
 .beverages-table {
-  border: 0.25rem solid black;
-  border-top: none;
+  width: 100%;
 }
 
 .table-header {
   display: grid;
-  grid-template-columns: 1fr 60px 100px 100px 100px 200px;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  grid-template-columns: 1fr 50px 90px 90px 90px 70px;
+  gap: 1.25rem;
+  padding: 0.5rem 1rem;
   font-weight: 900;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   border-bottom: 0.25rem solid black;
 }
 
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 60px 100px 100px 100px 200px;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  grid-template-columns: 1fr 50px 90px 90px 90px 70px;
+  gap: 1.25rem;
+  padding: 0.5rem 1rem;
   align-items: center;
   border-bottom: 1px solid black;
+  font-weight: 600;
+  font-size: 0.875rem;
   transition: background 0.1s;
 }
 
@@ -218,6 +221,10 @@ h2 {
 
 .table-row:last-child {
   border-bottom: none;
+}
+
+.table-row:nth-child(even) {
+  background: #f0f0f0;
 }
 
 .table-row:hover {
@@ -240,14 +247,15 @@ h2 {
 }
 
 .btn-edit, .btn-delete {
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.5rem;
   border: 0.2rem solid black;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600;
   transition: filter 0.2s;
+  line-height: 1;
 }
 
 .btn-edit {

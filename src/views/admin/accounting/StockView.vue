@@ -29,8 +29,20 @@ const totalDepositValue = computed(() => {
     .toFixed(2)
 })
 
-function formatPrice(val: string): string {
-  return parseFloat(val || '0').toFixed(2)
+function formatPrice(val: string | number): string {
+  return parseFloat(String(val) || '0').toFixed(2)
+}
+
+function groupStockValue(items: StockEntry[]): number {
+  return items.reduce((sum, e) => sum + parseFloat(e.stock_value || '0'), 0)
+}
+
+function groupDepositValue(items: StockEntry[]): number {
+  return items.reduce((sum, e) => sum + parseFloat(e.deposit_value || '0'), 0)
+}
+
+function groupQuantity(items: StockEntry[]): number {
+  return items.reduce((sum, e) => sum + (e.quantity || 0), 0)
 }
 
 async function loadData() {
@@ -72,13 +84,29 @@ onMounted(() => {
           span.col-loose Rest
           span.col-value Warenwert
           span.col-deposit Pfand
-        .table-row(v-for="item in items" :key="item.id")
+        .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }")
           span.col-name {{ item.name }}
           span.col-qty {{ item.quantity }}
           span.col-crates {{ item.crates }}
           span.col-loose {{ item.loose_bottles }}
           span.col-value {{ formatPrice(item.stock_value) }} €
           span.col-deposit {{ formatPrice(item.deposit_value) }} €
+        .table-row.row-subtotal
+          span.col-name Summe {{ groupName }}
+          span.col-qty {{ groupQuantity(items) }}
+          span.col-crates
+          span.col-loose
+          span.col-value {{ formatPrice(groupStockValue(items)) }} €
+          span.col-deposit {{ formatPrice(groupDepositValue(items)) }} €
+
+    .stock-table.total-table(v-if="entries.length")
+      .table-row.row-total
+        span.col-name Gesamt
+        span.col-qty {{ entries.reduce((s, e) => s + (e.quantity || 0), 0) }}
+        span.col-crates
+        span.col-loose
+        span.col-value {{ totalStockValue }} €
+        span.col-deposit {{ totalDepositValue }} €
 
     .empty(v-if="entries.length === 0") Keine Bestandsdaten vorhanden
 </template>
@@ -131,9 +159,10 @@ h2 {
 .group-title {
   font-size: 1.1rem;
   font-weight: 900;
-  border-bottom: 0.25rem solid black;
-  padding-bottom: 0.5rem;
-  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background: black;
+  color: white;
+  margin-bottom: 0;
 }
 
 .stock-table {
@@ -143,9 +172,9 @@ h2 {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
+  grid-template-columns: 3fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
 }
 
 .table-header {
@@ -162,8 +191,32 @@ h2 {
   font-size: 0.875rem;
 }
 
+.row-even {
+  background: #f0f0f0;
+}
+
 .table-row:hover {
+  background: #e0e0e0;
+}
+
+.row-subtotal {
+  font-weight: 900;
+  border-bottom: 0.25rem solid black;
+  border-top: 0.15rem solid black;
   background: #f5f5f5;
+}
+
+.row-total {
+  font-weight: 900;
+  font-size: 1rem;
+  border: 0.25rem solid black;
+  padding: 0.75rem 0;
+  background: black;
+  color: white;
+}
+
+.total-table {
+  margin-top: 1rem;
 }
 
 .col-qty,
