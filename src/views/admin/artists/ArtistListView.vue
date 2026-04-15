@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { artistService, type Artist } from '@/services'
 import type { PaginatedResponse } from '@/types/api'
 
 const router = useRouter()
+const { t } = useI18n()
 const artistsData = ref<PaginatedResponse<Artist> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
@@ -36,7 +38,7 @@ async function loadArtists() {
 }
 
 async function deleteArtist(artist: Artist) {
-  if (!confirm(`Delete artist "${artist.name}"?`)) return
+  if (!confirm(t('artists.confirmDelete', { name: artist.name }))) return
 
   try {
     await artistService.delete(artist.id!)
@@ -46,7 +48,7 @@ async function deleteArtist(artist: Artist) {
       artistsData.value.count--
     }
   } catch (e: any) {
-    alert('Failed to delete artist: ' + e.message)
+    alert(t('artists.errorDeleting') + e.message)
   }
 }
 
@@ -58,16 +60,16 @@ onMounted(() => {
 <template lang="pug">
 .artist-list-view
   .header
-    h2 Artists
+    h2 {{ $t('artists.title') }}
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Search artists..."
+        :placeholder="$t('artists.searchPlaceholder')"
       )
-      router-link.btn-primary(to="/admin/artists/create") Create Artist
+      router-link.btn-primary(to="/admin/artists/create") {{ $t('artists.createArtist') }}
 
-  .loading(v-if="isLoading") Loading artists...
+  .loading(v-if="isLoading") {{ $t('artists.loadingArtists') }}
   .error(v-else-if="error") {{ error }}
 
   .artists-grid(v-else-if="filteredArtists.length")
@@ -81,16 +83,16 @@ onMounted(() => {
         p.artist-description(v-if="artist.description") {{ artist.description }}
 
         .artist-links(v-if="artist.link || artist.soundcloud || artist.youtube || artist.bandcamp")
-          a.link(v-if="artist.link" :href="artist.link" target="_blank") Website
-          a.link(v-if="artist.soundcloud" :href="artist.soundcloud" target="_blank") SoundCloud
-          a.link(v-if="artist.youtube" :href="artist.youtube" target="_blank") YouTube
-          a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") Bandcamp
+          a.link(v-if="artist.link" :href="artist.link" target="_blank") {{ $t('artists.website') }}
+          a.link(v-if="artist.soundcloud" :href="artist.soundcloud" target="_blank") {{ $t('artists.soundcloud') }}
+          a.link(v-if="artist.youtube" :href="artist.youtube" target="_blank") {{ $t('artists.youtube') }}
+          a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") {{ $t('artists.bandcamp') }}
 
       .artist-actions
-        router-link.btn-edit(:to="`/admin/artists/${artist.id}`") Edit
-        button.btn-delete(@click="deleteArtist(artist)") Delete
+        router-link.btn-edit(:to="`/admin/artists/${artist.id}`") {{ $t('events.edit') }}
+        button.btn-delete(@click="deleteArtist(artist)") {{ $t('common.delete') }}
 
-  .empty(v-else) No artists found
+  .empty(v-else) {{ $t('artists.noArtists') }}
 </template>
 
 <style scoped>

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { eventService, type Event } from '@/services'
 import type { PaginatedResponse } from '@/types/api'
 
 const router = useRouter()
+const { t } = useI18n()
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
@@ -37,7 +39,7 @@ async function loadEvents() {
 }
 
 async function deleteEvent(event: Event) {
-  if (!confirm(`Delete event "${event.title}"?`)) return
+  if (!confirm(t('events.confirmDelete', { title: event.title }))) return
 
   try {
     await eventService.delete(event.id)
@@ -47,7 +49,7 @@ async function deleteEvent(event: Event) {
       eventsData.value.count--
     }
   } catch (e: any) {
-    alert('Failed to delete event: ' + e.message)
+    alert(t('events.errorDeleting') + e.message)
   }
 }
 
@@ -69,16 +71,16 @@ onMounted(() => {
 <template lang="pug">
 .event-list-view
   .header
-    h2 Events
+    h2 {{ $t('events.title') }}
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Search events..."
+        :placeholder="$t('events.searchPlaceholder')"
       )
-      router-link.btn-primary(to="/admin/events/create") Create Event
+      router-link.btn-primary(to="/admin/events/create") {{ $t('events.createEvent') }}
 
-  .loading(v-if="isLoading") Loading events...
+  .loading(v-if="isLoading") {{ $t('events.loadingEvents') }}
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length > 0")
@@ -96,13 +98,13 @@ onMounted(() => {
       .event-footer
         .event-meta
           span.fee(v-if="event.fee") {{ event.fee }} €
-          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") Tickets
+          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") {{ $t('events.tickets') }}
 
         .event-actions
-          router-link.btn-edit(:to="`/admin/events/${event.id}`") Edit
-          button.btn-delete(@click="deleteEvent(event)") Delete
+          router-link.btn-edit(:to="`/admin/events/${event.id}`") {{ $t('events.edit') }}
+          button.btn-delete(@click="deleteEvent(event)") {{ $t('common.delete') }}
 
-  .empty(v-else) No events found
+  .empty(v-else) {{ $t('events.noEvents') }}
 
 </template>
 

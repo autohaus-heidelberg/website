@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { settingsService } from '@/services'
+
+const { t } = useI18n()
 
 // State
 const activeTab = ref('helferpad')
@@ -25,7 +28,7 @@ onMounted(async () => {
       // Setting doesn't exist yet - will create on first save
       helferpadContent.value = 'HelferPad'
     } else {
-      error.value = 'Failed to load settings'
+      error.value = t('settings.errorLoading')
       console.error('Error loading settings:', err)
     }
   } finally {
@@ -49,12 +52,12 @@ async function handleSave() {
       settingId.value = created.id
     }
 
-    success.value = 'Settings saved successfully!'
+    success.value = t('settings.savedSuccess')
     setTimeout(() => {
       success.value = ''
     }, 3000)
   } catch (err: any) {
-    error.value = err.message || 'Failed to save settings'
+    error.value = err.message || t('settings.errorSaving')
     console.error('Error saving settings:', err)
   } finally {
     isSaving.value = false
@@ -65,19 +68,19 @@ async function handleSave() {
 <template lang="pug">
 .settings-view
   .settings-header
-    h2 Settings
+    h2 {{ $t('settings.title') }}
 
   .tabs-nav
     button.tab-button(
       :class="{ active: activeTab === 'helferpad' }"
       @click="activeTab = 'helferpad'"
     )
-      | Helferpad
+      | {{ $t('settings.helferpad') }}
 
   .tab-content(v-show="activeTab === 'helferpad'")
     .section-description
-      p Default content that appears in new Helferpad documents
-      p.replacements-title Available placeholders:
+      p {{ $t('settings.helferpadDesc') }}
+      p.replacements-title {{ $t('settings.availablePlaceholders') }}
       ul.replacements-list(v-pre)
         li #[code {{Eventname}}] - Event title
         li #[code {{EventDate}}] - Event start date/time (German timezone)
@@ -85,17 +88,17 @@ async function handleSave() {
         li #[code {{EventSoundCheck}}] - Event start minus 2 hours (German timezone)
         li #[code {{EventDinner}}] - Event start minus 1 hour (German timezone)
         li #[code {{EntranceFee}}] - AK price (or [TBA] if not set)
-        li #[code {{EventLink}}] - Link to event website 
+        li #[code {{EventLink}}] - Link to event website
     form.setting-form(@submit.prevent="handleSave")
       .form-group
-        label(for="helferpad-content") Default Content
+        label(for="helferpad-content") {{ $t('settings.defaultContent') }}
         textarea#helferpad-content(
           v-model="helferpadContent"
           :disabled="isLoading || isSaving"
           rows="15"
-          placeholder="Enter default Helferpad content..."
+          :placeholder="$t('settings.contentPlaceholder')"
         )
-        .field-hint Plain text only
+        .field-hint {{ $t('settings.plainTextOnly') }}
 
       .error(v-if="error") {{ error }}
       .success(v-if="success") {{ success }}
@@ -105,7 +108,7 @@ async function handleSave() {
           type="submit"
           :disabled="isSaving || isLoading"
         )
-          | {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          | {{ isSaving ? $t('common.saving') : $t('settings.saveChanges') }}
 </template>
 
 <style scoped>

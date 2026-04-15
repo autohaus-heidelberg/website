@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { eventService, accountingService } from '@/services'
 import type { Event } from '@/services'
 import type { EventAccounting } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
+
+const { t } = useI18n()
 
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const accountings = ref<EventAccounting[]>([])
@@ -38,8 +41,8 @@ function formatDate(date: string) {
 }
 
 function statusLabel(status?: string): string {
-  if (!status) return 'Not Created'
-  return status === 'final' ? 'Finalized' : 'Draft'
+  if (!status) return t('accountingList.statusNotCreated')
+  return status === 'final' ? t('accountingList.statusFinalized') : t('accountingList.statusDraft')
 }
 
 function statusClass(status?: string): string {
@@ -57,7 +60,7 @@ async function createAccounting(eventId: string) {
     })
     accountings.value.push(accounting)
   } catch (e: any) {
-    alert('Error creating: ' + e.message)
+    alert(t('accountingList.errorCreating') + e.message)
   }
 }
 
@@ -72,7 +75,7 @@ async function loadData() {
     eventsData.value = evData
     accountings.value = accData.results
   } catch (e: any) {
-    error.value = e.message || 'Failed to load data'
+    error.value = e.message || t('common.errorLoading')
   } finally {
     isLoading.value = false
   }
@@ -86,15 +89,15 @@ onMounted(() => {
 <template lang="pug">
 .accounting-list-view
   .header
-    h2 Accounting
+    h2 {{ $t('accountingList.title') }}
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Search event..."
+        :placeholder="$t('accountingList.searchPlaceholder')"
       )
 
-  .loading(v-if="isLoading") Loading...
+  .loading(v-if="isLoading") {{ $t('common.loading') }}
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length")
@@ -115,13 +118,13 @@ onMounted(() => {
           router-link.btn-edit(
             v-if="event.accounting"
             :to="`/admin/accounting/${event.id}`"
-          ) Open Accounting
+          ) {{ $t('accountingList.openAccounting') }}
           button.btn-primary(
             v-else
             @click="createAccounting(event.id)"
-          ) Start Accounting
+          ) {{ $t('accountingList.startAccounting') }}
 
-  .empty(v-else) No events found
+  .empty(v-else) {{ $t('accountingList.noEvents') }}
 </template>
 
 <style scoped>

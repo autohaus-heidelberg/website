@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
+
+function toggleLocale() {
+  const next = locale.value === 'de' ? 'en' : 'de'
+  locale.value = next
+  localStorage.setItem('locale', next)
+}
 
 function handleLogout() {
   authStore.logout()
@@ -59,39 +67,41 @@ watch(isMobileMenuOpen, (isOpen) => {
 
   nav.admin-nav(:class="{ 'is-open': isMobileMenuOpen }")
     .admin-nav-header
-      h1 Event Management
+      h1 {{ $t('nav.title') }}
       .user-info
         .username {{ authStore.user?.username }}
         .user-groups(v-if="authStore.user?.groups.length")
           span.group(v-for="group in authStore.user.groups" :key="group") {{ group }}
-        button.btn-logout(@click="handleLogout") Logout
+        .nav-controls
+          button.btn-locale(@click="toggleLocale") {{ locale === 'de' ? 'EN' : 'DE' }}
+          button.btn-logout(@click="handleLogout") {{ $t('nav.logout') }}
 
     .admin-nav-links
       router-link.nav-link(to="/admin" exact-active-class="active" @click="handleNavigation")
-        span Dashboard
+        span {{ $t('nav.dashboard') }}
       router-link.nav-link(to="/admin/events" active-class="active" @click="handleNavigation")
-        span Events
+        span {{ $t('nav.events') }}
       router-link.nav-link(to="/admin/artists" active-class="active" @click="handleNavigation")
-        span Artists
+        span {{ $t('nav.artists') }}
       router-link.nav-link(to="/admin/sync" active-class="active" @click="handleNavigation")
-        span Event Sync
+        span {{ $t('nav.eventSync') }}
       router-link.nav-link(to="/admin/settings" active-class="active" @click="handleNavigation")
-        span Settings
+        span {{ $t('nav.settings') }}
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
-        span Checklist Templates
+        span {{ $t('nav.checklistTemplates') }}
 
       .nav-divider
       router-link.nav-link(to="/admin/accounting" active-class="active" @click="handleNavigation")
-        span Accounting
+        span {{ $t('nav.accounting') }}
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
-        span Beverages
+        span {{ $t('nav.beverages') }}
       router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
-        span Purchases
+        span {{ $t('nav.purchases') }}
       router-link.nav-link(to="/admin/stock" active-class="active" @click="handleNavigation")
-        span Stock
+        span {{ $t('nav.stock') }}
 
       router-link.nav-link(to="/" @click="handleNavigation")
-        span Public Site
+        span {{ $t('nav.publicSite') }}
 
   main.admin-content
     router-view
@@ -170,6 +180,27 @@ watch(isMobileMenuOpen, (isOpen) => {
 
 .btn-logout:hover {
   filter: brightness(120%);
+}
+
+.nav-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-locale {
+  padding: 0.625rem;
+  background: white;
+  color: black;
+  border: 0.25rem solid black;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-locale:hover {
+  background: black;
+  color: white;
 }
 
 .admin-nav-links {

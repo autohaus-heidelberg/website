@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { purchaseService, beverageService } from '@/services'
 import type { Purchase } from '@/types/accounting'
 import type { BeverageItem } from '@/types/accounting'
+
+const { t } = useI18n()
 
 const purchases = ref<Purchase[]>([])
 const beverages = ref<BeverageItem[]>([])
@@ -24,7 +27,7 @@ function formatDate(date: string) {
 }
 
 function statusLabel(status: string): string {
-  return status === 'final' ? 'Finalized' : 'Draft'
+  return status === 'final' ? t('purchases.statusFinalized') : t('purchases.statusDraft')
 }
 
 function statusClass(status: string): string {
@@ -46,16 +49,16 @@ function formatTotal(p: Purchase): string {
 
 function itemLabel(p: Purchase): string {
   const n = itemCount(p)
-  return `${n} item${n !== 1 ? 's' : ''}`
+  return t('purchases.itemCount', { n }, n)
 }
 
 async function deletePurchase(id: number) {
-  if (!confirm('Delete this purchase?')) return
+  if (!confirm(t('purchases.confirmDelete'))) return
   try {
     await purchaseService.delete(id)
     purchases.value = purchases.value.filter(p => p.id !== id)
   } catch (e: any) {
-    alert('Error: ' + e.message)
+    alert(t('purchases.errorDeleting') + e.message)
   }
 }
 
@@ -70,7 +73,7 @@ async function loadData() {
     purchases.value = purData.results
     beverages.value = bevData.results
   } catch (e: any) {
-    error.value = e.message || 'Failed to load data'
+    error.value = e.message || t('purchases.errorLoading')
   } finally {
     isLoading.value = false
   }
@@ -84,11 +87,11 @@ onMounted(() => {
 <template lang="pug">
 .purchase-list-view
   .header
-    h2 Purchases
+    h2 {{ $t('purchases.title') }}
     .header-actions
-      router-link.btn-primary(to="/admin/purchases/create") + New Purchase
+      router-link.btn-primary(to="/admin/purchases/create") {{ $t('purchases.newPurchase') }}
 
-  .loading(v-if="isLoading") Loading...
+  .loading(v-if="isLoading") {{ $t('common.loading') }}
   .error(v-else-if="error") {{ error }}
 
   .purchases-container(v-else-if="sortedPurchases.length")
@@ -98,20 +101,20 @@ onMounted(() => {
         span.status-badge(:class="statusClass(p.status)")
           | {{ statusLabel(p.status) }}
 
-      h3.purchase-title {{ p.supplier || 'No Supplier' }}
+      h3.purchase-title {{ p.supplier || $t('purchases.noSupplier') }}
       .purchase-meta(v-if="p.invoice_number")
-        | Invoice: {{ p.invoice_number }}
+        | {{ $t('purchases.invoice') }}{{ p.invoice_number }}
 
       .purchase-items(v-if="p.items?.length")
         span {{ itemLabel(p) }}
-        |  · Gesamt: {{ formatTotal(p) }} €
+        |  · {{ $t('purchases.totalLabel') }}{{ formatTotal(p) }} €
 
       .purchase-footer
         .purchase-actions
-          router-link.btn-edit(:to="`/admin/purchases/${p.id}`") Open
-          button.btn-delete(v-if="p.status === 'draft'" @click="deletePurchase(p.id)") Delete
+          router-link.btn-edit(:to="`/admin/purchases/${p.id}`") {{ $t('common.open') }}
+          button.btn-delete(v-if="p.status === 'draft'" @click="deletePurchase(p.id)") {{ $t('common.delete') }}
 
-  .empty(v-else) No purchases found
+  .empty(v-else) {{ $t('purchases.noPurchases') }}
 </template>
 
 <style scoped>

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { eventService, artistService } from '@/services'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const eventsCount = ref(0)
 const artistsCount = ref(0)
@@ -26,30 +28,30 @@ onMounted(async () => {
 
 <template lang="pug">
 .dashboard
-  h2 Welcome, {{ authStore.user?.username }}!
+  h2 {{ $t('dashboard.welcome', { name: authStore.user?.username }) }}
 
   .stats-grid(v-if="!isLoading")
     .stat-card
       .stat-info
         .stat-value {{ eventsCount }}
-        .stat-label Events
-      router-link.stat-link(to="/admin/events") Manage Events
+        .stat-label {{ $t('dashboard.events') }}
+      router-link.stat-link(to="/admin/events") {{ $t('dashboard.manageEvents') }}
 
     .stat-card
       .stat-info
         .stat-value {{ artistsCount }}
-        .stat-label Artists
-      router-link.stat-link(to="/admin/artists") Manage Artists
+        .stat-label {{ $t('dashboard.artists') }}
+      router-link.stat-link(to="/admin/artists") {{ $t('dashboard.manageArtists') }}
 
-  .loading(v-else) Loading stats...
+  .loading(v-else) {{ $t('dashboard.loadingStats') }}
 
   .quick-actions
-    h3 Quick Actions
+    h3 {{ $t('dashboard.quickActions') }}
     .actions-grid
       router-link.action-btn(to="/admin/events/create")
-        span Create New Event
+        span {{ $t('dashboard.createNewEvent') }}
       router-link.action-btn(to="/admin/artists/create")
-        span Create New Artist
+        span {{ $t('dashboard.createNewArtist') }}
 </template>
 
 <style scoped>

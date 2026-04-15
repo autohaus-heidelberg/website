@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { beverageService } from '@/services'
 import type { BeverageItem } from '@/types/accounting'
 
@@ -9,6 +10,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 const isEditing = !!props.id
 
 const form = ref<Partial<BeverageItem>>({
@@ -48,15 +50,15 @@ async function loadBeverage() {
 
 async function handleSubmit() {
   if (!form.value.name) {
-    error.value = 'Please enter a name'
+    error.value = t('beverages.form.errorName')
     return
   }
   if (!form.value.supplier_group) {
-    error.value = 'Please enter a supplier group'
+    error.value = t('beverages.form.errorSupplier')
     return
   }
   if (!form.value.purchase_price) {
-    error.value = 'Please enter a purchase price'
+    error.value = t('beverages.form.errorPrice')
     return
   }
 
@@ -71,7 +73,7 @@ async function handleSubmit() {
     }
     router.push('/admin/beverages')
   } catch (e: any) {
-    error.value = e.message || 'Error saving'
+    error.value = e.message || t('common.errorSaving')
   } finally {
     isLoading.value = false
   }
@@ -85,25 +87,25 @@ onMounted(() => {
 <template lang="pug">
 .beverage-form-view
   .form-header
-    h2 {{ isEditing ? 'Edit Beverage' : 'New Beverage' }}
-    router-link.btn-cancel(to="/admin/beverages") Cancel
+    h2 {{ isEditing ? $t('beverages.editBeverage') : $t('beverages.newBeverage') }}
+    router-link.btn-cancel(to="/admin/beverages") {{ $t('common.cancel') }}
 
   form.beverage-form(@submit.prevent="handleSubmit")
     .form-group
-      label(for="name") Name
+      label(for="name") {{ $t('common.name') }}
       input#name(
         v-model="form.name"
         type="text"
-        placeholder="z.B. Kurpfalz Helles"
+        :placeholder="$t('beverages.form.namePlaceholder')"
         required
       )
 
     .form-group
-      label(for="supplier_group") Supplier Group
+      label(for="supplier_group") {{ $t('beverages.form.supplierGroup') }}
       input#supplier_group(
         v-model="form.supplier_group"
         type="text"
-        placeholder="e.g. Getränkestation"
+        :placeholder="$t('beverages.form.supplierPlaceholder')"
         list="supplier-suggestions"
         required
       )
@@ -112,7 +114,7 @@ onMounted(() => {
 
     .form-row
       .form-group
-        label(for="purchase_price") Purchase Price (excl. deposit)
+        label(for="purchase_price") {{ $t('beverages.form.purchasePrice') }}
         .input-with-unit
           input#purchase_price(
             v-model="form.purchase_price"
@@ -125,7 +127,7 @@ onMounted(() => {
           span.unit €
 
       .form-group
-        label(for="selling_price") Selling Price (single)
+        label(for="selling_price") {{ $t('beverages.form.sellingPrice') }}
         .input-with-unit
           input#selling_price(
             v-model="form.selling_price"
@@ -137,7 +139,7 @@ onMounted(() => {
           span.unit €
 
       .form-group
-        label(for="deposit") Deposit
+        label(for="deposit") {{ $t('beverages.form.deposit') }}
         .input-with-unit
           input#deposit(
             v-model="form.deposit"
@@ -150,40 +152,40 @@ onMounted(() => {
 
     .form-row
       .form-group
-        label(for="units_per_crate") Units per Package
+        label(for="units_per_crate") {{ $t('beverages.form.unitsPerPackage') }}
         input#units_per_crate(
           v-model.number="form.units_per_crate"
           type="number"
           min="1"
-          placeholder="e.g. 24"
+          :placeholder="$t('beverages.form.unitsPlaceholder')"
         )
-        .hint e.g. 24 for a 24-pack crate, 1 for single bottles
+        .hint {{ $t('beverages.form.unitsHint') }}
 
       .form-group
-        label(for="bottle_size") Bottle Size
+        label(for="bottle_size") {{ $t('beverages.form.bottleSize') }}
         .input-with-unit
           input#bottle_size(
             v-model="form.bottle_size"
             type="number"
             step="0.01"
             min="0"
-            placeholder="z.B. 0.33"
+            :placeholder="$t('beverages.form.bottleSizePlaceholder')"
           )
           span.unit L
-        .hint z.B. 0.33, 0.5, 0.7, 0.75, 1.0
+        .hint {{ $t('beverages.form.bottleSizeHint') }}
 
       .form-group
-        label(for="portions_per_bottle") Portions per Bottle
+        label(for="portions_per_bottle") {{ $t('beverages.form.portionsPerBottle') }}
         input#portions_per_bottle(
           v-model.number="form.portions_per_bottle"
           type="number"
           min="1"
-          placeholder="empty = 1:1"
+          :placeholder="$t('beverages.form.portionsPlaceholder')"
         )
-        .hint Only for tap/pour (e.g. 3 cups from 0.7L bottle)
+        .hint {{ $t('beverages.form.portionsHint') }}
 
       .form-group
-        label(for="selling_price_portion") Price per Portion
+        label(for="selling_price_portion") {{ $t('beverages.form.pricePerPortion') }}
         .input-with-unit
           input#selling_price_portion(
             v-model="form.selling_price_portion"
@@ -193,11 +195,11 @@ onMounted(() => {
             placeholder="0.00"
           )
           span.unit €
-        .hint Selling price per cup/glass
+        .hint {{ $t('beverages.form.pricePerPortionHint') }}
 
     .form-row
       .form-group
-        label(for="sort_order") Sort Order
+        label(for="sort_order") {{ $t('beverages.form.sortOrder') }}
         input#sort_order(
           v-model.number="form.sort_order"
           type="number"
@@ -210,14 +212,14 @@ onMounted(() => {
             v-model="form.is_active"
             type="checkbox"
           )
-          |  Active
+          |  {{ $t('common.active') }}
 
     .error(v-if="error") {{ error }}
 
     .form-actions
       button.btn-primary(type="submit" :disabled="isLoading")
-        | {{ isLoading ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
-      router-link.btn-secondary(to="/admin/beverages") Cancel
+        | {{ isLoading ? $t('common.saving') : (isEditing ? $t('common.update') : $t('common.create')) }}
+      router-link.btn-secondary(to="/admin/beverages") {{ $t('common.cancel') }}
 </template>
 
 <style scoped>
