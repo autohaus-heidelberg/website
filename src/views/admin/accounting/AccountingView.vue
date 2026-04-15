@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { accountingService, beverageService, eventService } from '@/services'
+import { accountingService, beverageService, eventService, pretixService } from '@/services'
 import type { Event } from '@/services'
+import type { PretixOrderSummary } from '@/services/accounting'
 import type {
   EventAccounting,
   RevenueEntry,
@@ -39,6 +40,34 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref('')
 const saveSuccess = ref('')
+
+// ── Pretix VVK ───────────────────────────────────────────────────
+const pretixData = ref<PretixOrderSummary | null>(null)
+const pretixLoading = ref(false)
+const pretixError = ref('')
+
+async function fetchPretixData() {
+  if (!props.eventId) return
+  pretixLoading.value = true
+  pretixError.value = ''
+  try {
+    pretixData.value = await pretixService.getOrderSummary(props.eventId)
+  } catch (e: any) {
+    pretixError.value = e.message || 'Pretix-Daten konnten nicht geladen werden'
+  } finally {
+    pretixLoading.value = false
+  }
+}
+
+function applyPretixData() {
+  if (!pretixData.value) return
+  for (const [source, info] of Object.entries(pretixData.value.by_source)) {
+    const rev = getRevenue(source as RevenueSource)
+    rev.total = info.revenue.toFixed(2)
+    rev.fees = info.fees.toFixed(2)
+    rev.change_money = '0.00'
+  }
+}
 
 // ── Computed: Revenue ────────────────────────────────────────────
 
@@ -405,7 +434,18 @@ onMounted(() => {
     //- ── Kassensturz Tab ──
     .tab-content(v-if="activeTab === 'kassensturz'")
       .section(v-for="group in REVENUE_GROUPS" :key="group.label")
-        h3.section-title {{ group.label }}
+        .section-title-row
+          h3.section-title {{ group.label }}
+          .pretix-actions(v-if="group.sources.some(s => s.startsWith('vvk_'))")
+            button.btn-pretix(
+              @click="fetchPretixData"
+              :disabled="pretixLoading"
+            ) {{ pretixLoading ? 'Lade...' : 'VVK von Pretix laden' }}
+            button.btn-pretix.btn-apply(
+              v-if="pretixData"
+              @click="applyPretixData"
+            ) Übernehmen ({{ pretixData.total_tickets }} Tickets, {{ pretixData.total_revenue.toFixed(2) }} €)
+            span.pretix-error(v-if="pretixError") {{ pretixError }}
         .revenue-table
           .revenue-header
             .col-source Quelle
@@ -840,6 +880,58 @@ h2 {
   background: black;
   color: white;
   margin-bottom: 0;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.section-title-row .section-title {
+  flex: 1;
+}
+
+.pretix-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: black;
+  padding: 0 1rem 0 0;
+}
+
+.btn-pretix {
+  background: white;
+  color: black;
+  border: 2px solid white;
+  padding: 0.25rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.btn-pretix:hover {
+  background: #e0e0e0;
+}
+
+.btn-pretix:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-apply {
+  background: #00c853;
+  color: white;
+  border-color: #00c853;
+}
+
+.btn-apply:hover {
+  background: #00a844;
+}
+
+.pretix-error {
+  color: #ff5252;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 /* ── Revenue Table ── */

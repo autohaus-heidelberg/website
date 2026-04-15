@@ -301,3 +301,24 @@ export const stockService = {
     )
   },
 }
+
+// ── Pretix (VVK-Daten) ──────────────────────────────────────────
+
+export interface PretixSourceSummary {
+  tickets: number
+  revenue: number
+  fees: number
+}
+
+export interface PretixOrderSummary {
+  event_slug: string
+  total_tickets: number
+  total_revenue: number
+  by_source: Record<string, PretixSourceSummary>
+}
+
+export const pretixService = {
+  async getOrderSummary(eventSlug: string): Promise<PretixOrderSummary> {
+    return api.get<PretixOrderSummary>(`/api/pretix/orders/${eventSlug}/`)
+  },
+}
