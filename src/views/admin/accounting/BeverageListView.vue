@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router'
 import { beverageService } from '@/services'
 import type { BeverageItem } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
+import { useSort } from '@/composables/useSort'
 
 const router = useRouter()
+const sort = useSort<BeverageItem>()
 
 const beveragesData = ref<PaginatedResponse<BeverageItem> | null>(null)
 const isLoading = ref(false)
@@ -29,6 +31,19 @@ const groupedBeverages = computed(() => {
     if (!groups[b.supplier_group]) groups[b.supplier_group] = []
     groups[b.supplier_group].push(b)
   }
+  // Apply sort within each group
+  for (const key in groups) {
+    groups[key] = sort.sorted(groups[key], (item, k) => {
+      switch (k) {
+        case 'name': return item.name.toLowerCase()
+        case 'crate': return item.units_per_crate || 1
+        case 'purchase': return parseFloat(item.purchase_price || '0')
+        case 'selling': return parseFloat(item.selling_price || item.selling_price_portion || '0')
+        case 'deposit': return parseFloat(item.deposit || '0')
+        default: return 0
+      }
+    })
+  }
   return groups
 })
 
@@ -43,14 +58,14 @@ async function loadBeverages() {
   try {
     beveragesData.value = await beverageService.getAll()
   } catch (e: any) {
-    error.value = e.message || 'Getränke konnten nicht geladen werden'
+    error.value = e.message || 'Failed to load beverages'
   } finally {
     isLoading.value = false
   }
 }
 
 async function deleteBeverage(item: BeverageItem) {
-  if (!confirm(`"${item.name}" wirklich löschen?`)) return
+  if (!confirm(`Delete "${item.name}"?`)) return
   try {
     await beverageService.delete(item.id!)
     if (beveragesData.value) {
@@ -58,7 +73,7 @@ async function deleteBeverage(item: BeverageItem) {
       beveragesData.value.count--
     }
   } catch (e: any) {
-    alert('Fehler beim Löschen: ' + e.message)
+    alert('Error deleting: ' + e.message)
   }
 }
 
@@ -70,16 +85,16 @@ onMounted(() => {
 <template lang="pug">
 .beverage-list-view
   .header
-    h2 Getränke
+    h2 Beverages
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Suchen..."
+        placeholder="Search..."
       )
-      router-link.btn-primary(to="/admin/beverages/create") Neues Getränk
+      router-link.btn-primary(to="/admin/beverages/create") New Beverage
 
-  .loading(v-if="isLoading") Lade Getränke...
+  .loading(v-if="isLoading") Loading beverages...
   .error(v-else-if="error") {{ error }}
 
   template(v-else-if="filteredBeverages.length")
@@ -87,17 +102,17 @@ onMounted(() => {
       h3.group-title {{ group }}
       .beverages-table
         .table-header
-          .col-name Name
-          .col-crate Geb.
-          .col-size Fl.
-          .col-price Einkauf
-          .col-price Verkauf
-          .col-price Pfand
+          .col-name.sortable(@click="sort.toggle('name')") Name{{ sort.indicator('name') }}
+          .col-crate.sortable(@click="sort.toggle('crate')") Pkg.{{ sort.indicator('crate') }}
+          .col-size Btl.
+          .col-price.sortable(@click="sort.toggle('purchase')") Purchase{{ sort.indicator('purchase') }}
+          .col-price.sortable(@click="sort.toggle('selling')") Selling{{ sort.indicator('selling') }}
+          .col-price.sortable(@click="sort.toggle('deposit')") Deposit{{ sort.indicator('deposit') }}
           .col-actions
 
         .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }" @click="router.push(`/admin/beverages/${item.id}`)")
           .col-name {{ item.name }}
-          .col-crate {{ item.units_per_crate || 1 }}er
+          .col-crate {{ item.units_per_crate || 1 }}pc
           .col-size {{ item.bottle_size ? item.bottle_size + 'L' : '' }}
           .col-price {{ formatPrice(item.purchase_price) }}
           .col-price
@@ -110,7 +125,7 @@ onMounted(() => {
             router-link.btn-edit(:to="`/admin/beverages/${item.id}`") ✎
             button.btn-delete(@click.stop="deleteBeverage(item)") ✕
 
-  .empty(v-else) Keine Getränke gefunden
+  .empty(v-else) No beverages found
 </template>
 
 <style scoped>
@@ -197,6 +212,16 @@ h2 {
 
 .beverages-table {
   width: 100%;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable:hover {
+  text-decoration: underline;
 }
 
 .table-header,

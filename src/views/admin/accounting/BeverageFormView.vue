@@ -42,21 +42,21 @@ async function loadBeverage() {
     const item = await beverageService.getById(Number(props.id))
     form.value = { ...item }
   } catch (e: any) {
-    error.value = 'Getränk konnte nicht geladen werden'
+    error.value = 'Failed to load beverage'
   }
 }
 
 async function handleSubmit() {
   if (!form.value.name) {
-    error.value = 'Bitte Name eingeben'
+    error.value = 'Please enter a name'
     return
   }
   if (!form.value.supplier_group) {
-    error.value = 'Bitte Lieferantengruppe eingeben'
+    error.value = 'Please enter a supplier group'
     return
   }
   if (!form.value.purchase_price) {
-    error.value = 'Bitte Einkaufspreis eingeben'
+    error.value = 'Please enter a purchase price'
     return
   }
 
@@ -71,7 +71,7 @@ async function handleSubmit() {
     }
     router.push('/admin/beverages')
   } catch (e: any) {
-    error.value = e.message || 'Fehler beim Speichern'
+    error.value = e.message || 'Error saving'
   } finally {
     isLoading.value = false
   }
@@ -85,8 +85,8 @@ onMounted(() => {
 <template lang="pug">
 .beverage-form-view
   .form-header
-    h2 {{ isEditing ? 'Getränk bearbeiten' : 'Neues Getränk' }}
-    router-link.btn-cancel(to="/admin/beverages") Abbrechen
+    h2 {{ isEditing ? 'Edit Beverage' : 'New Beverage' }}
+    router-link.btn-cancel(to="/admin/beverages") Cancel
 
   form.beverage-form(@submit.prevent="handleSubmit")
     .form-group
@@ -99,11 +99,11 @@ onMounted(() => {
       )
 
     .form-group
-      label(for="supplier_group") Lieferantengruppe
+      label(for="supplier_group") Supplier Group
       input#supplier_group(
         v-model="form.supplier_group"
         type="text"
-        placeholder="z.B. Getränkestation"
+        placeholder="e.g. Getränkestation"
         list="supplier-suggestions"
         required
       )
@@ -112,7 +112,7 @@ onMounted(() => {
 
     .form-row
       .form-group
-        label(for="purchase_price") Einkaufspreis (ohne Pfand)
+        label(for="purchase_price") Purchase Price (excl. deposit)
         .input-with-unit
           input#purchase_price(
             v-model="form.purchase_price"
@@ -125,7 +125,7 @@ onMounted(() => {
           span.unit €
 
       .form-group
-        label(for="selling_price") Verkaufspreis (Einzelverkauf)
+        label(for="selling_price") Selling Price (single)
         .input-with-unit
           input#selling_price(
             v-model="form.selling_price"
@@ -137,7 +137,7 @@ onMounted(() => {
           span.unit €
 
       .form-group
-        label(for="deposit") Pfand
+        label(for="deposit") Deposit
         .input-with-unit
           input#deposit(
             v-model="form.deposit"
@@ -150,17 +150,17 @@ onMounted(() => {
 
     .form-row
       .form-group
-        label(for="units_per_crate") Einheiten pro Gebinde
+        label(for="units_per_crate") Units per Package
         input#units_per_crate(
           v-model.number="form.units_per_crate"
           type="number"
           min="1"
-          placeholder="z.B. 24"
+          placeholder="e.g. 24"
         )
-        .hint z.B. 24 für einen 24er-Kasten, 1 für Einzelflaschen
+        .hint e.g. 24 for a 24-pack crate, 1 for single bottles
 
       .form-group
-        label(for="bottle_size") Flaschengröße
+        label(for="bottle_size") Bottle Size
         .input-with-unit
           input#bottle_size(
             v-model="form.bottle_size"
@@ -173,17 +173,17 @@ onMounted(() => {
         .hint z.B. 0.33, 0.5, 0.7, 0.75, 1.0
 
       .form-group
-        label(for="portions_per_bottle") Portionen pro Flasche
+        label(for="portions_per_bottle") Portions per Bottle
         input#portions_per_bottle(
           v-model.number="form.portions_per_bottle"
           type="number"
           min="1"
-          placeholder="leer = 1:1 Abgabe"
+          placeholder="empty = 1:1"
         )
-        .hint Nur bei Ausschank (z.B. 3 Becher aus 0,7L Flasche)
+        .hint Only for tap/pour (e.g. 3 cups from 0.7L bottle)
 
       .form-group
-        label(for="selling_price_portion") VK pro Portion
+        label(for="selling_price_portion") Price per Portion
         .input-with-unit
           input#selling_price_portion(
             v-model="form.selling_price_portion"
@@ -193,11 +193,11 @@ onMounted(() => {
             placeholder="0.00"
           )
           span.unit €
-        .hint Verkaufspreis pro Becher/Glas
+        .hint Selling price per cup/glass
 
     .form-row
       .form-group
-        label(for="sort_order") Sortierung
+        label(for="sort_order") Sort Order
         input#sort_order(
           v-model.number="form.sort_order"
           type="number"
@@ -210,14 +210,14 @@ onMounted(() => {
             v-model="form.is_active"
             type="checkbox"
           )
-          |  Aktiv
+          |  Active
 
     .error(v-if="error") {{ error }}
 
     .form-actions
       button.btn-primary(type="submit" :disabled="isLoading")
-        | {{ isLoading ? 'Speichern...' : (isEditing ? 'Aktualisieren' : 'Erstellen') }}
-      router-link.btn-secondary(to="/admin/beverages") Abbrechen
+        | {{ isLoading ? 'Saving...' : (isEditing ? 'Update' : 'Create') }}
+      router-link.btn-secondary(to="/admin/beverages") Cancel
 </template>
 
 <style scoped>

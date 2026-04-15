@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://content.hopfner.cc',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       }

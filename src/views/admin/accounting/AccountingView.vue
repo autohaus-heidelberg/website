@@ -19,13 +19,14 @@ import {
   REVENUE_GROUPS,
   EXPENSE_PAID_FROM_LABELS,
 } from '@/types/accounting'
+import { useSort } from '@/composables/useSort'
 
 const props = defineProps<{
   eventId: string
 }>()
 
 const router = useRouter()
-const activeTab = ref('kassensturz')
+const activeTab = ref('cashcount')
 
 // ── State ────────────────────────────────────────────────────────
 const event = ref<Event | null>(null)
@@ -45,6 +46,33 @@ const saveSuccess = ref('')
 const pretixData = ref<PretixOrderSummary | null>(null)
 const pretixLoading = ref(false)
 const pretixError = ref('')
+
+// ── Sorting ──────────────────────────────────────────────────────
+const invSort = useSort<{ beverage: BeverageItem; entry: InventoryEntry }>()
+const expSort = useSort<ExpenseEntry>()
+
+function sortedInventory(items: { beverage: BeverageItem; entry: InventoryEntry }[]) {
+  return invSort.sorted(items, (item, key) => {
+    switch (key) {
+      case 'name': return item.beverage.name.toLowerCase()
+      case 'before': return parseFloat(item.entry.quantity_before || '0')
+      case 'after': return parseFloat(item.entry.quantity_after || '0')
+      case 'consumed': return inventoryConsumption(item.entry)
+      case 'value': return inventoryValue(item.entry, item.beverage)
+      default: return 0
+    }
+  })
+}
+
+const sortedExpenses = computed(() => {
+  return expSort.sorted(expenses.value, (item, key) => {
+    switch (key) {
+      case 'desc': return (item.description || '').toLowerCase()
+      case 'amount': return parseFloat(item.amount || '0')
+      default: return 0
+    }
+  })
+})
 
 async function fetchPretixData() {
   if (!props.eventId) return
@@ -143,7 +171,7 @@ const inventoryBySupplier = computed(() => {
   const groups: Record<string, { beverage: BeverageItem; entry: InventoryEntry }[]> = {}
   for (const bev of beverages.value) {
     if (!bev.is_active) continue
-    const group = bev.supplier_group || 'Sonstige'
+    const group = bev.supplier_group || 'Other'
     if (!groups[group]) groups[group] = []
     let entry = inventory.value.find(i => i.beverage_item === bev.id)
     if (!entry) {
@@ -325,7 +353,7 @@ async function loadData() {
       })
     }
 
-    // Default-Beteiligung: Bernd 33%
+    // Default split: Bernd 33%
     if (splits.value.length === 0) {
       splits.value.push({
         accounting: accounting.value?.id || 0,
@@ -334,7 +362,7 @@ async function loadData() {
       })
     }
   } catch (e: any) {
-    error.value = e.message || 'Daten konnten nicht geladen werden'
+    error.value = e.message || 'Failed to load data'
   } finally {
     isLoading.value = false
   }
@@ -349,45 +377,25 @@ async function saveAll() {
   try {
     const accId = accounting.value.id
 
-    // Save accounting meta
+    // Build all nested data and save in one PUT
     await accountingService.update(accId, {
       status: accounting.value.status,
       notes: accounting.value.notes,
       deposit_return: accounting.value.deposit_return,
+      revenues: revenues.value
+        .filter(rev => parseFloat(rev.total || '0') !== 0 || rev.id),
+      inventory_entries: inventory.value
+        .filter(inv => parseFloat(inv.quantity_before || '0') !== 0 || parseFloat(inv.quantity_after || '0') !== 0 || inv.id),
+      expenses: expenses.value
+        .filter(exp => exp.description || exp.id),
+      splits: splits.value
+        .filter(split => split.participant_name || split.id),
     })
 
-    // Save revenues
-    for (const rev of revenues.value) {
-      if (parseFloat(rev.total || '0') !== 0 || rev.id) {
-        await accountingService.saveRevenue(accId, rev)
-      }
-    }
-
-    // Save inventory
-    for (const inv of inventory.value) {
-      if (parseFloat(inv.quantity_before || '0') !== 0 || parseFloat(inv.quantity_after || '0') !== 0 || inv.id) {
-        await accountingService.saveInventory(accId, inv)
-      }
-    }
-
-    // Save expenses
-    for (const exp of expenses.value) {
-      if (exp.description || exp.id) {
-        await accountingService.saveExpense(accId, exp)
-      }
-    }
-
-    // Save splits
-    for (const split of splits.value) {
-      if (split.participant_name || split.id) {
-        await accountingService.saveSplit(accId, split)
-      }
-    }
-
-    saveSuccess.value = 'Gespeichert!'
+    saveSuccess.value = 'Saved!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
   } catch (e: any) {
-    error.value = e.message || 'Fehler beim Speichern'
+    error.value = e.message || 'Error saving data'
   } finally {
     isSaving.value = false
   }
@@ -400,39 +408,39 @@ onMounted(() => {
 
 <template lang="pug">
 .accounting-view
-  .loading(v-if="isLoading") Lade Abrechnung...
+  .loading(v-if="isLoading") Loading accounting...
   template(v-else-if="accounting")
     .page-header
       .header-left
-        router-link.btn-back(to="/admin/accounting") ← Zurück
+        router-link.btn-back(to="/admin/accounting") ← Back
         h2 {{ event?.title || props.eventId }}
       .header-right
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveAll" :disabled="isSaving")
-          | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
+          | {{ isSaving ? 'Saving...' : 'Save All' }}
 
     .error(v-if="error") {{ error }}
 
     .tabs
       button.tab(
-        :class="{ active: activeTab === 'kassensturz' }"
-        @click="activeTab = 'kassensturz'"
-      ) Kassensturz
+        :class="{ active: activeTab === 'cashcount' }"
+        @click="activeTab = 'cashcount'"
+      ) Cash Count
       button.tab(
-        :class="{ active: activeTab === 'inventur' }"
-        @click="activeTab = 'inventur'"
-      ) Inventur
+        :class="{ active: activeTab === 'inventory' }"
+        @click="activeTab = 'inventory'"
+      ) Inventory
       button.tab(
-        :class="{ active: activeTab === 'ausgaben' }"
-        @click="activeTab = 'ausgaben'"
-      ) Ausgaben
+        :class="{ active: activeTab === 'expenses' }"
+        @click="activeTab = 'expenses'"
+      ) Expenses
       button.tab(
-        :class="{ active: activeTab === 'ergebnis' }"
-        @click="activeTab = 'ergebnis'"
-      ) Ergebnis
+        :class="{ active: activeTab === 'result' }"
+        @click="activeTab = 'result'"
+      ) Result
 
-    //- ── Kassensturz Tab ──
-    .tab-content(v-if="activeTab === 'kassensturz'")
+    //- ── Cash Count Tab ──
+    .tab-content(v-if="activeTab === 'cashcount'")
       .section(v-for="group in REVENUE_GROUPS" :key="group.label")
         .section-title-row
           h3.section-title {{ group.label }}
@@ -440,19 +448,19 @@ onMounted(() => {
             button.btn-pretix(
               @click="fetchPretixData"
               :disabled="pretixLoading"
-            ) {{ pretixLoading ? 'Lade...' : 'VVK von Pretix laden' }}
+            ) {{ pretixLoading ? 'Loading...' : 'Load presale from Pretix' }}
             button.btn-pretix.btn-apply(
               v-if="pretixData"
               @click="applyPretixData"
-            ) Übernehmen ({{ pretixData.total_tickets }} Tickets, {{ pretixData.total_revenue.toFixed(2) }} €)
+            ) Apply ({{ pretixData.total_tickets }} tickets, {{ pretixData.total_revenue.toFixed(2) }} €)
             span.pretix-error(v-if="pretixError") {{ pretixError }}
         .revenue-table
           .revenue-header
-            .col-source Quelle
+            .col-source Source
             .col-amount Total
-            .col-amount Wechselgeld
-            .col-amount Gebühren
-            .col-amount Netto
+            .col-amount Change
+            .col-amount Fees
+            .col-amount Net
 
           template(v-for="source in group.sources" :key="source")
             .revenue-row
@@ -492,7 +500,7 @@ onMounted(() => {
                 .col-amount.sub-val {{ info.fees.toFixed(2) }} €
                 .col-amount.sub-val
               .revenue-row.sub-row
-                .col-source.sub-source └ Pretix-Gebühr
+                .col-source.sub-source └ Pretix Fee
                 .col-amount.sub-val
                 .col-amount.sub-val —
                 .col-amount.sub-val {{ pretixData.pretix_fee.toFixed(2) }} €
@@ -503,32 +511,32 @@ onMounted(() => {
           strong {{ formatCurrency(groupRevenue(group.sources)) }}
 
       .grand-total
-        span Gesamteinnahmen:
+        span Total Revenue:
         strong {{ formatCurrency(totalRevenue) }}
 
-    //- ── Inventur Tab ──
-    .tab-content(v-if="activeTab === 'inventur'")
+    //- ── Inventory Tab ──
+    .tab-content(v-if="activeTab === 'inventory'")
       .section(v-for="(items, group) in inventoryBySupplier" :key="group")
         h3.section-title {{ group }}
         .inventory-table
           .inventory-header
-            .col-inv-name Getränk
-            .col-inv-info Kiste
-            .col-inv-pair Davor
-            .col-inv-pair Danach
-            .col-inv-num Gesamt
-            .col-inv-num Verbr.
-            .col-inv-amount Wert
+            .col-inv-name.sortable(@click="invSort.toggle('name')") Drink{{ invSort.indicator('name') }}
+            .col-inv-info Crate
+            .col-inv-pair.sortable(@click="invSort.toggle('before')") Before{{ invSort.indicator('before') }}
+            .col-inv-pair.sortable(@click="invSort.toggle('after')") After{{ invSort.indicator('after') }}
+            .col-inv-num Total
+            .col-inv-num.sortable(@click="invSort.toggle('consumed')") Used{{ invSort.indicator('consumed') }}
+            .col-inv-amount.sortable(@click="invSort.toggle('value')") Value{{ invSort.indicator('value') }}
 
-          .inventory-row(v-for="{ beverage, entry } in items" :key="beverage.id")
+          .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
             .col-inv-name
               .bev-name {{ beverage.name }}
-              .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}er · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
-              .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
-            .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}er
-            .col-inv-info(v-else) Fl.
+              .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}pc · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Dep. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
+              .bev-info(v-else) Bottle · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
+            .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}pc
+            .col-inv-info(v-else) Btl.
 
-            //- Kisten-Modus (units_per_crate > 1)
+            //- Crate mode (units_per_crate > 1)
             template(v-if="(beverage.units_per_crate || 1) > 1")
               .col-inv-pair
                 .crate-input
@@ -573,7 +581,7 @@ onMounted(() => {
                   )
                   span.input-label Fl
 
-            //- Flaschen-Modus (units_per_crate = 1) → ein Dezimal-Feld
+            //- Bottle mode (units_per_crate = 1)
             template(v-else)
               .col-inv-pair.bottle-mode
                 input.qty-input(
@@ -599,39 +607,39 @@ onMounted(() => {
             .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
         .group-total
-          span Zwischensumme {{ group }}:
+          span Subtotal {{ group }}:
           strong {{ formatCurrency(groupInventoryValue(items)) }}
 
       .grand-total
         div
-          span Bestandswert (Danach):
+          span Stock Value (After):
           strong {{ formatCurrency(totalStockValue) }}
         div
-          span Pfandwert Bestand:
+          span Stock Deposit Value:
           strong {{ formatCurrency(totalStockDepositValue) }}
         div.separator
         div
-          span Wareneinsatz gesamt:
+          span Total Cost of Goods:
           strong {{ formatCurrency(totalInventoryValue) }}
         div
-          span Pfand-Umlauf gesamt:
+          span Total Deposit Turnover:
           strong {{ formatCurrency(totalDepositValue) }}
 
-    //- ── Ausgaben Tab ──
-    .tab-content(v-if="activeTab === 'ausgaben'")
+    //- ── Expenses Tab ──
+    .tab-content(v-if="activeTab === 'expenses'")
       .expenses-table
         .expense-header
-          .col-desc Beschreibung
-          .col-amount Betrag
-          .col-from Bezahlt aus
+          .col-desc.sortable(@click="expSort.toggle('desc')") Description{{ expSort.indicator('desc') }}
+          .col-amount.sortable(@click="expSort.toggle('amount')") Amount{{ expSort.indicator('amount') }}
+          .col-from Paid From
           .col-action
 
-        .expense-row(v-for="(exp, index) in expenses" :key="index")
+        .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
           .col-desc
             input.text-input(
               v-model="exp.description"
               type="text"
-              placeholder="z.B. Rewe, Hotel..."
+              placeholder="e.g. Rewe, Hotel..."
             )
           .col-amount
             input.amount-input(
@@ -648,58 +656,58 @@ onMounted(() => {
           .col-action
             button.btn-remove(@click="removeExpense(index)") ×
 
-      button.btn-add(@click="addExpense") + Ausgabe hinzufügen
+      button.btn-add(@click="addExpense") + Add Expense
 
       .grand-total
-        span Summe Ausgaben:
+        span Total Expenses:
         strong {{ formatCurrency(totalExpenses) }}
 
-    //- ── Ergebnis Tab ──
-    .tab-content(v-if="activeTab === 'ergebnis'")
+    //- ── Result Tab ──
+    .tab-content(v-if="activeTab === 'result'")
 
-      //- Einnahmen-Aufschlüsselung
-      h3.section-title Einnahmen
+      //- Revenue breakdown
+      h3.section-title Revenue
       .result-detail
         template(v-for="rev in revenues" :key="rev.source")
           .detail-row(v-if="revenueNet(rev) !== 0")
             span {{ REVENUE_SOURCE_LABELS[rev.source] }}
             span.amount {{ formatCurrency(revenueNet(rev)) }}
         .detail-row.detail-total
-          span Summe Einnahmen
+          span Total Revenue
           strong.positive {{ formatCurrency(totalRevenue) }}
 
-      //- Wareneinsatz-Aufschlüsselung
-      h3.section-title Wareneinsatz
+      //- Cost of goods breakdown
+      h3.section-title Cost of Goods
       .result-detail
         template(v-for="(items, group) in inventoryBySupplier" :key="group")
           .detail-row(v-if="groupInventoryValue(items) !== 0")
             span {{ group }}
             span.amount -{{ formatCurrency(groupInventoryValue(items)) }}
         .detail-row.detail-total
-          span Summe Wareneinsatz
+          span Total Cost of Goods
           strong.negative {{ formatCurrency(totalInventoryValue) }}
 
-      //- Ausgaben-Aufschlüsselung
-      h3.section-title Ausgaben
+      //- Expenses breakdown
+      h3.section-title Expenses
       .result-detail
         template(v-for="exp in expenses" :key="exp.description")
           .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
-            span {{ exp.description || '(ohne Bezeichnung)' }}
+            span {{ exp.description || '(no description)' }}
             span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
         .detail-row.detail-total
-          span Summe Ausgaben
+          span Total Expenses
           strong.negative {{ formatCurrency(totalExpenses) }}
 
-      //- Gesamtergebnis
+      //- Final result
       .result-summary
         .result-row
-          span Einnahmen
+          span Revenue
           strong.positive {{ formatCurrency(totalRevenue) }}
         .result-row
-          span − Ausgaben
+          span − Expenses
           strong.negative {{ formatCurrency(totalExpenses) }}
         .result-row
-          span Pfandrückgabe
+          span Deposit Return
           .input-inline
             input.amount-input(
               v-model="depositReturn"
@@ -710,11 +718,11 @@ onMounted(() => {
             )
             span.unit €
         .result-row.result-total
-          span Ergebnis
+          span Result
           strong(:class="result >= 0 ? 'positive' : 'negative'")
             | {{ formatCurrency(result) }}
 
-      h3.section-title Beteiligungsteilung
+      h3.section-title Profit Split
       .splits-table
         .split-row(v-for="(split, index) in splits" :key="index")
           .col-name
@@ -737,22 +745,22 @@ onMounted(() => {
           .col-action
             button.btn-remove(@click="removeSplit(index)") ×
 
-      button.btn-add(@click="addSplit") + Beteiligung hinzufügen
+      button.btn-add(@click="addSplit") + Add Split
 
       .splits-summary(v-if="splits.length")
         .result-row
-          span Gesamt verteilt ({{ totalSplitPercentage.toFixed(1) }}%)
+          span Total Distributed ({{ totalSplitPercentage.toFixed(1) }}%)
           strong {{ formatCurrency(result - remainingAfterSplits) }}
         .result-row.result-total
-          span Verbleibt
+          span Remaining
           strong(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
             | {{ formatCurrency(remainingAfterSplits) }}
 
       .notes-section
-        h3.section-title Notizen
+        h3.section-title Notes
         textarea.notes-input(
           v-model="accounting.notes"
-          placeholder="Anmerkungen zur Abrechnung..."
+          placeholder="Notes about this accounting..."
           rows="4"
         )
 </template>
@@ -1058,6 +1066,16 @@ h2 {
 .bottle-mode .qty-input {
   flex: 1;
   min-width: 0;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable:hover {
+  text-decoration: underline;
 }
 
 .col-inv-num {

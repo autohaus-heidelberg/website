@@ -25,18 +25,18 @@ export type RevenueSource =
   | 'vvk_stripe'
 
 export const REVENUE_SOURCE_LABELS: Record<RevenueSource, string> = {
-  bar_cash: 'Bar (Bargeld)',
+  bar_cash: 'Bar (Cash)',
   bar_paypal: 'Bar (PayPal)',
-  entrance_cash: 'Einlass (Bargeld)',
-  entrance_paypal: 'Einlass (PayPal)',
-  vvk_pretix: 'VVK (Pretix)',
-  vvk_paypal: 'VVK (PayPal)',
-  vvk_stripe: 'VVK (Stripe)',
+  entrance_cash: 'Door (Cash)',
+  entrance_paypal: 'Door (PayPal)',
+  vvk_pretix: 'Presale (Pretix)',
+  vvk_paypal: 'Presale (PayPal)',
+  vvk_stripe: 'Presale (Stripe)',
 }
 
 export const REVENUE_GROUPS: { label: string; sources: RevenueSource[] }[] = [
-  { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal'] },
-  { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
+  { label: 'Drink Sales', sources: ['bar_cash', 'bar_paypal'] },
+  { label: 'Admission', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
 ]
 
 export interface RevenueEntry {
@@ -66,9 +66,9 @@ export interface InventoryEntry {
 export type ExpensePaidFrom = 'entrance_cash' | 'bar_cash' | 'other'
 
 export const EXPENSE_PAID_FROM_LABELS: Record<ExpensePaidFrom, string> = {
-  entrance_cash: 'Einlasskasse',
-  bar_cash: 'Barkasse',
-  other: 'Sonstiges',
+  entrance_cash: 'Door Register',
+  bar_cash: 'Bar Register',
+  other: 'Other',
 }
 
 export interface ExpenseEntry {

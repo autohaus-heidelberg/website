@@ -2,17 +2,30 @@
 import { ref, onMounted, computed } from 'vue'
 import { stockService } from '@/services'
 import type { StockEntry } from '@/types/accounting'
+import { useSort } from '@/composables/useSort'
 
 const entries = ref<StockEntry[]>([])
 const isLoading = ref(false)
 const error = ref('')
+const sort = useSort<StockEntry>()
 
 const grouped = computed(() => {
   const groups: Record<string, StockEntry[]> = {}
   for (const e of entries.value) {
-    const key = e.supplier_group || 'Sonstige'
+    const key = e.supplier_group || 'Other'
     if (!groups[key]) groups[key] = []
     groups[key].push(e)
+  }
+  for (const key in groups) {
+    groups[key] = sort.sorted(groups[key], (item, k) => {
+      switch (k) {
+        case 'name': return item.name.toLowerCase()
+        case 'stock': return item.quantity || 0
+        case 'value': return parseFloat(item.stock_value || '0')
+        case 'deposit': return parseFloat(item.deposit_value || '0')
+        default: return 0
+      }
+    })
   }
   return groups
 })
@@ -51,7 +64,7 @@ async function loadData() {
   try {
     entries.value = await stockService.getAll()
   } catch (e: any) {
-    error.value = e.message || 'Bestand konnte nicht geladen werden'
+    error.value = e.message || 'Failed to load stock data'
   } finally {
     isLoading.value = false
   }
@@ -65,12 +78,12 @@ onMounted(() => {
 <template lang="pug">
 .stock-view
   .header
-    h2 Bestand
+    h2 Stock
     .header-summary
-      span.summary-item Warenwert: {{ totalStockValue }} €
-      span.summary-item Pfand: {{ totalDepositValue }} €
+      span.summary-item Value: {{ totalStockValue }} €
+      span.summary-item Deposit: {{ totalDepositValue }} €
 
-  .loading(v-if="isLoading") Lade Bestand...
+  .loading(v-if="isLoading") Loading stock...
   .error(v-else-if="error") {{ error }}
 
   template(v-else)
@@ -78,11 +91,11 @@ onMounted(() => {
       h3.group-title {{ groupName }}
       .stock-table
         .table-header
-          span.col-name Getränk
-          span.col-size Fl.
-          span.col-stock Bestand
-          span.col-value Warenwert
-          span.col-deposit Pfand
+          span.col-name.sortable(@click="sort.toggle('name')") Drink{{ sort.indicator('name') }}
+          span.col-size Btl.
+          span.col-stock.sortable(@click="sort.toggle('stock')") Stock{{ sort.indicator('stock') }}
+          span.col-value.sortable(@click="sort.toggle('value')") Value{{ sort.indicator('value') }}
+          span.col-deposit.sortable(@click="sort.toggle('deposit')") Deposit{{ sort.indicator('deposit') }}
         .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }")
           span.col-name {{ item.name }}
           span.col-size(v-if="item.bottle_size") {{ item.bottle_size }}L
@@ -93,7 +106,7 @@ onMounted(() => {
           span.col-value {{ formatPrice(item.stock_value) }} €
           span.col-deposit {{ formatPrice(item.deposit_value) }} €
         .table-row.row-subtotal
-          span.col-name Summe {{ groupName }}
+          span.col-name Subtotal {{ groupName }}
           span.col-size
           .col-stock
             span.stock-qty {{ groupQuantity(items) }}
@@ -102,14 +115,14 @@ onMounted(() => {
 
     .stock-table.total-table(v-if="entries.length")
       .table-row.row-total
-        span.col-name Gesamt
+        span.col-name Total
         span.col-size
         .col-stock
           span.stock-qty {{ entries.reduce((s, e) => s + (e.quantity || 0), 0) }}
         span.col-value {{ totalStockValue }} €
         span.col-deposit {{ totalDepositValue }} €
 
-    .empty(v-if="entries.length === 0") Keine Bestandsdaten vorhanden
+    .empty(v-if="entries.length === 0") No stock data available
 </template>
 
 <style scoped>
@@ -168,6 +181,16 @@ h2 {
 
 .stock-table {
   width: 100%;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable:hover {
+  text-decoration: underline;
 }
 
 .table-header,

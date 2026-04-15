@@ -66,7 +66,7 @@ async function scanReceipt(event: Event) {
       itemLoose.value.push(0)
     }
   } catch (e: any) {
-    scanError.value = e.response?.data?.error || e.message || 'Scan fehlgeschlagen'
+    scanError.value = e.response?.data?.error || e.message || 'Scan failed'
   } finally {
     isScanning.value = false
     input.value = ''  // Reset file input
@@ -150,7 +150,7 @@ async function loadData() {
       }
     }
   } catch (e: any) {
-    error.value = e.message || 'Daten konnten nicht geladen werden'
+    error.value = e.message || 'Failed to load data'
   } finally {
     isLoading.value = false
   }
@@ -158,7 +158,7 @@ async function loadData() {
 
 async function handleSubmit() {
   if (!form.value.date) {
-    error.value = 'Bitte Datum eingeben'
+    error.value = 'Please enter a date'
     return
   }
   isLoading.value = true
@@ -172,14 +172,14 @@ async function handleSubmit() {
     }
     router.push('/admin/purchases')
   } catch (e: any) {
-    error.value = e.response?.data?.error || e.message || 'Fehler beim Speichern'
+    error.value = e.response?.data?.error || e.message || 'Error saving'
   } finally {
     isLoading.value = false
   }
 }
 
 async function finalize() {
-  if (!confirm('Einkauf abschließen? Kann danach nicht mehr bearbeitet werden.')) return
+  if (!confirm('Finalize purchase? Cannot be edited afterwards.')) return
   form.value.status = 'final'
   await handleSubmit()
 }
@@ -192,48 +192,48 @@ onMounted(() => {
 <template lang="pug">
 .purchase-form-view
   .form-header
-    h2 {{ isEditing ? 'Einkauf bearbeiten' : 'Neuer Einkauf' }}
-    router-link.btn-cancel(to="/admin/purchases") Zurück
+    h2 {{ isEditing ? 'Edit Purchase' : 'New Purchase' }}
+    router-link.btn-cancel(to="/admin/purchases") Back
 
   .error-msg(v-if="error") {{ error }}
 
   form.purchase-form(@submit.prevent="handleSubmit")
     .form-row
       .form-group
-        label(for="date") Datum
+        label(for="date") Date
         input#date(v-model="form.date" type="date" required)
       .form-group
-        label(for="supplier") Lieferant
-        input#supplier(v-model="form.supplier" type="text" placeholder="z.B. Getränkestation")
+        label(for="supplier") Supplier
+        input#supplier(v-model="form.supplier" type="text" placeholder="e.g. Getränkestation")
       .form-group
-        label(for="invoice_number") Lieferschein-Nr.
+        label(for="invoice_number") Invoice No.
         input#invoice_number(v-model="form.invoice_number" type="text")
 
     .form-row
       .form-group
-        label(for="invoice_total") Rechnungsbetrag (€)
+        label(for="invoice_total") Invoice Total (€)
         input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0")
       .form-group
-        label Berechneter Betrag
+        label Calculated Total
         .computed-total {{ computedTotal }} €
       .form-group
-        label(for="notes") Notizen
+        label(for="notes") Notes
         textarea#notes(v-model="form.notes" rows="2")
 
-    h3.section-title Positionen
+    h3.section-title Items
     .scan-area
       label.btn-scan(:class="{ scanning: isScanning }")
         input(type="file" accept="image/*" capture="environment" @change="scanReceipt" hidden)
-        | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
-      span.scan-hint Foto von Kassenbon/Rechnung → AI füllt Positionen aus
+        | {{ isScanning ? '⏳ Analyzing...' : '📷 Scan Receipt' }}
+      span.scan-hint Photo of receipt → AI fills in items
     .error-msg(v-if="scanError") {{ scanError }}
     .items-header
-      span.col-bev Getränk
-      span.col-crates Kisten
-      span.col-loose Lose Fl.
-      span.col-qty Einzelfl.
-      span.col-price EK / Kiste (€)
-      span.col-total Summe (€)
+      span.col-bev Drink
+      span.col-crates Crates
+      span.col-loose Loose Btl.
+      span.col-qty Units
+      span.col-price Price / Crate (€)
+      span.col-total Total (€)
       span.col-action &nbsp;
 
     .item-row(v-for="(item, idx) in form.items" :key="idx")
@@ -263,17 +263,17 @@ onMounted(() => {
       span.col-total {{ formatItemTotal(item) }}
       button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
 
-    button.btn-add(type="button" @click="addItem") + Position hinzufügen
+    button.btn-add(type="button" @click="addItem") + Add Item
 
     .form-actions
       button.btn-save(type="submit" :disabled="isLoading")
-        | {{ isLoading ? 'Speichern...' : 'Speichern' }}
+        | {{ isLoading ? 'Saving...' : 'Save' }}
       button.btn-finalize(
         v-if="form.status === 'draft'"
         type="button"
         @click="finalize"
         :disabled="isLoading"
-      ) Abschließen
+      ) Finalize
 </template>
 
 <style scoped>

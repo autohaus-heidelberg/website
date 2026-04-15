@@ -82,13 +82,13 @@ watch(isMobileMenuOpen, (isOpen) => {
 
       .nav-divider
       router-link.nav-link(to="/admin/accounting" active-class="active" @click="handleNavigation")
-        span Abrechnung
+        span Accounting
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
-        span Getränke
+        span Beverages
       router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
-        span Einkäufe
+        span Purchases
       router-link.nav-link(to="/admin/stock" active-class="active" @click="handleNavigation")
-        span Bestand
+        span Stock
 
       router-link.nav-link(to="/" @click="handleNavigation")
         span Public Site

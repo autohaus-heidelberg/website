@@ -30,7 +30,7 @@ const filteredEvents = computed(() => {
 })
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleString('de-DE', {
+  return new Date(date).toLocaleString('en-GB', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -38,8 +38,8 @@ function formatDate(date: string) {
 }
 
 function statusLabel(status?: string): string {
-  if (!status) return 'Nicht angelegt'
-  return status === 'final' ? 'Abgeschlossen' : 'Entwurf'
+  if (!status) return 'Not Created'
+  return status === 'final' ? 'Finalized' : 'Draft'
 }
 
 function statusClass(status?: string): string {
@@ -57,7 +57,7 @@ async function createAccounting(eventId: string) {
     })
     accountings.value.push(accounting)
   } catch (e: any) {
-    alert('Fehler beim Erstellen: ' + e.message)
+    alert('Error creating: ' + e.message)
   }
 }
 
@@ -72,7 +72,7 @@ async function loadData() {
     eventsData.value = evData
     accountings.value = accData.results
   } catch (e: any) {
-    error.value = e.message || 'Daten konnten nicht geladen werden'
+    error.value = e.message || 'Failed to load data'
   } finally {
     isLoading.value = false
   }
@@ -86,15 +86,15 @@ onMounted(() => {
 <template lang="pug">
 .accounting-list-view
   .header
-    h2 Abrechnung
+    h2 Accounting
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Event suchen..."
+        placeholder="Search event..."
       )
 
-  .loading(v-if="isLoading") Lade Daten...
+  .loading(v-if="isLoading") Loading...
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length")
@@ -115,13 +115,13 @@ onMounted(() => {
           router-link.btn-edit(
             v-if="event.accounting"
             :to="`/admin/accounting/${event.id}`"
-          ) Abrechnung öffnen
+          ) Open Accounting
           button.btn-primary(
             v-else
             @click="createAccounting(event.id)"
-          ) Abrechnung starten
+          ) Start Accounting
 
-  .empty(v-else) Keine Events gefunden
+  .empty(v-else) No events found
 </template>
 
 <style scoped>
