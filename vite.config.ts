@@ -18,7 +18,7 @@ export default defineConfig({
       '/api': {
         target: 'https://content.hopfner.cc',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       }
     }
   }

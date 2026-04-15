@@ -18,6 +18,7 @@ const form = ref<Partial<BeverageItem>>({
   selling_price: '',
   deposit: '0.00',
   units_per_crate: 24,
+  bottle_size: '',
   sort_order: 0,
   is_active: true,
   portions_per_bottle: null,
@@ -157,6 +158,19 @@ onMounted(() => {
           placeholder="z.B. 24"
         )
         .hint z.B. 24 für einen 24er-Kasten, 6 für einen Sixpack
+
+      .form-group
+        label(for="bottle_size") Flaschengröße
+        .input-with-unit
+          input#bottle_size(
+            v-model="form.bottle_size"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="z.B. 0.33"
+          )
+          span.unit L
+        .hint z.B. 0.33, 0.5, 0.7, 0.75, 1.0
 
       .form-group
         label(for="portions_per_bottle") Portionen pro Flasche

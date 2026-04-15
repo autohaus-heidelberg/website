@@ -97,6 +97,7 @@ onMounted(() => {
         .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }" @click="router.push(`/admin/beverages/${item.id}`)")
           .col-name
             span {{ item.name }}
+            span.bottle-size(v-if="item.bottle_size")  {{ item.bottle_size }}L
             span.portion-info(v-if="item.portions_per_bottle") {{ item.portions_per_bottle }}x {{ formatPrice(item.selling_price_portion) }}
           .col-crate {{ item.units_per_crate || 1 }}er
           .col-price {{ formatPrice(item.purchase_price) }}
@@ -239,6 +240,12 @@ h2 {
 
 .col-name {
   font-weight: 600;
+}
+
+.bottle-size {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.8rem;
 }
 
 .portion-info {
