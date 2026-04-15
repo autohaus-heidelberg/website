@@ -79,32 +79,33 @@ onMounted(() => {
       .stock-table
         .table-header
           span.col-name Getränk
-          span.col-qty Einzelfl.
-          span.col-crates Kisten
-          span.col-loose Rest
+          span.col-size Fl.
+          span.col-stock Bestand
           span.col-value Warenwert
           span.col-deposit Pfand
         .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }")
           span.col-name {{ item.name }}
-          span.col-qty {{ item.quantity }}
-          span.col-crates {{ item.crates }}
-          span.col-loose {{ item.loose_bottles }}
+          span.col-size(v-if="item.bottle_size") {{ item.bottle_size }}L
+          span.col-size(v-else)
+          .col-stock
+            span.stock-qty {{ item.quantity }}
+            span.stock-hint(v-if="item.crates") ({{ item.crates }}×{{ item.units_per_crate }}er{{ item.loose_bottles ? ' +' + item.loose_bottles : '' }})
           span.col-value {{ formatPrice(item.stock_value) }} €
           span.col-deposit {{ formatPrice(item.deposit_value) }} €
         .table-row.row-subtotal
           span.col-name Summe {{ groupName }}
-          span.col-qty {{ groupQuantity(items) }}
-          span.col-crates
-          span.col-loose
+          span.col-size
+          .col-stock
+            span.stock-qty {{ groupQuantity(items) }}
           span.col-value {{ formatPrice(groupStockValue(items)) }} €
           span.col-deposit {{ formatPrice(groupDepositValue(items)) }} €
 
     .stock-table.total-table(v-if="entries.length")
       .table-row.row-total
         span.col-name Gesamt
-        span.col-qty {{ entries.reduce((s, e) => s + (e.quantity || 0), 0) }}
-        span.col-crates
-        span.col-loose
+        span.col-size
+        .col-stock
+          span.stock-qty {{ entries.reduce((s, e) => s + (e.quantity || 0), 0) }}
         span.col-value {{ totalStockValue }} €
         span.col-deposit {{ totalDepositValue }} €
 
@@ -172,7 +173,7 @@ h2 {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 3fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 50px 170px 90px 90px;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
 }
@@ -219,11 +220,31 @@ h2 {
   margin-top: 1rem;
 }
 
-.col-qty,
-.col-crates,
-.col-loose,
+.col-size,
+.col-stock,
 .col-value,
 .col-deposit {
   text-align: right;
+}
+
+.col-stock {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.stock-qty {
+  font-weight: 700;
+}
+
+.stock-hint {
+  color: #999;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.row-total .stock-hint {
+  color: #ccc;
 }
 </style>

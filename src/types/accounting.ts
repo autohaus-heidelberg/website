@@ -151,6 +151,7 @@ export interface StockEntry {
   name: string
   supplier_group: string
   units_per_crate: number
+  bottle_size: string | null
   quantity: number
   crates: number
   loose_bottles: number
