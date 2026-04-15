@@ -150,14 +150,14 @@ onMounted(() => {
 
     .form-row
       .form-group
-        label(for="units_per_crate") Einheiten pro Kiste
+        label(for="units_per_crate") Einheiten pro Gebinde
         input#units_per_crate(
           v-model.number="form.units_per_crate"
           type="number"
           min="1"
           placeholder="z.B. 24"
         )
-        .hint z.B. 24 für einen 24er-Kasten, 6 für einen Sixpack
+        .hint z.B. 24 für einen 24er-Kasten, 1 für Einzelflaschen
 
       .form-group
         label(for="bottle_size") Flaschengröße

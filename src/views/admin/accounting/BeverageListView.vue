@@ -88,20 +88,23 @@ onMounted(() => {
       .beverages-table
         .table-header
           .col-name Name
-          .col-crate Kiste
+          .col-crate Geb.
+          .col-size Fl.
           .col-price Einkauf
           .col-price Verkauf
           .col-price Pfand
           .col-actions
 
         .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }" @click="router.push(`/admin/beverages/${item.id}`)")
-          .col-name
-            span {{ item.name }}
-            span.bottle-size(v-if="item.bottle_size")  {{ item.bottle_size }}L
-            span.portion-info(v-if="item.portions_per_bottle") {{ item.portions_per_bottle }}x {{ formatPrice(item.selling_price_portion) }}
+          .col-name {{ item.name }}
           .col-crate {{ item.units_per_crate || 1 }}er
+          .col-size {{ item.bottle_size ? item.bottle_size + 'L' : '' }}
           .col-price {{ formatPrice(item.purchase_price) }}
-          .col-price {{ formatPrice(item.selling_price) }}
+          .col-price
+            template(v-if="item.selling_price") {{ formatPrice(item.selling_price) }}
+            template(v-else-if="item.selling_price_portion")
+              | {{ formatPrice(item.selling_price_portion) }}
+              span.portion-hint  /P
           .col-price {{ formatPrice(item.deposit) }}
           .col-actions
             router-link.btn-edit(:to="`/admin/beverages/${item.id}`") ✎
@@ -199,7 +202,7 @@ h2 {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 50px 90px 90px 90px 70px;
+  grid-template-columns: 1fr 45px 50px 90px 90px 90px 70px;
   gap: 1.25rem;
   padding: 0.5rem 1rem;
 }
@@ -242,16 +245,13 @@ h2 {
   font-weight: 600;
 }
 
-.bottle-size {
-  font-weight: 400;
-  color: #666;
+.col-size {
+  text-align: right;
   font-size: 0.8rem;
 }
 
-.portion-info {
-  display: block;
+.portion-hint {
   font-size: 0.7rem;
-  font-weight: 400;
   color: #666;
 }
 
