@@ -261,6 +261,20 @@ const totalExpenses = computed(() => {
   return expenses.value.reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
 })
 
+// Expenses paid from a cash register are already deducted from the cash count,
+// so we need to add them back to get the true revenue.
+const expensesPaidFromRegister = computed(() => {
+  return expenses.value
+    .filter(e => e.paid_from === 'entrance_cash' || e.paid_from === 'bar_cash')
+    .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
+})
+
+const externalExpenses = computed(() => {
+  return expenses.value
+    .filter(e => e.paid_from === 'other')
+    .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
+})
+
 function addExpense() {
   expenses.value.push({
     accounting: accounting.value?.id || 0,
@@ -285,8 +299,13 @@ const depositReturn = computed({
   },
 })
 
+// True revenue = cash counted + expenses paid from registers (which reduced the count)
+const adjustedRevenue = computed(() => {
+  return totalRevenue.value + expensesPaidFromRegister.value
+})
+
 const result = computed(() => {
-  return totalRevenue.value - totalExpenses.value + parseFloat(depositReturn.value || '0')
+  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value + parseFloat(depositReturn.value || '0')
 })
 
 function addSplit() {
@@ -672,9 +691,12 @@ onMounted(() => {
           .detail-row(v-if="revenueNet(rev) !== 0")
             span {{ REVENUE_SOURCE_LABELS[rev.source] }}
             span.amount {{ formatCurrency(revenueNet(rev)) }}
+        .detail-row(v-if="expensesPaidFromRegister > 0")
+          span + Paid out from registers
+          span.amount {{ formatCurrency(expensesPaidFromRegister) }}
         .detail-row.detail-total
-          span Total Revenue
-          strong.positive {{ formatCurrency(totalRevenue) }}
+          span True Revenue
+          strong.positive {{ formatCurrency(adjustedRevenue) }}
 
       //- Cost of goods breakdown
       h3.section-title Cost of Goods
@@ -701,8 +723,17 @@ onMounted(() => {
       //- Final result
       .result-summary
         .result-row
-          span Revenue
-          strong.positive {{ formatCurrency(totalRevenue) }}
+          span Revenue (counted)
+          strong {{ formatCurrency(totalRevenue) }}
+        .result-row(v-if="expensesPaidFromRegister > 0")
+          span + Paid from registers
+          strong {{ formatCurrency(expensesPaidFromRegister) }}
+        .result-row
+          span = True Revenue
+          strong.positive {{ formatCurrency(adjustedRevenue) }}
+        .result-row
+          span − Cost of Goods
+          strong.negative {{ formatCurrency(totalInventoryValue) }}
         .result-row
           span − Expenses
           strong.negative {{ formatCurrency(totalExpenses) }}
