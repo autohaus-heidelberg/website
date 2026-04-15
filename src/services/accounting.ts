@@ -314,6 +314,7 @@ export interface PretixOrderSummary {
   event_slug: string
   total_tickets: number
   total_revenue: number
+  pretix_fee: number
   by_source: Record<string, PretixSourceSummary>
 }
 

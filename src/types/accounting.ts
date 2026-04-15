@@ -36,7 +36,7 @@ export const REVENUE_SOURCE_LABELS: Record<RevenueSource, string> = {
 
 export const REVENUE_GROUPS: { label: string; sources: RevenueSource[] }[] = [
   { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal'] },
-  { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe'] },
+  { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
 ]
 
 export interface RevenueEntry {

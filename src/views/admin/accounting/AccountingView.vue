@@ -61,12 +61,12 @@ async function fetchPretixData() {
 
 function applyPretixData() {
   if (!pretixData.value) return
-  for (const [source, info] of Object.entries(pretixData.value.by_source)) {
-    const rev = getRevenue(source as RevenueSource)
-    rev.total = info.revenue.toFixed(2)
-    rev.fees = info.fees.toFixed(2)
-    rev.change_money = '0.00'
-  }
+  const d = pretixData.value
+  const totalFees = d.pretix_fee + Object.values(d.by_source).reduce((s, i) => s + i.fees, 0)
+  const rev = getRevenue('vvk_pretix')
+  rev.total = d.total_revenue.toFixed(2)
+  rev.fees = totalFees.toFixed(2)
+  rev.change_money = '0.00'
 }
 
 // ── Computed: Revenue ────────────────────────────────────────────
@@ -74,7 +74,7 @@ function applyPretixData() {
 const allRevenueSources: RevenueSource[] = [
   'bar_cash', 'bar_paypal',
   'entrance_cash', 'entrance_paypal',
-  'vvk_pretix', 'vvk_paypal', 'vvk_stripe',
+  'vvk_pretix',
 ]
 
 function getRevenue(source: RevenueSource): RevenueEntry {
@@ -454,35 +454,49 @@ onMounted(() => {
             .col-amount Gebühren
             .col-amount Netto
 
-          .revenue-row(v-for="source in group.sources" :key="source")
-            .col-source {{ REVENUE_SOURCE_LABELS[source] }}
-            .col-amount
-              input.amount-input(
-                v-model="getRevenue(source).total"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-              )
-            .col-amount
-              input.amount-input(
-                v-if="source.endsWith('_cash')"
-                v-model="getRevenue(source).change_money"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-              )
-              span.no-field(v-else) —
-            .col-amount
-              input.amount-input(
-                v-model="getRevenue(source).fees"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-              )
-            .col-amount.col-computed {{ formatCurrency(revenueNet(getRevenue(source))) }}
+          template(v-for="source in group.sources" :key="source")
+            .revenue-row
+              .col-source {{ REVENUE_SOURCE_LABELS[source] }}
+              .col-amount
+                input.amount-input(
+                  v-model="getRevenue(source).total"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                )
+              .col-amount
+                input.amount-input(
+                  v-if="source.endsWith('_cash')"
+                  v-model="getRevenue(source).change_money"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                )
+                span.no-field(v-else) —
+              .col-amount
+                input.amount-input(
+                  v-model="getRevenue(source).fees"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                )
+              .col-amount.col-computed {{ formatCurrency(revenueNet(getRevenue(source))) }}
+            template(v-if="source === 'vvk_pretix' && pretixData")
+              .revenue-row.sub-row(v-for="(info, src) in pretixData.by_source" :key="src")
+                .col-source.sub-source {{ src === 'vvk_stripe' ? '└ Stripe' : src === 'vvk_paypal' ? '└ PayPal' : '└ ' + src }}
+                .col-amount.sub-val {{ info.revenue.toFixed(2) }} €
+                .col-amount.sub-val —
+                .col-amount.sub-val {{ info.fees.toFixed(2) }} €
+                .col-amount.sub-val
+              .revenue-row.sub-row
+                .col-source.sub-source └ Pretix-Gebühr
+                .col-amount.sub-val
+                .col-amount.sub-val —
+                .col-amount.sub-val {{ pretixData.pretix_fee.toFixed(2) }} €
+                .col-amount.sub-val
 
         .group-total
           span Total {{ group.label }}:
@@ -961,6 +975,22 @@ h2 {
 
 .revenue-row:last-child {
   border-bottom: none;
+}
+
+.revenue-row.sub-row {
+  background: #f5f5f5;
+  font-size: 0.75rem;
+  color: #666;
+  padding: 0.25rem 1rem;
+  border-bottom: 1px dashed #ccc;
+}
+
+.sub-source {
+  padding-left: 1rem;
+}
+
+.sub-val {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Inventory Table ── */
