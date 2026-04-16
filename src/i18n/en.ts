@@ -123,10 +123,8 @@ export default {
       K: 'C',
       Fl: 'B',
       subtotal: 'Subtotal {group}:',
-      stockValueAfter: 'Stock Value (After):',
-      stockDepositValue: 'Stock Deposit Value:',
-      totalCostOfGoods: 'Total Cost of Goods:',
-      totalDepositTurnover: 'Total Deposit Turnover:',
+      stockValueAfter: 'Stock Value (incl. Deposit):',
+      totalCostOfGoods: 'Total Cost of Goods (incl. Deposit):',
     },
     expensesTable: {
       title: 'Expenses',

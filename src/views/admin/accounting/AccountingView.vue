@@ -253,14 +253,8 @@ function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const consumedCrates = inventoryConsumption(entry) / upc
   const price = parseFloat(entry.snapshot_purchase_price || beverage.purchase_price || '0')
-  return consumedCrates * price
-}
-
-function inventoryDepositValue(entry: InventoryEntry, beverage: BeverageItem): number {
-  const upc = beverage.units_per_crate || 1
-  const consumedCrates = inventoryConsumption(entry) / upc
   const deposit = parseFloat(entry.snapshot_deposit || beverage.deposit || '0')
-  return consumedCrates * deposit
+  return consumedCrates * (price + deposit)
 }
 
 function groupInventoryValue(items: { beverage: BeverageItem; entry: InventoryEntry }[]): number {
@@ -273,40 +267,18 @@ const totalInventoryValue = computed(() => {
   )
 })
 
-const totalDepositValue = computed(() => {
-  return Object.values(inventoryBySupplier.value).reduce(
-    (sum, items) => sum + items.reduce(
-      (s, { beverage, entry }) => s + inventoryDepositValue(entry, beverage), 0
-    ), 0
-  )
-})
-
 function stockValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const afterCrates = parseFloat(entry.quantity_after || '0') / upc
   const price = parseFloat(entry.snapshot_purchase_price || beverage.purchase_price || '0')
-  return afterCrates * price
-}
-
-function stockDepositValue(entry: InventoryEntry, beverage: BeverageItem): number {
-  const upc = beverage.units_per_crate || 1
-  const afterCrates = parseFloat(entry.quantity_after || '0') / upc
   const deposit = parseFloat(entry.snapshot_deposit || beverage.deposit || '0')
-  return afterCrates * deposit
+  return afterCrates * (price + deposit)
 }
 
 const totalStockValue = computed(() => {
   return Object.values(inventoryBySupplier.value).reduce(
     (sum, items) => sum + items.reduce(
       (s, { beverage, entry }) => s + stockValue(entry, beverage), 0
-    ), 0
-  )
-})
-
-const totalStockDepositValue = computed(() => {
-  return Object.values(inventoryBySupplier.value).reduce(
-    (sum, items) => sum + items.reduce(
-      (s, { beverage, entry }) => s + stockDepositValue(entry, beverage), 0
     ), 0
   )
 })
@@ -860,16 +832,10 @@ onMounted(() => {
         div
           span {{ $t('accounting.inventoryTable.stockValueAfter') }}
           strong {{ formatCurrency(totalStockValue) }}
-        div
-          span {{ $t('accounting.inventoryTable.stockDepositValue') }}
-          strong {{ formatCurrency(totalStockDepositValue) }}
         div.separator
         div
           span {{ $t('accounting.inventoryTable.totalCostOfGoods') }}
           strong {{ formatCurrency(totalInventoryValue) }}
-        div
-          span {{ $t('accounting.inventoryTable.totalDepositTurnover') }}
-          strong {{ formatCurrency(totalDepositValue) }}
 
     //- ── Expenses Tab ──
     .tab-content(v-if="activeTab === 'expenses'")

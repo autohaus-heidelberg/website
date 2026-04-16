@@ -123,10 +123,8 @@ export default {
       K: 'K',
       Fl: 'Fl',
       subtotal: 'Zwischensumme {group}:',
-      stockValueAfter: 'Lagerwert (Nachher):',
-      stockDepositValue: 'Pfandwert Lager:',
-      totalCostOfGoods: 'Gesamtwareneinsatz:',
-      totalDepositTurnover: 'Pfandumsatz gesamt:',
+      stockValueAfter: 'Lagerwert (inkl. Pfand):',
+      totalCostOfGoods: 'Wareneinsatz (inkl. Pfand):',
     },
     expensesTable: {
       title: 'Ausgaben',
