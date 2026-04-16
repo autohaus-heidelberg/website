@@ -351,8 +351,12 @@ const adjustedRevenue = computed(() => {
   return totalRevenue.value + expensesPaidFromRegister.value
 })
 
+const artistHospitality = computed(() => {
+  return (event.value?.artists?.length ?? 0) * 20
+})
+
 const result = computed(() => {
-  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value + parseFloat(depositReturn.value || '0')
+  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value - artistHospitality.value + parseFloat(depositReturn.value || '0')
 })
 
 function addSplit() {
@@ -487,6 +491,7 @@ onMounted(() => {
         router-link.btn-back(to="/admin/accounting") {{ $t('common.back') }}
         h2 {{ event?.title || props.eventId }}
       .header-right
+        router-link.btn-grant(:to="`/admin/accounting/${eventId}/grant`") {{ $t('grant.title') }}
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveAll" :disabled="isSaving")
           | {{ isSaving ? $t('common.saving') : $t('common.saveAll') }}
@@ -795,9 +800,12 @@ onMounted(() => {
           .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
             span {{ exp.description || $t('accounting.result.noDescription') }}
             span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+        .detail-row(v-if="artistHospitality > 0")
+          span {{ $t('accounting.result.artistHospitality', { count: event?.artists?.length ?? 0 }) }}
+          span.amount {{ formatCurrency(artistHospitality) }}
         .detail-row.detail-total
           span {{ $t('accounting.result.totalExpenses') }}
-          strong.negative {{ formatCurrency(totalExpenses) }}
+          strong.negative {{ formatCurrency(totalExpenses + artistHospitality) }}
 
       //- Final result
       .result-summary
@@ -816,6 +824,9 @@ onMounted(() => {
         .result-row
           span {{ $t('accounting.result.minusExpenses') }}
           strong.negative {{ formatCurrency(totalExpenses) }}
+        .result-row(v-if="artistHospitality > 0")
+          span {{ $t('accounting.result.minusHospitality') }}
+          strong.negative {{ formatCurrency(artistHospitality) }}
         .result-row
           span {{ $t('accounting.result.depositReturn') }}
           .input-inline
@@ -955,6 +966,20 @@ h2 {
 .btn-save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-grant {
+  padding: 0.5rem 1rem;
+  border: 0.25rem solid black;
+  text-decoration: none;
+  color: black;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-grant:hover {
+  background: black;
+  color: white;
 }
 
 .error {

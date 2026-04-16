@@ -10,6 +10,8 @@ import type {
   AccountingSummary,
   Purchase,
   StockEntry,
+  GrantApplication,
+  GrantSummary,
 } from '@/types/accounting'
 
 // ── Seed-Daten: Standard-Getränke ──────────────────────────────
@@ -350,5 +352,31 @@ export interface PayPalBarSummary {
 export const paypalBarService = {
   async getBarTransactions(eventId: string): Promise<PayPalBarSummary> {
     return api.get<PayPalBarSummary>(`/api/paypal/bar-transactions/${eventId}/`)
+  },
+}
+
+// ── Grant Applications (Förderung) ──────────────────────────────
+
+export const grantService = {
+  async getAll(): Promise<PaginatedResponse<GrantApplication>> {
+    return api.get<PaginatedResponse<GrantApplication>>('/api/grants/')
+  },
+
+  async getByEvent(eventId: string): Promise<GrantApplication | null> {
+    const { results } = await api.get<PaginatedResponse<GrantApplication>>(`/api/grants/?event=${eventId}`)
+    return results[0] ?? null
+  },
+
+  async create(data: Partial<GrantApplication>): Promise<GrantApplication> {
+    return api.post<GrantApplication>('/api/grants/', data)
+  },
+
+  async update(id: number, data: Partial<GrantApplication>): Promise<GrantApplication> {
+    return api.patch<GrantApplication>(`/api/grants/${id}/`, data)
+  },
+
+  async getSummary(year?: number): Promise<GrantSummary> {
+    const params = year ? `?year=${year}` : ''
+    return api.get<GrantSummary>(`/api/grants/summary/${params}`)
   },
 }

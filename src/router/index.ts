@@ -143,6 +143,12 @@ const router = createRouter({
           component: () => import('../views/admin/accounting/AccountingView.vue'),
           props: true
         },
+        {
+          path: 'accounting/:eventId/grant',
+          name: 'admin-grant',
+          component: () => import('../views/admin/accounting/GrantView.vue'),
+          props: true
+        },
         // Purchase routes
         {
           path: 'purchases',

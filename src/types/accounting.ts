@@ -160,3 +160,23 @@ export interface StockEntry {
   stock_value: string
   deposit_value: string
 }
+
+export interface GrantApplication {
+  id?: number
+  event: string
+  event_title?: string
+  event_date?: string
+  requested_amount: string
+  eligible_expenses: string
+  own_revenue: string
+  annual_staff_costs: string
+  annual_rent_costs: string
+  notes: string
+  created?: string
+  updated?: string
+}
+
+export interface GrantSummary {
+  total_requested: number
+  grant_count: number
+}
