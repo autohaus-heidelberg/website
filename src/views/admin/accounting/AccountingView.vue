@@ -341,7 +341,7 @@ const artistHospitality = computed(() => {
 })
 
 const result = computed(() => {
-  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value - artistHospitality.value + parseFloat(depositReturn.value || '0')
+  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value + parseFloat(depositReturn.value || '0')
 })
 
 function addSplit() {
@@ -375,8 +375,12 @@ const grantRecordedExpenses = computed(() => {
   return expenses.value.reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
 })
 
+const grantCostOfGoods = computed(() => {
+  return Math.max(0, totalInventoryValue.value - artistHospitality.value)
+})
+
 const grantTotalEligible = computed(() => {
-  return grantRecordedExpenses.value + artistHospitality.value + totalInventoryValue.value + rentFlatAmount.value
+  return grantRecordedExpenses.value + artistHospitality.value + grantCostOfGoods.value + rentFlatAmount.value
 })
 
 const grantAdmissionRevenue = computed(() => {
@@ -910,12 +914,9 @@ onMounted(() => {
           .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
             span {{ exp.description || $t('accounting.result.noDescription') }}
             span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-        .detail-row(v-if="artistHospitality > 0")
-          span {{ $t('accounting.result.artistHospitality', { count: event?.artists?.length ?? 0 }) }}
-          span.amount {{ formatCurrency(artistHospitality) }}
         .detail-row.detail-total
           span {{ $t('accounting.result.totalExpenses') }}
-          strong.negative {{ formatCurrency(totalExpenses + artistHospitality) }}
+          strong.negative {{ formatCurrency(totalExpenses) }}
 
       //- Final result
       .result-summary
@@ -933,7 +934,7 @@ onMounted(() => {
           strong.negative {{ formatCurrency(totalInventoryValue) }}
         .result-row
           span {{ $t('accounting.result.minusExpenses') }}
-          strong.negative {{ formatCurrency(totalExpenses + artistHospitality) }}
+          strong.negative {{ formatCurrency(totalExpenses) }}
         .result-row
           span {{ $t('accounting.result.depositReturn') }}
           .input-inline
@@ -1017,9 +1018,9 @@ onMounted(() => {
           .detail-row(v-if="artistHospitality > 0")
             span {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
             span.amount {{ formatCurrency(artistHospitality) }}
-          .detail-row(v-if="totalInventoryValue > 0")
+          .detail-row(v-if="grantCostOfGoods > 0")
             span {{ $t('grant.costOfGoods') }}
-            span.amount {{ formatCurrency(totalInventoryValue) }}
+            span.amount {{ formatCurrency(grantCostOfGoods) }}
           .detail-row.input-row
             span {{ $t('grant.rentFlatRate') }}
             .input-group
