@@ -106,6 +106,8 @@ export default {
       net: 'Netto',
       totalGroup: 'Gesamt {group}:',
       totalRevenue: 'Gesamteinnahmen:',
+      paidOut: 'Aus Kasse bezahlt',
+      grossRevenue: '= Einnahmen brutto',
     },
     inventoryTable: {
       drink: 'Getränk',
@@ -171,6 +173,7 @@ export default {
     artists: 'Künstler',
     eligibleExpenses: 'Zuwendungsfähige Ausgaben',
     hospitality: 'Bewirtung Bands ({count} × 20 €)',
+    costOfGoods: 'Wareneinsatz',
     staffFlatRate: 'Personalkosten (0,5% Jahreskosten)',
     rentFlatRate: 'Mietkosten (0,5% Jahresmiete)',
     annualAmount: 'Jahresbetrag',

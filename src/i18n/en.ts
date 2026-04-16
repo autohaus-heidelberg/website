@@ -106,6 +106,8 @@ export default {
       net: 'Net',
       totalGroup: 'Total {group}:',
       totalRevenue: 'Total Revenue:',
+      paidOut: 'Paid from register',
+      grossRevenue: '= Gross revenue',
     },
     inventoryTable: {
       drink: 'Drink',
@@ -171,6 +173,7 @@ export default {
     artists: 'Artists',
     eligibleExpenses: 'Eligible Expenses',
     hospitality: 'Artist Hospitality ({count} × 20 €)',
+    costOfGoods: 'Cost of Goods',
     staffFlatRate: 'Staff Costs (0.5% annual)',
     rentFlatRate: 'Rent Costs (0.5% annual)',
     annualAmount: 'Annual amount',

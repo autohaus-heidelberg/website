@@ -319,10 +319,14 @@ const totalExpenses = computed(() => {
 
 // Expenses paid from a cash register are already deducted from the cash count,
 // so we need to add them back to get the true revenue.
-const expensesPaidFromRegister = computed(() => {
+function expensesFromSource(source: string): number {
   return expenses.value
-    .filter(e => e.paid_from === 'entrance_cash' || e.paid_from === 'bar_cash')
+    .filter(e => e.paid_from === source)
     .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
+}
+
+const expensesPaidFromRegister = computed(() => {
+  return expensesFromSource('entrance_cash') + expensesFromSource('bar_cash')
 })
 
 const externalExpenses = computed(() => {
@@ -400,13 +404,15 @@ const grantRecordedExpenses = computed(() => {
 })
 
 const grantTotalEligible = computed(() => {
-  return grantRecordedExpenses.value + artistHospitality.value + rentFlatAmount.value
+  return grantRecordedExpenses.value + artistHospitality.value + totalInventoryValue.value + rentFlatAmount.value
 })
 
 const grantAdmissionRevenue = computed(() => {
-  return revenues.value
-    .filter(r => r.source === 'entrance_cash' || r.source === 'entrance_paypal')
+  const admissionNet = revenues.value
+    .filter(r => r.source === 'entrance_cash' || r.source === 'entrance_paypal' || r.source === 'vvk_pretix')
     .reduce((sum, r) => sum + revenueNet(r), 0)
+  // Add back expenses paid from entrance cash (these were admission revenue used for payouts)
+  return admissionNet + expensesFromSource('entrance_cash')
 })
 
 const grantBarContribution = computed(() => {
@@ -702,6 +708,20 @@ onMounted(() => {
                   placeholder="0.00"
                 )
               .col-amount.col-computed {{ formatCurrency(revenueNet(getRevenue(source))) }}
+            template(v-if="(source === 'entrance_cash' || source === 'bar_cash') && expensesFromSource(source) > 0")
+              .revenue-row.sub-row.register-payout
+                .col-source.sub-source └ {{ $t('accounting.revenueTable.paidOut') }}
+                .col-amount.sub-val
+                .col-amount.sub-val
+                .col-amount.sub-val
+                .col-amount.sub-val.positive + {{ formatCurrency(expensesFromSource(source)) }}
+              .revenue-row.sub-row.register-gross
+                .col-source.sub-source {{ $t('accounting.revenueTable.grossRevenue') }}
+                .col-amount.sub-val
+                .col-amount.sub-val
+                .col-amount.sub-val
+                .col-amount.sub-val
+                  strong {{ formatCurrency(revenueNet(getRevenue(source)) + expensesFromSource(source)) }}
             template(v-if="source === 'vvk_pretix' && pretixData")
               .revenue-row.sub-row(v-for="(info, src) in pretixData.by_source" :key="src")
                 .col-source.sub-source {{ src === 'vvk_stripe' ? $t('accounting.pretix.stripe') : src === 'vvk_paypal' ? $t('accounting.pretix.paypal') : '└ ' + src }}
@@ -1031,6 +1051,9 @@ onMounted(() => {
           .detail-row(v-if="artistHospitality > 0")
             span {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
             span.amount {{ formatCurrency(artistHospitality) }}
+          .detail-row(v-if="totalInventoryValue > 0")
+            span {{ $t('grant.costOfGoods') }}
+            span.amount {{ formatCurrency(totalInventoryValue) }}
           .detail-row.input-row
             span {{ $t('grant.rentFlatRate') }}
             .input-group
@@ -1345,7 +1368,7 @@ h2 {
 
 .revenue-header, .revenue-row {
   display: grid;
-  grid-template-columns: 180px 1fr 1fr 1fr 120px;
+  grid-template-columns: 180px minmax(110px, 1fr) minmax(110px, 1fr) minmax(110px, 1fr) 120px;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   align-items: center;
