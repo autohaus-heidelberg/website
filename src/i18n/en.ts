@@ -6,6 +6,7 @@ export default {
     save: 'Save',
     saveAll: 'Save All',
     saved: 'Saved!',
+    confirm: 'Are you sure?',
     cancel: 'Cancel',
     back: '← Back',
     delete: 'Delete',
@@ -64,18 +65,23 @@ export default {
     expensePaidFrom: {
       entrance_cash: 'Door Register',
       bar_cash: 'Bar Register',
-      other: 'Other',
+      other: 'Open',
     },
   },
 
   // ── Accounting View ────────────────────────────────────────────
   accounting: {
     loadingAccounting: 'Loading accounting...',
+    finalize: 'Finalize',
+    reopen: 'Reopen',
+    finalized: 'Accounting finalized!',
+    confirmFinalize: 'Really finalize this accounting? It will become read-only afterwards.',
     tabs: {
       cashCount: 'Cash Count',
       inventory: 'Inventory',
       expenses: 'Expenses',
       result: 'Result',
+      grant: 'Grant',
     },
     pretix: {
       loadPresale: 'Load presale from Pretix',
@@ -121,6 +127,7 @@ export default {
       totalDepositTurnover: 'Total Deposit Turnover:',
     },
     expensesTable: {
+      title: 'Expenses',
       description: 'Description',
       amount: 'Amount',
       paidFrom: 'Paid From',
@@ -184,6 +191,9 @@ export default {
     yearLabel: 'Year',
     totalRequested: 'Total Requested',
     grantCount: 'Number of Grant Applications',
+    approvedSection: 'Approval Notice',
+    approvedAmount: 'Approved Maximum Amount',
+    finalAmount: 'Grant Amount (per notice)',
   },
 
   // ── Accounting List ────────────────────────────────────────────

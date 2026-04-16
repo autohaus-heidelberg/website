@@ -6,6 +6,7 @@ export default {
     save: 'Speichern',
     saveAll: 'Alles speichern',
     saved: 'Gespeichert!',
+    confirm: 'Bist du sicher?',
     cancel: 'Abbrechen',
     back: '← Zurück',
     delete: 'Löschen',
@@ -64,18 +65,23 @@ export default {
     expensePaidFrom: {
       entrance_cash: 'Einlasskasse',
       bar_cash: 'Barkasse',
-      other: 'Sonstige',
+      other: 'Offen',
     },
   },
 
   // ── Accounting View ────────────────────────────────────────────
   accounting: {
     loadingAccounting: 'Abrechnung wird geladen...',
+    finalize: 'Abschließen',
+    reopen: 'Wieder öffnen',
+    finalized: 'Abrechnung abgeschlossen!',
+    confirmFinalize: 'Abrechnung wirklich abschließen? Danach kann sie nur noch im Lesemodus geöffnet werden.',
     tabs: {
       cashCount: 'Kassenzählung',
       inventory: 'Inventur',
       expenses: 'Ausgaben',
       result: 'Ergebnis',
+      grant: 'Förderung',
     },
     pretix: {
       loadPresale: 'VVK von Pretix laden',
@@ -121,6 +127,7 @@ export default {
       totalDepositTurnover: 'Pfandumsatz gesamt:',
     },
     expensesTable: {
+      title: 'Ausgaben',
       description: 'Beschreibung',
       amount: 'Betrag',
       paidFrom: 'Bezahlt aus',
@@ -184,6 +191,9 @@ export default {
     yearLabel: 'Jahr',
     totalRequested: 'Beantragte Summe',
     grantCount: 'Anzahl Förderanträge',
+    approvedSection: 'Bewilligungsbescheid',
+    approvedAmount: 'Bewilligter Höchstbetrag',
+    finalAmount: 'Förderbetrag (nach Bescheid)',
   },
 
   // ── Accounting List ────────────────────────────────────────────

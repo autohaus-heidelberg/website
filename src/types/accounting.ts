@@ -171,6 +171,7 @@ export interface GrantApplication {
   own_revenue: string
   annual_staff_costs: string
   annual_rent_costs: string
+  approved_amount?: string | null
   notes: string
   created?: string
   updated?: string
