@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { accountingService, beverageService, eventService, pretixService } from '@/services'
+import { accountingService, beverageService, eventService, pretixService, paypalBarService } from '@/services'
 import type { Event } from '@/services'
-import type { PretixOrderSummary } from '@/services/accounting'
+import type { PretixOrderSummary, PayPalBarSummary } from '@/services/accounting'
 import type {
   EventAccounting,
   RevenueEntry,
@@ -49,6 +49,23 @@ const saveSuccess = ref('')
 const pretixData = ref<PretixOrderSummary | null>(null)
 const pretixLoading = ref(false)
 const pretixError = ref('')
+
+// ── PayPal Bar ───────────────────────────────────────────────────
+const paypalBarData = ref<PayPalBarSummary | null>(null)
+const paypalBarLoading = ref(false)
+const paypalBarError = ref('')
+const paypalBarExpanded = ref(false)
+
+const paypalBarTotals = computed(() => {
+  if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
+  const txns = paypalBarData.value.transactions
+  return {
+    amount: txns.reduce((s, t) => s + t.amount, 0),
+    fees: txns.reduce((s, t) => s + t.fee, 0),
+    net: txns.reduce((s, t) => s + t.net, 0),
+    count: txns.length,
+  }
+})
 
 // ── Sorting ──────────────────────────────────────────────────────
 const invSort = useSort<{ beverage: BeverageItem; entry: InventoryEntry }>()
@@ -98,6 +115,33 @@ function applyPretixData() {
   rev.total = d.total_revenue.toFixed(2)
   rev.fees = totalFees.toFixed(2)
   rev.change_money = '0.00'
+}
+
+async function fetchPaypalBarData() {
+  if (!props.eventId) return
+  paypalBarLoading.value = true
+  paypalBarError.value = ''
+  try {
+    paypalBarData.value = await paypalBarService.getBarTransactions(props.eventId)
+  } catch (e: any) {
+    paypalBarError.value = e.message || t('accounting.paypalBar.errorLoading')
+  } finally {
+    paypalBarLoading.value = false
+  }
+}
+
+function applyPaypalBarData() {
+  if (!paypalBarData.value) return
+  const t = paypalBarTotals.value
+  const rev = getRevenue('bar_paypal')
+  rev.total = t.amount.toFixed(2)
+  rev.fees = t.fees.toFixed(2)
+  rev.change_money = '0.00'
+}
+
+function removePaypalBarTransaction(idx: number) {
+  if (!paypalBarData.value) return
+  paypalBarData.value.transactions.splice(idx, 1)
 }
 
 // ── Computed: Revenue ────────────────────────────────────────────
@@ -342,6 +386,12 @@ function formatCurrency(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
 }
 
+function formatTime(isoString: string): string {
+  if (!isoString) return ''
+  const d = new Date(isoString)
+  return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
+
 // ── Load & Save ──────────────────────────────────────────────────
 
 async function loadData() {
@@ -476,6 +526,16 @@ onMounted(() => {
               @click="applyPretixData"
             ) {{ $t('accounting.pretix.apply', { tickets: pretixData.total_tickets, amount: pretixData.total_revenue.toFixed(2) }) }}
             span.pretix-error(v-if="pretixError") {{ pretixError }}
+          .pretix-actions(v-if="group.sources.includes('bar_paypal')")
+            button.btn-pretix(
+              @click="fetchPaypalBarData"
+              :disabled="paypalBarLoading"
+            ) {{ paypalBarLoading ? $t('common.loading') : $t('accounting.paypalBar.loadTransactions') }}
+            button.btn-pretix.btn-apply(
+              v-if="paypalBarData"
+              @click="applyPaypalBarData"
+            ) {{ $t('accounting.paypalBar.apply', { count: paypalBarTotals.count, amount: paypalBarTotals.amount.toFixed(2) }) }}
+            span.pretix-error(v-if="paypalBarError") {{ paypalBarError }}
         .revenue-table
           .revenue-header
             .col-source {{ $t('accounting.revenueTable.source') }}
@@ -527,6 +587,22 @@ onMounted(() => {
                 .col-amount.sub-val —
                 .col-amount.sub-val {{ pretixData.pretix_fee.toFixed(2) }} €
                 .col-amount.sub-val
+            template(v-if="source === 'bar_paypal' && paypalBarData")
+              .revenue-row.sub-row.sub-toggle(@click="paypalBarExpanded = !paypalBarExpanded")
+                .col-source.sub-source {{ paypalBarExpanded ? '▼' : '▶' }} {{ $t('accounting.paypalBar.transactionCount', { count: paypalBarTotals.count }) }}
+                .col-amount.sub-val {{ paypalBarTotals.amount.toFixed(2) }} €
+                .col-amount.sub-val —
+                .col-amount.sub-val {{ paypalBarTotals.fees.toFixed(2) }} €
+                .col-amount.sub-val {{ paypalBarTotals.net.toFixed(2) }} €
+              template(v-if="paypalBarExpanded")
+                .revenue-row.sub-row.sub-detail(v-for="(txn, idx) in paypalBarData.transactions" :key="idx")
+                  .col-source.sub-source.sub-detail-source
+                    span └ {{ txn.name }} · {{ formatTime(txn.timestamp) }}
+                  .col-amount.sub-val {{ txn.amount.toFixed(2) }} €
+                  .col-amount.sub-val —
+                  .col-amount.sub-val {{ txn.fee.toFixed(2) }} €
+                  .col-amount.sub-val {{ txn.net.toFixed(2) }} €
+                  button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" :title="$t('accounting.paypalBar.remove')") ✕
 
         .group-total
           span {{ $t('accounting.revenueTable.totalGroup', { group: $t(group.labelKey) }) }}
@@ -1025,6 +1101,56 @@ h2 {
   color: #666;
   padding: 0.25rem 1rem;
   border-bottom: 1px dashed #ccc;
+}
+
+.revenue-row.sub-toggle {
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+}
+.revenue-row.sub-toggle:hover {
+  background: #eaeaea;
+}
+
+.revenue-row.sub-detail {
+  font-size: 0.7rem;
+  color: #888;
+  padding: 0.15rem 1rem;
+  position: relative;
+}
+
+.sub-detail-source {
+  padding-left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sub-detail-source span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.btn-remove-txn {
+  position: absolute;
+  right: 0.3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 1px solid #ccc;
+  color: #999;
+  font-size: 0.65rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
+  cursor: pointer;
+}
+.btn-remove-txn:hover {
+  background: black;
+  color: white;
+  border-color: black;
 }
 
 .sub-source {

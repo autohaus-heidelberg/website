@@ -85,6 +85,13 @@ export default {
       paypal: '└ PayPal',
       pretixFee: '└ Pretix Fee',
     },
+    paypalBar: {
+      loadTransactions: 'Load PayPal transactions',
+      apply: 'Apply ({count} transactions, {amount} €)',
+      errorLoading: 'Could not load PayPal data',
+      transactionCount: '{count} transactions',
+      remove: 'Remove transaction',
+    },
     revenueTable: {
       source: 'Source',
       total: 'Total',

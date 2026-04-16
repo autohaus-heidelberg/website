@@ -323,3 +323,32 @@ export const pretixService = {
     return api.get<PretixOrderSummary>(`/api/pretix/orders/${eventSlug}/`)
   },
 }
+
+// ── PayPal Bar Transactions ─────────────────────────────────────
+
+export interface PayPalBarTransaction {
+  timestamp: string
+  name: string
+  description: string
+  amount: number
+  fee: number
+  net: number
+  type: string
+}
+
+export interface PayPalBarSummary {
+  event_id: string
+  event_date: string
+  search_window: { start: string; end: string }
+  transaction_count: number
+  total_amount: number
+  total_fees: number
+  total_net: number
+  transactions: PayPalBarTransaction[]
+}
+
+export const paypalBarService = {
+  async getBarTransactions(eventId: string): Promise<PayPalBarSummary> {
+    return api.get<PayPalBarSummary>(`/api/paypal/bar-transactions/${eventId}/`)
+  },
+}
