@@ -459,13 +459,20 @@ async function loadData() {
       })
     }
 
-    // Default split: Bernd 33%
+    // Default splits: Bernd 33%, Carousel e.V. 67%
     if (splits.value.length === 0) {
-      splits.value.push({
-        accounting: accounting.value?.id || 0,
-        participant_name: 'Bernd',
-        share_percentage: '33',
-      })
+      splits.value.push(
+        {
+          accounting: accounting.value?.id || 0,
+          participant_name: 'Bernd',
+          share_percentage: '33',
+        },
+        {
+          accounting: accounting.value?.id || 0,
+          participant_name: 'Carousel e.V.',
+          share_percentage: '67',
+        },
+      )
     }
 
     // Load grant record (optional)
