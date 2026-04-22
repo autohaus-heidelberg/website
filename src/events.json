@@ -40,6 +40,37 @@
         ]
     },
     {
+        "id": "zoomies-howileft",
+        "date": "2026-05-16T18:00:00+00:00",
+        "title": "Zoomies (Americana, Leipzig), How I Left (Indie, Karlsruhe)",
+        "fee": "12",
+        "feeAk": "15",
+        "descriptionShort": "<p>Die inoffizielle St&auml;dtefreundschaft Leipzig Heidelberg wird einmal mehr im Carousel zelebriert, denn am 16. Mai besucht uns die n&auml;chste Delegation: Zoomies! Aber irgendwas ist anders.. keine komplett &uuml;berdrehte Gitarren, durch den Lo-Fi Wolf gedrehte Synths oder atemberaubende Hi-Hat Hits, sondern Songs mit viel Raum: f&uuml;r Geschichten, sanfte Melodien und Ruhe, welche unweigerlich an die romantisierte Pr&auml;rie im mittleren Westen Amerikas erinnert. Der Lo-Fi Aspekt findet sich bei Zoomies im weichen Sound, weg vom Bit-exakten kristallklaren digitalen Klang hin zur sanften S&auml;ttigung des Tonbandes. Am 8. Mai erscheint das neue Album bei Staatsakt und wir freuen uns wahnsinnig sie am 16. Mai bei uns im Carousel begr&uuml;&szlig;en zu d&uuml;rfen!</p>\n<p><br>Ebenso wahnsinnig ist die Legende, dass How I Left ihr zu Covid Zeiten erschienenes Album Birds In The City alleine im Keller aufgenommen haben, so gut klingt es halt einfach! Aber kein Wunder, das Duo mit Julian B&auml;tz und Michy Muuf t&uuml;ftelt immerhin seit mindestens einer Dekade an ihrem Sound und den gemeinsamen Songs und brachte 2 &frac12; Alben in der Zeit heraus, das letzte davon auf This Charming Man Records. Wir k&ouml;nnen es kaum erwarten, ihre Version von Indie-Folk mit durchaus quirligen und auch etwas lauteren Momenten auf unserer B&uuml;hne genie&szlig;en zu k&ouml;nnen!</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/zoomies-howileft/",
+        "img": "/img/4d56c0a7-bdf3-4acd-847c-2f2a663138ec.png",
+        "artists": [
+            {
+                "name": "Zoomies",
+                "link": "https://www.instagram.com/zoomies__music/",
+                "description": "Die Geschichte der Americana in Leipzig ist schnell erz\u00e4hlt. Erst kam lange nix, und dann endlich die Zoomies.\n\nWobei die Zoomies \u2013 dem Herzensprojekt des Musikers Maxim Tschernych \u2013 auf dem Deb\u00fct-Tape \u201cCarbonated Soft Drinks\u201d aus dem Jahre 2023 noch klangen wie eine T\u00fcte New-Wave-Gemischtes zwischen Jack J., Bowie oder Ween.\n\nAber nun endlich die folgerichtige, die Pop-Historie auf VHS-Tape r\u00fcckw\u00e4rts spulende, leicht verrauschte Hinwendung zur Americana, genauer gesagt zum rock-poppigen Teil, wo Country oder Folk keine Schimpfw\u00f6rter sind, wo Harry Nilsson einst seine Songs dichtete, wo Alex G heute lebt und von wo aus auch MJ Lenderman ein Liedchen singen kann. Hier treiben sich also auch die Zoomies herum.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/kIAoGK2MDnU",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1268612527/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/63a56d05-4f5b-405b-984e-ec49a60ad7f2.jpeg"
+            },
+            {
+                "name": "How I Left",
+                "link": "https://www.instagram.com/how_i_left/",
+                "description": "How I Left kreieren inmitten der s\u00fcddeutschen Provinz, dort wo kleine Trauben zu k\u00f6stlichen Wein werden, ihren ganz eigenen und wohltuenden sound for lovers. How I Left macht Musik, die ganz besonders den Fans von the Weakerthans, Wilco oder Ben Kweller ein wohltuendes Gef\u00fchl im Bauch ausl\u00f6sen wird. Slackerfolk trifft auf eing\u00e4ngigen Indiepop! Gem\u00fctlich rumpeln Drums und Bass, dar\u00fcber lockere Gitarren, ein altes Klavier und die Philicorda-Heimorgel vom Sperrm\u00fcll. Sobald der Gesang einsetzt, fragt sich das geschulte Ohr, wann denn die Stimmfusion von Paul Simon, Neil Young und Conor Oberst stattgefunden hat. Die Texte erinnern an American Short Stories \u2013 Alltagssituationen, kuriose Schlagzeilen und zwischenmenschliche Begegnungen verschmelzen zu literarischen Miniaturen. Eigensinnig mit einer Prise Esprit!\n- This Charming Man Records",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/jLZj7ri8hms",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1279522454/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/0e5c1d92-dbcf-413d-99dd-f3edcbc7c520.jpeg"
+            }
+        ]
+    },
+    {
         "id": "lemongrab-socke-invertida-rocket2",
         "date": "2026-05-09T18:00:00+00:00",
         "title": "Lemongrab + Socke + Invertida + Rocket 2",
