@@ -160,6 +160,18 @@
         ]
     },
     {
+        "id": "mm-260422",
+        "date": "2026-04-23T18:00:00+00:00",
+        "title": "Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<p>Diesmal tauchen wir ab in die fr&uuml;hen 1920er Jahre, in eine Zeit zwischen wissenschaftlichem Fortschritt und tief verwurzeltem Aberglauben: Dieses au&szlig;ergew&ouml;hnliche Werk eines vision&auml;ren skandinavischen Regisseurs entzieht sich bis heute klaren Kategorien. Mit eindringlichen Bildern und ungew&ouml;hnlicher Erz&auml;hlweise taucht es ein in die dunklen Kapitel europ&auml;ischer Geschichte und stellt unbequeme Fragen nach Angst, Macht und gesellschaftlicher Ausgrenzung. Dokumentarisches und Fantastisches verschmelzen zu einer ebenso verst&ouml;renden wie faszinierenden Erfahrung &ndash; ein filmisches Experiment, das lange nachwirkt und eine der ersten Mockumentaries!</p>",
+        "descriptionLong": "",
+        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3485811827",
+        "img": "/img/96852fc1-990c-453a-b98b-064c27baa81b.jpeg",
+        "artists": []
+    },
+    {
         "id": "dirkandtheseconds-shocktroopers-fatale",
         "date": "2026-04-18T18:00:00+00:00",
         "title": "Dirk and the Seconds (Garage Punk, Leipzig), Shocktroopers (Crust Punk, Aschaffenburg) und Fatale (Post Punk, Heidelberg)",
