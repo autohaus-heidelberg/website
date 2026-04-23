@@ -187,6 +187,20 @@ async function saveGrant() {
   }
 }
 
+const isDownloading = ref(false)
+
+async function downloadVerwendungsnachweis() {
+  isDownloading.value = true
+  error.value = ''
+  try {
+    await grantService.downloadVerwendungsnachweis(props.eventId)
+  } catch (e: any) {
+    error.value = e.message || 'Download fehlgeschlagen'
+  } finally {
+    isDownloading.value = false
+  }
+}
+
 function printPage() {
   window.print()
 }
@@ -209,6 +223,8 @@ onMounted(() => {
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveGrant" :disabled="isSaving")
           | {{ isSaving ? $t('common.saving') : $t('grant.save') }}
+        button.btn-print(@click="downloadVerwendungsnachweis" :disabled="isDownloading || !grantRecord?.id")
+          | {{ isDownloading ? 'Lade...' : 'Verwendungsnachweis PDF' }}
         button.btn-print(@click="printPage") {{ $t('grant.print') }}
 
     .event-info

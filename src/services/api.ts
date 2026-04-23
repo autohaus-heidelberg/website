@@ -129,6 +129,10 @@ class ApiClient {
     })
     return response.data
   }
+
+  getBaseUrl(): string {
+    return API_BASE_URL
+  }
 }
 
 export const api = new ApiClient(API_BASE_URL)

@@ -61,9 +61,29 @@ const paypalBarExpanded = ref(false)
 // ── Grant (Förderung) ────────────────────────────────────────────
 const grantRecord = ref<GrantApplication | null>(null)
 const grantSummary = ref<GrantSummary | null>(null)
+const grantSubTab = ref<'antrag' | 'nachweis'>('antrag')
 const rentFlatAmount = ref(134.46)
 const approvedAmount = ref<number | null>(null)
 const grantSaving = ref(false)
+const grantDownloading = ref<string | null>(null)
+
+// Zuwendungsbescheid
+const zuwendungsbescheidDate = ref('')
+const auszahlungAmount = ref<number | null>(null)
+
+// Sachbericht
+const sachbericht = ref('')
+const grantNotes = ref('')
+
+// Budget plan (expected expenses & revenues for Antrag)
+const budgetKuenstler = ref<{ name: string; amount: string }[]>([])
+const budgetSachkosten = ref<{ name: string; amount: string }[]>([])
+const budgetSonstiges = ref<{ name: string; amount: string }[]>([])
+const budgetRevEintritt = ref('0')
+const budgetRevGetraenke = ref('0')
+const budgetRevEigenmittel = ref('0')
+const budgetRevDrittmittel = ref('0')
+const budgetRevSonstige = ref('0')
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -414,6 +434,40 @@ const grantAmount = computed(() => {
   return calculated
 })
 
+// ── Kostenplan-based computeds (for Antrag) ──────────────────────
+
+const budgetTotalKuenstler = computed(() => {
+  return budgetKuenstler.value.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0)
+})
+
+const budgetTotalSachkosten = computed(() => {
+  return budgetSachkosten.value.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0)
+})
+
+const budgetTotalSonstiges = computed(() => {
+  return budgetSonstiges.value.reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0)
+})
+
+const budgetTotalExpenses = computed(() => {
+  return budgetTotalKuenstler.value + budgetTotalSachkosten.value + budgetTotalSonstiges.value + rentFlatAmount.value
+})
+
+const budgetTotalRevenues = computed(() => {
+  return (parseFloat(budgetRevEintritt.value) || 0)
+    + (parseFloat(budgetRevGetraenke.value) || 0)
+    + (parseFloat(budgetRevEigenmittel.value) || 0)
+    + (parseFloat(budgetRevDrittmittel.value) || 0)
+    + (parseFloat(budgetRevSonstige.value) || 0)
+})
+
+const budgetEligibleAmount = computed(() => {
+  return Math.max(0, budgetTotalExpenses.value - budgetTotalRevenues.value)
+})
+
+const budgetGrantAmount = computed(() => {
+  return Math.min(1000, budgetEligibleAmount.value)
+})
+
 // ── Format helpers ───────────────────────────────────────────────
 
 function formatCurrency(value: number): string {
@@ -459,12 +513,12 @@ async function loadData() {
       })
     }
 
-    // Default splits: Bernd 33%, Carousel e.V. 67%
+    // Default splits: Thierry 33%, Carousel e.V. 67%
     if (splits.value.length === 0) {
       splits.value.push(
         {
           accounting: accounting.value?.id || 0,
-          participant_name: 'Bernd',
+          participant_name: 'Thierry',
           share_percentage: '33',
         },
         {
@@ -484,6 +538,28 @@ async function loadData() {
         rentFlatAmount.value = rent > 0 ? rent : 134.46
         const approved = parseFloat(existing.approved_amount || '0')
         approvedAmount.value = approved > 0 ? approved : null
+
+        // Zuwendungsbescheid fields
+        zuwendungsbescheidDate.value = existing.zuwendungsbescheid_date || ''
+        const auszahlung = parseFloat(existing.auszahlung_amount || '0')
+        auszahlungAmount.value = auszahlung > 0 ? auszahlung : null
+
+        // Sachbericht + notes
+        sachbericht.value = existing.sachbericht || ''
+        grantNotes.value = existing.notes || ''
+
+        // Budget plan
+        const bp = existing.budget_plan || {}
+        const bpExp = bp.expenses || {}
+        const bpRev = bp.revenues || {}
+        budgetKuenstler.value = (bpExp.kuenstlerhonorar || []).map((i: any) => ({ name: i.name || '', amount: String(i.amount || '0') }))
+        budgetSachkosten.value = (bpExp.sachkosten || []).map((i: any) => ({ name: i.name || '', amount: String(i.amount || '0') }))
+        budgetSonstiges.value = (bpExp.sonstiges || []).map((i: any) => ({ name: i.name || '', amount: String(i.amount || '0') }))
+        budgetRevEintritt.value = String(bpRev.eintritt || '0')
+        budgetRevGetraenke.value = String(bpRev.getraenke || '0')
+        budgetRevEigenmittel.value = String(bpRev.eigenmittel || '0')
+        budgetRevDrittmittel.value = String(bpRev.drittmittel || '0')
+        budgetRevSonstige.value = String(bpRev.sonstige || '0')
       }
       const eventYear = ev.date ? new Date(ev.date).getFullYear() : new Date().getFullYear()
       grantSummary.value = await grantService.getSummary(eventYear)
@@ -559,13 +635,33 @@ async function saveGrant() {
     // Save accounting first so grant uses persisted data
     await saveAll()
 
+    const budgetPlan = {
+      expenses: {
+        kuenstlerhonorar: budgetKuenstler.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
+        sachkosten: budgetSachkosten.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
+        sonstiges: budgetSonstiges.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
+      },
+      revenues: {
+        eintritt: parseFloat(budgetRevEintritt.value) || 0,
+        getraenke: parseFloat(budgetRevGetraenke.value) || 0,
+        eigenmittel: parseFloat(budgetRevEigenmittel.value) || 0,
+        drittmittel: parseFloat(budgetRevDrittmittel.value) || 0,
+        sonstige: parseFloat(budgetRevSonstige.value) || 0,
+      },
+    }
+
     const data: Partial<GrantApplication> = {
       event: props.eventId,
-      requested_amount: grantAmount.value.toFixed(2),
+      requested_amount: budgetGrantAmount.value.toFixed(2),
       eligible_expenses: grantTotalEligible.value.toFixed(2),
       own_revenue: grantTotalOwnRevenue.value.toFixed(2),
       annual_rent_costs: rentFlatAmount.value.toFixed(2),
       approved_amount: approvedAmount.value != null ? approvedAmount.value.toFixed(2) : null,
+      zuwendungsbescheid_date: zuwendungsbescheidDate.value || null,
+      auszahlung_amount: auszahlungAmount.value != null ? auszahlungAmount.value.toFixed(2) : null,
+      sachbericht: sachbericht.value,
+      notes: grantNotes.value,
+      budget_plan: budgetPlan,
     }
     if (grantRecord.value?.id) {
       grantRecord.value = await grantService.update(grantRecord.value.id, data)
@@ -582,6 +678,45 @@ async function saveGrant() {
   } finally {
     grantSaving.value = false
   }
+}
+
+async function downloadAntrag() {
+  if (!grantRecord.value?.id) return
+  grantDownloading.value = 'antrag'
+  error.value = ''
+  try {
+    await grantService.downloadAntrag(grantRecord.value.id, event.value?.title || 'Event')
+  } catch (e: any) {
+    error.value = e.message || 'Download fehlgeschlagen'
+  } finally {
+    grantDownloading.value = null
+  }
+}
+
+async function downloadVerwendungsnachweis() {
+  grantDownloading.value = 'verwendungsnachweis'
+  error.value = ''
+  try {
+    await saveGrant()
+    await grantService.downloadVerwendungsnachweis(props.eventId)
+  } catch (e: any) {
+    error.value = e.message || 'Download fehlgeschlagen'
+  } finally {
+    grantDownloading.value = null
+  }
+}
+
+function addBudgetItem(category: 'kuenstler' | 'sachkosten' | 'sonstiges') {
+  const item = { name: '', amount: '0' }
+  if (category === 'kuenstler') budgetKuenstler.value.push(item)
+  else if (category === 'sachkosten') budgetSachkosten.value.push(item)
+  else budgetSonstiges.value.push(item)
+}
+
+function removeBudgetItem(category: 'kuenstler' | 'sachkosten' | 'sonstiges', index: number) {
+  if (category === 'kuenstler') budgetKuenstler.value.splice(index, 1)
+  else if (category === 'sachkosten') budgetSachkosten.value.splice(index, 1)
+  else budgetSonstiges.value.splice(index, 1)
 }
 
 onMounted(() => {
@@ -856,6 +991,7 @@ onMounted(() => {
           .col-desc.sortable(@click="expSort.toggle('desc')") {{ $t('accounting.expensesTable.description') }}{{ expSort.indicator('desc') }}
           .col-amount.sortable(@click="expSort.toggle('amount')") {{ $t('accounting.expensesTable.amount') }}{{ expSort.indicator('amount') }}
           .col-from {{ $t('accounting.expensesTable.paidFrom') }}
+          .col-grant-cat {{ $t('accounting.expensesTable.grantCategory') }}
           .col-action
 
         .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
@@ -877,6 +1013,12 @@ onMounted(() => {
             select.select-input(v-model="exp.paid_from")
               option(v-for="(key, source) in EXPENSE_PAID_FROM_KEYS" :key="source" :value="source")
                 | {{ $t(key) }}
+          .col-grant-cat
+            select.select-input(v-model="exp.grant_category")
+              option(:value="null") –
+              option(value="kuenstlerhonorar") {{ $t('accounting.expensesTable.catKuenstler') }}
+              option(value="sachkosten") {{ $t('accounting.expensesTable.catSachkosten') }}
+              option(value="sonstiges") {{ $t('accounting.expensesTable.catSonstiges') }}
           .col-action
             button.btn-remove(@click="removeExpense(index)") ×
 
@@ -1015,87 +1157,241 @@ onMounted(() => {
             span.label {{ $t('grant.artists') }}
             span.value {{ event?.artists?.map(a => a.name).join(', ') || '–' }}
 
-        //- ── Eligible Expenses ──
-        h3.section-title {{ $t('grant.eligibleExpenses') }}
-        .grant-detail
-          template(v-for="exp in expenses" :key="exp.description")
-            .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
-              span {{ exp.description || '–' }}
-              span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-          .detail-row(v-if="artistHospitality > 0")
-            span {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
-            span.amount {{ formatCurrency(artistHospitality) }}
-          .detail-row(v-if="grantCostOfGoods > 0")
-            span {{ $t('grant.costOfGoods') }}
-            span.amount {{ formatCurrency(grantCostOfGoods) }}
-          .detail-row.input-row
-            span {{ $t('grant.rentFlatRate') }}
-            .input-group
-              input.amount-input(
-                v-model.number="rentFlatAmount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="134.46"
-              )
-              span.unit €
-          .detail-row.detail-total
-            span {{ $t('grant.totalEligible') }}
-            strong {{ formatCurrency(grantTotalEligible) }}
+        //- ── Sub-Tab Navigation ──
+        .grant-sub-tabs
+          button.grant-sub-tab(
+            :class="{ active: grantSubTab === 'antrag' }"
+            @click="grantSubTab = 'antrag'"
+          ) {{ $t('grant.tabAntrag') }}
+          button.grant-sub-tab(
+            :class="{ active: grantSubTab === 'nachweis' }"
+            @click="grantSubTab = 'nachweis'"
+          ) {{ $t('grant.tabNachweis') }}
 
-        //- ── Own Revenue ──
-        h3.section-title {{ $t('grant.ownRevenue') }}
-        .grant-detail
-          .detail-row
-            span {{ $t('grant.admissionRevenue') }}
-            span.amount {{ formatCurrency(grantAdmissionRevenue) }}
-          .detail-row
-            span {{ $t('grant.barRevenue') }}
-            span.amount {{ formatCurrency(grantBarContribution) }}
-          .detail-row.detail-total
-            span {{ $t('grant.totalOwnRevenue') }}
-            strong {{ formatCurrency(grantTotalOwnRevenue) }}
+        //- ════════════════════════════════════════════════════════
+        //- ── Sub-Tab: Antrag ──
+        //- ════════════════════════════════════════════════════════
+        template(v-if="grantSubTab === 'antrag'")
 
-        //- ── Calculation ──
-        h3.section-title {{ $t('grant.calculation') }}
-        .grant-summary
-          .result-row
-            span {{ $t('grant.totalEligible') }}
-            strong {{ formatCurrency(grantTotalEligible) }}
-          .result-row
-            span {{ $t('grant.minusOwnRevenue') }}
-            strong.negative {{ formatCurrency(grantTotalOwnRevenue) }}
-          .result-row
-            span {{ $t('grant.eligibleAmount') }}
-            strong {{ formatCurrency(grantEligibleAmount) }}
-          .result-row.result-total
-            span {{ $t('grant.requestedAmount') }}
-            strong {{ formatCurrency(grantAmount) }}
-          .max-note {{ $t('grant.maxNote') }}
+          //- ── Budget Plan (Kostenplan) ──
+          h3.section-title {{ $t('grant.budgetPlan') }}
 
-        //- ── Bewilligter Betrag ──
-        h3.section-title {{ $t('grant.approvedSection') }}
-        .grant-detail
-          .detail-row.input-row
-            span {{ $t('grant.approvedAmount') }}
-            .input-group
-              input.amount-input(
-                v-model.number="approvedAmount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="–"
-              )
-              span.unit €
-          .detail-row.detail-total(v-if="approvedAmount != null && approvedAmount > 0")
-            span {{ $t('grant.finalAmount') }}
-            strong {{ formatCurrency(grantAmount) }}
+          .grant-detail
+            .detail-row.detail-cat-header
+              span {{ $t('grant.budgetKuenstler') }}
+              button.btn-add-sm(@click="addBudgetItem('kuenstler')") +
+            .detail-row.input-row(v-for="(item, idx) in budgetKuenstler" :key="'k' + idx")
+              input.text-input(v-model="item.name" type="text" :placeholder="$t('grant.budgetNamePlaceholder')")
+              .input-group
+                input.amount-input(v-model="item.amount" type="number" step="0.01" min="0" placeholder="0.00")
+                span.unit €
+                button.btn-remove-sm(@click="removeBudgetItem('kuenstler', idx)") ×
 
-        //- ── Save & Summary ──
-        .grant-actions
-          button.btn-save(@click="saveGrant" :disabled="grantSaving")
-            | {{ grantSaving ? $t('common.saving') : $t('grant.save') }}
+            .detail-row.detail-cat-header
+              span {{ $t('grant.budgetSachkosten') }}
+              button.btn-add-sm(@click="addBudgetItem('sachkosten')") +
+            .detail-row.input-row(v-for="(item, idx) in budgetSachkosten" :key="'s' + idx")
+              input.text-input(v-model="item.name" type="text" :placeholder="$t('grant.budgetNamePlaceholder')")
+              .input-group
+                input.amount-input(v-model="item.amount" type="number" step="0.01" min="0" placeholder="0.00")
+                span.unit €
+                button.btn-remove-sm(@click="removeBudgetItem('sachkosten', idx)") ×
 
+            .detail-row.detail-cat-header
+              span {{ $t('grant.budgetSonstiges') }}
+              button.btn-add-sm(@click="addBudgetItem('sonstiges')") +
+            .detail-row.input-row(v-for="(item, idx) in budgetSonstiges" :key="'o' + idx")
+              input.text-input(v-model="item.name" type="text" :placeholder="$t('grant.budgetNamePlaceholder')")
+              .input-group
+                input.amount-input(v-model="item.amount" type="number" step="0.01" min="0" placeholder="0.00")
+                span.unit €
+                button.btn-remove-sm(@click="removeBudgetItem('sonstiges', idx)") ×
+
+            .detail-row.detail-cat-header
+              span {{ $t('grant.rentFlatRate') }}
+            .detail-row.input-row
+              span Mietkosten (0,5% Jahresmiete)
+              .input-group
+                input.amount-input(
+                  v-model.number="rentFlatAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="134.46"
+                )
+                span.unit €
+
+            .detail-row.detail-total
+              span {{ $t('grant.totalExpensesBudget') }}
+              strong {{ formatCurrency(budgetTotalExpenses) }}
+
+          //- ── Expected Revenues ──
+          h3.section-title {{ $t('grant.budgetRevenues') }}
+          .grant-detail
+            .detail-row.input-row
+              span {{ $t('grant.revEintritt') }}
+              .input-group
+                input.amount-input(v-model="budgetRevEintritt" type="number" step="0.01" min="0" placeholder="0")
+                span.unit €
+            .detail-row.input-row
+              span {{ $t('grant.revGetraenke') }}
+              .input-group
+                input.amount-input(v-model="budgetRevGetraenke" type="number" step="0.01" min="0" placeholder="0")
+                span.unit €
+            .detail-row.input-row
+              span {{ $t('grant.revEigenmittel') }}
+              .input-group
+                input.amount-input(v-model="budgetRevEigenmittel" type="number" step="0.01" min="0" placeholder="0")
+                span.unit €
+            .detail-row.input-row
+              span {{ $t('grant.revDrittmittel') }}
+              .input-group
+                input.amount-input(v-model="budgetRevDrittmittel" type="number" step="0.01" min="0" placeholder="0")
+                span.unit €
+            .detail-row.input-row
+              span {{ $t('grant.revSonstige') }}
+              .input-group
+                input.amount-input(v-model="budgetRevSonstige" type="number" step="0.01" min="0" placeholder="0")
+                span.unit €
+            .detail-row.detail-total
+              span {{ $t('grant.totalRevenuesBudget') }}
+              strong {{ formatCurrency(budgetTotalRevenues) }}
+
+          //- ── Calculation (from Kostenplan) ──
+          h3.section-title {{ $t('grant.calculation') }}
+          .grant-summary
+            .result-row
+              span {{ $t('grant.totalExpensesBudget') }}
+              strong {{ formatCurrency(budgetTotalExpenses) }}
+            .result-row
+              span {{ $t('grant.minusOwnRevenue') }}
+              strong.negative {{ formatCurrency(budgetTotalRevenues) }}
+            .result-row
+              span {{ $t('grant.eligibleAmount') }}
+              strong {{ formatCurrency(budgetEligibleAmount) }}
+            .result-row.result-total
+              span {{ $t('grant.requestedAmount') }}
+              strong {{ formatCurrency(budgetGrantAmount) }}
+            .max-note {{ $t('grant.maxNote') }}
+
+          //- ── Save & Download Antrag ──
+          .grant-actions
+            button.btn-save(@click="saveGrant" :disabled="grantSaving")
+              | {{ grantSaving ? $t('common.saving') : $t('grant.save') }}
+            button.btn-pdf(@click="downloadAntrag" :disabled="grantDownloading !== null || !grantRecord?.id")
+              | {{ grantDownloading === 'antrag' ? 'Lade...' : $t('grant.downloadAntrag') }}
+
+        //- ════════════════════════════════════════════════════════
+        //- ── Sub-Tab: Verwendungsnachweis ──
+        //- ════════════════════════════════════════════════════════
+        template(v-if="grantSubTab === 'nachweis'")
+
+          //- ── Bewilligungsbescheid ──
+          h3.section-title {{ $t('grant.approvedSection') }}
+          .grant-detail
+            .detail-row.input-row
+              span {{ $t('grant.approvedAmount') }}
+              .input-group
+                input.amount-input(
+                  v-model.number="approvedAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="–"
+                )
+                span.unit €
+            .detail-row.detail-total(v-if="approvedAmount != null && approvedAmount > 0")
+              span {{ $t('grant.finalAmount') }}
+              strong {{ formatCurrency(grantAmount) }}
+            .detail-row.input-row
+              span {{ $t('grant.zuwendungsbescheidDate') }}
+              .input-group
+                input.date-input(v-model="zuwendungsbescheidDate" type="date")
+            .detail-row.input-row
+              span {{ $t('grant.auszahlungAmount') }}
+              .input-group
+                input.amount-input(
+                  v-model.number="auszahlungAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="–"
+                )
+                span.unit €
+
+          //- ── Actual Eligible Expenses ──
+          h3.section-title {{ $t('grant.eligibleExpenses') }}
+          .grant-detail
+            template(v-for="exp in expenses" :key="exp.description")
+              .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
+                span {{ exp.description || '–' }}
+                span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+            .detail-row(v-if="artistHospitality > 0")
+              span {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
+              span.amount {{ formatCurrency(artistHospitality) }}
+            .detail-row(v-if="grantCostOfGoods > 0")
+              span {{ $t('grant.costOfGoods') }}
+              span.amount {{ formatCurrency(grantCostOfGoods) }}
+            .detail-row
+              span {{ $t('grant.rentFlatRate') }}
+              span.amount {{ formatCurrency(rentFlatAmount) }}
+            .detail-row.detail-total
+              span {{ $t('grant.totalEligible') }}
+              strong {{ formatCurrency(grantTotalEligible) }}
+
+          //- ── Actual Own Revenue ──
+          h3.section-title {{ $t('grant.ownRevenue') }}
+          .grant-detail
+            .detail-row
+              span {{ $t('grant.admissionRevenue') }}
+              span.amount {{ formatCurrency(grantAdmissionRevenue) }}
+            .detail-row
+              span {{ $t('grant.barRevenue') }}
+              span.amount {{ formatCurrency(grantBarContribution) }}
+            .detail-row.detail-total
+              span {{ $t('grant.totalOwnRevenue') }}
+              strong {{ formatCurrency(grantTotalOwnRevenue) }}
+
+          //- ── Actual Calculation ──
+          h3.section-title {{ $t('grant.calculationActual') }}
+          .grant-summary
+            .result-row
+              span {{ $t('grant.totalEligible') }}
+              strong {{ formatCurrency(grantTotalEligible) }}
+            .result-row
+              span {{ $t('grant.minusOwnRevenue') }}
+              strong.negative {{ formatCurrency(grantTotalOwnRevenue) }}
+            .result-row
+              span {{ $t('grant.eligibleAmount') }}
+              strong {{ formatCurrency(grantEligibleAmount) }}
+            .result-row.result-total
+              span {{ $t('grant.requestedAmount') }}
+              strong {{ formatCurrency(grantAmount) }}
+
+          //- ── Sachbericht (for Verwendungsnachweis) ──
+          h3.section-title {{ $t('grant.sachbericht') }}
+          textarea.notes-input(
+            v-model="sachbericht"
+            :placeholder="$t('grant.sachberichtPlaceholder')"
+            rows="6"
+          )
+
+          //- ── Notizen ──
+          h3.section-title {{ $t('common.notes') }}
+          textarea.notes-input(
+            v-model="grantNotes"
+            :placeholder="$t('grant.notesPlaceholder')"
+            rows="3"
+          )
+
+          //- ── Save & Download Verwendungsnachweis ──
+          .grant-actions
+            button.btn-save(@click="saveGrant" :disabled="grantSaving")
+              | {{ grantSaving ? $t('common.saving') : $t('grant.save') }}
+            button.btn-pdf(@click="downloadVerwendungsnachweis" :disabled="grantDownloading !== null || !grantRecord?.id")
+              | {{ grantDownloading === 'verwendungsnachweis' ? 'Lade...' : $t('grant.downloadVerwendungsnachweis') }}
+
+        //- ── Summary (visible in both sub-tabs) ──
         .summary-section(v-if="grantSummary")
           h3.section-title {{ $t('grant.summary') }} ({{ event?.date ? new Date(event.date).getFullYear() : '' }})
           .grant-detail
@@ -1550,7 +1846,7 @@ h2 {
 
 .expense-header, .expense-row {
   display: grid;
-  grid-template-columns: 1fr 120px 150px 40px;
+  grid-template-columns: 1fr 120px 150px 140px 40px;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   align-items: center;
@@ -1887,6 +2183,38 @@ h2 {
   gap: 1.5rem;
 }
 
+.grant-sub-tabs {
+  display: flex;
+  gap: 0;
+  border: 0.25rem solid black;
+}
+
+.grant-sub-tab {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  background: white;
+  color: black;
+  border: none;
+  border-right: 0.25rem solid black;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.15s;
+}
+
+.grant-sub-tab:last-child {
+  border-right: none;
+}
+
+.grant-sub-tab.active {
+  background: black;
+  color: white;
+}
+
+.grant-sub-tab:not(.active):hover {
+  background: #f0f0f0;
+}
+
 .event-info {
   display: flex;
   flex-direction: column;
@@ -1922,9 +2250,22 @@ h2 {
   font-weight: 700;
 }
 
+.detail-row.detail-cat-header {
+  background: #f5f5f5;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
 .detail-row.input-row {
-  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.detail-row.input-row .text-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .input-group {
@@ -2002,6 +2343,122 @@ h2 {
 .grant-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-pdf {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: black;
+  border: 0.25rem solid black;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-pdf:hover {
+  background: black;
+  color: white;
+}
+
+.btn-pdf:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.budget-section {
+  border: 0.25rem solid black;
+  margin-bottom: 1.5rem;
+}
+
+.budget-category {
+  border-bottom: 1px solid #ddd;
+}
+
+.budget-category:last-child {
+  border-bottom: none;
+}
+
+.budget-cat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #f5f5f5;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.budget-cat-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: black;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.budget-row {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.375rem 1rem;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.budget-row .text-input {
+  flex: 1;
+}
+
+.budget-row .amount-input {
+  width: 100px;
+}
+
+.btn-add-sm {
+  padding: 0.15rem 0.5rem;
+  background: black;
+  color: white;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.btn-add-sm:hover {
+  filter: brightness(120%);
+}
+
+.btn-remove-sm {
+  padding: 0.15rem 0.4rem;
+  background: black;
+  color: white;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.btn-remove-sm:hover {
+  filter: brightness(120%);
+}
+
+.date-input {
+  padding: 0.25rem 0.5rem;
+  border: 0.15rem solid black;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.date-input:focus {
+  outline: none;
+  background: black;
+  color: white;
 }
 
 .summary-section {

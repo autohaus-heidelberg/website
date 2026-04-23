@@ -379,4 +379,47 @@ export const grantService = {
     const params = year ? `?year=${year}` : ''
     return api.get<GrantSummary>(`/api/grants/summary/${params}`)
   },
+
+  async downloadVerwendungsnachweis(eventId: string): Promise<void> {
+    // Find the accounting for this event
+    const { results } = await api.get<PaginatedResponse<EventAccounting>>('/api/abrechnungen/')
+    const acc = results.find(a => a.event === eventId)
+    if (!acc?.id) throw new Error('Keine Abrechnung für dieses Event gefunden')
+
+    const token = localStorage.getItem('access_token')
+    const baseUrl = api.getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/abrechnungen/${acc.id}/verwendungsnachweis/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Download fehlgeschlagen' }))
+      throw new Error(err.error || 'Download fehlgeschlagen')
+    }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Verwendungsnachweis_${eventId}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  },
+
+  async downloadAntrag(grantId: number, eventTitle: string): Promise<void> {
+    const token = localStorage.getItem('access_token')
+    const baseUrl = api.getBaseUrl()
+    const response = await fetch(`${baseUrl}/api/grants/${grantId}/antrag-pdf/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Download fehlgeschlagen' }))
+      throw new Error(err.error || 'Download fehlgeschlagen')
+    }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Antrag_${eventTitle.replace(/\s+/g, '_')}.pdf`
+    a.click()
+    URL.revokeObjectURL(url)
+  },
 }

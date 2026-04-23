@@ -78,6 +78,7 @@ export interface ExpenseEntry {
   amount: string
   notes: string
   paid_from: ExpensePaidFrom
+  grant_category?: GrantCategory | null
   is_paid_out?: boolean
 }
 
@@ -161,6 +162,8 @@ export interface StockEntry {
   deposit_value: string
 }
 
+export type GrantCategory = 'kuenstlerhonorar' | 'sachkosten' | 'sonstiges'
+
 export interface GrantApplication {
   id?: number
   event: string
@@ -172,9 +175,14 @@ export interface GrantApplication {
   annual_staff_costs: string
   annual_rent_costs: string
   approved_amount?: string | null
+  sachbericht: string
+  budget_plan: Record<string, any>
+  zuwendungsbescheid_date?: string | null
+  auszahlung_amount?: string | null
   notes: string
   created?: string
   updated?: string
+  has_abrechnung?: boolean
 }
 
 export interface GrantSummary {
