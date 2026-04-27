@@ -17,7 +17,6 @@ const form = ref<Partial<Purchase>>({
   invoice_number: '',
   invoice_total: '0.00',
   notes: '',
-  status: 'draft',
   items: [],
 })
 
@@ -178,12 +177,6 @@ async function handleSubmit() {
   }
 }
 
-async function finalize() {
-  if (!confirm('Einkauf abschließen? Kann danach nicht mehr bearbeitet werden.')) return
-  form.value.status = 'final'
-  await handleSubmit()
-}
-
 onMounted(() => {
   loadData()
 })
@@ -268,12 +261,6 @@ onMounted(() => {
     .form-actions
       button.btn-save(type="submit" :disabled="isLoading")
         | {{ isLoading ? 'Speichern...' : 'Speichern' }}
-      button.btn-finalize(
-        v-if="form.status === 'draft'"
-        type="button"
-        @click="finalize"
-        :disabled="isLoading"
-      ) Abschließen
 </template>
 
 <style scoped>
@@ -482,26 +469,6 @@ h2 {
 }
 
 .btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-finalize {
-  padding: 0.75rem 2rem;
-  background: white;
-  color: black;
-  border: 0.25rem solid black;
-  font-weight: 900;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.btn-finalize:hover {
-  background: black;
-  color: white;
-}
-
-.btn-finalize:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
