@@ -1226,7 +1226,7 @@ onMounted(() => {
                 button.btn-remove-sm(@click="removeBudgetItem('sonstiges', idx)") ×
 
             .detail-row.detail-cat-header
-              span Mietkosten (0,5% Jahresmiete)
+              span Personal- und Mietkosten
             .detail-row.input-row
               span Mietkosten (0,5% Jahresmiete)
               .input-group
