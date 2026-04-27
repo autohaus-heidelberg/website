@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import { eventService, artistService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
@@ -29,7 +28,6 @@ const props = defineProps<{
 
 const router = useRouter()
 const route = useRoute()
-const { t } = useI18n()
 const isEditing = !!props.id
 const activeTab = ref('details')
 
@@ -96,7 +94,7 @@ async function loadEvent() {
       imagePreview.value = event.image_url
     }
   } catch (e: any) {
-    error.value = t('events.errorLoadEvent')
+    error.value = 'Veranstaltung konnte nicht geladen werden'
   }
 }
 
@@ -117,19 +115,19 @@ function handleImageChange(e: Event) {
 async function createShopLink() {
   // Validate required fields for Pretix
   if (!form.value.id) {
-    error.value = t('events.errorEventId')
+    error.value = 'Event-ID wird für Shop-Link benötigt'
     return
   }
   if (!form.value.title) {
-    error.value = t('events.errorTitle')
+    error.value = 'Titel wird für Shop-Link benötigt'
     return
   }
   if (!form.value.date) {
-    error.value = t('events.errorDate')
+    error.value = 'Datum wird für Shop-Link benötigt'
     return
   }
   if (!form.value.fee) {
-    error.value = t('events.errorFee')
+    error.value = 'Eintrittspreis wird für Shop-Link benötigt'
     return
   }
 
@@ -153,14 +151,14 @@ async function createShopLink() {
       form.value.shopLink = result.shopLink
     }
 
-    shopLinkSuccess.value = t('events.shopLinkSuccess')
+    shopLinkSuccess.value = 'Shop-Link erfolgreich erstellt!'
 
     // Clear success message after 3 seconds
     setTimeout(() => {
       shopLinkSuccess.value = ''
     }, 3000)
   } catch (e: any) {
-    error.value = e.message || t('events.errorSaving')
+    error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
   } finally {
     isCreatingShopLink.value = false
   }
@@ -169,7 +167,7 @@ async function createShopLink() {
 async function createHelferpad() {
   // Validate required fields
   if (!form.value.id) {
-    error.value = t('events.errorHelferpadId')
+    error.value = 'Event-ID wird für Helferpad benötigt'
     return
   }
 
@@ -181,15 +179,15 @@ async function createHelferpad() {
     // If event is new (not editing), save it first
     if (!isEditing) {
       if (!form.value.title) {
-        error.value = t('events.errorHelferpadTitle')
+        error.value = 'Titel wird vor Helferpad-Erstellung benötigt'
         return
       }
       if (!form.value.date) {
-        error.value = t('events.errorHelferpadDate')
+        error.value = 'Datum wird vor Helferpad-Erstellung benötigt'
         return
       }
       if (!form.value.descriptionShort) {
-        error.value = t('events.errorHelferpadDesc')
+        error.value = 'Kurzbeschreibung wird vor Helferpad-Erstellung benötigt'
         return
       }
 
@@ -216,14 +214,14 @@ async function createHelferpad() {
     // Create the Helferpad with event data
     const result = await eventService.createHelferpad(form.value.id!, helferpadData)
     form.value.helferpadLink = result.helferpadLink
-    helferpadSuccess.value = t('events.helferpadSuccess')
+    helferpadSuccess.value = 'Helferpad erfolgreich erstellt!'
 
     // Clear success message after 3 seconds
     setTimeout(() => {
       helferpadSuccess.value = ''
     }, 3000)
   } catch (e: any) {
-    error.value = e.message || t('events.errorSaving')
+    error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
   } finally {
     isCreatingHelferpad.value = false
   }
@@ -231,7 +229,7 @@ async function createHelferpad() {
 
 async function handleSubmit() {
   if (!form.value.id || !form.value.title || !form.value.date || !form.value.descriptionShort) {
-    error.value = t('events.errorRequired')
+    error.value = 'Bitte alle Pflichtfelder ausfüllen'
     return
   }
 
@@ -265,7 +263,7 @@ async function handleSubmit() {
 
     router.push('/admin/events')
   } catch (e: any) {
-    error.value = e.message || t('events.errorSaving')
+    error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
   } finally {
     isLoading.value = false
   }
@@ -316,20 +314,20 @@ onMounted(async () => {
 <template lang="pug">
 .event-form-view
   .form-header
-    h2 {{ isEditing ? $t('events.editEvent') : $t('events.createEvent') }}
-    router-link.btn-cancel(to="/admin/events") {{ $t('common.cancel') }}
+    h2 {{ isEditing ? 'Veranstaltung bearbeiten' : 'Veranstaltung erstellen' }}
+    router-link.btn-cancel(to="/admin/events") Abbrechen
 
   .event-tabs(v-if="isEditing")
     button.tab(
       :class="{ active: activeTab === 'details' }"
       @click="activeTab = 'details'"
       type="button"
-    ) {{ $t('events.eventDetails') }}
+    ) Veranstaltungsdetails
     button.tab(
       :class="{ active: activeTab === 'checklist' }"
       @click="activeTab = 'checklist'"
       type="button"
-    ) {{ $t('events.checklist') }}
+    ) Checkliste
 
   .tab-content(v-show="activeTab === 'details'")
     .form-container
@@ -337,19 +335,19 @@ onMounted(async () => {
         form.event-form(@submit.prevent="handleSubmit")
           .form-row
             .form-group
-              label(for="id") {{ $t('events.eventId') }}
+              label(for="id") Event-ID *
               input#id(
                 v-model="form.id"
                 required
                 :disabled="isEditing"
-                :placeholder="$t('events.eventIdPlaceholder')"
+                placeholder="z.B. event-2025-12-31"
                 @input="handleIdInput"
               )
-              .field-hint {{ $t('events.eventIdHint') }}
-              .field-hint {{ $t('events.eventIdChars') }}
+              .field-hint Eindeutiger Bezeichner (kann nach Erstellung nicht geändert werden)
+              .field-hint Erlaubte Zeichen: A-Z, a-z, 0-9 und - (keine Unterstriche _)
 
             .form-group
-              label(for="date") {{ $t('events.dateTime') }}
+              label(for="date") Datum & Uhrzeit *
               input#date(
                 v-model="form.date"
                 type="datetime-local"
@@ -357,41 +355,41 @@ onMounted(async () => {
               )
 
           .form-group
-            label(for="title") {{ $t('events.titleField') }}
+            label(for="title") Titel *
             input#title(
               v-model="form.title"
               required
-              :placeholder="$t('events.titlePlaceholder')"
+              placeholder="Veranstaltungsname"
             )
 
           .form-group
-            label(for="descriptionShort") {{ $t('events.shortDescription') }}
+            label(for="descriptionShort") Kurzbeschreibung *
             Editor(
               v-model="form.descriptionShort"
               :init="editorConfig"
               licenseKey="gpl"
             )
-            .field-hint {{ $t('events.richTextHint') }}
+            .field-hint Rich-Text-Editor für Veranstaltungsbeschreibung
 
           .form-row
             .form-group
-              label(for="fee") {{ $t('events.vvkPrice') }}
+              label(for="fee") VVK-Preis
               input#fee(
                 v-model="form.fee"
-                :placeholder="$t('events.vvkPricePlaceholder')"
+                placeholder="z.B. 10"
               )
-              .field-hint {{ $t('events.vvkPriceHint') }}
+              .field-hint Preis muss eine Zahl sein (z.B. 10 für 10€)
 
             .form-group
-              label(for="feeAk") {{ $t('events.akPrice') }}
+              label(for="feeAk") AK-Preis
               input#feeAk(
                 v-model="form.feeAk"
-                :placeholder="$t('events.akPricePlaceholder')"
+                placeholder="z.B. 8"
               )
-              .field-hint {{ $t('events.akPriceHint') }}
+              .field-hint Preis muss eine Zahl sein (z.B. 8 für 8€)
 
           .form-group
-            label(for="shopLink") {{ $t('events.shopLink') }}
+            label(for="shopLink") Ticket-Shop-Link
             input#shopLink(
               v-model="form.shopLink"
               type="url"
@@ -403,12 +401,12 @@ onMounted(async () => {
                 @click="createShopLink"
                 :disabled="isCreatingShopLink"
               )
-                | {{ isCreatingShopLink ? $t('events.creatingShopLink') : $t('events.createPretixShop') }}
-              .field-hint {{ $t('events.shopLinkHint') }}
+                | {{ isCreatingShopLink ? 'Wird erstellt...' : 'Pretix-Shop-Link erstellen' }}
+              .field-hint Benötigt: Event-ID, Titel, Datum und Preis (muss eine Zahl sein). Erstellt keinen Event in der Datenbank.
             .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
 
           .form-group
-            label(for="helferpadLink") {{ $t('events.helferpadLink') }}
+            label(for="helferpadLink") Helferpad-Link
             input#helferpadLink(
               v-model="form.helferpadLink"
               type="url"
@@ -420,28 +418,28 @@ onMounted(async () => {
                 @click="createHelferpad"
                 :disabled="isCreatingHelferpad"
               )
-                | {{ isCreatingHelferpad ? $t('common.saving') : $t('events.createHelferpad') }}
-              .field-hint {{ $t('events.helferpadHint') }}
+                | {{ isCreatingHelferpad ? 'Speichern...' : 'Helferpad erstellen' }}
+              .field-hint Benötigt: Event-ID
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
           .form-group
-            label {{ $t('events.artistSelection') }}
+            label Künstlerauswahl
             ArtistSelector(
               v-model="form.artist_ids"
               v-model:artistOrder="form.artistOrder"
             )
 
           .form-group
-            label(for="image") {{ $t('events.eventImage') }}
+            label(for="image") Veranstaltungsbild
             .image-preview(v-if="imagePreview")
               img(:src="imagePreview" alt="Event image preview")
-              .preview-label {{ imageFile ? $t('events.newImage') : $t('events.currentImage') }}
+              .preview-label {{ imageFile ? 'Neues Bild (wird hochgeladen)' : 'Aktuelles Bild' }}
             input#image(
               type="file"
               accept="image/*"
               @change="handleImageChange"
             )
-            .field-hint {{ $t('events.imageHint') }}
+            .field-hint Bild: wird auf 1000x1000px skaliert
 
           .error(v-if="error") {{ error }}
 
@@ -450,17 +448,17 @@ onMounted(async () => {
               type="submit"
               :disabled="isLoading"
             )
-              | {{ isLoading ? $t('common.saving') : (isEditing ? $t('events.updateEvent') : $t('events.createEvent')) }}
-            router-link.btn-secondary(to="/admin/events") {{ $t('common.cancel') }}
+              | {{ isLoading ? 'Speichern...' : (isEditing ? 'Veranstaltung aktualisieren' : 'Veranstaltung erstellen') }}
+            router-link.btn-secondary(to="/admin/events") Abbrechen
 
       .preview-section
         .preview-header
-          h3 {{ $t('events.livePreview') }}
-          .loading-indicator(v-if="loadingArtists") {{ $t('events.loadingArtists') }}
+          h3 Live-Vorschau
+          .loading-indicator(v-if="loadingArtists") Künstler werden geladen...
         .preview-content
           EventDisplay(:event="previewEvent" v-if="form.title")
           .preview-empty(v-else)
-            p {{ $t('events.fillFormForPreview') }}
+            p Formular ausfüllen für Vorschau
 
   .tab-content(v-if="isEditing" v-show="activeTab === 'checklist'")
     EventChecklistTab(:eventId="props.id")

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import { artistService, type Artist } from '@/services'
 import ArtistFormFields from '@/components/admin/ArtistFormFields.vue'
 
@@ -10,7 +9,6 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const { t } = useI18n()
 const isEditing = !!props.id
 
 const form = ref<Partial<Artist>>({
@@ -40,7 +38,7 @@ async function loadArtist() {
     const artist = await artistService.getById(Number(props.id))
     form.value = { ...artist }
   } catch (e: any) {
-    error.value = t('artists.errorLoadArtist')
+    error.value = 'Künstler konnte nicht geladen werden'
   }
 }
 
@@ -53,17 +51,17 @@ function handleImageChange(e: InputEvent) {
 
 async function handleSubmit() {
   if (!form.value.name) {
-    error.value = t('artists.errorName')
+    error.value = 'Bitte einen Künstlernamen eingeben'
     return
   }
 
   if (form.value.youtube && !form.value.youtube.startsWith('https://www.youtube.com/embed/')) {
-    error.value = t('artists.errorYoutube')
+    error.value = 'YouTube-URL muss mit https://www.youtube.com/embed/ beginnen'
     return
   }
 
   if (form.value.bandcamp && !form.value.bandcamp.startsWith('https://bandcamp.com/EmbeddedPlayer')) {
-    error.value = t('artists.errorBandcamp')
+    error.value = 'Bandcamp-URL muss mit https://bandcamp.com/EmbeddedPlayer beginnen'
     return
   }
 
@@ -90,7 +88,7 @@ async function handleSubmit() {
 
     router.push('/admin/artists')
   } catch (e: any) {
-    error.value = e.message || t('artists.errorSaving')
+    error.value = e.message || 'Künstler konnte nicht gespeichert werden'
   } finally {
     isLoading.value = false
   }
@@ -105,20 +103,20 @@ onMounted(() => {
 .artist-form-layout
   .artist-form-view
     .form-header
-      h2 {{ isEditing ? $t('artists.editArtist') : $t('artists.createArtist') }}
-      router-link.btn-cancel(to="/admin/artists") {{ $t('common.cancel') }}
+      h2 {{ isEditing ? 'Künstler bearbeiten' : 'Künstler erstellen' }}
+      router-link.btn-cancel(to="/admin/artists") Abbrechen
 
     form.artist-form(@submit.prevent="handleSubmit")
       ArtistFormFields(v-model="form")
         template(#image-field)
           .form-group
-            label(for="image") {{ $t('artists.artistImage') }}
+            label(for="image") Künstlerbild
             input#image(
               type="file"
               accept="image/*"
               @change="handleImageChange"
             )
-            .field-hint {{ $t('artists.imageHint') }}
+            .field-hint Bild: wird skaliert
 
       .error(v-if="error") {{ error }}
 
@@ -127,15 +125,15 @@ onMounted(() => {
           type="submit"
           :disabled="isLoading"
         )
-          | {{ isLoading ? $t('common.saving') : (isEditing ? $t('artists.updateArtist') : $t('artists.createArtist')) }}
-        router-link.btn-secondary(to="/admin/artists") {{ $t('common.cancel') }}
+          | {{ isLoading ? 'Speichern...' : (isEditing ? 'Künstler aktualisieren' : 'Künstler erstellen') }}
+        router-link.btn-secondary(to="/admin/artists") Abbrechen
 
   .artist-preview
-    h3.preview-title {{ $t('artists.preview') }}
+    h3.preview-title Vorschau
     .artist
-      h2.accent {{ form.name || $t('artists.artistNameFallback') }}
+      h2.accent {{ form.name || 'Künstlername' }}
       img.artist-img(v-if="previewImageUrl" :src="previewImageUrl")
-      a(v-if="form.link" :href="form.link") {{ $t('artists.bandWebsite') }}
+      a(v-if="form.link" :href="form.link") Band-Website
       p {{ form.description }}
       .video-container(v-if="form.youtube && form.youtube.startsWith('https://www.youtube.com/embed/')")
         iframe.youtube(:src="form.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)

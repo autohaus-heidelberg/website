@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { purchaseService, beverageService } from '@/services'
 import type { Purchase } from '@/types/accounting'
 import type { BeverageItem } from '@/types/accounting'
 
-const { t } = useI18n()
 
 const purchases = ref<Purchase[]>([])
 const beverages = ref<BeverageItem[]>([])
@@ -27,7 +25,7 @@ function formatDate(date: string) {
 }
 
 function statusLabel(status: string): string {
-  return status === 'final' ? t('purchases.statusFinalized') : t('purchases.statusDraft')
+  return status === 'final' ? 'Abgeschlossen' : 'Entwurf'
 }
 
 function statusClass(status: string): string {
@@ -53,12 +51,12 @@ function itemLabel(p: Purchase): string {
 }
 
 async function deletePurchase(id: number) {
-  if (!confirm(t('purchases.confirmDelete'))) return
+  if (!confirm('Diesen Einkauf löschen?')) return
   try {
     await purchaseService.delete(id)
     purchases.value = purchases.value.filter(p => p.id !== id)
   } catch (e: any) {
-    alert(t('purchases.errorDeleting') + e.message)
+    alert('Fehler: ' + e.message)
   }
 }
 
@@ -73,7 +71,7 @@ async function loadData() {
     purchases.value = purData.results
     beverages.value = bevData.results
   } catch (e: any) {
-    error.value = e.message || t('purchases.errorLoading')
+    error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -87,11 +85,11 @@ onMounted(() => {
 <template lang="pug">
 .purchase-list-view
   .header
-    h2 {{ $t('purchases.title') }}
+    h2 Einkäufe
     .header-actions
-      router-link.btn-primary(to="/admin/purchases/create") {{ $t('purchases.newPurchase') }}
+      router-link.btn-primary(to="/admin/purchases/create") + Neuer Einkauf
 
-  .loading(v-if="isLoading") {{ $t('common.loading') }}
+  .loading(v-if="isLoading") Laden...
   .error(v-else-if="error") {{ error }}
 
   .purchases-container(v-else-if="sortedPurchases.length")
@@ -101,20 +99,20 @@ onMounted(() => {
         span.status-badge(:class="statusClass(p.status)")
           | {{ statusLabel(p.status) }}
 
-      h3.purchase-title {{ p.supplier || $t('purchases.noSupplier') }}
+      h3.purchase-title {{ p.supplier || 'Kein Lieferant' }}
       .purchase-meta(v-if="p.invoice_number")
-        | {{ $t('purchases.invoice') }}{{ p.invoice_number }}
+        | Rechnung: {{ p.invoice_number }}
 
       .purchase-items(v-if="p.items?.length")
         span {{ itemLabel(p) }}
-        |  · {{ $t('purchases.totalLabel') }}{{ formatTotal(p) }} €
+        |  · Gesamt: {{ formatTotal(p) }} €
 
       .purchase-footer
         .purchase-actions
-          router-link.btn-edit(:to="`/admin/purchases/${p.id}`") {{ $t('common.open') }}
-          button.btn-delete(v-if="p.status === 'draft'" @click="deletePurchase(p.id)") {{ $t('common.delete') }}
+          router-link.btn-edit(:to="`/admin/purchases/${p.id}`") Öffnen
+          button.btn-delete(v-if="p.status === 'draft'" @click="deletePurchase(p.id)") Löschen
 
-  .empty(v-else) {{ $t('purchases.noPurchases') }}
+  .empty(v-else) Keine Einkäufe gefunden
 </template>
 
 <style scoped>

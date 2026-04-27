@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import { beverageService } from '@/services'
 import type { BeverageItem } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 import { useSort } from '@/composables/useSort'
 
 const router = useRouter()
-const { t } = useI18n()
 const sort = useSort<BeverageItem>()
 
 const beveragesData = ref<PaginatedResponse<BeverageItem> | null>(null)
@@ -60,7 +58,7 @@ async function loadBeverages() {
   try {
     beveragesData.value = await beverageService.getAll()
   } catch (e: any) {
-    error.value = e.message || t('beverages.errorLoading')
+    error.value = e.message || 'Getränke konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -75,7 +73,7 @@ async function deleteBeverage(item: BeverageItem) {
       beveragesData.value.count--
     }
   } catch (e: any) {
-    alert(t('beverages.errorDeleting') + e.message)
+    alert('Fehler beim Löschen: ' + e.message)
   }
 }
 
@@ -87,16 +85,16 @@ onMounted(() => {
 <template lang="pug">
 .beverage-list-view
   .header
-    h2 {{ $t('beverages.title') }}
+    h2 Getränke
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        :placeholder="$t('common.search')"
+        placeholder="Suchen..."
       )
-      router-link.btn-primary(to="/admin/beverages/create") {{ $t('beverages.newBeverage') }}
+      router-link.btn-primary(to="/admin/beverages/create") Neues Getränk
 
-  .loading(v-if="isLoading") {{ $t('beverages.loadingBeverages') }}
+  .loading(v-if="isLoading") Getränke werden geladen...
   .error(v-else-if="error") {{ error }}
 
   template(v-else-if="filteredBeverages.length")
@@ -104,30 +102,30 @@ onMounted(() => {
       h3.group-title {{ group }}
       .beverages-table
         .table-header
-          .col-name.sortable(@click="sort.toggle('name')") {{ $t('beverages.tableHeaders.name') }}{{ sort.indicator('name') }}
-          .col-crate.sortable(@click="sort.toggle('crate')") {{ $t('beverages.tableHeaders.pkg') }}{{ sort.indicator('crate') }}
-          .col-size {{ $t('beverages.tableHeaders.btl') }}
-          .col-price.sortable(@click="sort.toggle('purchase')") {{ $t('beverages.tableHeaders.purchase') }}{{ sort.indicator('purchase') }}
-          .col-price.sortable(@click="sort.toggle('selling')") {{ $t('beverages.tableHeaders.selling') }}{{ sort.indicator('selling') }}
-          .col-price.sortable(@click="sort.toggle('deposit')") {{ $t('beverages.tableHeaders.deposit') }}{{ sort.indicator('deposit') }}
+          .col-name.sortable(@click="sort.toggle('name')") Name{{ sort.indicator('name') }}
+          .col-crate.sortable(@click="sort.toggle('crate')") Geb.{{ sort.indicator('crate') }}
+          .col-size Fl.
+          .col-price.sortable(@click="sort.toggle('purchase')") Einkauf{{ sort.indicator('purchase') }}
+          .col-price.sortable(@click="sort.toggle('selling')") Verkauf{{ sort.indicator('selling') }}
+          .col-price.sortable(@click="sort.toggle('deposit')") Pfand{{ sort.indicator('deposit') }}
           .col-actions
 
         .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }" @click="router.push(`/admin/beverages/${item.id}`)")
           .col-name {{ item.name }}
-          .col-crate {{ item.units_per_crate || 1 }}{{ $t('accounting.inventoryTable.pc') }}
+          .col-crate {{ item.units_per_crate || 1 }}St.
           .col-size {{ item.bottle_size ? item.bottle_size + 'L' : '' }}
           .col-price {{ formatPrice(item.purchase_price) }}
           .col-price
             template(v-if="item.selling_price") {{ formatPrice(item.selling_price) }}
             template(v-else-if="item.selling_price_portion")
               | {{ formatPrice(item.selling_price_portion) }}
-              span.portion-hint  {{ $t('beverages.portionHint') }}
+              span.portion-hint  /P
           .col-price {{ formatPrice(item.deposit) }}
           .col-actions
             router-link.btn-edit(:to="`/admin/beverages/${item.id}`") ✎
             button.btn-delete(@click.stop="deleteBeverage(item)") ✕
 
-  .empty(v-else) {{ $t('beverages.noBeverages') }}
+  .empty(v-else) Keine Getränke gefunden
 </template>
 
 <style scoped>

@@ -11,9 +11,7 @@ import type {
   GrantApplication,
   GrantSummary,
 } from '@/types/accounting'
-import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
 
 const props = defineProps<{
   eventId: string
@@ -150,7 +148,7 @@ async function loadData() {
     const eventYear = ev.date ? new Date(ev.date).getFullYear() : new Date().getFullYear()
     grantSummary.value = await grantService.getSummary(eventYear)
   } catch (e: any) {
-    error.value = e.message || t('common.errorLoading')
+    error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -174,14 +172,14 @@ async function saveGrant() {
     } else {
       grantRecord.value = await grantService.create(data)
     }
-    saveSuccess.value = t('grant.saved')
+    saveSuccess.value = 'Gespeichert!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
 
     // Refresh summary
     const eventYear = event.value?.date ? new Date(event.value.date).getFullYear() : new Date().getFullYear()
     grantSummary.value = await grantService.getSummary(eventYear)
   } catch (e: any) {
-    error.value = e.message || t('common.errorSaving')
+    error.value = e.message || 'Fehler beim Speichern'
   } finally {
     isSaving.value = false
   }
@@ -212,114 +210,114 @@ onMounted(() => {
 
 <template lang="pug">
 .grant-view
-  .loading(v-if="isLoading") {{ $t('common.loading') }}
+  .loading(v-if="isLoading") Laden...
   .error(v-else-if="error") {{ error }}
   template(v-else-if="accounting")
     .page-header
       .header-left
-        router-link.btn-back(:to="`/admin/accounting/${eventId}`") {{ $t('common.back') }}
-        h2 {{ $t('grant.title') }}
+        router-link.btn-back(:to="`/admin/accounting/${eventId}`") ← Zurück
+        h2 Förderungsantrag
       .header-right
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveGrant" :disabled="isSaving")
-          | {{ isSaving ? $t('common.saving') : $t('grant.save') }}
+          | {{ isSaving ? 'Speichern...' : 'Förderung speichern' }}
         button.btn-print(@click="downloadVerwendungsnachweis" :disabled="isDownloading || !grantRecord?.id")
           | {{ isDownloading ? 'Lade...' : 'Verwendungsnachweis PDF' }}
-        button.btn-print(@click="printPage") {{ $t('grant.print') }}
+        button.btn-print(@click="printPage") Drucken
 
     .event-info
       .info-row
-        span.label {{ $t('grant.eventTitle') }}
+        span.label Veranstaltung
         span.value {{ event?.title }}
       .info-row
-        span.label {{ $t('grant.eventDate') }}
+        span.label Datum
         span.value {{ event?.date ? new Date(event.date).toLocaleDateString('de-DE') : '–' }}
       .info-row
-        span.label {{ $t('grant.artists') }}
+        span.label Künstler
         span.value {{ event?.artists?.map(a => a.name).join(', ') || '–' }}
 
     //- ── Eligible Expenses ──
-    h3.section-title {{ $t('grant.eligibleExpenses') }}
+    h3.section-title Zuwendungsfähige Ausgaben
     .grant-detail
       template(v-for="exp in expenses" :key="exp.description")
         .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
           span {{ exp.description || '–' }}
           span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
       .detail-row(v-if="artistHospitality > 0")
-        span {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
+        span Bewirtung Bands ({{ event?.artists?.length ?? 0 }} × 20 €)
         span.amount {{ formatCurrency(artistHospitality) }}
       .detail-row.input-row
-        span {{ $t('grant.staffFlatRate') }}
+        span Personalkosten (0,5% Jahreskosten)
         .input-group
           input.amount-input(
             v-model.number="annualStaffCosts"
             type="number"
             step="1"
             min="0"
-            :placeholder="$t('grant.annualAmount')"
+            placeholder="Jahresbetrag"
           )
           span.unit €/a
           span.computed × 0,5% = {{ formatCurrency(staffFlatRate) }}
       .detail-row.input-row
-        span {{ $t('grant.rentFlatRate') }}
+        span Mietkosten (0,5% Jahresmiete)
         .input-group
           input.amount-input(
             v-model.number="annualRentCosts"
             type="number"
             step="1"
             min="0"
-            :placeholder="$t('grant.annualAmount')"
+            placeholder="Jahresbetrag"
           )
           span.unit €/a
           span.computed × 0,5% = {{ formatCurrency(rentFlatRate) }}
       .detail-row.detail-total
-        span {{ $t('grant.totalEligible') }}
+        span Zuwendungsfähige Ausgaben gesamt
         strong {{ formatCurrency(totalEligibleExpenses) }}
 
     //- ── Own Revenue ──
-    h3.section-title {{ $t('grant.ownRevenue') }}
+    h3.section-title Eigenanteil (Einnahmen)
     .grant-detail
       .detail-row
-        span {{ $t('grant.admissionRevenue') }}
+        span Eintrittseinnahmen
         span.amount {{ formatCurrency(admissionRevenue) }}
       .detail-row
-        span {{ $t('grant.barRevenue') }}
+        span 20% Getränkeeinnahmen (Abendöffnung)
         span.amount {{ formatCurrency(barRevenueContribution) }}
       .detail-row.detail-total
-        span {{ $t('grant.totalOwnRevenue') }}
+        span Eigenanteil gesamt
         strong {{ formatCurrency(totalOwnRevenue) }}
 
     //- ── Calculation ──
-    h3.section-title {{ $t('grant.calculation') }}
+    h3.section-title Berechnung Förderbetrag
     .grant-summary
       .result-row
-        span {{ $t('grant.totalEligible') }}
+        span Zuwendungsfähige Ausgaben gesamt
         strong {{ formatCurrency(totalEligibleExpenses) }}
       .result-row
-        span {{ $t('grant.minusOwnRevenue') }}
+        span − Eigenanteil
         strong.negative {{ formatCurrency(totalOwnRevenue) }}
       .result-row
-        span {{ $t('grant.eligibleAmount') }}
+        span Förderfähiger Betrag
         strong {{ formatCurrency(eligibleAmount) }}
       .result-row.result-total
-        span {{ $t('grant.requestedAmount') }}
+        span Beantragter Zuschuss
         strong {{ formatCurrency(grantAmount) }}
-      .max-note {{ $t('grant.maxNote') }}
+      .max-note Max. 1.000 € pro Veranstaltung / 3.000 € pro Jahr (6.000 € bei >24 Veranstaltungen/Jahr)
 
     //- ── Year Summary ──
     .summary-section(v-if="grantSummary")
-      h3.section-title {{ $t('grant.summary') }} ({{ event?.date ? new Date(event.date).getFullYear() : '' }})
+      h3.section-title Förder-Übersicht ({{ event?.date ? new Date(event.date).getFullYear() : '' }})
       .grant-detail
         .detail-row
-          span {{ $t('grant.totalRequested') }}
+          span Beantragte Summe
           span.amount {{ formatCurrency(grantSummary.total_requested) }}
         .detail-row
-          span {{ $t('grant.grantCount') }}
+          span Anzahl Förderanträge
           span.amount {{ grantSummary.grant_count }}
 
   .no-accounting(v-else)
-    p {{ $t('grant.noAccounting') }}
-    router-link.btn-back(to="/admin/accounting") {{ $t('common.back') }}
+    p Keine Abrechnung für diese Veranstaltung vorhanden.
+    router-link.btn-back(to="/admin/accounting") ← Zurück
 </template>
 
 <style scoped>

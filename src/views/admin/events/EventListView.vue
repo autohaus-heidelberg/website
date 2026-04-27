@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import { eventService, type Event } from '@/services'
 import type { PaginatedResponse } from '@/types/api'
 
 const router = useRouter()
-const { t } = useI18n()
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
@@ -49,7 +47,7 @@ async function deleteEvent(event: Event) {
       eventsData.value.count--
     }
   } catch (e: any) {
-    alert(t('events.errorDeleting') + e.message)
+    alert('Fehler beim Löschen: ' + e.message)
   }
 }
 
@@ -71,16 +69,16 @@ onMounted(() => {
 <template lang="pug">
 .event-list-view
   .header
-    h2 {{ $t('events.title') }}
+    h2 Veranstaltungen
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        :placeholder="$t('events.searchPlaceholder')"
+        placeholder="Veranstaltungen suchen..."
       )
-      router-link.btn-primary(to="/admin/events/create") {{ $t('events.createEvent') }}
+      router-link.btn-primary(to="/admin/events/create") Veranstaltung erstellen
 
-  .loading(v-if="isLoading") {{ $t('events.loadingEvents') }}
+  .loading(v-if="isLoading") Veranstaltungen werden geladen...
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length > 0")
@@ -98,13 +96,13 @@ onMounted(() => {
       .event-footer
         .event-meta
           span.fee(v-if="event.fee") {{ event.fee }} €
-          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") {{ $t('events.tickets') }}
+          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") Tickets
 
         .event-actions
-          router-link.btn-edit(:to="`/admin/events/${event.id}`") {{ $t('events.edit') }}
-          button.btn-delete(@click="deleteEvent(event)") {{ $t('common.delete') }}
+          router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
+          button.btn-delete(@click="deleteEvent(event)") Löschen
 
-  .empty(v-else) {{ $t('events.noEvents') }}
+  .empty(v-else) Keine Veranstaltungen gefunden
 
 </template>
 

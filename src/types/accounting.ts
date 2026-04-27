@@ -24,19 +24,19 @@ export type RevenueSource =
   | 'vvk_paypal'
   | 'vvk_stripe'
 
-export const REVENUE_SOURCE_KEYS: Record<RevenueSource, string> = {
-  bar_cash: 'revenue.sources.bar_cash',
-  bar_paypal: 'revenue.sources.bar_paypal',
-  entrance_cash: 'revenue.sources.entrance_cash',
-  entrance_paypal: 'revenue.sources.entrance_paypal',
-  vvk_pretix: 'revenue.sources.vvk_pretix',
-  vvk_paypal: 'revenue.sources.vvk_paypal',
-  vvk_stripe: 'revenue.sources.vvk_stripe',
+export const REVENUE_SOURCE_LABELS: Record<RevenueSource, string> = {
+  bar_cash: 'Bar (Bargeld)',
+  bar_paypal: 'Bar (PayPal)',
+  entrance_cash: 'Einlass (Bargeld)',
+  entrance_paypal: 'Einlass (PayPal)',
+  vvk_pretix: 'VVK (Pretix)',
+  vvk_paypal: 'VVK (PayPal)',
+  vvk_stripe: 'VVK (Stripe)',
 }
 
-export const REVENUE_GROUPS: { labelKey: string; sources: RevenueSource[] }[] = [
-  { labelKey: 'revenue.groups.drinkSales', sources: ['bar_cash', 'bar_paypal'] },
-  { labelKey: 'revenue.groups.admission', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
+export const REVENUE_GROUPS: { label: string; sources: RevenueSource[] }[] = [
+  { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal'] },
+  { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
 ]
 
 export interface RevenueEntry {
@@ -65,10 +65,10 @@ export interface InventoryEntry {
 
 export type ExpensePaidFrom = 'entrance_cash' | 'bar_cash' | 'other'
 
-export const EXPENSE_PAID_FROM_KEYS: Record<ExpensePaidFrom, string> = {
-  entrance_cash: 'revenue.expensePaidFrom.entrance_cash',
-  bar_cash: 'revenue.expensePaidFrom.bar_cash',
-  other: 'revenue.expensePaidFrom.other',
+export const EXPENSE_PAID_FROM_LABELS: Record<ExpensePaidFrom, string> = {
+  entrance_cash: 'Einlasskasse',
+  bar_cash: 'Barkasse',
+  other: 'Offen',
 }
 
 export interface ExpenseEntry {
@@ -157,6 +157,7 @@ export interface StockEntry {
   crates: number
   loose_bottles: number
   purchase_price: string
+  fifo_price: string
   deposit: string
   stock_value: string
   deposit_value: string

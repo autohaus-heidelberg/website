@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService } from '@/services'
+import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService } from '@/services'
 import type { Event } from '@/services'
 import type { PretixOrderSummary, PayPalBarSummary } from '@/services/accounting'
 import type {
@@ -15,16 +15,15 @@ import type {
   BeverageItem,
   GrantApplication,
   GrantSummary,
+  StockEntry,
 } from '@/types/accounting'
 import {
-  REVENUE_SOURCE_KEYS,
+  REVENUE_SOURCE_LABELS,
   REVENUE_GROUPS,
-  EXPENSE_PAID_FROM_KEYS,
+  EXPENSE_PAID_FROM_LABELS,
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
-import { useI18n } from 'vue-i18n'
 
-const { t } = useI18n()
 
 const props = defineProps<{
   eventId: string
@@ -37,6 +36,7 @@ const activeTab = ref('cashcount')
 const event = ref<Event | null>(null)
 const accounting = ref<EventAccounting | null>(null)
 const beverages = ref<BeverageItem[]>([])
+const stockData = ref<Record<number, StockEntry>>({})
 const revenues = ref<RevenueEntry[]>([])
 const inventory = ref<InventoryEntry[]>([])
 const expenses = ref<ExpenseEntry[]>([])
@@ -130,7 +130,7 @@ async function fetchPretixData() {
   try {
     pretixData.value = await pretixService.getOrderSummary(props.eventId)
   } catch (e: any) {
-    pretixError.value = e.message || t('accounting.pretix.errorLoading')
+    pretixError.value = e.message || 'Pretix-Daten konnten nicht geladen werden'
   } finally {
     pretixLoading.value = false
   }
@@ -153,7 +153,7 @@ async function fetchPaypalBarData() {
   try {
     paypalBarData.value = await paypalBarService.getBarTransactions(props.eventId)
   } catch (e: any) {
-    paypalBarError.value = e.message || t('accounting.paypalBar.errorLoading')
+    paypalBarError.value = e.message || 'PayPal-Daten konnten nicht geladen werden'
   } finally {
     paypalBarLoading.value = false
   }
@@ -247,14 +247,17 @@ const inventoryBySupplier = computed(() => {
   const groups: Record<string, { beverage: BeverageItem; entry: InventoryEntry }[]> = {}
   for (const bev of beverages.value) {
     if (!bev.is_active) continue
-    const group = bev.supplier_group || t('common.other')
+    const group = bev.supplier_group || 'Sonstige'
     if (!groups[group]) groups[group] = []
     let entry = inventory.value.find(i => i.beverage_item === bev.id)
     if (!entry) {
+      // Auto-fill quantity_before from current stock
+      const stock = stockData.value[bev.id!]
+      const stockQty = stock ? stock.quantity : 0
       entry = {
         accounting: accounting.value?.id || 0,
         beverage_item: bev.id!,
-        quantity_before: '0',
+        quantity_before: String(stockQty),
         quantity_after: '0',
       }
       inventory.value.push(entry)
@@ -267,6 +270,16 @@ const inventoryBySupplier = computed(() => {
 
 function inventoryConsumption(entry: InventoryEntry): number {
   return parseFloat(entry.quantity_before || '0') - parseFloat(entry.quantity_after || '0')
+}
+
+function stockWarning(bevId: number, entry: InventoryEntry): string | null {
+  const stock = stockData.value[bevId]
+  if (!stock) return null
+  const before = parseFloat(entry.quantity_before || '0')
+  if (before > stock.quantity) {
+    return `Bestand nur ${stock.quantity}, aber ${before} angegeben`
+  }
+  return null
 }
 
 function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
@@ -493,6 +506,14 @@ async function loadData() {
     event.value = ev
     beverages.value = bevData.results
 
+    // Fetch current stock for auto-fill and warnings
+    try {
+      const stockEntries = await stockService.getAll()
+      const map: Record<number, StockEntry> = {}
+      for (const s of stockEntries) map[s.id] = s
+      stockData.value = map
+    } catch { /* stock is optional */ }
+
     try {
       const acc = await accountingService.getByEvent(props.eventId)
       if (!acc) throw new Error('not found')
@@ -565,7 +586,7 @@ async function loadData() {
       grantSummary.value = await grantService.getSummary(eventYear)
     } catch { /* grant data is optional */ }
   } catch (e: any) {
-    error.value = e.message || t('common.errorLoading')
+    error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -573,14 +594,14 @@ async function loadData() {
 
 async function finalizeAccounting() {
   if (!accounting.value?.id) return
-  if (!confirm(t('accounting.confirmFinalize'))) return
+  if (!confirm('Abrechnung wirklich abschließen? Danach kann sie nur noch im Lesemodus geöffnet werden.')) return
   try {
     await accountingService.update(accounting.value.id, { status: 'final' })
     accounting.value.status = 'final'
-    saveSuccess.value = t('accounting.finalized')
+    saveSuccess.value = 'Abrechnung abgeschlossen!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
   } catch (e: any) {
-    error.value = e.message || t('common.errorSaving')
+    error.value = e.message || 'Fehler beim Speichern'
   }
 }
 
@@ -590,7 +611,7 @@ async function reopenAccounting() {
     await accountingService.update(accounting.value.id, { status: 'draft' })
     accounting.value.status = 'draft'
   } catch (e: any) {
-    error.value = e.message || t('common.errorSaving')
+    error.value = e.message || 'Fehler beim Speichern'
   }
 }
 
@@ -619,10 +640,10 @@ async function saveAll() {
         .filter(split => split.participant_name || split.id),
     })
 
-    saveSuccess.value = t('common.saved')
+    saveSuccess.value = 'Gespeichert!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
   } catch (e: any) {
-    error.value = e.message || t('common.errorSaving')
+    error.value = e.message || 'Fehler beim Speichern'
   } finally {
     isSaving.value = false
   }
@@ -671,13 +692,13 @@ async function saveGrant() {
     } else {
       grantRecord.value = await grantService.create(data)
     }
-    saveSuccess.value = t('grant.saved')
+    saveSuccess.value = 'Gespeichert!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
 
     const eventYear = event.value?.date ? new Date(event.value.date).getFullYear() : new Date().getFullYear()
     grantSummary.value = await grantService.getSummary(eventYear)
   } catch (e: any) {
-    error.value = e.message || t('common.errorSaving')
+    error.value = e.message || 'Fehler beim Speichern'
   } finally {
     grantSaving.value = false
   }
@@ -729,18 +750,18 @@ onMounted(() => {
 
 <template lang="pug">
 .accounting-view
-  .loading(v-if="isLoading") {{ $t('accounting.loadingAccounting') }}
+  .loading(v-if="isLoading") Abrechnung wird geladen...
   template(v-else-if="accounting")
     .page-header
       .header-left
-        router-link.btn-back(to="/admin/accounting") {{ $t('common.back') }}
+        router-link.btn-back(to="/admin/accounting") ← Zurück
         h2 {{ event?.title || props.eventId }}
       .header-right
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveAll" :disabled="isSaving || accounting.status === 'final'")
-          | {{ isSaving ? $t('common.saving') : $t('common.saveAll') }}
-        button.btn-finalize(v-if="accounting.status === 'draft'" @click="finalizeAccounting") {{ $t('accounting.finalize') }}
-        button.btn-reopen(v-if="accounting.status === 'final'" @click="reopenAccounting") {{ $t('accounting.reopen') }}
+          | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
+        button.btn-finalize(v-if="accounting.status === 'draft'" @click="finalizeAccounting") Abschließen
+        button.btn-reopen(v-if="accounting.status === 'final'" @click="reopenAccounting") Wieder öffnen
 
     .error(v-if="error") {{ error }}
 
@@ -748,60 +769,60 @@ onMounted(() => {
       button.tab(
         :class="{ active: activeTab === 'cashcount' }"
         @click="activeTab = 'cashcount'"
-      ) {{ $t('accounting.tabs.cashCount') }}
+      ) Kassenzählung
       button.tab(
         :class="{ active: activeTab === 'inventory' }"
         @click="activeTab = 'inventory'"
-      ) {{ $t('accounting.tabs.inventory') }}
+      ) Inventur
       button.tab(
         :class="{ active: activeTab === 'expenses' }"
         @click="activeTab = 'expenses'"
-      ) {{ $t('accounting.tabs.expenses') }}
+      ) Ausgaben
       button.tab(
         :class="{ active: activeTab === 'result' }"
         @click="activeTab = 'result'"
-      ) {{ $t('accounting.tabs.result') }}
+      ) Ergebnis
       button.tab.tab-grant(
         :class="{ active: activeTab === 'grant' }"
         @click="activeTab = 'grant'"
-      ) {{ $t('accounting.tabs.grant') }}
+      ) Förderung
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
-      .section(v-for="group in REVENUE_GROUPS" :key="group.labelKey")
+      .section(v-for="group in REVENUE_GROUPS" :key="group.label")
         .section-title-row
-          h3.section-title {{ $t(group.labelKey) }}
+          h3.section-title {{ group.label }}
           .pretix-actions(v-if="group.sources.some(s => s.startsWith('vvk_'))")
             button.btn-pretix(
               @click="fetchPretixData"
               :disabled="pretixLoading"
-            ) {{ pretixLoading ? $t('common.loading') : $t('accounting.pretix.loadPresale') }}
+            ) {{ pretixLoading ? 'Laden...' : 'VVK von Pretix laden' }}
             button.btn-pretix.btn-apply(
               v-if="pretixData"
               @click="applyPretixData"
-            ) {{ $t('accounting.pretix.apply', { tickets: pretixData.total_tickets, amount: pretixData.total_revenue.toFixed(2) }) }}
+            ) Übernehmen ({{ pretixData.total_tickets }} Tickets, {{ pretixData.total_revenue.toFixed(2) }} €)
             span.pretix-error(v-if="pretixError") {{ pretixError }}
           .pretix-actions(v-if="group.sources.includes('bar_paypal')")
             button.btn-pretix(
               @click="fetchPaypalBarData"
               :disabled="paypalBarLoading"
-            ) {{ paypalBarLoading ? $t('common.loading') : $t('accounting.paypalBar.loadTransactions') }}
+            ) {{ paypalBarLoading ? 'Laden...' : 'PayPal-Transaktionen laden' }}
             button.btn-pretix.btn-apply(
               v-if="paypalBarData"
               @click="applyPaypalBarData"
-            ) {{ $t('accounting.paypalBar.apply', { count: paypalBarTotals.count, amount: paypalBarTotals.amount.toFixed(2) }) }}
+            ) Übernehmen ({{ paypalBarTotals.count }} Transaktionen, {{ paypalBarTotals.amount.toFixed(2) }} €)
             span.pretix-error(v-if="paypalBarError") {{ paypalBarError }}
         .revenue-table
           .revenue-header
-            .col-source {{ $t('accounting.revenueTable.source') }}
-            .col-amount {{ $t('accounting.revenueTable.total') }}
-            .col-amount {{ $t('accounting.revenueTable.change') }}
-            .col-amount {{ $t('accounting.revenueTable.fees') }}
-            .col-amount {{ $t('accounting.revenueTable.net') }}
+            .col-source Quelle
+            .col-amount Gesamt
+            .col-amount Wechselgeld
+            .col-amount Gebühren
+            .col-amount Netto
 
           template(v-for="source in group.sources" :key="source")
             .revenue-row
-              .col-source {{ $t(REVENUE_SOURCE_KEYS[source]) }}
+              .col-source {{ REVENUE_SOURCE_LABELS[source] }}
               .col-amount
                 input.amount-input(
                   v-model="getRevenue(source).total"
@@ -831,13 +852,13 @@ onMounted(() => {
               .col-amount.col-computed {{ formatCurrency(revenueNet(getRevenue(source))) }}
             template(v-if="(source === 'entrance_cash' || source === 'bar_cash') && expensesFromSource(source) > 0")
               .revenue-row.sub-row.register-payout
-                .col-source.sub-source └ {{ $t('accounting.revenueTable.paidOut') }}
+                .col-source.sub-source └ Aus Kasse bezahlt
                 .col-amount.sub-val
                 .col-amount.sub-val
                 .col-amount.sub-val
                 .col-amount.sub-val.positive + {{ formatCurrency(expensesFromSource(source)) }}
               .revenue-row.sub-row.register-gross
-                .col-source.sub-source {{ $t('accounting.revenueTable.grossRevenue') }}
+                .col-source.sub-source = Einnahmen brutto
                 .col-amount.sub-val
                 .col-amount.sub-val
                 .col-amount.sub-val
@@ -845,20 +866,20 @@ onMounted(() => {
                   strong {{ formatCurrency(revenueNet(getRevenue(source)) + expensesFromSource(source)) }}
             template(v-if="source === 'vvk_pretix' && pretixData")
               .revenue-row.sub-row(v-for="(info, src) in pretixData.by_source" :key="src")
-                .col-source.sub-source {{ src === 'vvk_stripe' ? $t('accounting.pretix.stripe') : src === 'vvk_paypal' ? $t('accounting.pretix.paypal') : '└ ' + src }}
+                .col-source.sub-source {{ src === 'vvk_stripe' ? '└ Stripe' : src === 'vvk_paypal' ? '└ PayPal' : '└ ' + src }}
                 .col-amount.sub-val {{ info.revenue.toFixed(2) }} €
                 .col-amount.sub-val —
                 .col-amount.sub-val {{ info.fees.toFixed(2) }} €
                 .col-amount.sub-val
               .revenue-row.sub-row
-                .col-source.sub-source {{ $t('accounting.pretix.pretixFee') }}
+                .col-source.sub-source └ Pretix-Gebühr
                 .col-amount.sub-val
                 .col-amount.sub-val —
                 .col-amount.sub-val {{ pretixData.pretix_fee.toFixed(2) }} €
                 .col-amount.sub-val
             template(v-if="source === 'bar_paypal' && paypalBarData")
               .revenue-row.sub-row.sub-toggle(@click="paypalBarExpanded = !paypalBarExpanded")
-                .col-source.sub-source {{ paypalBarExpanded ? '▼' : '▶' }} {{ $t('accounting.paypalBar.transactionCount', { count: paypalBarTotals.count }) }}
+                .col-source.sub-source {{ paypalBarExpanded ? '▼' : '▶' }} {{ paypalBarTotals.count }} Transaktionen
                 .col-amount.sub-val {{ paypalBarTotals.amount.toFixed(2) }} €
                 .col-amount.sub-val —
                 .col-amount.sub-val {{ paypalBarTotals.fees.toFixed(2) }} €
@@ -871,14 +892,14 @@ onMounted(() => {
                   .col-amount.sub-val —
                   .col-amount.sub-val {{ txn.fee.toFixed(2) }} €
                   .col-amount.sub-val {{ txn.net.toFixed(2) }} €
-                  button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" :title="$t('accounting.paypalBar.remove')") ✕
+                  button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
 
         .group-total
-          span {{ $t('accounting.revenueTable.totalGroup', { group: $t(group.labelKey) }) }}
+          span Gesamt {{ group.label }}:
           strong {{ formatCurrency(groupRevenue(group.sources)) }}
 
       .grand-total
-        span {{ $t('accounting.revenueTable.totalRevenue') }}
+        span Gesamteinnahmen:
         strong {{ formatCurrency(totalRevenue) }}
 
     //- ── Inventory Tab ──
@@ -887,21 +908,22 @@ onMounted(() => {
         h3.section-title {{ group }}
         .inventory-table
           .inventory-header
-            .col-inv-name.sortable(@click="invSort.toggle('name')") {{ $t('accounting.inventoryTable.drink') }}{{ invSort.indicator('name') }}
-            .col-inv-info {{ $t('accounting.inventoryTable.crate') }}
-            .col-inv-pair.sortable(@click="invSort.toggle('before')") {{ $t('accounting.inventoryTable.before') }}{{ invSort.indicator('before') }}
-            .col-inv-pair.sortable(@click="invSort.toggle('after')") {{ $t('accounting.inventoryTable.after') }}{{ invSort.indicator('after') }}
-            .col-inv-num {{ $t('common.total') }}
-            .col-inv-num.sortable(@click="invSort.toggle('consumed')") {{ $t('accounting.inventoryTable.used') }}{{ invSort.indicator('consumed') }}
-            .col-inv-amount.sortable(@click="invSort.toggle('value')") {{ $t('accounting.inventoryTable.value') }}{{ invSort.indicator('value') }}
+            .col-inv-name.sortable(@click="invSort.toggle('name')") Getränk{{ invSort.indicator('name') }}
+            .col-inv-info Kiste
+            .col-inv-pair.sortable(@click="invSort.toggle('before')") Vorher{{ invSort.indicator('before') }}
+            .col-inv-pair.sortable(@click="invSort.toggle('after')") Nachher{{ invSort.indicator('after') }}
+            .col-inv-num Gesamt
+            .col-inv-num.sortable(@click="invSort.toggle('consumed')") Verbraucht{{ invSort.indicator('consumed') }}
+            .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
 
           .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
             .col-inv-name
               .bev-name {{ beverage.name }}
-              .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}{{ $t('accounting.inventoryTable.pc') }} · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · {{ $t('accounting.inventoryTable.dep') }} {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
-              .bev-info(v-else) {{ $t('accounting.inventoryTable.bottle') }} · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
-            .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}{{ $t('accounting.inventoryTable.pc') }}
-            .col-inv-info(v-else) {{ $t('accounting.inventoryTable.btl') }}
+              .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
+              .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
+              .stock-warning(v-if="stockWarning(beverage.id, entry)") ⚠ {{ stockWarning(beverage.id, entry) }}
+            .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
+            .col-inv-info(v-else) Fl.
 
             //- Crate mode (units_per_crate > 1)
             template(v-if="(beverage.units_per_crate || 1) > 1")
@@ -915,7 +937,7 @@ onMounted(() => {
                     placeholder="0"
                     @input="updateEntryFromCrates(entry, beverage)"
                   )
-                  span.input-label {{ $t('accounting.inventoryTable.K') }}
+                  span.input-label K
                 .crate-input
                   input.qty-input(
                     v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles"
@@ -925,7 +947,7 @@ onMounted(() => {
                     placeholder="0"
                     @input="updateEntryFromCrates(entry, beverage)"
                   )
-                  span.input-label {{ $t('accounting.inventoryTable.Fl') }}
+                  span.input-label Fl
               .col-inv-pair
                 .crate-input
                   input.qty-input(
@@ -936,7 +958,7 @@ onMounted(() => {
                     placeholder="0"
                     @input="updateEntryFromCrates(entry, beverage)"
                   )
-                  span.input-label {{ $t('accounting.inventoryTable.K') }}
+                  span.input-label K
                 .crate-input
                   input.qty-input(
                     v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
@@ -946,7 +968,7 @@ onMounted(() => {
                     placeholder="0"
                     @input="updateEntryFromCrates(entry, beverage)"
                   )
-                  span.input-label {{ $t('accounting.inventoryTable.Fl') }}
+                  span.input-label Fl
 
             //- Bottle mode (units_per_crate = 1)
             template(v-else)
@@ -958,7 +980,7 @@ onMounted(() => {
                   step="0.5"
                   placeholder="0"
                 )
-                span.input-label {{ $t('accounting.inventoryTable.btl') }}
+                span.input-label Fl.
               .col-inv-pair.bottle-mode
                 input.qty-input(
                   v-model="entry.quantity_after"
@@ -967,33 +989,33 @@ onMounted(() => {
                   step="0.5"
                   placeholder="0"
                 )
-                span.input-label {{ $t('accounting.inventoryTable.btl') }}
+                span.input-label Fl.
 
             .col-inv-num {{ entry.quantity_before }}
             .col-inv-num {{ inventoryConsumption(entry) }}
             .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
         .group-total
-          span {{ $t('accounting.inventoryTable.subtotal', { group }) }}
+          span Zwischensumme {{ group }}:
           strong {{ formatCurrency(groupInventoryValue(items)) }}
 
       .grand-total
         div
-          span {{ $t('accounting.inventoryTable.stockValueAfter') }}
+          span Lagerwert (inkl. Pfand):
           strong {{ formatCurrency(totalStockValue) }}
         div.separator
         div
-          span {{ $t('accounting.inventoryTable.totalCostOfGoods') }}
+          span Wareneinsatz (inkl. Pfand):
           strong {{ formatCurrency(totalInventoryValue) }}
 
     //- ── Expenses Tab ──
     .tab-content(v-if="activeTab === 'expenses'")
-      h3.section-title {{ $t('accounting.expensesTable.title') }}
+      h3.section-title Ausgaben
       .expenses-table
         .expense-header
-          .col-desc.sortable(@click="expSort.toggle('desc')") {{ $t('accounting.expensesTable.description') }}{{ expSort.indicator('desc') }}
-          .col-amount.sortable(@click="expSort.toggle('amount')") {{ $t('accounting.expensesTable.amount') }}{{ expSort.indicator('amount') }}
-          .col-from {{ $t('accounting.expensesTable.paidFrom') }}
+          .col-desc.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
+          .col-amount.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
+          .col-from Bezahlt aus
           .col-action
 
         .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
@@ -1001,7 +1023,7 @@ onMounted(() => {
             input.text-input(
               v-model="exp.description"
               type="text"
-              :placeholder="$t('accounting.expensesTable.placeholder')"
+              placeholder="z.B. Rewe, Hotel..."
             )
           .col-amount
             input.amount-input(
@@ -1013,75 +1035,75 @@ onMounted(() => {
             )
           .col-from
             select.select-input(v-model="exp.paid_from")
-              option(v-for="(key, source) in EXPENSE_PAID_FROM_KEYS" :key="source" :value="source")
-                | {{ $t(key) }}
+              option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
+                | {{ label }}
           .col-action
             button.btn-remove(@click="removeExpense(index)") ×
 
-      button.btn-add(@click="addExpense") {{ $t('accounting.expensesTable.addExpense') }}
+      button.btn-add(@click="addExpense") + Ausgabe hinzufügen
 
       .grand-total
-        span {{ $t('accounting.expensesTable.totalExpenses') }}
+        span Gesamtausgaben:
         strong {{ formatCurrency(totalExpenses) }}
 
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
 
       //- Revenue breakdown
-      h3.section-title {{ $t('accounting.result.revenue') }}
+      h3.section-title Einnahmen
       .result-detail
         template(v-for="rev in revenues" :key="rev.source")
           .detail-row(v-if="revenueNet(rev) !== 0")
-            span {{ $t(REVENUE_SOURCE_KEYS[rev.source]) }}
+            span {{ REVENUE_SOURCE_LABELS[rev.source] }}
             span.amount {{ formatCurrency(revenueNet(rev)) }}
         .detail-row(v-if="expensesPaidFromRegister > 0")
-          span {{ $t('accounting.result.paidOutFromRegisters') }}
+          span + Auszahlungen aus Kassen
           span.amount {{ formatCurrency(expensesPaidFromRegister) }}
         .detail-row.detail-total
-          span {{ $t('accounting.result.trueRevenue') }}
+          span Tatsächliche Einnahmen
           strong.positive {{ formatCurrency(adjustedRevenue) }}
 
       //- Cost of goods breakdown
-      h3.section-title {{ $t('accounting.result.costOfGoods') }}
+      h3.section-title Wareneinsatz
       .result-detail
         template(v-for="(items, group) in inventoryBySupplier" :key="group")
           .detail-row(v-if="groupInventoryValue(items) !== 0")
             span {{ group }}
             span.amount -{{ formatCurrency(groupInventoryValue(items)) }}
         .detail-row.detail-total
-          span {{ $t('accounting.result.totalCostOfGoods') }}
+          span Wareneinsatz gesamt
           strong.negative {{ formatCurrency(totalInventoryValue) }}
 
       //- Expenses breakdown
-      h3.section-title {{ $t('accounting.result.expenses') }}
+      h3.section-title Ausgaben
       .result-detail
         template(v-for="exp in expenses" :key="exp.description")
           .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
-            span {{ exp.description || $t('accounting.result.noDescription') }}
+            span {{ exp.description || '(keine Beschreibung)' }}
             span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
         .detail-row.detail-total
-          span {{ $t('accounting.result.totalExpenses') }}
+          span Ausgaben gesamt
           strong.negative {{ formatCurrency(totalExpenses) }}
 
       //- Final result
       .result-summary
         .result-row
-          span {{ $t('accounting.result.revenueCounted') }}
+          span Einnahmen (gezählt)
           strong {{ formatCurrency(totalRevenue) }}
         .result-row(v-if="expensesPaidFromRegister > 0")
-          span {{ $t('accounting.result.paidFromRegisters') }}
+          span + Aus Kassen bezahlt
           strong {{ formatCurrency(expensesPaidFromRegister) }}
         .result-row
-          span {{ $t('accounting.result.equalsTrueRevenue') }}
+          span = Tatsächliche Einnahmen
           strong.positive {{ formatCurrency(adjustedRevenue) }}
         .result-row
-          span {{ $t('accounting.result.minusCostOfGoods') }}
+          span − Wareneinsatz
           strong.negative {{ formatCurrency(totalInventoryValue) }}
         .result-row
-          span {{ $t('accounting.result.minusExpenses') }}
+          span − Ausgaben
           strong.negative {{ formatCurrency(totalExpenses) }}
         .result-row
-          span {{ $t('accounting.result.depositReturn') }}
+          span Pfandrückgabe
           .input-inline
             input.amount-input(
               v-model="depositReturn"
@@ -1092,18 +1114,18 @@ onMounted(() => {
             )
             span.unit €
         .result-row.result-total
-          span {{ $t('accounting.result.resultLabel') }}
+          span Ergebnis
           strong(:class="result >= 0 ? 'positive' : 'negative'")
             | {{ formatCurrency(result) }}
 
-      h3.section-title {{ $t('accounting.result.profitSplit') }}
+      h3.section-title Gewinnverteilung
       .splits-table
         .split-row(v-for="(split, index) in splits" :key="index")
           .col-name
             input.text-input(
               v-model="split.participant_name"
               type="text"
-              :placeholder="$t('accounting.result.namePlaceholder')"
+              placeholder="Name"
             )
           .col-pct
             input.amount-input(
@@ -1119,22 +1141,22 @@ onMounted(() => {
           .col-action
             button.btn-remove(@click="removeSplit(index)") ×
 
-      button.btn-add(@click="addSplit") {{ $t('accounting.result.addSplit') }}
+      button.btn-add(@click="addSplit") + Anteil hinzufügen
 
       .splits-summary(v-if="splits.length")
         .result-row
-          span {{ $t('accounting.result.totalDistributed', { pct: totalSplitPercentage.toFixed(1) }) }}
+          span Verteilt ({{ totalSplitPercentage.toFixed(1) }}%)
           strong {{ formatCurrency(result - remainingAfterSplits) }}
         .result-row.result-total
-          span {{ $t('accounting.result.remaining') }}
+          span Verbleibend
           strong(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
             | {{ formatCurrency(remainingAfterSplits) }}
 
       .notes-section
-        h3.section-title {{ $t('common.notes') }}
+        h3.section-title Notizen
         textarea.notes-input(
           v-model="accounting.notes"
-          :placeholder="$t('accounting.result.notesPlaceholder')"
+          placeholder="Notizen zu dieser Abrechnung..."
           rows="4"
         )
 
@@ -1144,13 +1166,13 @@ onMounted(() => {
 
         .event-info
           .info-row
-            span.label {{ $t('grant.eventTitle') }}
+            span.label Veranstaltung
             span.value {{ event?.title }}
           .info-row
-            span.label {{ $t('grant.eventDate') }}
+            span.label Datum
             span.value {{ event?.date ? new Date(event.date).toLocaleDateString('de-DE') : '–' }}
           .info-row
-            span.label {{ $t('grant.artists') }}
+            span.label Künstler
             span.value {{ event?.artists?.map(a => a.name).join(', ') || '–' }}
 
         //- ── Sub-Tab Navigation ──
@@ -1158,11 +1180,11 @@ onMounted(() => {
           button.grant-sub-tab(
             :class="{ active: grantSubTab === 'antrag' }"
             @click="grantSubTab = 'antrag'"
-          ) {{ $t('grant.tabAntrag') }}
+          ) Antrag
           button.grant-sub-tab(
             :class="{ active: grantSubTab === 'nachweis' }"
             @click="grantSubTab = 'nachweis'"
-          ) {{ $t('grant.tabNachweis') }}
+          ) Verwendungsnachweis
 
         //- ════════════════════════════════════════════════════════
         //- ── Sub-Tab: Antrag ──
@@ -1170,41 +1192,41 @@ onMounted(() => {
         template(v-if="grantSubTab === 'antrag'")
 
           //- ── Budget Plan (Kostenplan) ──
-          h3.section-title {{ $t('grant.budgetPlan') }}
+          h3.section-title Kostenplan
 
           .grant-detail
             .detail-row.detail-cat-header
-              span {{ $t('grant.budgetKuenstler') }}
+              span Künstlerhonorare / Anfahrt / Übernachtung
               button.btn-add-sm(@click="addBudgetItem('kuenstler')") +
             .detail-row.input-row(v-for="(item, idx) in budgetKuenstler" :key="'k' + idx")
-              input.text-input(v-model="item.name" type="text" :placeholder="$t('grant.budgetNamePlaceholder')")
+              input.text-input(v-model="item.name" type="text" placeholder="z.B. Band XY Gage")
               .input-group
                 input.amount-input(v-model="item.amount" type="number" step="0.01" min="0" placeholder="0.00")
                 span.unit €
                 button.btn-remove-sm(@click="removeBudgetItem('kuenstler', idx)") ×
 
             .detail-row.detail-cat-header
-              span {{ $t('grant.budgetSachkosten') }}
+              span Projektspezifische Sachkosten (Werbung, Marketing)
               button.btn-add-sm(@click="addBudgetItem('sachkosten')") +
             .detail-row.input-row(v-for="(item, idx) in budgetSachkosten" :key="'s' + idx")
-              input.text-input(v-model="item.name" type="text" :placeholder="$t('grant.budgetNamePlaceholder')")
+              input.text-input(v-model="item.name" type="text" placeholder="z.B. Band XY Gage")
               .input-group
                 input.amount-input(v-model="item.amount" type="number" step="0.01" min="0" placeholder="0.00")
                 span.unit €
                 button.btn-remove-sm(@click="removeBudgetItem('sachkosten', idx)") ×
 
             .detail-row.detail-cat-header
-              span {{ $t('grant.budgetSonstiges') }}
+              span Sonstiges (GEMA, KSK, etc.)
               button.btn-add-sm(@click="addBudgetItem('sonstiges')") +
             .detail-row.input-row(v-for="(item, idx) in budgetSonstiges" :key="'o' + idx")
-              input.text-input(v-model="item.name" type="text" :placeholder="$t('grant.budgetNamePlaceholder')")
+              input.text-input(v-model="item.name" type="text" placeholder="z.B. Band XY Gage")
               .input-group
                 input.amount-input(v-model="item.amount" type="number" step="0.01" min="0" placeholder="0.00")
                 span.unit €
                 button.btn-remove-sm(@click="removeBudgetItem('sonstiges', idx)") ×
 
             .detail-row.detail-cat-header
-              span {{ $t('grant.rentFlatRate') }}
+              span Mietkosten (0,5% Jahresmiete)
             .detail-row.input-row
               span Mietkosten (0,5% Jahresmiete)
               .input-group
@@ -1218,64 +1240,64 @@ onMounted(() => {
                 span.unit €
 
             .detail-row.detail-total
-              span {{ $t('grant.totalExpensesBudget') }}
+              span Geplante Ausgaben gesamt
               strong {{ formatCurrency(budgetTotalExpenses) }}
 
           //- ── Expected Revenues ──
-          h3.section-title {{ $t('grant.budgetRevenues') }}
+          h3.section-title Erwartete Einnahmen (für Antrag)
           .grant-detail
             .detail-row.input-row
-              span {{ $t('grant.revEintritt') }}
+              span Eintrittseinnahmen
               .input-group
                 input.amount-input(v-model="budgetRevEintritt" type="number" step="0.01" min="0" placeholder="0")
                 span.unit €
             .detail-row.input-row
-              span {{ $t('grant.revGetraenke') }}
+              span 20% Getränkeeinnahmen
               .input-group
                 input.amount-input(v-model="budgetRevGetraenke" type="number" step="0.01" min="0" placeholder="0")
                 span.unit €
             .detail-row.input-row
-              span {{ $t('grant.revEigenmittel') }}
+              span Eigenmittel
               .input-group
                 input.amount-input(v-model="budgetRevEigenmittel" type="number" step="0.01" min="0" placeholder="0")
                 span.unit €
             .detail-row.input-row
-              span {{ $t('grant.revDrittmittel') }}
+              span Drittmittel
               .input-group
                 input.amount-input(v-model="budgetRevDrittmittel" type="number" step="0.01" min="0" placeholder="0")
                 span.unit €
             .detail-row.input-row
-              span {{ $t('grant.revSonstige') }}
+              span Sonstige Einnahmen
               .input-group
                 input.amount-input(v-model="budgetRevSonstige" type="number" step="0.01" min="0" placeholder="0")
                 span.unit €
             .detail-row.detail-total
-              span {{ $t('grant.totalRevenuesBudget') }}
+              span Geplante Einnahmen gesamt
               strong {{ formatCurrency(budgetTotalRevenues) }}
 
           //- ── Calculation (from Kostenplan) ──
-          h3.section-title {{ $t('grant.calculation') }}
+          h3.section-title Berechnung Förderbetrag
           .grant-summary
             .result-row
-              span {{ $t('grant.totalExpensesBudget') }}
+              span Geplante Ausgaben gesamt
               strong {{ formatCurrency(budgetTotalExpenses) }}
             .result-row
-              span {{ $t('grant.minusOwnRevenue') }}
+              span − Eigenanteil
               strong.negative {{ formatCurrency(budgetTotalRevenues) }}
             .result-row
-              span {{ $t('grant.eligibleAmount') }}
+              span Förderfähiger Betrag
               strong {{ formatCurrency(budgetEligibleAmount) }}
             .result-row.result-total
-              span {{ $t('grant.requestedAmount') }}
+              span Beantragter Zuschuss
               strong {{ formatCurrency(budgetGrantAmount) }}
-            .max-note {{ $t('grant.maxNote') }}
+            .max-note Max. 1.000 € pro Veranstaltung / 3.000 € pro Jahr (6.000 € bei >24 Veranstaltungen/Jahr)
 
           //- ── Save & Download Antrag ──
           .grant-actions
             button.btn-save(@click="saveGrant" :disabled="grantSaving")
-              | {{ grantSaving ? $t('common.saving') : $t('grant.save') }}
+              | {{ grantSaving ? 'Speichern...' : 'Förderung speichern' }}
             button.btn-pdf(@click="downloadAntrag" :disabled="grantDownloading !== null || !grantRecord?.id")
-              | {{ grantDownloading === 'antrag' ? 'Lade...' : $t('grant.downloadAntrag') }}
+              | {{ grantDownloading === 'antrag' ? 'Lade...' : 'Antrag PDF' }}
 
         //- ════════════════════════════════════════════════════════
         //- ── Sub-Tab: Verwendungsnachweis ──
@@ -1283,10 +1305,10 @@ onMounted(() => {
         template(v-if="grantSubTab === 'nachweis'")
 
           //- ── Bewilligungsbescheid ──
-          h3.section-title {{ $t('grant.approvedSection') }}
+          h3.section-title Bewilligungsbescheid
           .grant-detail
             .detail-row.input-row
-              span {{ $t('grant.approvedAmount') }}
+              span Bewilligter Höchstbetrag
               .input-group
                 input.amount-input(
                   v-model.number="approvedAmount"
@@ -1297,14 +1319,14 @@ onMounted(() => {
                 )
                 span.unit €
             .detail-row.detail-total(v-if="approvedAmount != null && approvedAmount > 0")
-              span {{ $t('grant.finalAmount') }}
+              span Förderbetrag (nach Bescheid)
               strong {{ formatCurrency(grantAmount) }}
             .detail-row.input-row
-              span {{ $t('grant.zuwendungsbescheidDate') }}
+              span Bescheiddatum
               .input-group
                 input.date-input(v-model="zuwendungsbescheidDate" type="date")
             .detail-row.input-row
-              span {{ $t('grant.auszahlungAmount') }}
+              span Ausgezahlter Betrag
               .input-group
                 input.amount-input(
                   v-model.number="auszahlungAmount"
@@ -1316,12 +1338,12 @@ onMounted(() => {
                 span.unit €
 
           //- ── Actual Eligible Expenses ──
-          h3.section-title {{ $t('grant.eligibleExpenses') }}
+          h3.section-title Zuwendungsfähige Ausgaben
           .expenses-table.grant-expenses
             .expense-header
-              .col-desc {{ $t('accounting.expensesTable.description') }}
-              .col-amount {{ $t('accounting.expensesTable.amount') }}
-              .col-grant-cat {{ $t('accounting.expensesTable.grantCategory') }}
+              .col-desc Beschreibung
+              .col-amount Betrag
+              .col-grant-cat Förder-Kat.
             template(v-for="(exp, index) in expenses" :key="index")
               .expense-row(v-if="parseFloat(exp.amount || '0') !== 0")
                 .col-desc {{ exp.description || '–' }}
@@ -1329,88 +1351,88 @@ onMounted(() => {
                 .col-grant-cat
                   select.select-input(v-model="exp.grant_category")
                     option(:value="null") –
-                    option(value="kuenstlerhonorar") {{ $t('accounting.expensesTable.catKuenstler') }}
-                    option(value="sachkosten") {{ $t('accounting.expensesTable.catSachkosten') }}
-                    option(value="sonstiges") {{ $t('accounting.expensesTable.catSonstiges') }}
+                    option(value="kuenstlerhonorar") Künstler
+                    option(value="sachkosten") Sachkosten
+                    option(value="sonstiges") Sonstiges
             .expense-row(v-if="artistHospitality > 0")
-              .col-desc {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
+              .col-desc Bewirtung Bands ({{ event?.artists?.length ?? 0 }} × 20 €)
               .col-amount {{ formatCurrency(artistHospitality) }}
               .col-grant-cat
             .expense-row(v-if="grantCostOfGoods > 0")
-              .col-desc {{ $t('grant.costOfGoods') }}
+              .col-desc Wareneinsatz
               .col-amount {{ formatCurrency(grantCostOfGoods) }}
               .col-grant-cat
             .expense-row
-              .col-desc {{ $t('grant.rentFlatRate') }}
+              .col-desc Mietkosten (0,5% Jahresmiete)
               .col-amount {{ formatCurrency(rentFlatAmount) }}
               .col-grant-cat
             .expense-row.expense-total
-              .col-desc {{ $t('grant.totalEligible') }}
+              .col-desc Zuwendungsfähige Ausgaben gesamt
               .col-amount
                 strong {{ formatCurrency(grantTotalEligible) }}
               .col-grant-cat
 
           //- ── Actual Own Revenue ──
-          h3.section-title {{ $t('grant.ownRevenue') }}
+          h3.section-title Eigenanteil (Einnahmen)
           .grant-detail
             .detail-row
-              span {{ $t('grant.admissionRevenue') }}
+              span Eintrittseinnahmen
               span.amount {{ formatCurrency(grantAdmissionRevenue) }}
             .detail-row
-              span {{ $t('grant.barRevenue') }}
+              span 20% Getränkeeinnahmen (Abendöffnung)
               span.amount {{ formatCurrency(grantBarContribution) }}
             .detail-row.detail-total
-              span {{ $t('grant.totalOwnRevenue') }}
+              span Eigenanteil gesamt
               strong {{ formatCurrency(grantTotalOwnRevenue) }}
 
           //- ── Actual Calculation ──
-          h3.section-title {{ $t('grant.calculationActual') }}
+          h3.section-title Abrechnung Förderbetrag
           .grant-summary
             .result-row
-              span {{ $t('grant.totalEligible') }}
+              span Zuwendungsfähige Ausgaben gesamt
               strong {{ formatCurrency(grantTotalEligible) }}
             .result-row
-              span {{ $t('grant.minusOwnRevenue') }}
+              span − Eigenanteil
               strong.negative {{ formatCurrency(grantTotalOwnRevenue) }}
             .result-row
-              span {{ $t('grant.eligibleAmount') }}
+              span Förderfähiger Betrag
               strong {{ formatCurrency(grantEligibleAmount) }}
             .result-row.result-total
-              span {{ $t('grant.requestedAmount') }}
+              span Beantragter Zuschuss
               strong {{ formatCurrency(grantAmount) }}
 
           //- ── Sachbericht (for Verwendungsnachweis) ──
-          h3.section-title {{ $t('grant.sachbericht') }}
+          h3.section-title Sachbericht
           textarea.notes-input(
             v-model="sachbericht"
-            :placeholder="$t('grant.sachberichtPlaceholder')"
+            placeholder="Kurze Beschreibung der Veranstaltung, Programm, Besucherzahl..."
             rows="6"
           )
 
           //- ── Notizen ──
-          h3.section-title {{ $t('common.notes') }}
+          h3.section-title Notizen
           textarea.notes-input(
             v-model="grantNotes"
-            :placeholder="$t('grant.notesPlaceholder')"
+            placeholder="Interne Notizen zur Förderung..."
             rows="3"
           )
 
           //- ── Save & Download Verwendungsnachweis ──
           .grant-actions
             button.btn-save(@click="saveGrant" :disabled="grantSaving")
-              | {{ grantSaving ? $t('common.saving') : $t('grant.save') }}
+              | {{ grantSaving ? 'Speichern...' : 'Förderung speichern' }}
             button.btn-pdf(@click="downloadVerwendungsnachweis" :disabled="grantDownloading !== null || !grantRecord?.id")
-              | {{ grantDownloading === 'verwendungsnachweis' ? 'Lade...' : $t('grant.downloadVerwendungsnachweis') }}
+              | {{ grantDownloading === 'verwendungsnachweis' ? 'Lade...' : 'Verwendungsnachweis PDF' }}
 
         //- ── Summary (visible in both sub-tabs) ──
         .summary-section(v-if="grantSummary")
-          h3.section-title {{ $t('grant.summary') }} ({{ event?.date ? new Date(event.date).getFullYear() : '' }})
+          h3.section-title Förder-Übersicht ({{ event?.date ? new Date(event.date).getFullYear() : '' }})
           .grant-detail
             .detail-row
-              span {{ $t('grant.totalRequested') }}
+              span Beantragte Summe
               span.amount {{ formatCurrency(grantSummary.total_requested) }}
             .detail-row
-              span {{ $t('grant.grantCount') }}
+              span Anzahl Förderanträge
               span.amount {{ grantSummary.grant_count }}
 </template>
 
@@ -1763,6 +1785,12 @@ h2 {
   font-size: 0.75rem;
   font-weight: 400;
   color: #555;
+}
+
+.stock-warning {
+  font-size: 0.7rem;
+  color: #c55;
+  font-weight: 500;
 }
 
 .col-inv-info {

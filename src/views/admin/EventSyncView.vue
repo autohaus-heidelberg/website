@@ -1,10 +1,10 @@
 <template lang="pug">
 .event-sync
-  h1 {{ $t('eventSync.title') }}
+  h1 Event-Synchronisierung
 
   .error-banner(v-if="sseError")
     .error-content
-      strong {{ $t('eventSync.sseError') }}
+      strong SSE-Verbindungsfehler:
       |  {{ sseError }}
 
   .actions.mb-2
@@ -13,26 +13,26 @@
       @click="handleWriteToWebsite"
       :disabled="isSyncing || isWriting || selectedEvents.length === 0"
     )
-      span(v-if="!isWriting") {{ $t('eventSync.writeToWebsite', { count: selectedEvents.length }) }}
-      span(v-else) {{ $t('eventSync.writing') }}
+      span(v-if="!isWriting") Auf Website schreiben ({{ selectedEvents.length }} ausgewählt)
+      span(v-else) Wird geschrieben...
 
   EventSyncLog(:logs="logs")
 
   .event-list.mb-2
-    h2 {{ $t('eventSync.eventsTitle') }}
+    h2 Veranstaltungen
     .select-all-container.mb-1
       label.checkbox-label
         input(type="checkbox" v-model="selectAll" @change="toggleSelectAll")
-        span {{ $t('eventSync.selectAll', { count: events.length }) }}
+        span Alle auswählen ({{ events.length }} Veranstaltungen)
 
     .table-container(v-if="events.length > 0")
       table.event-table
         thead
           tr
             th.col-select
-            th.col-id {{ $t('eventSync.colId') }}
-            th.col-date {{ $t('eventSync.colDate') }}
-            th.col-title {{ $t('eventSync.colTitle') }}
+            th.col-id ID
+            th.col-date Datum
+            th.col-title Titel
         tbody
           tr(v-for="event in events" :key="event.id")
             td.col-select
@@ -42,24 +42,23 @@
             td.col-title {{ event.title }}
 
     .loading(v-else-if="isLoadingEvents")
-      p {{ $t('eventSync.loadingEvents') }}
+      p Veranstaltungen werden geladen...
 
     .empty-state(v-else)
-      p {{ $t('eventSync.noEvents') }}
+      p Keine Veranstaltungen in der Datenbank gefunden.
 
 
   button.btn-primary(
     @click="handleSyncFromGit"
     :disabled="isSyncing || isWriting"
   )
-    span(v-if="!isSyncing") {{ $t('eventSync.syncFromGit') }}
-    span(v-else) {{ $t('eventSync.syncing') }}
+    span(v-if="!isSyncing") Von Git synchronisieren (Diesen Button nur benutzen wenn ihr wisst was ihr tut)
+    span(v-else) Wird synchronisiert...
 
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { eventService, type Event } from '@/services/events'
 import { useEventSource } from '@/composables/useEventSource'
 import EventSyncLog from '@/components/admin/EventSyncLog.vue'
@@ -68,7 +67,6 @@ import dayjs from 'dayjs'
 import websiteEvents from '@/events.json'
 
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
-const { t } = useI18n()
 const selectedEvents = ref<string[]>([])
 const isLoadingEvents = ref(false)
 

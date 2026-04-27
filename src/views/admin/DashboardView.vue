@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { eventService, artistService } from '@/services'
 
-const { t } = useI18n()
 const authStore = useAuthStore()
 const eventsCount = ref(0)
 const artistsCount = ref(0)
@@ -28,30 +26,30 @@ onMounted(async () => {
 
 <template lang="pug">
 .dashboard
-  h2 {{ $t('dashboard.welcome', { name: authStore.user?.username }) }}
+  h2 Willkommen, {{ authStore.user?.username || 'Admin' }}!
 
   .stats-grid(v-if="!isLoading")
     .stat-card
       .stat-info
         .stat-value {{ eventsCount }}
-        .stat-label {{ $t('dashboard.events') }}
-      router-link.stat-link(to="/admin/events") {{ $t('dashboard.manageEvents') }}
+        .stat-label Veranstaltungen
+      router-link.stat-link(to="/admin/events") Veranstaltungen verwalten
 
     .stat-card
       .stat-info
         .stat-value {{ artistsCount }}
-        .stat-label {{ $t('dashboard.artists') }}
-      router-link.stat-link(to="/admin/artists") {{ $t('dashboard.manageArtists') }}
+        .stat-label Künstler
+      router-link.stat-link(to="/admin/artists") Künstler verwalten
 
-  .loading(v-else) {{ $t('dashboard.loadingStats') }}
+  .loading(v-else) Lade Statistiken...
 
   .quick-actions
-    h3 {{ $t('dashboard.quickActions') }}
+    h3 Schnellaktionen
     .actions-grid
       router-link.action-btn(to="/admin/events/create")
-        span {{ $t('dashboard.createNewEvent') }}
+        span Neue Veranstaltung erstellen
       router-link.action-btn(to="/admin/artists/create")
-        span {{ $t('dashboard.createNewArtist') }}
+        span Neuen Künstler erstellen
 </template>
 
 <style scoped>

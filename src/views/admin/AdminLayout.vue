@@ -1,19 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 
-const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
-
-function toggleLocale() {
-  const next = locale.value === 'de' ? 'en' : 'de'
-  locale.value = next
-  localStorage.setItem('locale', next)
-}
 
 function handleLogout() {
   authStore.logout()
@@ -67,41 +59,40 @@ watch(isMobileMenuOpen, (isOpen) => {
 
   nav.admin-nav(:class="{ 'is-open': isMobileMenuOpen }")
     .admin-nav-header
-      h1 {{ $t('nav.title') }}
+      h1 Veranstaltungsverwaltung
       .user-info
         .username {{ authStore.user?.username }}
         .user-groups(v-if="authStore.user?.groups.length")
           span.group(v-for="group in authStore.user.groups" :key="group") {{ group }}
         .nav-controls
-          button.btn-locale(@click="toggleLocale") {{ locale === 'de' ? 'EN' : 'DE' }}
-          button.btn-logout(@click="handleLogout") {{ $t('nav.logout') }}
+          button.btn-logout(@click="handleLogout") Abmelden
 
     .admin-nav-links
       router-link.nav-link(to="/admin" exact-active-class="active" @click="handleNavigation")
-        span {{ $t('nav.dashboard') }}
+        span Übersicht
       router-link.nav-link(to="/admin/events" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.events') }}
+        span Veranstaltungen
       router-link.nav-link(to="/admin/artists" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.artists') }}
+        span Künstler
       router-link.nav-link(to="/admin/sync" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.eventSync') }}
+        span Event-Sync
       router-link.nav-link(to="/admin/settings" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.settings') }}
+        span Einstellungen
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.checklistTemplates') }}
+        span Checklisten-Vorlagen
 
       .nav-divider
       router-link.nav-link(to="/admin/accounting" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.accounting') }}
+        span Abrechnung
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.beverages') }}
+        span Getränke
       router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.purchases') }}
+        span Einkäufe
       router-link.nav-link(to="/admin/stock" active-class="active" @click="handleNavigation")
-        span {{ $t('nav.stock') }}
+        span Lager
 
       router-link.nav-link(to="/" @click="handleNavigation")
-        span {{ $t('nav.publicSite') }}
+        span Öffentliche Seite
 
   main.admin-content
     router-view

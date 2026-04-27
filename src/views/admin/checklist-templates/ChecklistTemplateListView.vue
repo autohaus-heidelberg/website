@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { checklistTemplateService, type ChecklistTemplateItem } from '@/services'
 import type { PaginatedResponse } from '@/types/api'
 
-const { t } = useI18n()
 
 const templatesData = ref<PaginatedResponse<ChecklistTemplateItem> | null>(null)
 const isLoading = ref(false)
@@ -50,9 +48,9 @@ const templatesByPhase = computed(() => {
 })
 
 const phaseLabels = computed<Record<string, string>>(() => ({
-  before: t('checklists.phaseBefore'),
-  during: t('checklists.phaseDuring'),
-  after: t('checklists.phaseAfter'),
+  before: 'BEFORE - Vor der Veranstaltung',
+  during: 'DURING - Während der Veranstaltung',
+  after: 'AFTER - Nach der Veranstaltung',
 }))
 
 const phaseOptions = [
@@ -68,7 +66,7 @@ async function loadTemplates() {
   try {
     templatesData.value = await checklistTemplateService.getAll()
   } catch (e: any) {
-    error.value = e.message || t('checklists.errorLoading')
+    error.value = e.message || 'Checklisten-Vorlagen konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -97,7 +95,7 @@ async function saveEdit() {
     editingId.value = null
     editingForm.value = {}
   } catch (e: any) {
-    alert(t('checklists.errorUpdating') + e.message)
+    alert('Fehler beim Aktualisieren: ' + e.message)
   } finally {
     isSaving.value = false
   }
@@ -138,7 +136,7 @@ async function saveNew() {
       phase: 'before'
     }
   } catch (e: any) {
-    alert(t('checklists.errorCreating') + e.message)
+    alert('Fehler beim Erstellen: ' + e.message)
   } finally {
     isSaving.value = false
   }
@@ -154,7 +152,7 @@ async function deleteTemplate(template: ChecklistTemplateItem) {
       templatesData.value.count--
     }
   } catch (e: any) {
-    alert(t('checklists.errorDeleting') + e.message)
+    alert('Fehler beim Löschen: ' + e.message)
   }
 }
 
@@ -187,18 +185,18 @@ onMounted(() => {
 <template lang="pug">
 .checklist-template-list-view
   .header
-    h2 {{ $t('checklists.title') }}
+    h2 Checklisten-Vorlagen
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        :placeholder="$t('checklists.searchPlaceholder')"
+        placeholder="Vorlagen suchen..."
       )
 
   .help-text
-    | {{ $t('checklists.helpText') }}
+    | Klick auf Zeile zum Bearbeiten • Enter speichern • Escape abbrechen
 
-  .loading(v-if="isLoading") {{ $t('checklists.loadingTemplates') }}
+  .loading(v-if="isLoading") Vorlagen werden geladen...
   .error(v-else-if="error") {{ error }}
 
   .templates-container(v-else)
@@ -208,16 +206,16 @@ onMounted(() => {
         button.btn-add(
           @click="startAdd(phase)"
           :disabled="addingPhase === phase"
-        ) {{ $t('checklists.addNew') }}
+        ) + Neu
 
       table.templates-table
         thead
           tr
-            th {{ $t('checklists.task') }}
-            th {{ $t('checklists.area') }}
-            th {{ $t('checklists.phase') }}
-            th {{ $t('checklists.created') }}
-            th {{ $t('checklists.actions') }}
+            th Aufgabe
+            th Bereich
+            th Phase
+            th Erstellt
+            th Aktionen
 
         tbody
           tr(
@@ -232,7 +230,7 @@ onMounted(() => {
                 v-model="editingForm.name"
                 @click.stop
                 @keydown="handleKeydown($event, 'edit')"
-                :placeholder="$t('checklists.taskPlaceholder')"
+                placeholder="Aufgabe"
                 autofocus
               )
               span(v-else) {{ template.name }}
@@ -243,7 +241,7 @@ onMounted(() => {
                 v-model="editingForm.stage"
                 @click.stop
                 @keydown="handleKeydown($event, 'edit')"
-                :placeholder="$t('checklists.areaPlaceholder')"
+                placeholder="Bereich"
               )
               span(v-else) {{ template.stage }}
 
@@ -269,10 +267,10 @@ onMounted(() => {
                 button.btn-save(
                   @click="saveEdit"
                   :disabled="isSaving || !editingForm.name || !editingForm.stage"
-                ) {{ $t('common.save') }}
-                button.btn-cancel(@click="cancelEdit") {{ $t('common.cancel') }}
+                ) Speichern
+                button.btn-cancel(@click="cancelEdit") Abbrechen
               .action-buttons(v-else)
-                button.btn-delete(@click="deleteTemplate(template)") {{ $t('common.delete') }}
+                button.btn-delete(@click="deleteTemplate(template)") Löschen
 
           // Add new row
           tr.add-row(v-if="addingPhase === phase")
@@ -280,7 +278,7 @@ onMounted(() => {
               input.inline-input(
                 v-model="newItemForm.name"
                 @keydown="handleKeydown($event, 'add')"
-                :placeholder="$t('checklists.newTaskPlaceholder')"
+                placeholder="Neue Aufgabe..."
                 autofocus
               )
 
@@ -288,7 +286,7 @@ onMounted(() => {
               input.inline-input(
                 v-model="newItemForm.stage"
                 @keydown="handleKeydown($event, 'add')"
-                :placeholder="$t('checklists.areaPlaceholder')"
+                placeholder="Bereich"
               )
 
             td
@@ -303,21 +301,21 @@ onMounted(() => {
                 ) {{ option.label }}
 
             td.created-cell
-              span.muted {{ $t('checklists.newLabel') }}
+              span.muted Neu
 
             td.actions-cell
               .action-buttons
                 button.btn-save(
                   @click="saveNew"
                   :disabled="isSaving || !newItemForm.name || !newItemForm.stage"
-                ) {{ $t('common.save') }}
-                button.btn-cancel(@click="cancelAdd") {{ $t('common.cancel') }}
+                ) Speichern
+                button.btn-cancel(@click="cancelAdd") Abbrechen
 
       .empty(v-if="!phaseTemplates.length && addingPhase !== phase")
-        | {{ $t('checklists.noTemplatesPhase') }}
+        | Keine Vorlagen für diese Phase
 
     .empty(v-if="!templates.length && !isLoading")
-      | {{ $t('checklists.noTemplates') }}
+      | Keine Checklisten-Vorlagen vorhanden.
 </template>
 
 <style scoped>

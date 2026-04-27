@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
 import { purchaseService, beverageService } from '@/services'
 import type { Purchase, PurchaseItem, BeverageItem } from '@/types/accounting'
 
@@ -10,7 +9,6 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const { t } = useI18n()
 const isEditing = !!props.id
 
 const form = ref<Partial<Purchase>>({
@@ -68,7 +66,7 @@ async function scanReceipt(event: Event) {
       itemLoose.value.push(0)
     }
   } catch (e: any) {
-    scanError.value = e.response?.data?.error || e.message || t('purchases.form.scanFailed')
+    scanError.value = e.response?.data?.error || e.message || 'Scan fehlgeschlagen'
   } finally {
     isScanning.value = false
     input.value = ''  // Reset file input
@@ -152,7 +150,7 @@ async function loadData() {
       }
     }
   } catch (e: any) {
-    error.value = e.message || t('purchases.errorLoading')
+    error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -160,7 +158,7 @@ async function loadData() {
 
 async function handleSubmit() {
   if (!form.value.date) {
-    error.value = t('purchases.form.errorDate')
+    error.value = 'Bitte ein Datum eingeben'
     return
   }
   isLoading.value = true
@@ -174,14 +172,14 @@ async function handleSubmit() {
     }
     router.push('/admin/purchases')
   } catch (e: any) {
-    error.value = e.response?.data?.error || e.message || t('common.errorSaving')
+    error.value = e.response?.data?.error || e.message || 'Fehler beim Speichern'
   } finally {
     isLoading.value = false
   }
 }
 
 async function finalize() {
-  if (!confirm(t('purchases.form.confirmFinalize'))) return
+  if (!confirm('Einkauf abschließen? Kann danach nicht mehr bearbeitet werden.')) return
   form.value.status = 'final'
   await handleSubmit()
 }
@@ -194,48 +192,48 @@ onMounted(() => {
 <template lang="pug">
 .purchase-form-view
   .form-header
-    h2 {{ isEditing ? $t('purchases.editPurchase') : $t('purchases.newPurchase') }}
-    router-link.btn-cancel(to="/admin/purchases") {{ $t('common.back') }}
+    h2 {{ isEditing ? 'Einkauf bearbeiten' : '+ Neuer Einkauf' }}
+    router-link.btn-cancel(to="/admin/purchases") ← Zurück
 
   .error-msg(v-if="error") {{ error }}
 
   form.purchase-form(@submit.prevent="handleSubmit")
     .form-row
       .form-group
-        label(for="date") {{ $t('common.date') }}
+        label(for="date") Datum
         input#date(v-model="form.date" type="date" required)
       .form-group
-        label(for="supplier") {{ $t('purchases.form.supplier') }}
-        input#supplier(v-model="form.supplier" type="text" :placeholder="$t('purchases.form.supplierPlaceholder')")
+        label(for="supplier") Lieferant
+        input#supplier(v-model="form.supplier" type="text" placeholder="z.B. Getränkestation")
       .form-group
-        label(for="invoice_number") {{ $t('purchases.form.invoiceNo') }}
+        label(for="invoice_number") Rechnungsnr.
         input#invoice_number(v-model="form.invoice_number" type="text")
 
     .form-row
       .form-group
-        label(for="invoice_total") {{ $t('purchases.form.invoiceTotal') }}
+        label(for="invoice_total") Rechnungsbetrag (€)
         input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0")
       .form-group
-        label {{ $t('purchases.form.calculatedTotal') }}
+        label Berechnete Summe
         .computed-total {{ computedTotal }} €
       .form-group
-        label(for="notes") {{ $t('common.notes') }}
+        label(for="notes") Notizen
         textarea#notes(v-model="form.notes" rows="2")
 
-    h3.section-title {{ $t('purchases.form.items') }}
+    h3.section-title Positionen
     .scan-area
       label.btn-scan(:class="{ scanning: isScanning }")
         input(type="file" accept="image/*" capture="environment" @change="scanReceipt" hidden)
-        | {{ isScanning ? $t('purchases.form.scanning') : $t('purchases.form.scanReceipt') }}
-      span.scan-hint {{ $t('purchases.form.scanHint') }}
+        | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
+      span.scan-hint Foto vom Bon → KI füllt die Positionen aus
     .error-msg(v-if="scanError") {{ scanError }}
     .items-header
-      span.col-bev {{ $t('purchases.form.drink') }}
-      span.col-crates {{ $t('purchases.form.crates') }}
-      span.col-loose {{ $t('purchases.form.looseBtl') }}
-      span.col-qty {{ $t('purchases.form.units') }}
-      span.col-price {{ $t('purchases.form.pricePerCrate') }}
-      span.col-total {{ $t('purchases.form.totalCol') }}
+      span.col-bev Getränk
+      span.col-crates Kisten
+      span.col-loose Einzelfl.
+      span.col-qty Einheiten
+      span.col-price Preis / Kiste (€)
+      span.col-total Gesamt (€)
       span.col-action &nbsp;
 
     .item-row(v-for="(item, idx) in form.items" :key="idx")
@@ -265,17 +263,17 @@ onMounted(() => {
       span.col-total {{ formatItemTotal(item) }}
       button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
 
-    button.btn-add(type="button" @click="addItem") {{ $t('purchases.form.addItem') }}
+    button.btn-add(type="button" @click="addItem") + Position hinzufügen
 
     .form-actions
       button.btn-save(type="submit" :disabled="isLoading")
-        | {{ isLoading ? $t('common.saving') : $t('common.save') }}
+        | {{ isLoading ? 'Speichern...' : 'Speichern' }}
       button.btn-finalize(
         v-if="form.status === 'draft'"
         type="button"
         @click="finalize"
         :disabled="isLoading"
-      ) {{ $t('purchases.form.finalize') }}
+      ) Abschließen
 </template>
 
 <style scoped>

@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { eventService, accountingService } from '@/services'
 import type { Event } from '@/services'
 import type { EventAccounting } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 
-const { t } = useI18n()
 
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const accountings = ref<EventAccounting[]>([])
@@ -41,8 +39,8 @@ function formatDate(date: string) {
 }
 
 function statusLabel(status?: string): string {
-  if (!status) return t('accountingList.statusNotCreated')
-  return status === 'final' ? t('accountingList.statusFinalized') : t('accountingList.statusDraft')
+  if (!status) return 'Nicht erstellt'
+  return status === 'final' ? 'Abgeschlossen' : 'Entwurf'
 }
 
 function statusClass(status?: string): string {
@@ -60,7 +58,7 @@ async function createAccounting(eventId: string) {
     })
     accountings.value.push(accounting)
   } catch (e: any) {
-    alert(t('accountingList.errorCreating') + e.message)
+    alert('Fehler beim Erstellen: ' + e.message)
   }
 }
 
@@ -75,7 +73,7 @@ async function loadData() {
     eventsData.value = evData
     accountings.value = accData.results
   } catch (e: any) {
-    error.value = e.message || t('common.errorLoading')
+    error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -89,15 +87,15 @@ onMounted(() => {
 <template lang="pug">
 .accounting-list-view
   .header
-    h2 {{ $t('accountingList.title') }}
+    h2 Abrechnung
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        :placeholder="$t('accountingList.searchPlaceholder')"
+        placeholder="Veranstaltung suchen..."
       )
 
-  .loading(v-if="isLoading") {{ $t('common.loading') }}
+  .loading(v-if="isLoading") Laden...
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length")
@@ -118,13 +116,13 @@ onMounted(() => {
           router-link.btn-edit(
             v-if="event.accounting"
             :to="`/admin/accounting/${event.id}`"
-          ) {{ $t('accountingList.openAccounting') }}
+          ) Abrechnung öffnen
           button.btn-primary(
             v-else
             @click="createAccounting(event.id)"
-          ) {{ $t('accountingList.startAccounting') }}
+          ) Abrechnung starten
 
-  .empty(v-else) {{ $t('accountingList.noEvents') }}
+  .empty(v-else) Keine Veranstaltungen gefunden
 </template>
 
 <style scoped>

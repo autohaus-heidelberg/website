@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { settingsService } from '@/services'
 
-const { t } = useI18n()
 
 // State
 const activeTab = ref('helferpad')
@@ -28,7 +26,7 @@ onMounted(async () => {
       // Setting doesn't exist yet - will create on first save
       helferpadContent.value = 'HelferPad'
     } else {
-      error.value = t('settings.errorLoading')
+      error.value = 'Einstellungen konnten nicht geladen werden'
       console.error('Error loading settings:', err)
     }
   } finally {
@@ -52,12 +50,12 @@ async function handleSave() {
       settingId.value = created.id
     }
 
-    success.value = t('settings.savedSuccess')
+    success.value = 'Einstellungen erfolgreich gespeichert!'
     setTimeout(() => {
       success.value = ''
     }, 3000)
   } catch (err: any) {
-    error.value = err.message || t('settings.errorSaving')
+    error.value = err.message || 'Einstellungen konnten nicht gespeichert werden'
     console.error('Error saving settings:', err)
   } finally {
     isSaving.value = false
@@ -68,19 +66,19 @@ async function handleSave() {
 <template lang="pug">
 .settings-view
   .settings-header
-    h2 {{ $t('settings.title') }}
+    h2 Einstellungen
 
   .tabs-nav
     button.tab-button(
       :class="{ active: activeTab === 'helferpad' }"
       @click="activeTab = 'helferpad'"
     )
-      | {{ $t('settings.helferpad') }}
+      | Helferpad
 
   .tab-content(v-show="activeTab === 'helferpad'")
     .section-description
-      p {{ $t('settings.helferpadDesc') }}
-      p.replacements-title {{ $t('settings.availablePlaceholders') }}
+      p Standardinhalt für neue Helferpad-Dokumente
+      p.replacements-title Verfügbare Platzhalter:
       ul.replacements-list(v-pre)
         li #[code {{Eventname}}] - Event title
         li #[code {{EventDate}}] - Event start date/time (German timezone)
@@ -91,14 +89,14 @@ async function handleSave() {
         li #[code {{EventLink}}] - Link to event website
     form.setting-form(@submit.prevent="handleSave")
       .form-group
-        label(for="helferpad-content") {{ $t('settings.defaultContent') }}
+        label(for="helferpad-content") Standardinhalt
         textarea#helferpad-content(
           v-model="helferpadContent"
           :disabled="isLoading || isSaving"
           rows="15"
-          :placeholder="$t('settings.contentPlaceholder')"
+          placeholder="Standardinhalt für Helferpad eingeben..."
         )
-        .field-hint {{ $t('settings.plainTextOnly') }}
+        .field-hint Nur Klartext
 
       .error(v-if="error") {{ error }}
       .success(v-if="success") {{ success }}
@@ -108,7 +106,7 @@ async function handleSave() {
           type="submit"
           :disabled="isSaving || isLoading"
         )
-          | {{ isSaving ? $t('common.saving') : $t('settings.saveChanges') }}
+          | {{ isSaving ? 'Speichern...' : 'Änderungen speichern' }}
 </template>
 
 <style scoped>
