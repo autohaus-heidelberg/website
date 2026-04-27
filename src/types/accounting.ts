@@ -179,6 +179,8 @@ export interface GrantApplication {
   budget_plan: Record<string, any>
   zuwendungsbescheid_date?: string | null
   auszahlung_amount?: string | null
+  actual_admission_revenue?: string
+  actual_beverage_revenue?: string
   notes: string
   created?: string
   updated?: string

@@ -642,6 +642,7 @@ async function saveGrant() {
         sonstiges: budgetSonstiges.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
       },
       revenues: {
+        zuwendung: budgetGrantAmount.value,
         eintritt: parseFloat(budgetRevEintritt.value) || 0,
         getraenke: parseFloat(budgetRevGetraenke.value) || 0,
         eigenmittel: parseFloat(budgetRevEigenmittel.value) || 0,
@@ -659,6 +660,8 @@ async function saveGrant() {
       approved_amount: approvedAmount.value != null ? approvedAmount.value.toFixed(2) : null,
       zuwendungsbescheid_date: zuwendungsbescheidDate.value || null,
       auszahlung_amount: auszahlungAmount.value != null ? auszahlungAmount.value.toFixed(2) : null,
+      actual_admission_revenue: grantAdmissionRevenue.value.toFixed(2),
+      actual_beverage_revenue: grantBarContribution.value.toFixed(2),
       sachbericht: sachbericht.value,
       notes: grantNotes.value,
       budget_plan: budgetPlan,
@@ -991,7 +994,6 @@ onMounted(() => {
           .col-desc.sortable(@click="expSort.toggle('desc')") {{ $t('accounting.expensesTable.description') }}{{ expSort.indicator('desc') }}
           .col-amount.sortable(@click="expSort.toggle('amount')") {{ $t('accounting.expensesTable.amount') }}{{ expSort.indicator('amount') }}
           .col-from {{ $t('accounting.expensesTable.paidFrom') }}
-          .col-grant-cat {{ $t('accounting.expensesTable.grantCategory') }}
           .col-action
 
         .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
@@ -1013,12 +1015,6 @@ onMounted(() => {
             select.select-input(v-model="exp.paid_from")
               option(v-for="(key, source) in EXPENSE_PAID_FROM_KEYS" :key="source" :value="source")
                 | {{ $t(key) }}
-          .col-grant-cat
-            select.select-input(v-model="exp.grant_category")
-              option(:value="null") –
-              option(value="kuenstlerhonorar") {{ $t('accounting.expensesTable.catKuenstler') }}
-              option(value="sachkosten") {{ $t('accounting.expensesTable.catSachkosten') }}
-              option(value="sonstiges") {{ $t('accounting.expensesTable.catSonstiges') }}
           .col-action
             button.btn-remove(@click="removeExpense(index)") ×
 
@@ -1321,23 +1317,38 @@ onMounted(() => {
 
           //- ── Actual Eligible Expenses ──
           h3.section-title {{ $t('grant.eligibleExpenses') }}
-          .grant-detail
-            template(v-for="exp in expenses" :key="exp.description")
-              .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
-                span {{ exp.description || '–' }}
-                span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-            .detail-row(v-if="artistHospitality > 0")
-              span {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
-              span.amount {{ formatCurrency(artistHospitality) }}
-            .detail-row(v-if="grantCostOfGoods > 0")
-              span {{ $t('grant.costOfGoods') }}
-              span.amount {{ formatCurrency(grantCostOfGoods) }}
-            .detail-row
-              span {{ $t('grant.rentFlatRate') }}
-              span.amount {{ formatCurrency(rentFlatAmount) }}
-            .detail-row.detail-total
-              span {{ $t('grant.totalEligible') }}
-              strong {{ formatCurrency(grantTotalEligible) }}
+          .expenses-table.grant-expenses
+            .expense-header
+              .col-desc {{ $t('accounting.expensesTable.description') }}
+              .col-amount {{ $t('accounting.expensesTable.amount') }}
+              .col-grant-cat {{ $t('accounting.expensesTable.grantCategory') }}
+            template(v-for="(exp, index) in expenses" :key="index")
+              .expense-row(v-if="parseFloat(exp.amount || '0') !== 0")
+                .col-desc {{ exp.description || '–' }}
+                .col-amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+                .col-grant-cat
+                  select.select-input(v-model="exp.grant_category")
+                    option(:value="null") –
+                    option(value="kuenstlerhonorar") {{ $t('accounting.expensesTable.catKuenstler') }}
+                    option(value="sachkosten") {{ $t('accounting.expensesTable.catSachkosten') }}
+                    option(value="sonstiges") {{ $t('accounting.expensesTable.catSonstiges') }}
+            .expense-row(v-if="artistHospitality > 0")
+              .col-desc {{ $t('grant.hospitality', { count: event?.artists?.length ?? 0 }) }}
+              .col-amount {{ formatCurrency(artistHospitality) }}
+              .col-grant-cat
+            .expense-row(v-if="grantCostOfGoods > 0")
+              .col-desc {{ $t('grant.costOfGoods') }}
+              .col-amount {{ formatCurrency(grantCostOfGoods) }}
+              .col-grant-cat
+            .expense-row
+              .col-desc {{ $t('grant.rentFlatRate') }}
+              .col-amount {{ formatCurrency(rentFlatAmount) }}
+              .col-grant-cat
+            .expense-row.expense-total
+              .col-desc {{ $t('grant.totalEligible') }}
+              .col-amount
+                strong {{ formatCurrency(grantTotalEligible) }}
+              .col-grant-cat
 
           //- ── Actual Own Revenue ──
           h3.section-title {{ $t('grant.ownRevenue') }}
@@ -1846,10 +1857,34 @@ h2 {
 
 .expense-header, .expense-row {
   display: grid;
-  grid-template-columns: 1fr 120px 150px 140px 40px;
+  grid-template-columns: 1fr 120px 150px 40px;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   align-items: center;
+}
+
+.grant-expenses .expense-header,
+.grant-expenses .expense-row {
+  grid-template-columns: 1fr 120px 140px;
+}
+
+.grant-expenses {
+  margin-bottom: 0;
+  border-top: 0.25rem solid black;
+}
+
+.grant-expenses .col-desc {
+  text-align: left;
+}
+
+.grant-expenses .col-amount {
+  text-align: right;
+}
+
+.expense-row.expense-total {
+  border-top: 0.25rem solid black;
+  font-weight: 700;
+  background: #f5f5f5;
 }
 
 .expense-header {
