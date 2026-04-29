@@ -26,6 +26,48 @@ const error = ref('')
 
 const activeBeverages = computed(() => beverages.value.filter(b => b.is_active))
 
+function beverageLabel(bev: BeverageItem): string {
+  const upc = bev.units_per_crate
+  return upc > 1 ? `${bev.name} (${upc}er Kiste)` : bev.name
+}
+
+// Inline new-beverage creation
+const showNewBeverage = ref(false)
+const newBevIdx = ref(-1) // which item row triggered it
+const newBev = ref({ name: '', units_per_crate: 6, purchase_price: '0.00' })
+
+function openNewBeverage(idx: number) {
+  newBevIdx.value = idx
+  newBev.value = { name: '', units_per_crate: 6, purchase_price: '0.00' }
+  showNewBeverage.value = true
+}
+
+async function saveNewBeverage() {
+  if (!newBev.value.name.trim()) return
+  try {
+    const created = await beverageService.create({
+      name: newBev.value.name.trim(),
+      units_per_crate: newBev.value.units_per_crate,
+      purchase_price: newBev.value.purchase_price,
+      is_active: true,
+      deposit: '0.00',
+      sort_order: 0,
+      supplier_group: '',
+    })
+    beverages.value.push(created)
+    // Assign to the row that triggered it
+    const idx = newBevIdx.value
+    if (idx >= 0 && form.value.items && form.value.items[idx]) {
+      form.value.items[idx].beverage_item = created.id!
+      form.value.items[idx].unit_price = created.purchase_price ?? '0.00'
+      recalcItem(form.value.items[idx], idx)
+    }
+    showNewBeverage.value = false
+  } catch (e: any) {
+    error.value = e.response?.data?.error || e.message || 'Getränk konnte nicht angelegt werden'
+  }
+}
+
 const isScanning = ref(false)
 const scanError = ref('')
 
@@ -230,9 +272,10 @@ onMounted(() => {
       span.col-action &nbsp;
 
     .item-row(v-for="(item, idx) in form.items" :key="idx")
-      select.col-bev(v-model.number="item.beverage_item" @change="onBeverageChange(item, idx)")
+      select.col-bev(v-model.number="item.beverage_item" @change="item.beverage_item === -1 ? openNewBeverage(idx) : onBeverageChange(item, idx)")
         option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
-          | {{ bev.name }}
+          | {{ beverageLabel(bev) }}
+        option(:value="-1") + Neues Getränk…
       input.col-crates(
         v-model.number="itemCrates[idx]"
         type="number"
@@ -257,6 +300,23 @@ onMounted(() => {
       button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
 
     button.btn-add(type="button" @click="addItem") + Position hinzufügen
+
+    .new-bev-overlay(v-if="showNewBeverage")
+      .new-bev-dialog
+        h3 Neues Getränk anlegen
+        .form-row
+          .form-group
+            label Name
+            input(v-model="newBev.name" type="text" placeholder="z.B. Sekt" autofocus)
+          .form-group
+            label Flaschen / Kiste
+            input(v-model.number="newBev.units_per_crate" type="number" min="1")
+          .form-group
+            label EK-Preis / Kiste (€)
+            input(v-model="newBev.purchase_price" type="number" step="0.01" min="0")
+        .dialog-actions
+          button.btn-save(type="button" @click="saveNewBeverage") Anlegen
+          button.btn-cancel-dialog(type="button" @click="showNewBeverage = false") Abbrechen
 
     .form-actions
       button.btn-save(type="submit" :disabled="isLoading")
@@ -471,5 +531,64 @@ h2 {
 .btn-save:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.new-bev-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.new-bev-dialog {
+  background: white;
+  border: 0.5rem solid black;
+  padding: 2rem;
+  width: min(90vw, 500px);
+}
+
+.new-bev-dialog h3 {
+  margin: 0 0 1.5rem;
+  font-weight: 900;
+  font-size: 1.25rem;
+}
+
+.new-bev-dialog input {
+  padding: 0.625rem;
+  border: 0.25rem solid black;
+  font-size: 0.95rem;
+  font-weight: 600;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.new-bev-dialog input:focus {
+  outline: none;
+  background: black;
+  color: white;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel-dialog {
+  padding: 0.75rem 2rem;
+  background: white;
+  color: black;
+  border: 0.25rem solid black;
+  font-weight: 900;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-cancel-dialog:hover {
+  background: black;
+  color: white;
 }
 </style>
