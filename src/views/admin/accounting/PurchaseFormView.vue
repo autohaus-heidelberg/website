@@ -548,6 +548,11 @@ h2 {
   border: 0.5rem solid black;
   padding: 2rem;
   width: min(90vw, 500px);
+  box-sizing: border-box;
+}
+
+.new-bev-dialog .form-row {
+  grid-template-columns: 1fr;
 }
 
 .new-bev-dialog h3 {
