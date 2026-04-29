@@ -35,8 +35,12 @@ function beverageName(id: number): string {
   return b?.name ?? `#${id}`
 }
 
+function formatCurrency(val: number): string {
+  return val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
+
 function formatTotal(p: Purchase): string {
-  return parseFloat(p.invoice_total || '0').toFixed(2)
+  return formatCurrency(parseFloat(p.invoice_total || '0'))
 }
 
 function itemLabel(p: Purchase): string {
@@ -68,7 +72,7 @@ const totalDepositValue = computed(() =>
 )
 
 function formatPrice(val: string | number): string {
-  return parseFloat(String(val) || '0').toFixed(2)
+  return formatCurrency(parseFloat(String(val) || '0'))
 }
 
 function groupQuantity(items: StockEntry[]): number {
@@ -125,8 +129,8 @@ onMounted(() => {
     .stock-header(@click="showStock = !showStock")
       h3 Lagerbestand
       .stock-totals(v-if="stockWithQty.length")
-        span.summary-item Wert: {{ formatPrice(totalStockValue) }} €
-        span.summary-item Pfand: {{ formatPrice(totalDepositValue) }} €
+        span.summary-item Wert: {{ formatPrice(totalStockValue) }}
+        span.summary-item Pfand: {{ formatPrice(totalDepositValue) }}
       span.stock-empty(v-else) Leer
       span.toggle {{ showStock ? '▲' : '▼' }}
 
@@ -146,13 +150,13 @@ onMounted(() => {
               .col-stock
                 span.stock-qty {{ item.quantity }}
                 span.stock-hint(v-if="item.crates") ({{ item.crates }}×{{ item.units_per_crate }}er{{ item.loose_bottles ? ' +' + item.loose_bottles : '' }})
-              span.col-value {{ formatPrice(item.stock_value) }} €
+              span.col-value {{ formatPrice(item.stock_value) }}
             .table-row.row-subtotal
               span.col-name Σ {{ groupName }}
               span.col-size
               .col-stock
                 span.stock-qty {{ groupQuantity(items) }}
-              span.col-value {{ formatPrice(groupStockValue(items)) }} €
+              span.col-value {{ formatPrice(groupStockValue(items)) }}
 
         .stock-table.total-table
           .table-row.row-total
@@ -160,7 +164,7 @@ onMounted(() => {
             span.col-size
             .col-stock
               span.stock-qty {{ stockWithQty.reduce((s, e) => s + (e.quantity || 0), 0) }}
-            span.col-value {{ formatPrice(totalStockValue) }} €
+            span.col-value {{ formatPrice(totalStockValue) }}
 
       .stock-empty-message(v-else)
         | Lager ist leer — noch keine Einkäufe vorhanden.
@@ -179,7 +183,7 @@ onMounted(() => {
 
       .purchase-items(v-if="p.items?.length")
         span {{ itemLabel(p) }}
-        |  · Gesamt: {{ formatTotal(p) }} €
+        |  · Gesamt: {{ formatTotal(p) }}
 
       .purchase-footer
         .purchase-actions

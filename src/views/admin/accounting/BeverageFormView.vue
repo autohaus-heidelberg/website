@@ -89,7 +89,7 @@ onMounted(() => {
     router-link.btn-cancel(to="/admin/beverages") Abbrechen
 
   form.beverage-form(@submit.prevent="handleSubmit")
-    .form-group
+    .form-group.full
       label(for="name") Name
       input#name(
         v-model="form.name"
@@ -98,8 +98,8 @@ onMounted(() => {
         required
       )
 
-    .form-group
-      label(for="supplier_group") Lieferantengruppe
+    .form-group.full
+      label(for="supplier_group") Lieferant
       input#supplier_group(
         v-model="form.supplier_group"
         type="text"
@@ -110,9 +110,10 @@ onMounted(() => {
       datalist#supplier-suggestions
         option(v-for="s in supplierSuggestions" :key="s" :value="s")
 
+    h3.section-title Preise
     .form-row
       .form-group
-        label(for="purchase_price") Einkaufspreis (ohne Pfand)
+        label(for="purchase_price") EK / Kiste
         .input-with-unit
           input#purchase_price(
             v-model="form.purchase_price"
@@ -125,7 +126,7 @@ onMounted(() => {
           span.unit €
 
       .form-group
-        label(for="selling_price") Verkaufspreis (Einzel)
+        label(for="selling_price") VK / Flasche
         .input-with-unit
           input#selling_price(
             v-model="form.selling_price"
@@ -148,42 +149,41 @@ onMounted(() => {
           )
           span.unit €
 
+    h3.section-title Gebinde & Flasche
     .form-row
       .form-group
-        label(for="units_per_crate") Einheiten pro Gebinde
+        label(for="units_per_crate") Fl. / Kiste
         input#units_per_crate(
           v-model.number="form.units_per_crate"
           type="number"
           min="1"
-          placeholder="z.B. 24"
+          placeholder="24"
         )
-        .hint z.B. 24 für 24er-Kiste, 1 für Einzelflaschen
 
       .form-group
-        label(for="bottle_size") Flaschengröße
-        .input-with-unit
-          input#bottle_size(
-            v-model="form.bottle_size"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="z.B. 0,33"
-          )
-          span.unit L
-        .hint z.B. 0,33, 0,5, 0,7, 0,75, 1,0
+        label(for="bottle_size") Größe (L)
+        input#bottle_size(
+          v-model="form.bottle_size"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.33"
+        )
 
+    h3.section-title Ausschank
+    .hint.section-hint Nur nötig wenn aus einer Flasche mehrere Portionen ausgeschenkt werden
+    .form-row
       .form-group
-        label(for="portions_per_bottle") Portionen pro Flasche
+        label(for="portions_per_bottle") Portionen / Fl.
         input#portions_per_bottle(
           v-model.number="form.portions_per_bottle"
           type="number"
           min="1"
-          placeholder="leer = 1:1"
+          placeholder="leer = 1"
         )
-        .hint Nur für Ausschank (z.B. 3 Gläser aus 0,7L Flasche)
 
       .form-group
-        label(for="selling_price_portion") Preis pro Portion
+        label(for="selling_price_portion") VK / Portion
         .input-with-unit
           input#selling_price_portion(
             v-model="form.selling_price_portion"
@@ -193,7 +193,6 @@ onMounted(() => {
             placeholder="0.00"
           )
           span.unit €
-        .hint Verkaufspreis pro Glas/Becher
 
     .form-row
       .form-group
@@ -251,8 +250,26 @@ h2 {
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
+}
+
+.form-group.full {
+  grid-column: 1 / -1;
+}
+
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 0.25rem solid black;
+  padding-bottom: 0.375rem;
+  margin: 0;
+}
+
+.section-hint {
+  margin-top: -0.75rem;
 }
 
 .form-group {

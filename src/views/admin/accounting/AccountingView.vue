@@ -800,7 +800,7 @@ onMounted(() => {
             button.btn-pretix.btn-apply(
               v-if="pretixData"
               @click="applyPretixData"
-            ) Übernehmen ({{ pretixData.total_tickets }} Tickets, {{ pretixData.total_revenue.toFixed(2) }} €)
+            ) Übernehmen ({{ pretixData.total_tickets }} Tickets, {{ formatCurrency(pretixData.total_revenue) }})
             span.pretix-error(v-if="pretixError") {{ pretixError }}
           .pretix-actions(v-if="group.sources.includes('bar_paypal')")
             button.btn-pretix(
@@ -810,7 +810,7 @@ onMounted(() => {
             button.btn-pretix.btn-apply(
               v-if="paypalBarData"
               @click="applyPaypalBarData"
-            ) Übernehmen ({{ paypalBarTotals.count }} Transaktionen, {{ paypalBarTotals.amount.toFixed(2) }} €)
+            ) Übernehmen ({{ paypalBarTotals.count }} Transaktionen, {{ formatCurrency(paypalBarTotals.amount) }})
             span.pretix-error(v-if="paypalBarError") {{ paypalBarError }}
         .revenue-table
           .revenue-header
@@ -867,31 +867,31 @@ onMounted(() => {
             template(v-if="source === 'vvk_pretix' && pretixData")
               .revenue-row.sub-row(v-for="(info, src) in pretixData.by_source" :key="src")
                 .col-source.sub-source {{ src === 'vvk_stripe' ? '└ Stripe' : src === 'vvk_paypal' ? '└ PayPal' : '└ ' + src }}
-                .col-amount.sub-val {{ info.revenue.toFixed(2) }} €
+                .col-amount.sub-val {{ formatCurrency(info.revenue) }}
                 .col-amount.sub-val —
-                .col-amount.sub-val {{ info.fees.toFixed(2) }} €
+                .col-amount.sub-val {{ formatCurrency(info.fees) }}
                 .col-amount.sub-val
               .revenue-row.sub-row
                 .col-source.sub-source └ Pretix-Gebühr
                 .col-amount.sub-val
                 .col-amount.sub-val —
-                .col-amount.sub-val {{ pretixData.pretix_fee.toFixed(2) }} €
+                .col-amount.sub-val {{ formatCurrency(pretixData.pretix_fee) }}
                 .col-amount.sub-val
             template(v-if="source === 'bar_paypal' && paypalBarData")
               .revenue-row.sub-row.sub-toggle(@click="paypalBarExpanded = !paypalBarExpanded")
                 .col-source.sub-source {{ paypalBarExpanded ? '▼' : '▶' }} {{ paypalBarTotals.count }} Transaktionen
-                .col-amount.sub-val {{ paypalBarTotals.amount.toFixed(2) }} €
+                .col-amount.sub-val {{ formatCurrency(paypalBarTotals.amount) }}
                 .col-amount.sub-val —
-                .col-amount.sub-val {{ paypalBarTotals.fees.toFixed(2) }} €
-                .col-amount.sub-val {{ paypalBarTotals.net.toFixed(2) }} €
+                .col-amount.sub-val {{ formatCurrency(paypalBarTotals.fees) }}
+                .col-amount.sub-val {{ formatCurrency(paypalBarTotals.net) }}
               template(v-if="paypalBarExpanded")
                 .revenue-row.sub-row.sub-detail(v-for="(txn, idx) in paypalBarData.transactions" :key="idx")
                   .col-source.sub-source.sub-detail-source
                     span └ {{ txn.name }} · {{ formatTime(txn.timestamp) }}
-                  .col-amount.sub-val {{ txn.amount.toFixed(2) }} €
+                  .col-amount.sub-val {{ formatCurrency(txn.amount) }}
                   .col-amount.sub-val —
-                  .col-amount.sub-val {{ txn.fee.toFixed(2) }} €
-                  .col-amount.sub-val {{ txn.net.toFixed(2) }} €
+                  .col-amount.sub-val {{ formatCurrency(txn.fee) }}
+                  .col-amount.sub-val {{ formatCurrency(txn.net) }}
                   button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
 
         .group-total

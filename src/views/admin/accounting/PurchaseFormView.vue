@@ -114,10 +114,14 @@ async function scanReceipt(event: Event) {
   }
 }
 
+function formatCurrency(val: number): string {
+  return val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
+
 const computedTotal = computed(() => {
-  return (form.value.items ?? [])
+  const total = (form.value.items ?? [])
     .reduce((sum, item) => sum + parseFloat(item.total_price || '0'), 0)
-    .toFixed(2)
+  return formatCurrency(total)
 })
 
 // Per-row crate/loose state (not sent to API, only for UI)
@@ -168,7 +172,7 @@ function beverageName(id: number): string {
 }
 
 function formatItemTotal(item: PurchaseItem): string {
-  return parseFloat(item.total_price || '0').toFixed(2)
+  return formatCurrency(parseFloat(item.total_price || '0'))
 }
 
 async function loadData() {
@@ -250,7 +254,7 @@ onMounted(() => {
         input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0")
       .form-group
         label Berechnete Summe
-        .computed-total {{ computedTotal }} €
+        .computed-total {{ computedTotal }}
       .form-group
         label(for="notes") Notizen
         textarea#notes(v-model="form.notes" rows="2")
