@@ -226,6 +226,7 @@ onMounted(() => {
   padding: 2rem;
   border: 0.5rem solid black;
   max-width: 700px;
+  overflow: hidden;
 }
 
 .form-header {
@@ -250,8 +251,8 @@ h2 {
 
 .form-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
 }
 
 .form-group {
@@ -273,6 +274,9 @@ input[type="number"] {
   font-size: 1rem;
   font-family: inherit;
   font-weight: 600;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 input:focus {
