@@ -133,6 +133,7 @@ onMounted(() => {
   background: white;
   padding: 2rem;
   border: 0.5rem solid black;
+  overflow: hidden;
 }
 
 .header {
@@ -212,6 +213,7 @@ h2 {
 
 .beverages-table {
   width: 100%;
+  overflow-x: auto;
 }
 
 .sortable {
@@ -227,9 +229,10 @@ h2 {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 45px 50px 90px 90px 90px 70px;
-  gap: 1.25rem;
+  grid-template-columns: 1fr 45px 50px 80px 80px 80px 60px;
+  gap: 0.75rem;
   padding: 0.5rem 1rem;
+  min-width: 0;
 }
 
 .table-header {
