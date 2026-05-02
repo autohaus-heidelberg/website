@@ -9,6 +9,7 @@ dayjs.locale('de')
 
 const title = ref('')
 const content = ref('')
+const textContent = ref('')
 const isGenerating = ref(false)
 const isSending = ref(false)
 const sendSuccess = ref<'test' | 'live' | null>(null)
@@ -34,6 +35,10 @@ function getOrderedArtists(event: Event): Artist[] {
   return event.artists
 }
 
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim()
+}
+
 function buildNewsletterHtml(events: Event[]): string {
   let html = ''
 
@@ -43,6 +48,11 @@ function buildNewsletterHtml(events: Event[]): string {
 
     html += `<h2>Diese Woche im Autohaus: ${dateStr} – ${event.title}</h2>\n`
     html += `<p><strong>Einlass: ${timeStr} Uhr</strong></p>\n`
+
+    if (event.image_url) {
+      html += `<p><img src="${event.image_url}" alt="${event.title}" style="max-width:100%;height:auto;"></p>\n`
+    }
+
     html += event.descriptionShort + '\n'
 
     const artists = getOrderedArtists(event)
@@ -66,6 +76,39 @@ function buildNewsletterHtml(events: Event[]): string {
   html += `<p style="font-size: 0.85em; color: #666;">Du möchtest keine Newsletter mehr erhalten? <a href="{%link_unsubscribe}">Hier abmelden</a></p>\n`
 
   return html
+}
+
+function buildNewsletterText(events: Event[]): string {
+  let text = ''
+
+  for (const event of events) {
+    const dateStr = dayjs(event.date).locale('de').format('dddd, DD. MMMM YYYY')
+    const timeStr = dayjs(event.date).format('HH:mm')
+
+    text += `Diese Woche im Autohaus: ${dateStr} – ${event.title}\n`
+    text += `${'='.repeat(60)}\n\n`
+    text += `Einlass: ${timeStr} Uhr\n\n`
+    text += stripHtml(event.descriptionShort) + '\n'
+
+    const artists = getOrderedArtists(event)
+    for (const artist of artists) {
+      text += `\n--- ${artist.name} ---\n`
+      if (artist.description) {
+        text += stripHtml(artist.description) + '\n'
+      }
+    }
+
+    text += `\nMehr Infos: https://altesauto.haus/event/${event.id}\n`
+    if (event.shopLink) {
+      text += `Tickets kaufen: ${event.shopLink}\n`
+    }
+    text += `\n${'─'.repeat(40)}\n\n`
+  }
+
+  text += `Zur Homepage: https://altesauto.haus\n\n`
+  text += `Du möchtest keine Newsletter mehr erhalten? {%link_unsubscribe}\n`
+
+  return text
 }
 
 async function generateProposal() {
@@ -96,6 +139,7 @@ async function generateProposal() {
     })
     title.value = titleParts.join('  /  ')
     content.value = buildNewsletterHtml(weekEvents)
+    textContent.value = buildNewsletterText(weekEvents)
   } catch (e: any) {
     error.value = 'Fehler beim Laden der Events: ' + (e?.message || e)
   } finally {
@@ -110,7 +154,7 @@ async function sendNewsletter(test = false) {
   sendSuccess.value = null
 
   try {
-    await eventService.sendNewsletter(title.value, content.value, test)
+    await eventService.sendNewsletter(title.value, content.value, textContent.value, test)
     sendSuccess.value = test ? 'test' : 'live'
   } catch (e: any) {
     error.value = 'Fehler beim Versenden: ' + (e?.message || e)
@@ -152,6 +196,14 @@ async function sendNewsletter(test = false) {
         v-model="content"
         placeholder="Newsletter-Inhalt als HTML..."
         rows="20"
+      )
+
+    .field
+      label(for="newsletter-text") Textversion (Plain Text)
+      textarea#newsletter-text(
+        v-model="textContent"
+        placeholder="Newsletter-Inhalt als reiner Text..."
+        rows="15"
       )
 
   .send-section(v-if="title && content")

@@ -108,8 +108,8 @@ export const eventService = {
   /**
    * Send newsletter via Rapidmail
    */
-  async sendNewsletter(subject: string, html_content: string, test = false): Promise<{ success: boolean }> {
-    return api.post<{ success: boolean }>('/api/newsletter/send/', { subject, html_content, test })
+  async sendNewsletter(subject: string, html_content: string, text_content: string, test = false): Promise<{ success: boolean }> {
+    return api.post<{ success: boolean }>('/api/newsletter/send/', { subject, html_content, text_content, test })
   },
 
   /**
