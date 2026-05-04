@@ -40,6 +40,37 @@
         ]
     },
     {
+        "id": "blackboxmassacre20260522",
+        "date": "2026-05-22T18:00:00+00:00",
+        "title": "Fuzz Sagrado, Zuendung",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Nachtigall, ick h&ouml;r dir trapsen - FUZZ SAGRADO. Quasi eine AllStar Band. Mit Christian Peters, dem ehemaligen Kopf von Samsara Blues Experiment und inzwischen in Brasilien beheimatet, Steffen Schneider von Spaceship Landing, Charlie Paschen von Coogans Bluff und Raphael Nigbur u.a. mit den letzten zwei genannten bei Blackbox Massacre. Aufmerksamen Liebhabern ausufernder Psychedelic-Stoner-Jams sollten die Namen durchaus gel&auml;ufig sein, treiben sie doch bereits seit geraumer Zeit ihr musikalisches Unwesen.</p>\n<p>Support gibt's von den Lokalmatadoren Z&Uuml;NDUNG (HD): M&uuml;helos verdichtet die 3erCombo mittels Hochspannungsfunken Garage Rock mit psychedelischem Stoner zu einem explosiven Gemisch. F&uuml;r eine effiziente akustische Entfaltung empfiehlt sich bestm&ouml;glicher Kraftstoffeinsatz bei h&ouml;chstem Verbrennungsdruck.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/blackboxmassacre20260522/",
+        "img": "/img/6c769695-4160-42f8-a215-d75e6e317b95.jpeg",
+        "artists": [
+            {
+                "name": "Fuzz Sagrado",
+                "link": "",
+                "description": "Quasi eine AllStar Band. Mit Christian Peters, dem ehemaligen Kopf von Samsara Blues Experiment und inzwischen in Brasilien beheimatet, Steffen Schneider von Spaceship Landing, Charlie Paschen von Coogans Bluff und Raphael Nigbur u.a. mit den letzten zwei genannten bei Blackbox Massacre. Aufmerksamen Liebhabern ausufernder Psychedelic-Stoner-Jams sollten die Namen durchaus gel\u00e4ufig sein, treiben sie doch bereits seit geraumer Zeit ihr musikalisches Unwesen.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            },
+            {
+                "name": "Z\u00fcndung",
+                "link": "",
+                "description": "M\u00fchelos verdichtet die heidelberger 3erCombo mittels Hochspannungsfunken Garage Rock mit psychedelischem Stoner, zu einem explosiven Gemisch. F\u00fcr eine effiziente akustische Entfaltung empfiehlt sich bestm\u00f6glicher Kraftstoffeinsatz bei h\u00f6chstem Verbrennungsdruck.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/E8AfSq1EZls",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1521329932/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/030bc54f-b6ce-4083-9acc-06867216e6be.png"
+            }
+        ]
+    },
+    {
         "id": "zoomies-howileft",
         "date": "2026-05-16T18:00:00+00:00",
         "title": "Zoomies (Americana, Leipzig), How I Left (Indie, Karlsruhe)",
