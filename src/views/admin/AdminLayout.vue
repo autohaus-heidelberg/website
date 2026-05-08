@@ -59,30 +59,40 @@ watch(isMobileMenuOpen, (isOpen) => {
 
   nav.admin-nav(:class="{ 'is-open': isMobileMenuOpen }")
     .admin-nav-header
-      h1 Event Management
+      h1 Veranstaltungsverwaltung
       .user-info
         .username {{ authStore.user?.username }}
         .user-groups(v-if="authStore.user?.groups.length")
           span.group(v-for="group in authStore.user.groups" :key="group") {{ group }}
-        button.btn-logout(@click="handleLogout") Logout
+        .nav-controls
+          button.btn-logout(@click="handleLogout") Abmelden
 
     .admin-nav-links
       router-link.nav-link(to="/admin" exact-active-class="active" @click="handleNavigation")
-        span Dashboard
+        span Übersicht
       router-link.nav-link(to="/admin/events" active-class="active" @click="handleNavigation")
-        span Events
+        span Veranstaltungen
       router-link.nav-link(to="/admin/artists" active-class="active" @click="handleNavigation")
-        span Artists
+        span Künstler
       router-link.nav-link(to="/admin/sync" active-class="active" @click="handleNavigation")
-        span Event Sync
-      router-link.nav-link(to="/admin/settings" active-class="active" @click="handleNavigation")
-        span Settings
-      router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
-        span Checklist Templates
+        span Event-Sync
       router-link.nav-link(to="/admin/newsletter" active-class="active" @click="handleNavigation")
         span Newsletter
+
+      .nav-divider
+      router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
+        span Getränke
+      router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
+        span Einkäufe & Lager
+
+      .nav-divider
+      router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
+        span Checklisten-Vorlagen
+      router-link.nav-link(to="/admin/settings" active-class="active" @click="handleNavigation")
+        span Einstellungen
+
       router-link.nav-link(to="/" @click="handleNavigation")
-        span Public Site
+        span Öffentliche Seite
 
   main.admin-content
     router-view
@@ -164,6 +174,27 @@ watch(isMobileMenuOpen, (isOpen) => {
   filter: brightness(120%);
 }
 
+.nav-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-locale {
+  padding: 0.625rem;
+  background: white;
+  color: black;
+  border: 0.25rem solid black;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-locale:hover {
+  background: black;
+  color: white;
+}
+
 .admin-nav-links {
   display: flex;
   flex-direction: column;
@@ -197,6 +228,12 @@ watch(isMobileMenuOpen, (isOpen) => {
   color: white;
   border: 0.25rem solid black;
   transform: rotate(-1deg);
+}
+
+.nav-divider {
+  height: 0.25rem;
+  background: black;
+  margin: 0.5rem 0;
 }
 
 .admin-content {

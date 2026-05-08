@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { checklistTemplateService, type ChecklistTemplateItem } from '@/services'
 
@@ -19,11 +19,11 @@ const form = ref<Partial<ChecklistTemplateItem>>({
 const isLoading = ref(false)
 const error = ref('')
 
-const phaseOptions = [
-  { value: 'before', label: 'BEFORE - Vor dem Event' },
-  { value: 'during', label: 'DURING - Während dem Event' },
-  { value: 'after', label: 'AFTER - Nach dem Event' }
-]
+const phaseOptions = computed(() => [
+  { value: 'before', label: 'BEFORE - Vor der Veranstaltung' },
+  { value: 'during', label: 'DURING - Während der Veranstaltung' },
+  { value: 'after', label: 'AFTER - Nach der Veranstaltung' }
+])
 
 async function loadTemplate() {
   if (!props.id) return
@@ -32,13 +32,13 @@ async function loadTemplate() {
     const template = await checklistTemplateService.getById(Number(props.id))
     form.value = { ...template }
   } catch (e: any) {
-    error.value = 'Failed to load template'
+    error.value = 'Vorlage konnte nicht geladen werden'
   }
 }
 
 async function handleSubmit() {
   if (!form.value.name || !form.value.stage || !form.value.phase) {
-    error.value = 'Please fill in all required fields'
+    error.value = 'Bitte alle Pflichtfelder ausfüllen'
     return
   }
 
@@ -54,7 +54,7 @@ async function handleSubmit() {
 
     router.push('/admin/checklist-templates')
   } catch (e: any) {
-    error.value = e.message || 'Failed to save template'
+    error.value = e.message || 'Vorlage konnte nicht gespeichert werden'
   } finally {
     isLoading.value = false
   }
@@ -69,12 +69,12 @@ onMounted(async () => {
 .checklist-template-form-view
   .form-container
     .form-header
-      h2 {{ isEditing ? 'Edit Checklist Template' : 'Create Checklist Template' }}
-      router-link.btn-cancel(to="/admin/checklist-templates") Cancel
+      h2 {{ isEditing ? 'Checklisten-Vorlage bearbeiten' : 'Checklisten-Vorlage erstellen' }}
+      router-link.btn-cancel(to="/admin/checklist-templates") Abbrechen
 
     form.template-form(@submit.prevent="handleSubmit")
       .form-group
-        label(for="name") Template Name *
+        label(for="name") Vorlagenname *
         input#name(
           v-model="form.name"
           required
@@ -83,7 +83,7 @@ onMounted(async () => {
         .field-hint Beschreibung der Aufgabe/Tätigkeit
 
       .form-group
-        label(for="stage") Stage/Bereich *
+        label(for="stage") Bereich *
         input#stage(
           v-model="form.stage"
           required
@@ -111,8 +111,8 @@ onMounted(async () => {
           type="submit"
           :disabled="isLoading"
         )
-          | {{ isLoading ? 'Saving...' : (isEditing ? 'Update Template' : 'Create Template') }}
-        router-link.btn-secondary(to="/admin/checklist-templates") Cancel
+          | {{ isLoading ? 'Speichern...' : (isEditing ? 'Vorlage aktualisieren' : 'Checklisten-Vorlage erstellen') }}
+        router-link.btn-secondary(to="/admin/checklist-templates") Abbrechen
 </template>
 
 <style scoped>

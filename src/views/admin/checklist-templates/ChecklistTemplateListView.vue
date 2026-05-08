@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { checklistTemplateService, type ChecklistTemplateItem } from '@/services'
 import type { PaginatedResponse } from '@/types/api'
 
+
 const templatesData = ref<PaginatedResponse<ChecklistTemplateItem> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
@@ -46,11 +47,11 @@ const templatesByPhase = computed(() => {
   return grouped
 })
 
-const phaseLabels: Record<string, string> = {
+const phaseLabels = computed<Record<string, string>>(() => ({
   before: 'BEFORE - Vor der Veranstaltung',
   during: 'DURING - Während der Veranstaltung',
-  after: 'AFTER - Nach der Veranstaltung'
-}
+  after: 'AFTER - Nach der Veranstaltung',
+}))
 
 const phaseOptions = [
   { value: 'before', label: 'BEFORE' },
@@ -65,7 +66,7 @@ async function loadTemplates() {
   try {
     templatesData.value = await checklistTemplateService.getAll()
   } catch (e: any) {
-    error.value = e.message || 'Failed to load checklist templates'
+    error.value = e.message || 'Checklisten-Vorlagen konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
@@ -94,7 +95,7 @@ async function saveEdit() {
     editingId.value = null
     editingForm.value = {}
   } catch (e: any) {
-    alert('Failed to update template: ' + e.message)
+    alert('Fehler beim Aktualisieren: ' + e.message)
   } finally {
     isSaving.value = false
   }
@@ -135,14 +136,14 @@ async function saveNew() {
       phase: 'before'
     }
   } catch (e: any) {
-    alert('Failed to create template: ' + e.message)
+    alert('Fehler beim Erstellen: ' + e.message)
   } finally {
     isSaving.value = false
   }
 }
 
 async function deleteTemplate(template: ChecklistTemplateItem) {
-  if (!confirm(`Delete checklist template "${template.name}"?\n\nNote: This will NOT affect existing events, only future events.`)) return
+  if (!confirm(t('checklists.confirmDelete', { name: template.name }))) return
 
   try {
     await checklistTemplateService.delete(template.id!)
@@ -151,7 +152,7 @@ async function deleteTemplate(template: ChecklistTemplateItem) {
       templatesData.value.count--
     }
   } catch (e: any) {
-    alert('Failed to delete template: ' + e.message)
+    alert('Fehler beim Löschen: ' + e.message)
   }
 }
 
@@ -184,18 +185,18 @@ onMounted(() => {
 <template lang="pug">
 .checklist-template-list-view
   .header
-    h2 Checklist Templates
+    h2 Checklisten-Vorlagen
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Search templates..."
+        placeholder="Vorlagen suchen..."
       )
 
   .help-text
     | Klick auf Zeile zum Bearbeiten • Enter speichern • Escape abbrechen
 
-  .loading(v-if="isLoading") Loading templates...
+  .loading(v-if="isLoading") Vorlagen werden geladen...
   .error(v-else-if="error") {{ error }}
 
   .templates-container(v-else)
@@ -311,10 +312,10 @@ onMounted(() => {
                 button.btn-cancel(@click="cancelAdd") Abbrechen
 
       .empty(v-if="!phaseTemplates.length && addingPhase !== phase")
-        | Keine Templates für diese Phase
+        | Keine Vorlagen für diese Phase
 
     .empty(v-if="!templates.length && !isLoading")
-      | Keine Checklist Templates vorhanden. Klicke "+ Neu" um eines zu erstellen.
+      | Keine Checklisten-Vorlagen vorhanden.
 </template>
 
 <style scoped>
