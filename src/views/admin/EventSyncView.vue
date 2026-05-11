@@ -1,10 +1,10 @@
 <template lang="pug">
 .event-sync
-  h1 Event Synchronization
+  h1 Event-Synchronisierung
 
   .error-banner(v-if="sseError")
     .error-content
-      strong SSE Connection Error:
+      strong SSE-Verbindungsfehler:
       |  {{ sseError }}
 
   .actions.mb-2
@@ -13,17 +13,17 @@
       @click="handleWriteToWebsite"
       :disabled="isSyncing || isWriting || selectedEvents.length === 0"
     )
-      span(v-if="!isWriting") Write to Website ({{ selectedEvents.length }} selected)
-      span(v-else) Writing...
+      span(v-if="!isWriting") Auf Website schreiben ({{ selectedEvents.length }} ausgewählt)
+      span(v-else) Wird geschrieben...
 
   EventSyncLog(:logs="logs")
 
   .event-list.mb-2
-    h2 Events
+    h2 Veranstaltungen
     .select-all-container.mb-1
       label.checkbox-label
-        input(type="checkbox" v-model="selectAll")
-        span Select All ({{ events.length }} events)
+        input(type="checkbox" v-model="selectAll" @change="toggleSelectAll")
+        span Alle auswählen ({{ events.length }} Veranstaltungen)
 
     .table-container(v-if="events.length > 0")
       table.event-table
@@ -31,8 +31,8 @@
           tr
             th.col-select
             th.col-id ID
-            th.col-date Date
-            th.col-title Title
+            th.col-date Datum
+            th.col-title Titel
         tbody
           tr(v-for="event in events" :key="event.id")
             td.col-select
@@ -42,18 +42,18 @@
             td.col-title {{ event.title }}
 
     .loading(v-else-if="isLoadingEvents")
-      p Loading events...
+      p Veranstaltungen werden geladen...
 
     .empty-state(v-else)
-      p No events found in the database.
+      p Keine Veranstaltungen in der Datenbank gefunden.
 
 
   button.btn-primary(
     @click="handleSyncFromGit"
     :disabled="isSyncing || isWriting"
   )
-    span(v-if="!isSyncing") Sync from Git ( Diesen Button nur benutzen wenn ihr wisst was ihr tut)
-    span(v-else) Syncing...
+    span(v-if="!isSyncing") Von Git synchronisieren (Diesen Button nur benutzen wenn ihr wisst was ihr tut)
+    span(v-else) Wird synchronisiert...
 
 </template>
 

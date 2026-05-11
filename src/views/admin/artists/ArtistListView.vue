@@ -36,7 +36,7 @@ async function loadArtists() {
 }
 
 async function deleteArtist(artist: Artist) {
-  if (!confirm(`Delete artist "${artist.name}"?`)) return
+  if (!confirm(`Künstler "${artist.name}" löschen?`)) return
 
   try {
     await artistService.delete(artist.id!)
@@ -46,7 +46,7 @@ async function deleteArtist(artist: Artist) {
       artistsData.value.count--
     }
   } catch (e: any) {
-    alert('Failed to delete artist: ' + e.message)
+    alert('Fehler beim Löschen: ' + e.message)
   }
 }
 
@@ -58,16 +58,16 @@ onMounted(() => {
 <template lang="pug">
 .artist-list-view
   .header
-    h2 Artists
+    h2 Künstler
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Search artists..."
+        placeholder="Künstler suchen..."
       )
-      router-link.btn-primary(to="/admin/artists/create") Create Artist
+      router-link.btn-primary(to="/admin/artists/create") Künstler erstellen
 
-  .loading(v-if="isLoading") Loading artists...
+  .loading(v-if="isLoading") Künstler werden geladen...
   .error(v-else-if="error") {{ error }}
 
   .artists-grid(v-else-if="filteredArtists.length")
@@ -87,10 +87,10 @@ onMounted(() => {
           a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") Bandcamp
 
       .artist-actions
-        router-link.btn-edit(:to="`/admin/artists/${artist.id}`") Edit
-        button.btn-delete(@click="deleteArtist(artist)") Delete
+        router-link.btn-edit(:to="`/admin/artists/${artist.id}`") Bearbeiten
+        button.btn-delete(@click="deleteArtist(artist)") Löschen
 
-  .empty(v-else) No artists found
+  .empty(v-else) Keine Künstler gefunden
 </template>
 
 <style scoped>

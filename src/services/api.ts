@@ -1,6 +1,9 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios'
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://content.hopfner.cc'
+// In dev mode, use empty string so requests are relative (→ Vite proxy handles /api/*)
+// In production, use the configured URL
+const envUrl = import.meta.env.VITE_API_BASE_URL
+export const API_BASE_URL = envUrl !== undefined ? envUrl : 'https://content.hopfner.cc'
 
 class ApiClient {
   private client: AxiosInstance
@@ -81,7 +84,8 @@ class ApiClient {
 
   // POST request
   async post<T>(url: string, data?: any): Promise<T> {
-    const response = await this.client.post<T>(url, data)
+    const config = data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {}
+    const response = await this.client.post<T>(url, data, config)
     return response.data
   }
 
@@ -124,6 +128,10 @@ class ApiClient {
       },
     })
     return response.data
+  }
+
+  getBaseUrl(): string {
+    return API_BASE_URL
   }
 }
 

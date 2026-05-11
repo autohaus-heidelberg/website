@@ -115,6 +115,55 @@ const router = createRouter({
           component: () => import('../views/admin/checklist-templates/ChecklistTemplateFormView.vue'),
           props: true
         },
+        // Accounting routes
+        {
+          path: 'beverages',
+          name: 'admin-beverages',
+          component: () => import('../views/admin/accounting/BeverageListView.vue')
+        },
+        {
+          path: 'beverages/create',
+          name: 'admin-beverage-create',
+          component: () => import('../views/admin/accounting/BeverageFormView.vue')
+        },
+        {
+          path: 'beverages/:id',
+          name: 'admin-beverage-edit',
+          component: () => import('../views/admin/accounting/BeverageFormView.vue'),
+          props: true
+        },
+        {
+          path: 'accounting',
+          redirect: { name: 'admin-events' }
+        },
+        {
+          path: 'accounting/tax-export',
+          name: 'admin-tax-export',
+          redirect: { name: 'admin-settings', query: { tab: 'euer' } }
+        },
+        {
+          path: 'accounting/:eventId',
+          name: 'admin-accounting-detail',
+          component: () => import('../views/admin/accounting/AccountingView.vue'),
+          props: true
+        },
+        // Purchase routes
+        {
+          path: 'purchases',
+          name: 'admin-purchases',
+          component: () => import('../views/admin/accounting/PurchaseListView.vue')
+        },
+        {
+          path: 'purchases/create',
+          name: 'admin-purchase-create',
+          component: () => import('../views/admin/accounting/PurchaseFormView.vue')
+        },
+        {
+          path: 'purchases/:id',
+          name: 'admin-purchase-edit',
+          component: () => import('../views/admin/accounting/PurchaseFormView.vue'),
+          props: true
+        },
         {
           path: 'newsletter',
           name: 'admin-newsletter',

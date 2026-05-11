@@ -1,22 +1,32 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { eventService, type Event } from '@/services'
+import { eventService, accountingService, type Event } from '@/services'
+import type { EventAccounting } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 
 const router = useRouter()
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
+const accountings = ref<EventAccounting[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
 
 const events = computed(() => eventsData.value?.results || [])
 
+const eventsWithAccounting = computed(() => {
+  return events.value.map(event => {
+    const accounting = accountings.value.find(a => a.event === event.id)
+    return { ...event, accounting }
+  })
+})
+
 const filteredEvents = computed(() => {
-  if (!searchQuery.value) return events.value
+  const list = eventsWithAccounting.value
+  if (!searchQuery.value) return list
 
   const query = searchQuery.value.toLowerCase()
-  return events.value.filter(event =>
+  return list.filter(event =>
     event.title.toLowerCase().includes(query) ||
     event.id.toLowerCase().includes(query) ||
     event.artists.some(a => a.name.toLowerCase().includes(query))
@@ -28,7 +38,12 @@ async function loadEvents() {
   error.value = ''
 
   try {
-    eventsData.value = await eventService.getAll()
+    const [evData, accData] = await Promise.all([
+      eventService.getAll(),
+      accountingService.getAll(),
+    ])
+    eventsData.value = evData
+    accountings.value = accData.results
   } catch (e: any) {
     error.value = e.message || 'Failed to load events'
   } finally {
@@ -36,18 +51,32 @@ async function loadEvents() {
   }
 }
 
+async function createAccounting(eventId: string) {
+  try {
+    const accounting = await accountingService.create({
+      event: eventId,
+      status: 'draft',
+      notes: '',
+      deposit_return: '0.00',
+    })
+    accountings.value.push(accounting)
+  } catch (e: any) {
+    const msg = e.response?.data?.error || e.message
+    alert('Fehler beim Erstellen: ' + msg)
+  }
+}
+
 async function deleteEvent(event: Event) {
-  if (!confirm(`Delete event "${event.title}"?`)) return
+  if (!confirm(`Veranstaltung "${event.title}" wirklich löschen?`)) return
 
   try {
     await eventService.delete(event.id)
-    // Remove from local data
     if (eventsData.value) {
       eventsData.value.results = eventsData.value.results.filter(e => e.id !== event.id)
       eventsData.value.count--
     }
   } catch (e: any) {
-    alert('Failed to delete event: ' + e.message)
+    alert('Fehler beim Löschen: ' + e.message)
   }
 }
 
@@ -61,6 +90,16 @@ function formatDate(date: string) {
   })
 }
 
+function statusLabel(status?: string): string {
+  if (!status) return ''
+  return status === 'final' ? 'Abgeschlossen' : 'Entwurf'
+}
+
+function statusClass(status?: string): string {
+  if (!status) return ''
+  return status === 'final' ? 'status-final' : 'status-draft'
+}
+
 onMounted(() => {
   loadEvents()
 })
@@ -69,23 +108,26 @@ onMounted(() => {
 <template lang="pug">
 .event-list-view
   .header
-    h2 Events
+    h2 Veranstaltungen
     .header-actions
       input.search-input(
         v-model="searchQuery"
         type="text"
-        placeholder="Search events..."
+        placeholder="Veranstaltungen suchen..."
       )
-      router-link.btn-primary(to="/admin/events/create") Create Event
+      router-link.btn-primary(to="/admin/events/create") Veranstaltung erstellen
 
-  .loading(v-if="isLoading") Loading events...
+  .loading(v-if="isLoading") Veranstaltungen werden geladen...
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length > 0")
     .event-card(v-for="event in filteredEvents" :key="event.id")
       .event-header
         .event-id {{ event.id }}
-        .event-date {{ formatDate(event.date) }}
+        .event-header-right
+          span.status-badge(v-if="event.accounting" :class="statusClass(event.accounting.status)")
+            | {{ statusLabel(event.accounting.status) }}
+          .event-date {{ formatDate(event.date) }}
 
       h3.event-title {{ event.title }}
 
@@ -99,10 +141,18 @@ onMounted(() => {
           a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") Tickets
 
         .event-actions
-          router-link.btn-edit(:to="`/admin/events/${event.id}`") Edit
-          button.btn-delete(@click="deleteEvent(event)") Delete
+          router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
+          router-link.btn-accounting(
+            v-if="event.accounting"
+            :to="`/admin/accounting/${event.id}`"
+          ) Abrechnung öffnen
+          button.btn-accounting-start(
+            v-else
+            @click="createAccounting(event.id)"
+          ) Abrechnung starten
+          button.btn-delete(@click="deleteEvent(event)") Löschen
 
-  .empty(v-else) No events found
+  .empty(v-else) Keine Veranstaltungen gefunden
 
 </template>
 
@@ -198,6 +248,30 @@ h2 {
   margin-bottom: 0.75rem;
 }
 
+.event-header-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.status-draft {
+  background: black;
+  color: white;
+}
+
+.status-final {
+  background: black;
+  color: white;
+  text-decoration: underline;
+}
+
 .event-id {
   font-family: 'Courier New', monospace;
   font-size: 0.875rem;
@@ -272,7 +346,7 @@ h2 {
   gap: 0.75rem;
 }
 
-.btn-edit, .btn-delete {
+.btn-edit, .btn-delete, .btn-accounting, .btn-accounting-start {
   padding: 0.5rem 1rem;
   border: 0.25rem solid black;
   cursor: pointer;
@@ -292,7 +366,18 @@ h2 {
   color: white;
 }
 
-.btn-edit:hover, .btn-delete:hover {
+.btn-accounting {
+  background: white;
+  color: black;
+}
+
+.btn-accounting-start {
+  background: white;
+  color: black;
+  border-style: dashed;
+}
+
+.btn-edit:hover, .btn-delete:hover, .btn-accounting:hover, .btn-accounting-start:hover {
   filter: brightness(120%);
 }
 </style>

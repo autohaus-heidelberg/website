@@ -26,30 +26,30 @@ onMounted(async () => {
 
 <template lang="pug">
 .dashboard
-  h2 Welcome, {{ authStore.user?.username }}!
+  h2 Willkommen, {{ authStore.user?.username || 'Admin' }}!
 
   .stats-grid(v-if="!isLoading")
     .stat-card
       .stat-info
         .stat-value {{ eventsCount }}
-        .stat-label Events
-      router-link.stat-link(to="/admin/events") Manage Events
+        .stat-label Veranstaltungen
+      router-link.stat-link(to="/admin/events") Veranstaltungen verwalten
 
     .stat-card
       .stat-info
         .stat-value {{ artistsCount }}
-        .stat-label Artists
-      router-link.stat-link(to="/admin/artists") Manage Artists
+        .stat-label Künstler
+      router-link.stat-link(to="/admin/artists") Künstler verwalten
 
-  .loading(v-else) Loading stats...
+  .loading(v-else) Lade Statistiken...
 
   .quick-actions
-    h3 Quick Actions
+    h3 Schnellaktionen
     .actions-grid
       router-link.action-btn(to="/admin/events/create")
-        span Create New Event
+        span Neue Veranstaltung erstellen
       router-link.action-btn(to="/admin/artists/create")
-        span Create New Artist
+        span Neuen Künstler erstellen
 </template>
 
 <style scoped>

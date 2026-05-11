@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { settingsService } from '@/services'
+import { taxExportService, type TaxSummaryResponse } from '@/services/accounting'
+
+const route = useRoute()
+
 
 // State
-const activeTab = ref('helferpad')
+const initialTab = route.query.tab === 'euer' ? 'euer' : 'helferpad'
+const activeTab = ref(initialTab)
 const helferpadContent = ref('')
 const settingId = ref<number>()
 const isLoading = ref(false)
@@ -11,10 +17,51 @@ const isSaving = ref(false)
 const error = ref('')
 const success = ref('')
 
+// EÜR state
+const currentYear = new Date().getFullYear()
+const selectedYear = ref(currentYear)
+const taxSummary = ref<TaxSummaryResponse | null>(null)
+const taxLoading = ref(false)
+const taxError = ref('')
+const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
+
+async function loadTaxSummary() {
+  taxLoading.value = true
+  taxError.value = ''
+  try {
+    taxSummary.value = await taxExportService.getSummary(selectedYear.value)
+  } catch (e: any) {
+    taxError.value = e.message || 'Daten konnten nicht geladen werden'
+  } finally {
+    taxLoading.value = false
+  }
+}
+
+async function downloadExcel() {
+  try {
+    await taxExportService.downloadExcel(selectedYear.value)
+  } catch (e: any) {
+    alert('Export fehlgeschlagen: ' + e.message)
+  }
+}
+
+async function downloadCsv() {
+  try {
+    await taxExportService.downloadCsv(selectedYear.value)
+  } catch (e: any) {
+    alert('Export fehlgeschlagen: ' + e.message)
+  }
+}
+
+function formatCurrency(value: number): string {
+  return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
+
 // Load helferpad setting on mount
 onMounted(async () => {
   isLoading.value = true
   error.value = ''
+  if (activeTab.value === 'euer') loadTaxSummary()
 
   try {
     const setting = await settingsService.getByName('helferpad')
@@ -25,7 +72,7 @@ onMounted(async () => {
       // Setting doesn't exist yet - will create on first save
       helferpadContent.value = 'HelferPad'
     } else {
-      error.value = 'Failed to load settings'
+      error.value = 'Einstellungen konnten nicht geladen werden'
       console.error('Error loading settings:', err)
     }
   } finally {
@@ -49,12 +96,12 @@ async function handleSave() {
       settingId.value = created.id
     }
 
-    success.value = 'Settings saved successfully!'
+    success.value = 'Einstellungen erfolgreich gespeichert!'
     setTimeout(() => {
       success.value = ''
     }, 3000)
   } catch (err: any) {
-    error.value = err.message || 'Failed to save settings'
+    error.value = err.message || 'Einstellungen konnten nicht gespeichert werden'
     console.error('Error saving settings:', err)
   } finally {
     isSaving.value = false
@@ -65,7 +112,7 @@ async function handleSave() {
 <template lang="pug">
 .settings-view
   .settings-header
-    h2 Settings
+    h2 Einstellungen
 
   .tabs-nav
     button.tab-button(
@@ -73,11 +120,16 @@ async function handleSave() {
       @click="activeTab = 'helferpad'"
     )
       | Helferpad
+    button.tab-button(
+      :class="{ active: activeTab === 'euer' }"
+      @click="activeTab = 'euer'; if (!taxSummary) loadTaxSummary()"
+    )
+      | EÜR / Steuer-Export
 
   .tab-content(v-show="activeTab === 'helferpad'")
     .section-description
-      p Default content that appears in new Helferpad documents
-      p.replacements-title Available placeholders:
+      p Standardinhalt für neue Helferpad-Dokumente
+      p.replacements-title Verfügbare Platzhalter:
       ul.replacements-list(v-pre)
         li #[code {{Eventname}}] - Event title
         li #[code {{EventDate}}] - Event start date/time (German timezone)
@@ -85,19 +137,19 @@ async function handleSave() {
         li #[code {{EventSoundCheck}}] - Event start minus 2 hours (German timezone)
         li #[code {{EventDinner}}] - Event start minus 1 hour (German timezone)
         li #[code {{EntranceFee}}] - AK price (or [TBA] if not set)
-        li #[code {{EventLink}}] - Link to event website 
-        li #[code {{EntranceShifts}}] - Einlass schichten (start zum Event start Date, anderthalb stunden schichten) 
-        li #[code {{BarShifts}}] - Bar schichten  (start zum Event start Date, anderthalb stunden schichten) 
+        li #[code {{EventLink}}] - Link to event website
+        li #[code {{EntranceShifts}}] - Einlass-Schichten (Start zum Event-Datum, 1,5h Schichten)
+        li #[code {{BarShifts}}] - Bar-Schichten (Start zum Event-Datum, 1,5h Schichten)
     form.setting-form(@submit.prevent="handleSave")
       .form-group
-        label(for="helferpad-content") Default Content
+        label(for="helferpad-content") Standardinhalt
         textarea#helferpad-content(
           v-model="helferpadContent"
           :disabled="isLoading || isSaving"
           rows="15"
-          placeholder="Enter default Helferpad content..."
+          placeholder="Standardinhalt für Helferpad eingeben..."
         )
-        .field-hint Plain text only
+        .field-hint Nur Klartext
 
       .error(v-if="error") {{ error }}
       .success(v-if="success") {{ success }}
@@ -107,7 +159,60 @@ async function handleSave() {
           type="submit"
           :disabled="isSaving || isLoading"
         )
-          | {{ isSaving ? 'Saving...' : 'Save Changes' }}
+          | {{ isSaving ? 'Speichern...' : 'Änderungen speichern' }}
+
+  .tab-content(v-show="activeTab === 'euer'")
+    .euer-header
+      select.year-select(v-model="selectedYear" @change="loadTaxSummary")
+        option(v-for="y in years" :key="y" :value="y") {{ y }}
+      .euer-actions
+        button.btn-export(@click="downloadExcel") Excel
+        button.btn-export-secondary(@click="downloadCsv") CSV
+
+    .loading(v-if="taxLoading") Laden...
+    .error(v-else-if="taxError") {{ taxError }}
+
+    template(v-else-if="taxSummary")
+      .summary-section
+        h3 Übersicht {{ selectedYear }}
+        .sphere-cards
+          .sphere-card(
+            v-for="(data, key) in taxSummary.spheres"
+            :key="key"
+            v-show="data.income || data.expense"
+          )
+            .sphere-label {{ data.label }}
+            .sphere-row
+              span.label Einnahmen
+              span.value.income {{ formatCurrency(data.income) }}
+            .sphere-row
+              span.label Ausgaben
+              span.value.expense {{ formatCurrency(data.expense) }}
+            .sphere-row.result
+              span.label Ergebnis
+              span.value(:class="data.result >= 0 ? 'positive' : 'negative'")
+                | {{ formatCurrency(data.result) }}
+
+      .vat-section
+        h3 Umsatzsteuer
+        .vat-table
+          .vat-row
+            span.label USt 7% (Eintritt)
+            span.value {{ formatCurrency(taxSummary.vat.ust_7) }}
+          .vat-row
+            span.label USt 19% (Bar)
+            span.value {{ formatCurrency(taxSummary.vat.ust_19) }}
+          .vat-row.subtotal
+            span.label USt gesamt
+            span.value {{ formatCurrency(taxSummary.vat.ust_total) }}
+          .vat-row
+            span.label Vorsteuer
+            span.value -{{ formatCurrency(taxSummary.vat.vorsteuer) }}
+          .vat-row.total
+            span.label Zahllast
+            span.value {{ formatCurrency(taxSummary.vat.zahllast) }}
+
+    .empty(v-else) Keine Daten für {{ selectedYear }}
 </template>
 
 <style scoped>
@@ -283,6 +388,126 @@ textarea:disabled {
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.euer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.euer-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.year-select {
+  padding: 0.5rem 1rem;
+  border: 0.25rem solid black;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.btn-export, .btn-export-secondary {
+  padding: 0.625rem 1.25rem;
+  border: 0.25rem solid black;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-export {
+  background: black;
+  color: white;
+}
+
+.btn-export-secondary {
+  background: white;
+  color: black;
+}
+
+.btn-export:hover { opacity: 0.85; }
+.btn-export-secondary:hover { background: #f0f0f0; }
+
+.summary-section, .vat-section {
+  margin-bottom: 2rem;
+}
+
+.summary-section h3, .vat-section h3 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  font-weight: 700;
+}
+
+.sphere-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.sphere-card {
+  border: 0.2rem solid black;
+  padding: 1.25rem;
+}
+
+.sphere-label {
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sphere-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.sphere-row.result {
+  border-top: 2px solid black;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  font-weight: 700;
+}
+
+.value.income { color: #16a34a; }
+.value.expense { color: #dc2626; }
+.value.positive { color: #16a34a; }
+.value.negative { color: #dc2626; }
+
+.vat-table {
+  max-width: 400px;
+  border: 0.2rem solid black;
+  padding: 1rem 1.25rem;
+}
+
+.vat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+}
+
+.vat-row.subtotal {
+  border-top: 1px solid #ccc;
+  padding-top: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.vat-row.total {
+  border-top: 2px solid black;
+  padding-top: 0.6rem;
+  margin-top: 0.25rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.loading, .empty {
+  padding: 2rem;
+  text-align: center;
+  color: #666;
 }
 
 @media (max-width: 768px) {
