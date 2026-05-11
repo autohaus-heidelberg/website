@@ -849,6 +849,10 @@ onMounted(() => {
         @click="activeTab = 'expenses'"
       ) Ausgaben
       button.tab(
+        :class="{ active: activeTab === 'documents' }"
+        @click="activeTab = 'documents'"
+      ) Belege
+      button.tab(
         :class="{ active: activeTab === 'result' }"
         @click="activeTab = 'result'"
       ) Ergebnis
@@ -856,10 +860,6 @@ onMounted(() => {
         :class="{ active: activeTab === 'grant' }"
         @click="activeTab = 'grant'"
       ) Förderung
-      button.tab(
-        :class="{ active: activeTab === 'documents' }"
-        @click="activeTab = 'documents'"
-      ) Belege
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
@@ -1715,6 +1715,7 @@ h2 {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   margin-bottom: 0;
   border-bottom: 0.25rem solid black;

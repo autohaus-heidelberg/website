@@ -491,7 +491,8 @@ export interface EventDocument {
 
 export const documentService = {
   async list(eventId: string): Promise<EventDocument[]> {
-    return api.get<EventDocument[]>(`/api/events/${eventId}/documents/`)
+    const data = await api.get<any>(`/api/events/${eventId}/documents/`)
+    return Array.isArray(data) ? data : data.results || []
   },
 
   async upload(eventId: string, file: File, category: string): Promise<EventDocument> {
