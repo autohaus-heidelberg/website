@@ -149,26 +149,27 @@ onMounted(() => {
       span {{ f.name }}
       span.status ⏳ wird hochgeladen…
 
-    .upload-error(v-if="uploadError")
-      p ⚠️ {{ uploadError }}
-    table.documents-table
-      thead
-        tr
-          th Datei
-          th Hochgeladen
-          th Von
-          th
-      tbody
-        tr(v-for="doc in documents" :key="doc.id")
-          td
-            a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
-            span(v-else) {{ doc.file_name }}
-          td {{ formatDate(doc.uploaded_at) }}
-          td {{ doc.uploaded_by_name }}
-          td
-            button.btn-delete(@click="deleteDocument(doc)") ✕
+  .upload-error(v-if="uploadError")
+    p ⚠️ {{ uploadError }}
 
-  .empty-state(v-else)
+  table.documents-table(v-if="documents.length")
+    thead
+      tr
+        th Datei
+        th Hochgeladen
+        th Von
+        th
+    tbody
+      tr(v-for="doc in documents" :key="doc.id")
+        td
+          a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
+          span(v-else) {{ doc.file_name }}
+        td {{ formatDate(doc.uploaded_at) }}
+        td {{ doc.uploaded_by_name }}
+        td
+          button.btn-delete(@click="deleteDocument(doc)") ✕
+
+  .empty-state(v-if="!documents.length && !isLoadingDocs")
     p Noch keine Dokumente für dieses Event.
 </template>
 
