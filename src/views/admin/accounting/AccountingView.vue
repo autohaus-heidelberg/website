@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService } from '@/services'
+import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
-import type { PretixOrderSummary, PayPalBarSummary } from '@/services/accounting'
+import type { PretixOrderSummary, PayPalBarSummary, EventDocument } from '@/services/accounting'
 import type {
   EventAccounting,
   RevenueEntry,
@@ -88,6 +88,14 @@ const budgetRevGetraenke = ref('0')
 const budgetRevEigenmittel = ref('0')
 const budgetRevDrittmittel = ref('0')
 const budgetRevSonstige = ref('0')
+
+// ── Documents (Google Drive) ────────
+const documents = ref<EventDocument[]>([])
+const isLoadingDocs = ref(false)
+const uploadingFiles = ref<{ name: string }[]>([])
+const dragOver = ref(false)
+const fileInputRef = ref<HTMLInputElement | null>(null)
+const uploadError = ref('')
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -747,8 +755,66 @@ function removeBudgetItem(category: 'kuenstler' | 'sachkosten' | 'sonstiges', in
   else budgetSonstiges.value.splice(index, 1)
 }
 
+// ── Document Methods ─────────────────────────────────────────────
+
+async function loadDocuments() {
+  isLoadingDocs.value = true
+  try {
+    documents.value = await documentService.list(props.eventId)
+  } catch {
+    // silently fail — documents are non-critical
+  } finally {
+    isLoadingDocs.value = false
+  }
+}
+
+function triggerFileUpload() {
+  fileInputRef.value?.click()
+}
+
+async function handleFileUpload(e: globalThis.Event) {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  await uploadFiles(Array.from(input.files))
+  input.value = ''
+}
+
+function handleDrop(e: DragEvent) {
+  dragOver.value = false
+  const files = e.dataTransfer?.files
+  if (files?.length) {
+    uploadFiles(Array.from(files))
+  }
+}
+
+async function uploadFiles(files: File[]) {
+  uploadError.value = ''
+  for (const file of files) {
+    uploadingFiles.value.push({ name: file.name })
+    try {
+      const doc = await documentService.upload(props.eventId, file)
+      documents.value.unshift(doc)
+    } catch (err: any) {
+      uploadError.value = err.response?.data?.error || 'Upload fehlgeschlagen'
+    } finally {
+      uploadingFiles.value = uploadingFiles.value.filter(f => f.name !== file.name)
+    }
+  }
+}
+
+async function deleteDocument(doc: EventDocument) {
+  if (!confirm(`"${doc.file_name}" wirklich löschen?`)) return
+  try {
+    await documentService.remove(props.eventId, doc.id)
+    documents.value = documents.value.filter(d => d.id !== doc.id)
+  } catch (err: any) {
+    console.error('Delete failed:', err)
+  }
+}
+
 onMounted(() => {
   loadData()
+  loadDocuments()
 })
 </script>
 
@@ -782,6 +848,10 @@ onMounted(() => {
         :class="{ active: activeTab === 'expenses' }"
         @click="activeTab = 'expenses'"
       ) Ausgaben
+      button.tab(
+        :class="{ active: activeTab === 'documents' }"
+        @click="activeTab = 'documents'"
+      ) Belege
       button.tab(
         :class="{ active: activeTab === 'result' }"
         @click="activeTab = 'result'"
@@ -1461,6 +1531,63 @@ onMounted(() => {
             .detail-row
               span Anzahl Förderanträge
               span.amount {{ grantSummary.grant_count }}
+
+    //- ── Documents Tab ──
+    .tab-content(v-if="activeTab === 'documents'")
+      .documents-tab
+        .section-header
+          h3.section-title Belege
+          .header-actions
+            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
+            router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
+
+        input.file-input(
+          ref="fileInputRef"
+          type="file"
+          multiple
+          @change="handleFileUpload"
+          style="display: none"
+        )
+
+        .drop-zone(
+          @dragover.prevent="dragOver = true"
+          @dragleave="dragOver = false"
+          @drop.prevent="handleDrop"
+          :class="{ 'drag-over': dragOver }"
+        )
+          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
+          p(v-else) Loslassen zum Hochladen…
+
+        .upload-progress(v-if="uploadingFiles.length")
+          .upload-item(v-for="f in uploadingFiles" :key="f.name")
+            span {{ f.name }}
+            span.status ⏳ wird hochgeladen…
+
+        .upload-error(v-if="uploadError")
+          p ⚠️ {{ uploadError }}
+
+        .documents-list(v-if="documents.length")
+          table.documents-table
+            thead
+              tr
+                th Datei
+                th Hochgeladen
+                th Von
+                th
+            tbody
+              tr(v-for="doc in documents" :key="doc.id")
+                td
+                  a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
+                  span(v-else) {{ doc.file_name }}
+                td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
+                td {{ doc.uploaded_by_name }}
+                td
+                  button.btn-delete(@click="deleteDocument(doc)") ✕
+
+        .empty-state(v-else-if="!isLoadingDocs")
+          p Noch keine Belege hochgeladen.
+
+        .loading(v-if="isLoadingDocs") Belege werden geladen…
 </template>
 
 <style scoped>
@@ -1591,6 +1718,7 @@ h2 {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0;
   margin-bottom: 0;
   border-bottom: 0.25rem solid black;
@@ -2628,5 +2756,94 @@ h2 {
 
 .summary-section {
   margin-top: 1rem;
+}
+
+/* ── Documents Tab ─────────────────────────────── */
+.documents-tab .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.documents-tab .header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.btn-upload {
+  background: var(--color-accent, #4f46e5);
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #666;
+  color: inherit;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.drop-zone {
+  border: 2px dashed #444;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  transition: border-color 0.2s, background 0.2s;
+}
+.drop-zone.drag-over {
+  border-color: var(--color-accent, #4f46e5);
+  background: rgba(79, 70, 229, 0.05);
+}
+.upload-progress {
+  margin-bottom: 1rem;
+}
+.upload-error {
+  background: #fff3cd;
+  border: 1px solid #856404;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  color: #856404;
+}
+.upload-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+.documents-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.documents-table th,
+.documents-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+.doc-link {
+  color: var(--color-accent, #4f46e5);
+  text-decoration: none;
+}
+.doc-link:hover {
+  text-decoration: underline;
+}
+.btn-delete {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.6;
 }
 </style>

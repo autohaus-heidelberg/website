@@ -133,6 +133,12 @@ const router = createRouter({
           props: true
         },
         {
+          path: 'events/:eventId/documents',
+          name: 'admin-event-documents',
+          component: () => import('../views/admin/events/EventDocumentsView.vue'),
+          props: true
+        },
+        {
           path: 'accounting',
           redirect: { name: 'admin-events' }
         },

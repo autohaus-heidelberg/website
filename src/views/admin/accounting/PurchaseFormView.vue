@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { purchaseService, beverageService } from '@/services'
 import type { Purchase, PurchaseItem, BeverageItem } from '@/types/accounting'
 
@@ -9,7 +9,9 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const isEditing = !!props.id
+const eventId = (route.query.event_id as string) || ''
 
 const form = ref<Partial<Purchase>>({
   date: new Date().toISOString().slice(0, 10),
@@ -81,7 +83,7 @@ async function scanReceipt(event: Event) {
   error.value = ''
 
   try {
-    const result = await purchaseService.scanReceipt(file)
+    const result = await purchaseService.scanReceipt(file, eventId || undefined)
     // Clear existing items
     form.value.items = []
     itemCrates.value = []

@@ -278,10 +278,11 @@ export const purchaseService = {
     await api.delete(`/api/purchases/${id}/`)
   },
 
-  async scanReceipt(imageFile: File): Promise<{ items: any[], raw: string }> {
+  async scanReceipt(imageFile: File, eventId?: string): Promise<{ items: any[], raw: string, drive_upload?: { file_id: string, url: string } }> {
     const formData = new FormData()
     formData.append('image', imageFile)
-    return api.post<{ items: any[], raw: string }>('/api/purchases/scan/', formData)
+    if (eventId) formData.append('event_id', eventId)
+    return api.post<{ items: any[], raw: string, drive_upload?: { file_id: string, url: string } }>('/api/purchases/scan/', formData)
   },
 }
 
@@ -472,5 +473,38 @@ export const taxExportService = {
     a.download = `EUER_${year}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  },
+}
+
+export interface EventDocument {
+  id: number
+  event: string
+  file_name: string
+  drive_file_id: string
+  drive_url: string
+  uploaded_by: number | null
+  uploaded_by_name: string
+  uploaded_at: string
+  warning?: string
+}
+
+export const documentService = {
+  async list(eventId: string): Promise<EventDocument[]> {
+    const data = await api.get<any>(`/api/events/${eventId}/documents/`)
+    return Array.isArray(data) ? data : data.results || []
+  },
+
+  async upload(eventId: string, file: File): Promise<EventDocument> {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<EventDocument>(`/api/events/${eventId}/documents/`, formData)
+  },
+
+  async remove(eventId: string, docId: number): Promise<void> {
+    return api.delete(`/api/events/${eventId}/documents/${docId}/`)
+  },
+
+  async createDriveFolder(eventId: string): Promise<{ drive_folder_id: string; event_id: string }> {
+    return api.post(`/api/events/${eventId}/create-drive-folder/`)
   },
 }
