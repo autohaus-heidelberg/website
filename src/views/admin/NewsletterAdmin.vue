@@ -49,8 +49,9 @@ function buildNewsletterHtml(events: Event[]): string {
     html += `<h2>Diese Woche im Autohaus: ${dateStr} – ${event.title}</h2>\n`
     html += `<p><strong>Einlass: ${timeStr} Uhr</strong></p>\n`
 
-    if (event.image_url) {
-      html += `<p><img src="${event.image_url}" alt="${event.title}" style="max-width:100%;height:auto;"></p>\n`
+    if (event.image) {
+      const filename = event.image.replace(/^.*upload\//, '')
+      html += `<p><img src="https://altesauto.haus/img/${filename}" alt="${event.title}" style="max-width:100%;height:auto;"></p>\n`
     }
 
     html += event.descriptionShort + '\n'
