@@ -14,23 +14,11 @@ const event = ref<Event | null>(null)
 const documents = ref<EventDocument[]>([])
 const isLoading = ref(false)
 const isLoadingDocs = ref(false)
-const uploadCategory = ref('beleg')
 const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
 const driveFolderCreating = ref(false)
 const uploadError = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
-
-const CATEGORY_LABELS: Record<string, string> = {
-  beleg: 'Beleg',
-  vertrag: 'Vertrag',
-  rider: 'Rider',
-  sonstiges: 'Sonstiges',
-}
-
-function categoryLabel(cat: string) {
-  return CATEGORY_LABELS[cat] || cat
-}
 
 async function loadEvent() {
   isLoading.value = true
@@ -78,7 +66,7 @@ async function uploadFiles(files: File[]) {
   for (const file of files) {
     uploadingFiles.value.push({ name: file.name })
     try {
-      const doc = await documentService.upload(props.eventId, file, uploadCategory.value)
+      const doc = await documentService.upload(props.eventId, file)
       documents.value.unshift(doc)
     } catch (err: any) {
       uploadError.value = err.response?.data?.error || 'Upload fehlgeschlagen'
@@ -147,14 +135,6 @@ onMounted(() => {
     style="display: none"
   )
 
-  .upload-bar
-    label Kategorie:
-    select(v-model="uploadCategory")
-      option(value="beleg") Beleg
-      option(value="vertrag") Vertrag
-      option(value="rider") Rider
-      option(value="sonstiges") Sonstiges
-
   .drop-zone(
     @dragover.prevent="dragOver = true"
     @dragleave="dragOver = false"
@@ -175,7 +155,6 @@ onMounted(() => {
       thead
         tr
           th Datei
-          th Kategorie
           th Hochgeladen
           th Von
           th
@@ -184,7 +163,6 @@ onMounted(() => {
           td
             a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
             span(v-else) {{ doc.file_name }}
-          td {{ categoryLabel(doc.category) }}
           td {{ formatDate(doc.uploaded_at) }}
           td {{ doc.uploaded_by_name }}
           td

@@ -479,7 +479,6 @@ export const taxExportService = {
 export interface EventDocument {
   id: number
   event: string
-  category: string
   file_name: string
   drive_file_id: string
   drive_url: string
@@ -495,10 +494,9 @@ export const documentService = {
     return Array.isArray(data) ? data : data.results || []
   },
 
-  async upload(eventId: string, file: File, category: string): Promise<EventDocument> {
+  async upload(eventId: string, file: File): Promise<EventDocument> {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('category', category)
     return api.post<EventDocument>(`/api/events/${eventId}/documents/`, formData)
   },
 

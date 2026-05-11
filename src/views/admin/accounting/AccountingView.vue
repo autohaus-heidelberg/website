@@ -89,15 +89,13 @@ const budgetRevEigenmittel = ref('0')
 const budgetRevDrittmittel = ref('0')
 const budgetRevSonstige = ref('0')
 
-// ── Documents (Google Drive) — only Belege in Abrechnung ────────
+// ── Documents (Google Drive) ────────
 const documents = ref<EventDocument[]>([])
 const isLoadingDocs = ref(false)
 const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
-
-const belegDocuments = computed(() => documents.value.filter(d => d.category === 'beleg'))
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -794,7 +792,7 @@ async function uploadFiles(files: File[]) {
   for (const file of files) {
     uploadingFiles.value.push({ name: file.name })
     try {
-      const doc = await documentService.upload(props.eventId, file, 'beleg')
+      const doc = await documentService.upload(props.eventId, file)
       documents.value.unshift(doc)
     } catch (err: any) {
       uploadError.value = err.response?.data?.error || 'Upload fehlgeschlagen'
@@ -1568,7 +1566,7 @@ onMounted(() => {
         .upload-error(v-if="uploadError")
           p ⚠️ {{ uploadError }}
 
-        .documents-list(v-if="belegDocuments.length")
+        .documents-list(v-if="documents.length")
           table.documents-table
             thead
               tr
@@ -1577,7 +1575,7 @@ onMounted(() => {
                 th Von
                 th
             tbody
-              tr(v-for="doc in belegDocuments" :key="doc.id")
+              tr(v-for="doc in documents" :key="doc.id")
                 td
                   a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
                   span(v-else) {{ doc.file_name }}
