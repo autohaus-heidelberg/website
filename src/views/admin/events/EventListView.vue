@@ -142,6 +142,7 @@ onMounted(() => {
 
         .event-actions
           router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
+          router-link.btn-docs(:to="`/admin/events/${event.id}/documents`") 📎 Dokumente
           router-link.btn-accounting(
             v-if="event.accounting"
             :to="`/admin/accounting/${event.id}`"
@@ -346,7 +347,7 @@ h2 {
   gap: 0.75rem;
 }
 
-.btn-edit, .btn-delete, .btn-accounting, .btn-accounting-start {
+.btn-edit, .btn-delete, .btn-accounting, .btn-accounting-start, .btn-docs {
   padding: 0.5rem 1rem;
   border: 0.25rem solid black;
   cursor: pointer;
@@ -377,7 +378,12 @@ h2 {
   border-style: dashed;
 }
 
-.btn-edit:hover, .btn-delete:hover, .btn-accounting:hover, .btn-accounting-start:hover {
+.btn-docs {
+  background: white;
+  color: black;
+}
+
+.btn-edit:hover, .btn-delete:hover, .btn-accounting:hover, .btn-accounting-start:hover, .btn-docs:hover {
   filter: brightness(120%);
 }
 </style>

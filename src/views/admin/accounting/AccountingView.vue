@@ -89,14 +89,14 @@ const budgetRevEigenmittel = ref('0')
 const budgetRevDrittmittel = ref('0')
 const budgetRevSonstige = ref('0')
 
-// ── Documents (Google Drive) ─────────────────────────────────────
+// ── Documents (Google Drive) — only Belege in Abrechnung ────────
 const documents = ref<EventDocument[]>([])
 const isLoadingDocs = ref(false)
-const uploadCategory = ref('beleg')
 const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
-const driveFolderCreating = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+
+const belegDocuments = computed(() => documents.value.filter(d => d.category === 'beleg'))
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -757,16 +757,6 @@ function removeBudgetItem(category: 'kuenstler' | 'sachkosten' | 'sonstiges', in
 }
 
 // ── Document Methods ─────────────────────────────────────────────
-const CATEGORY_LABELS: Record<string, string> = {
-  beleg: 'Beleg',
-  vertrag: 'Vertrag',
-  rider: 'Rider',
-  sonstiges: 'Sonstiges',
-}
-
-function categoryLabel(cat: string) {
-  return CATEGORY_LABELS[cat] || cat
-}
 
 async function loadDocuments() {
   isLoadingDocs.value = true
@@ -802,7 +792,7 @@ async function uploadFiles(files: File[]) {
   for (const file of files) {
     uploadingFiles.value.push({ name: file.name })
     try {
-      const doc = await documentService.upload(props.eventId, file, uploadCategory.value)
+      const doc = await documentService.upload(props.eventId, file, 'beleg')
       documents.value.unshift(doc)
     } catch (err: any) {
       console.error('Upload failed:', err)
@@ -819,25 +809,6 @@ async function deleteDocument(doc: EventDocument) {
     documents.value = documents.value.filter(d => d.id !== doc.id)
   } catch (err: any) {
     console.error('Delete failed:', err)
-  }
-}
-
-async function createDriveFolder() {
-  if (event.value?.drive_folder_id) {
-    // Open existing folder
-    window.open(`https://drive.google.com/drive/folders/${event.value.drive_folder_id}`, '_blank')
-    return
-  }
-  driveFolderCreating.value = true
-  try {
-    const result = await documentService.createDriveFolder(props.eventId)
-    if (event.value) {
-      (event.value as any).drive_folder_id = result.drive_folder_id
-    }
-  } catch (err: any) {
-    alert(err.response?.data?.error || 'Ordner-Erstellung fehlgeschlagen')
-  } finally {
-    driveFolderCreating.value = false
   }
 }
 
@@ -888,7 +859,7 @@ onMounted(() => {
       button.tab(
         :class="{ active: activeTab === 'documents' }"
         @click="activeTab = 'documents'"
-      ) Dokumente
+      ) Belege
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
@@ -1565,13 +1536,10 @@ onMounted(() => {
     .tab-content(v-if="activeTab === 'documents'")
       .documents-tab
         .section-header
-          h3.section-title Dokumente
+          h3.section-title Belege
           .header-actions
-            button.btn-upload(@click="triggerFileUpload") + Hochladen
-            button.btn-secondary(
-              @click="createDriveFolder"
-              :disabled="driveFolderCreating"
-            ) {{ event?.drive_folder_id ? '📂 Drive-Ordner öffnen' : '📁 Drive-Ordner erstellen' }}
+            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
+            router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
 
         input.file-input(
           ref="fileInputRef"
@@ -1581,21 +1549,13 @@ onMounted(() => {
           style="display: none"
         )
 
-        .upload-category
-          label Kategorie für Upload:
-          select(v-model="uploadCategory")
-            option(value="beleg") Beleg
-            option(value="vertrag") Vertrag
-            option(value="rider") Rider
-            option(value="sonstiges") Sonstiges
-
         .drop-zone(
           @dragover.prevent="dragOver = true"
           @dragleave="dragOver = false"
           @drop.prevent="handleDrop"
           :class="{ 'drag-over': dragOver }"
         )
-          p(v-if="!dragOver") Dateien hierher ziehen oder Button oben nutzen
+          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
           p(v-else) Loslassen zum Hochladen…
 
         .upload-progress(v-if="uploadingFiles.length")
@@ -1603,30 +1563,28 @@ onMounted(() => {
             span {{ f.name }}
             span.status ⏳ wird hochgeladen…
 
-        .documents-list(v-if="documents.length")
+        .documents-list(v-if="belegDocuments.length")
           table.documents-table
             thead
               tr
                 th Datei
-                th Kategorie
                 th Hochgeladen
                 th Von
                 th
             tbody
-              tr(v-for="doc in documents" :key="doc.id")
+              tr(v-for="doc in belegDocuments" :key="doc.id")
                 td
                   a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
                   span(v-else) {{ doc.file_name }}
-                td {{ categoryLabel(doc.category) }}
                 td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
                 td {{ doc.uploaded_by_name }}
                 td
                   button.btn-delete(@click="deleteDocument(doc)") ✕
 
         .empty-state(v-else-if="!isLoadingDocs")
-          p Noch keine Dokumente für dieses Event.
+          p Noch keine Belege hochgeladen.
 
-        .loading(v-if="isLoadingDocs") Dokumente werden geladen…
+        .loading(v-if="isLoadingDocs") Belege werden geladen…
 </template>
 
 <style scoped>
@@ -2822,19 +2780,7 @@ h2 {
   padding: 0.4rem 0.8rem;
   border-radius: 4px;
   cursor: pointer;
-}
-.upload-category {
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-.upload-category select {
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #444;
-  background: #1a1a1a;
-  color: inherit;
+  text-decoration: none;
 }
 .drop-zone {
   border: 2px dashed #444;
