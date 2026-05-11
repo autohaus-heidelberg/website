@@ -27,6 +27,7 @@ export interface Event {
   feeAk?: string
   shopLink?: string
   helferpadLink?: string
+  drive_folder_id?: string
   artistOrder?: string
   artists: Artist[]
   artist_ids?: number[]
