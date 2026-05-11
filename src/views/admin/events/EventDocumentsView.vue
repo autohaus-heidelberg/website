@@ -18,6 +18,7 @@ const uploadCategory = ref('beleg')
 const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
 const driveFolderCreating = ref(false)
+const uploadError = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -73,13 +74,14 @@ function handleDrop(e: DragEvent) {
 }
 
 async function uploadFiles(files: File[]) {
+  uploadError.value = ''
   for (const file of files) {
     uploadingFiles.value.push({ name: file.name })
     try {
       const doc = await documentService.upload(props.eventId, file, uploadCategory.value)
       documents.value.unshift(doc)
     } catch (err: any) {
-      console.error('Upload failed:', err)
+      uploadError.value = err.response?.data?.error || 'Upload fehlgeschlagen'
     } finally {
       uploadingFiles.value = uploadingFiles.value.filter(f => f.name !== file.name)
     }
@@ -167,9 +169,8 @@ onMounted(() => {
       span {{ f.name }}
       span.status ⏳ wird hochgeladen…
 
-  .loading(v-if="isLoadingDocs") Dokumente werden geladen…
-
-  .documents-list(v-else-if="documents.length")
+    .upload-error(v-if="uploadError")
+      p ⚠️ {{ uploadError }}
     table.documents-table
       thead
         tr
@@ -327,6 +328,14 @@ onMounted(() => {
 
 .btn-delete:hover {
   color: red;
+}
+
+.upload-error {
+  background: #fff3cd;
+  border: 0.2rem solid black;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
 }
 
 .empty-state {

@@ -95,6 +95,7 @@ const isLoadingDocs = ref(false)
 const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const uploadError = ref('')
 
 const belegDocuments = computed(() => documents.value.filter(d => d.category === 'beleg'))
 
@@ -789,13 +790,14 @@ function handleDrop(e: DragEvent) {
 }
 
 async function uploadFiles(files: File[]) {
+  uploadError.value = ''
   for (const file of files) {
     uploadingFiles.value.push({ name: file.name })
     try {
       const doc = await documentService.upload(props.eventId, file, 'beleg')
       documents.value.unshift(doc)
     } catch (err: any) {
-      console.error('Upload failed:', err)
+      uploadError.value = err.response?.data?.error || 'Upload fehlgeschlagen'
     } finally {
       uploadingFiles.value = uploadingFiles.value.filter(f => f.name !== file.name)
     }
@@ -1562,6 +1564,9 @@ onMounted(() => {
           .upload-item(v-for="f in uploadingFiles" :key="f.name")
             span {{ f.name }}
             span.status ⏳ wird hochgeladen…
+
+        .upload-error(v-if="uploadError")
+          p ⚠️ {{ uploadError }}
 
         .documents-list(v-if="belegDocuments.length")
           table.documents-table
@@ -2797,6 +2802,14 @@ h2 {
 }
 .upload-progress {
   margin-bottom: 1rem;
+}
+.upload-error {
+  background: #fff3cd;
+  border: 1px solid #856404;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  color: #856404;
 }
 .upload-item {
   display: flex;
