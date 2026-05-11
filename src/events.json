@@ -71,6 +71,18 @@
         ]
     },
     {
+        "id": "mm-260521",
+        "date": "2026-05-21T18:00:00+00:00",
+        "title": "Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<p><span data-olk-copy-source=\"MessageBody\">Ding-dong! Der Postbote ist da! </span></p>\n<p><span data-olk-copy-source=\"MessageBody\">Nur leider zur falschen Zeit am falschen Ort. Das klassische Wrong-Man-Szenario nimmt hier im Japan der 90er richtig Fahrt auf, denn der Regisseur wei&szlig;, wie man Rhythmus, Perspektive und Einstellungen so einsetzt, dass der Alltag unseres unbescholtenen B&uuml;rgers langsam, aber sicher v&ouml;llig entgleist. Absurd, witzig, einfallsreich, ein bisschen melancholisch, aber immer ziemlich charmant navigiert er durch zahllose Genres, von Slapstick &uuml;ber Action und Kom&ouml;die bis hin zur Romanze, und l&auml;sst es sich nicht nehmen, den Yakuza-Film mit seinen harten M&auml;nnern und noch h&auml;rteren Regeln liebevoll durch den Kakao zu ziehen &ndash; mit einem Hitman-Club, bei dem wir wohl alle gerne Mitglied w&auml;ren. </span></p>\n<p><span data-olk-copy-source=\"MessageBody\">Also: Schei&szlig; auf die Polizei. Werdet Yakuza. Oder folgt einfach dem abgeschnittenen Finger. Schwingt euch aufs Fahrrad und kommt am 21. Mai ins alte Autohaus.</span></p>\n<p><span style=\"color: #f1c40f;\" data-olk-copy-source=\"MessageBody\">Japanisch Original mit deutschen Untertiteln | <a class=\"Credits\" style=\"color: #f1c40f;\" href=\"https://www.karlstorkino.de/index.php?RUBRIK=4&amp;Document=40&amp;FSK=16\">FSK: 16</a>.</span></p>",
+        "descriptionLong": "",
+        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3516010506",
+        "img": "/img/4709b69e-471d-4900-9b14-8e5489b981bd.webp",
+        "artists": []
+    },
+    {
         "id": "zoomies-howileft",
         "date": "2026-05-16T18:00:00+00:00",
         "title": "Zoomies (Americana, Leipzig), How I Left (Indie, Karlsruhe)",
