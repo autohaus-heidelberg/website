@@ -153,7 +153,12 @@ const router = createRouter({
           component: () => import('../views/admin/accounting/AccountingView.vue'),
           props: true
         },
-        // Purchase routes
+        // Stock & Purchase routes
+        {
+          path: 'stock',
+          name: 'admin-stock',
+          component: () => import('../views/admin/accounting/StockView.vue')
+        },
         {
           path: 'purchases',
           name: 'admin-purchases',
