@@ -78,6 +78,22 @@ const auszahlungAmount = ref<number | null>(null)
 const sachbericht = ref('')
 const grantNotes = ref('')
 
+function generateDefaultSachbericht() {
+  if (!event.value) return
+  const e = event.value
+  const dateStr = new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })
+  const artistNames = e.artists.map(a => a.name)
+  let text = `Am ${dateStr} veranstaltete der Carousel e.V. die Veranstaltung „${e.title}" im Alten Autohaus Heidelberg.`
+  if (artistNames.length === 1) {
+    text += ` Es trat ${artistNames[0]} auf.`
+  } else if (artistNames.length > 1) {
+    const last = artistNames.pop()
+    text += ` Es traten ${artistNames.join(', ')} und ${last} auf.`
+  }
+  text += ' Die Veranstaltung war gut besucht und wurde vom Publikum positiv aufgenommen.'
+  sachbericht.value = text
+}
+
 // Budget plan (expected expenses & revenues for Antrag)
 const budgetKuenstler = ref<{ name: string; amount: string }[]>([])
 const budgetSachkosten = ref<{ name: string; amount: string }[]>([])
@@ -611,6 +627,15 @@ async function loadData() {
       revenues.value = acc.revenues ?? []
       inventory.value = acc.inventory_entries ?? []
       expenses.value = acc.expenses ?? []
+      // Auto-assign grant_category for known expense types
+      for (const exp of expenses.value) {
+        if (!exp.grant_category && exp.description) {
+          const desc = exp.description.toLowerCase()
+          if (/gema|ksk|künstlersozial/.test(desc)) {
+            exp.grant_category = 'sachkosten'
+          }
+        }
+      }
       splits.value = acc.splits ?? []
     } catch {
       // No accounting yet — create one
@@ -1548,7 +1573,9 @@ onMounted(() => {
               strong {{ formatCurrency(grantAmount) }}
 
           //- ── Sachbericht (for Verwendungsnachweis) ──
-          h3.section-title Sachbericht
+          .section-header-row
+            h3.section-title Sachbericht
+            button.btn-generate(@click="generateDefaultSachbericht" v-if="!sachbericht") Vorschlag generieren
           textarea.notes-input(
             v-model="sachbericht"
             placeholder="Kurze Beschreibung der Veranstaltung, Programm, Besucherzahl..."
@@ -1821,6 +1848,30 @@ h2 {
 
 .section-title-row .section-title {
   flex: 1;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.section-header-row .section-title {
+  flex: 1;
+}
+
+.btn-generate {
+  padding: 0.5rem 1rem;
+  background: black;
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.btn-generate:hover {
+  filter: brightness(150%);
 }
 
 .pretix-actions {
