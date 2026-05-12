@@ -2151,7 +2151,7 @@ h2 {
 
 .expense-header, .expense-row {
   display: grid;
-  grid-template-columns: 1fr auto auto auto 36px;
+  grid-template-columns: 1fr 100px 140px 140px 36px;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   align-items: center;
