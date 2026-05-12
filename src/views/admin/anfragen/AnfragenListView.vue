@@ -94,6 +94,9 @@ async function sendReply(anfrage: Anfrage) {
   try {
     await anfrageService.reply(anfrage.id, replySubject.value, replyMessage.value)
     anfrage.isRead = true
+    anfrage.lastReplySubject = replySubject.value
+    anfrage.lastReplyMessage = replyMessage.value
+    anfrage.lastReplyAt = new Date().toISOString()
     replySuccess.value = anfrage.id
     replyingTo.value = null
     replyMessage.value = ''
@@ -209,6 +212,13 @@ onMounted(() => {
           button.btn-delete(@click.stop="deleteAnfrage(anfrage)") Löschen
 
         .reply-success(v-if="replySuccess === anfrage.id") ✓ Antwort gesendet an {{ anfrage.contactEmail }}
+
+        .last-reply(v-if="anfrage.lastReplyAt")
+          .last-reply-header
+            strong Letzte Antwort
+            span.last-reply-date {{ formatDate(anfrage.lastReplyAt) }}
+          .last-reply-subject(v-if="anfrage.lastReplySubject") {{ anfrage.lastReplySubject }}
+          p.last-reply-body {{ anfrage.lastReplyMessage }}
 
         .reply-form(v-if="replyingTo === anfrage.id")
           .reply-header
@@ -520,6 +530,38 @@ h2 {
   border: 0.2rem solid #333;
   font-weight: 700;
   font-size: 0.85rem;
+}
+
+.last-reply {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border: 0.2rem solid #999;
+}
+
+.last-reply-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.last-reply-date {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.last-reply-subject {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.last-reply-body {
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  margin: 0;
 }
 
 .reply-form {
