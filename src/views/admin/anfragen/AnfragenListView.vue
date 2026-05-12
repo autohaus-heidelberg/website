@@ -392,34 +392,33 @@ h2 {
 
 .filter-chips {
   display: flex;
-  gap: 0.25rem;
 }
 
 .chip {
   padding: 0.4rem 0.9rem;
   border: 0.2rem solid black;
   background: white;
+  color: black;
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
+  margin-left: -0.2rem;
 }
 
 .chip:first-child {
-  border-right: none;
-}
-
-.chip:last-child {
-  border-left: none;
+  margin-left: 0;
 }
 
 .chip.active {
   background: black;
   color: white;
+  position: relative;
+  z-index: 1;
 }
 
 .chip:hover:not(.active) {
-  background: #f0f0f0;
+  background: #e8e8e8;
 }
 
 .filter-type select {
