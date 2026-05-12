@@ -134,11 +134,11 @@ p Wir sind das Carousel im alten Autohaus.
       p Wir sind ein gemeinnütziger Verein, getragen von ehrenamtlicher Arbeit. 
       p Unser Ziel ist die Förderung von Livemusik in Heidelberg.  
 
-    //- #anfragen
-    //-   h1 Anfragen
-    //-   p Für anfragen verwendet bitte unser Anfragenformular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen. 
-    //-   router-link(:to="{ name: 'requests' }")
-    //-     button Anfragenformular 
+    #anfragen
+      h1 Anfragen
+      p Für Anfragen verwendet bitte unser Anfragenformular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen.
+      router-link(:to="{ name: 'requests' }")
+        button Anfragenformular
 
     #impressum
       h1 Impressum
