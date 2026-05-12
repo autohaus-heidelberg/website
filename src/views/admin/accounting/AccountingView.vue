@@ -574,12 +574,12 @@ async function loadData() {
       })
     }
 
-    // Default splits: Thierry 33%, Carousel e.V. 67%
+    // Default splits: Bernd 33%, Carousel e.V. 67%
     if (splits.value.length === 0) {
       splits.value.push(
         {
           accounting: accounting.value?.id || 0,
-          participant_name: 'Thierry',
+          participant_name: 'Bernd',
           share_percentage: '33',
         },
         {
