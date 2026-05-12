@@ -179,6 +179,11 @@ const router = createRouter({
           path: 'newsletter',
           name: 'admin-newsletter',
           component: () => import('../views/admin/NewsletterAdmin.vue')
+        },
+        {
+          path: 'anfragen',
+          name: 'admin-anfragen',
+          component: () => import('../views/admin/anfragen/AnfragenListView.vue')
         }
       ]
     }
