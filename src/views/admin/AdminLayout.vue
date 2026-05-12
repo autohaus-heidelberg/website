@@ -83,7 +83,9 @@ watch(isMobileMenuOpen, (isOpen) => {
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
         span Getränke
       router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
-        span Einkäufe & Lager
+        span Einkäufe
+      router-link.nav-link(to="/admin/stock" active-class="active" @click="handleNavigation")
+        span Lagerbestand
 
       .nav-divider
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
