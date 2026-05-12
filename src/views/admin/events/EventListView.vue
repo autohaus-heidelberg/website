@@ -11,6 +11,14 @@ const accountings = ref<EventAccounting[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
+const activeFilter = ref<'all' | 'draft' | 'final' | 'none'>('all')
+
+const filters = [
+  { key: 'all' as const, label: 'Alle' },
+  { key: 'draft' as const, label: 'In Abrechnung' },
+  { key: 'final' as const, label: 'Abgeschlossen' },
+  { key: 'none' as const, label: 'Ohne Abrechnung' },
+]
 
 const events = computed(() => eventsData.value?.results || [])
 
@@ -22,7 +30,16 @@ const eventsWithAccounting = computed(() => {
 })
 
 const filteredEvents = computed(() => {
-  const list = eventsWithAccounting.value
+  let list = eventsWithAccounting.value
+
+  if (activeFilter.value === 'draft') {
+    list = list.filter(e => e.accounting?.status === 'draft')
+  } else if (activeFilter.value === 'final') {
+    list = list.filter(e => e.accounting?.status === 'final')
+  } else if (activeFilter.value === 'none') {
+    list = list.filter(e => !e.accounting)
+  }
+
   if (!searchQuery.value) return list
 
   const query = searchQuery.value.toLowerCase()
@@ -32,6 +49,15 @@ const filteredEvents = computed(() => {
     event.artists.some(a => a.name.toLowerCase().includes(query))
   )
 })
+
+function filterCount(key: string) {
+  const list = eventsWithAccounting.value
+  if (key === 'all') return list.length
+  if (key === 'draft') return list.filter(e => e.accounting?.status === 'draft').length
+  if (key === 'final') return list.filter(e => e.accounting?.status === 'final').length
+  if (key === 'none') return list.filter(e => !e.accounting).length
+  return 0
+}
 
 async function loadEvents() {
   isLoading.value = true
@@ -117,11 +143,23 @@ onMounted(() => {
       )
       router-link.btn-primary(to="/admin/events/create") Veranstaltung erstellen
 
+  .filter-chips
+    button.filter-chip(
+      v-for="f in filters"
+      :key="f.key"
+      :class="{ active: activeFilter === f.key }"
+      @click="activeFilter = f.key"
+    ) {{ f.label }} ({{ filterCount(f.key) }})
+
   .loading(v-if="isLoading") Veranstaltungen werden geladen...
   .error(v-else-if="error") {{ error }}
 
   .events-container(v-else-if="filteredEvents.length > 0")
-    .event-card(v-for="event in filteredEvents" :key="event.id")
+    .event-card(
+      v-for="event in filteredEvents"
+      :key="event.id"
+      :class="{ 'has-draft': event.accounting?.status === 'draft', 'has-final': event.accounting?.status === 'final' }"
+    )
       .event-header
         .event-id {{ event.id }}
         .event-header-right
@@ -214,6 +252,38 @@ h2 {
   filter: brightness(120%);
 }
 
+.filter-chips {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 0.4rem 1rem;
+  border: 0.2rem solid black;
+  background: white;
+  color: black;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-left: -0.2rem;
+}
+
+.filter-chip:first-child {
+  margin-left: 0;
+}
+
+.filter-chip.active {
+  background: black;
+  color: white;
+}
+
+.filter-chip:hover:not(.active) {
+  background: #f0f0f0;
+}
+
 .loading, .error, .empty {
   padding: 3rem;
   text-align: center;
@@ -236,6 +306,15 @@ h2 {
   border: 0.25rem solid black;
   transition: all 0.2s;
   transform: rotate(0.5deg);
+  border-left: 0.25rem solid black;
+}
+
+.event-card.has-draft {
+  border-left: 0.5rem solid #e67e22;
+}
+
+.event-card.has-final {
+  border-left: 0.5rem solid #27ae60;
 }
 
 .event-card:hover {

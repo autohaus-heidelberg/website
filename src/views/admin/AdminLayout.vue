@@ -59,7 +59,7 @@ watch(isMobileMenuOpen, (isOpen) => {
 
   nav.admin-nav(:class="{ 'is-open': isMobileMenuOpen }")
     .admin-nav-header
-      h1 Veranstaltungsverwaltung
+      h1 Carousel e.V.
       .user-info
         .username {{ authStore.user?.username }}
         .user-groups(v-if="authStore.user?.groups.length")
