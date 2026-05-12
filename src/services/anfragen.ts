@@ -14,6 +14,9 @@ export interface Anfrage {
   budget: string
   submittedAt: string
   isRead: boolean
+  lastReplySubject?: string | null
+  lastReplyMessage?: string | null
+  lastReplyAt?: string | null
 }
 
 export const ANFRAGE_TYPE_LABELS: Record<string, string> = {
