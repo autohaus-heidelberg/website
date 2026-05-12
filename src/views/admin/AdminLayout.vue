@@ -78,6 +78,8 @@ watch(isMobileMenuOpen, (isOpen) => {
         span Event-Sync
       router-link.nav-link(to="/admin/newsletter" active-class="active" @click="handleNavigation")
         span Newsletter
+      router-link.nav-link(to="/admin/anfragen" active-class="active" @click="handleNavigation")
+        span Anfragen
 
       .nav-divider
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
