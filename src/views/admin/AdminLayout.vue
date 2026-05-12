@@ -70,6 +70,8 @@ watch(isMobileMenuOpen, (isOpen) => {
     .admin-nav-links
       router-link.nav-link(to="/admin" exact-active-class="active" @click="handleNavigation")
         span Übersicht
+
+      .nav-section-label Veranstaltungen
       router-link.nav-link(to="/admin/events" active-class="active" @click="handleNavigation")
         span Veranstaltungen
       router-link.nav-link(to="/admin/artists" active-class="active" @click="handleNavigation")
@@ -81,13 +83,13 @@ watch(isMobileMenuOpen, (isOpen) => {
       router-link.nav-link(to="/admin/anfragen" active-class="active" @click="handleNavigation")
         span Anfragen
 
-      .nav-divider
+      .nav-section-label Buchhaltung & Lager
       router-link.nav-link(to="/admin/beverages" active-class="active" @click="handleNavigation")
         span Getränke
       router-link.nav-link(to="/admin/purchases" active-class="active" @click="handleNavigation")
         span Einkäufe & Lager
 
-      .nav-divider
+      .nav-section-label Verwaltung
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
         span Checklisten-Vorlagen
       router-link.nav-link(to="/admin/settings" active-class="active" @click="handleNavigation")
@@ -232,10 +234,13 @@ watch(isMobileMenuOpen, (isOpen) => {
   transform: rotate(-1deg);
 }
 
-.nav-divider {
-  height: 0.25rem;
-  background: black;
-  margin: 0.5rem 0;
+.nav-section-label {
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #999;
+  padding: 1.25rem 1rem 0.25rem;
 }
 
 .admin-content {
