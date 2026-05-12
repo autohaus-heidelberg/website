@@ -60,7 +60,6 @@ const pretixError = ref('')
 const paypalBarData = ref<PayPalBarSummary | null>(null)
 const paypalBarLoading = ref(false)
 const paypalBarError = ref('')
-const paypalBarExpanded = ref(false)
 
 // ── Grant (Förderung) ────────────────────────────────────────────
 const grantRecord = ref<GrantApplication | null>(null)
@@ -119,6 +118,13 @@ const paypalBarCategoryTotals = computed(() => {
   }
 })
 
+function paypalTransactionsFor(category: 'bar' | 'entrance') {
+  if (!paypalBarData.value) return []
+  return paypalBarData.value.transactions
+    .map((txn, idx) => ({ txn, idx }))
+    .filter(({ txn }) => txn.category === category)
+}
+
 // ── Sorting ──────────────────────────────────────────────────────
 const invSort = useSort<{ beverage: BeverageItem; entry: InventoryEntry }>()
 const expSort = useSort<ExpenseEntry>()
@@ -145,6 +151,46 @@ const sortedExpenses = computed(() => {
     }
   })
 })
+
+// ── Combined External Data Fetch ─────────────────────────────────
+const externalDataLoading = ref(false)
+const externalDataLoaded = ref(false)
+
+// ── Result tab expand toggles ────────────────────────────────────
+const resultExpandRevenue = ref(false)
+const resultExpandInventory = ref(false)
+const resultExpandExpenses = ref(false)
+
+async function fetchAndApplyAllExternal() {
+  if (!props.eventId) return
+  externalDataLoading.value = true
+  pretixError.value = ''
+  paypalBarError.value = ''
+
+  const results = await Promise.allSettled([
+    pretixService.getOrderSummary(props.eventId),
+    paypalBarService.getBarTransactions(props.eventId),
+  ])
+
+  // Pretix
+  if (results[0].status === 'fulfilled') {
+    pretixData.value = results[0].value
+    applyPretixData()
+  } else {
+    pretixError.value = results[0].reason?.message || 'Pretix-Daten konnten nicht geladen werden'
+  }
+
+  // PayPal
+  if (results[1].status === 'fulfilled') {
+    paypalBarData.value = results[1].value
+    applyPaypalBarData()
+  } else {
+    paypalBarError.value = results[1].reason?.message || 'PayPal-Daten konnten nicht geladen werden'
+  }
+
+  externalDataLoaded.value = true
+  externalDataLoading.value = false
+}
 
 async function fetchPretixData() {
   if (!props.eventId) return
@@ -206,11 +252,13 @@ function togglePaypalCategory(idx: number) {
   if (!paypalBarData.value) return
   const txn = paypalBarData.value.transactions[idx]
   txn.category = txn.category === 'bar' ? 'entrance' : 'bar'
+  applyPaypalBarData()
 }
 
 function setAllPaypalCategory(category: PayPalCategory) {
   if (!paypalBarData.value) return
   paypalBarData.value.transactions.forEach(t => { t.category = category })
+  applyPaypalBarData()
 }
 
 // ── Computed: Revenue ────────────────────────────────────────────
@@ -867,57 +915,48 @@ onMounted(() => {
       button.tab(
         :class="{ active: activeTab === 'cashcount' }"
         @click="activeTab = 'cashcount'"
-      ) Kassenzählung
+      ) 💰 Kassenzählung
       button.tab(
         :class="{ active: activeTab === 'inventory' }"
         @click="activeTab = 'inventory'"
-      ) Inventur
+      ) 📦 Inventur
       button.tab(
         :class="{ active: activeTab === 'expenses' }"
         @click="activeTab = 'expenses'"
-      ) Ausgaben
+      ) 🧾 Ausgaben
       button.tab(
         :class="{ active: activeTab === 'documents' }"
         @click="activeTab = 'documents'"
-      ) Belege
+      ) 📎 Belege
       button.tab(
         :class="{ active: activeTab === 'result' }"
         @click="activeTab = 'result'"
-      ) Ergebnis
+      ) 📊 Ergebnis
       button.tab.tab-grant(
         :class="{ active: activeTab === 'grant' }"
         @click="activeTab = 'grant'"
-      ) Förderung
+      ) 🏛️ Förderung
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
+      .external-data-bar
+        button.btn-fetch-all(
+          @click="fetchAndApplyAllExternal"
+          :disabled="externalDataLoading"
+        ) {{ externalDataLoading ? 'Laden...' : externalDataLoaded ? '↻ Externe Daten neu laden' : '⬇ Externe Daten laden (Pretix + PayPal)' }}
+        .external-data-status(v-if="externalDataLoaded && !externalDataLoading")
+          span.success(v-if="!pretixError && !paypalBarError") ✓ Daten übernommen
+          span.pretix-error(v-if="pretixError") Pretix: {{ pretixError }}
+          span.pretix-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
+        .pretix-warnings(v-if="pretixData?.warnings?.length")
+          .pretix-warning(v-for="w in pretixData.warnings" :key="w") ⚠️ {{ w }}
+        .external-data-summary(v-if="externalDataLoaded && !pretixError && !paypalBarError")
+          span(v-if="pretixData") 🎟️ {{ pretixData.total_tickets }} Tickets ({{ formatCurrency(pretixData.total_revenue) }})
+          span(v-if="paypalBarData") &nbsp;· 🍺 {{ paypalBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(paypalBarCategoryTotals.bar.amount) }}) · 🚪 {{ paypalBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(paypalBarCategoryTotals.entrance.amount) }})
+
       .section(v-for="group in REVENUE_GROUPS" :key="group.label")
         .section-title-row
           h3.section-title {{ group.label }}
-          .pretix-actions(v-if="group.sources.some(s => s.startsWith('vvk_'))")
-            button.btn-pretix(
-              @click="fetchPretixData"
-              :disabled="pretixLoading"
-            ) {{ pretixLoading ? 'Laden...' : 'VVK von Pretix laden' }}
-            button.btn-pretix.btn-apply(
-              v-if="pretixData"
-              @click="applyPretixData"
-            ) Übernehmen ({{ pretixData.total_tickets }} Tickets, {{ formatCurrency(pretixData.total_revenue) }})
-            span.pretix-error(v-if="pretixError") {{ pretixError }}
-            .pretix-warnings(v-if="pretixData?.warnings?.length")
-              .pretix-warning(v-for="w in pretixData.warnings" :key="w") ⚠️ {{ w }}
-          .pretix-actions(v-if="group.sources.includes('bar_paypal')")
-            button.btn-pretix(
-              @click="fetchPaypalBarData"
-              :disabled="paypalBarLoading"
-            ) {{ paypalBarLoading ? 'Laden...' : 'PayPal-Transaktionen laden' }}
-            button.btn-pretix.btn-apply(
-              v-if="paypalBarData"
-              @click="applyPaypalBarData"
-            ) Übernehmen
-            template(v-if="paypalBarData")
-              span.paypal-cat-summary 🍺 {{ paypalBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(paypalBarCategoryTotals.bar.amount) }}) · 🚪 {{ paypalBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(paypalBarCategoryTotals.entrance.amount) }})
-            span.pretix-error(v-if="paypalBarError") {{ paypalBarError }}
         .revenue-table
           .revenue-header
             .col-source Quelle
@@ -985,36 +1024,28 @@ onMounted(() => {
                 .col-amount.sub-val —
                 .col-amount.sub-val {{ formatCurrency(pretixData.pretix_fee) }}
                 .col-amount.sub-val
-            template(v-if="source === 'bar_paypal' && paypalBarData")
-              .revenue-row.sub-row.sub-toggle(@click="paypalBarExpanded = !paypalBarExpanded")
-                .col-source.sub-source {{ paypalBarExpanded ? '▼' : '▶' }} {{ paypalBarTotals.count }} Transaktionen
-                .col-amount.sub-val {{ formatCurrency(paypalBarTotals.amount) }}
+            template(v-if="(source === 'bar_paypal' || source === 'entrance_paypal') && paypalBarData && paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance').length")
+              .revenue-row.sub-row.paypal-cat-actions
+                .col-source.sub-source
+                  span.paypal-txn-count {{ paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance').length }} Transaktionen
+                  button.btn-cat-all(@click="setAllPaypalCategory(source === 'bar_paypal' ? 'entrance' : 'bar')") Alle → {{ source === 'bar_paypal' ? '🚪 Einlass' : '🍺 Bar' }}
+                  span.entry-price-hint(v-if="source === 'entrance_paypal' && paypalBarData.entry_price") Eintritt: {{ paypalBarData.entry_price }}€{{ paypalBarData.entry_price_ak ? ' / AK ' + paypalBarData.entry_price_ak + '€' : '' }}
+              .revenue-row.sub-row.sub-detail(
+                v-for="{ txn, idx } in paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance')"
+                :key="idx"
+                :class="{ 'cat-entrance': txn.category === 'entrance', 'cat-bar': txn.category === 'bar' }"
+              )
+                .col-source.sub-source.sub-detail-source
+                  button.btn-cat-toggle(
+                    @click.stop="togglePaypalCategory(idx)"
+                    :title="source === 'bar_paypal' ? '→ Einlass verschieben' : '→ Bar verschieben'"
+                  ) {{ source === 'bar_paypal' ? '→ 🚪' : '→ 🍺' }}
+                  span {{ txn.name }} · {{ formatTime(txn.timestamp) }}
+                .col-amount.sub-val {{ formatCurrency(txn.amount) }}
                 .col-amount.sub-val —
-                .col-amount.sub-val {{ formatCurrency(paypalBarTotals.fees) }}
-                .col-amount.sub-val {{ formatCurrency(paypalBarTotals.net) }}
-              template(v-if="paypalBarExpanded")
-                .revenue-row.sub-row.paypal-cat-actions
-                  .col-source.sub-source
-                    button.btn-cat-all(@click="setAllPaypalCategory('bar')") Alle → Bar
-                    button.btn-cat-all(@click="setAllPaypalCategory('entrance')") Alle → Einlass
-                    span.entry-price-hint(v-if="paypalBarData.entry_price") Eintritt: {{ paypalBarData.entry_price }}€{{ paypalBarData.entry_price_ak ? ' / AK ' + paypalBarData.entry_price_ak + '€' : '' }}
-                .revenue-row.sub-row.sub-detail(
-                  v-for="(txn, idx) in paypalBarData.transactions"
-                  :key="idx"
-                  :class="{ 'cat-entrance': txn.category === 'entrance', 'cat-bar': txn.category === 'bar' }"
-                )
-                  .col-source.sub-source.sub-detail-source
-                    button.btn-cat-toggle(
-                      @click.stop="togglePaypalCategory(idx)"
-                      :title="txn.category === 'bar' ? 'Klick → Einlass' : 'Klick → Bar'"
-                    ) {{ txn.category === 'bar' ? '🍺' : '🚪' }}
-                    span └ {{ txn.name }} · {{ formatTime(txn.timestamp) }}
-                  .col-amount.sub-val {{ formatCurrency(txn.amount) }}
-                  .col-amount.sub-val —
-                  .col-amount.sub-val {{ formatCurrency(txn.fee) }}
-                  .col-amount.sub-val {{ formatCurrency(txn.net) }}
-                  button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
-
+                .col-amount.sub-val {{ formatCurrency(txn.fee) }}
+                .col-amount.sub-val {{ formatCurrency(txn.net) }}
+                button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
         .group-total
           span Gesamt {{ group.label }}:
           strong {{ formatCurrency(groupRevenue(group.sources)) }}
@@ -1189,61 +1220,36 @@ onMounted(() => {
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
 
-      //- Revenue breakdown
-      h3.section-title Einnahmen
-      .result-detail
-        template(v-for="rev in revenues" :key="rev.source")
-          .detail-row(v-if="revenueNet(rev) !== 0")
-            span {{ REVENUE_SOURCE_LABELS[rev.source] }}
-            span.amount {{ formatCurrency(revenueNet(rev)) }}
-        .detail-row(v-if="expensesPaidFromRegister > 0")
-          span + Auszahlungen aus Kassen
-          span.amount {{ formatCurrency(expensesPaidFromRegister) }}
-        .detail-row.detail-total
-          span Tatsächliche Einnahmen
-          strong.positive {{ formatCurrency(adjustedRevenue) }}
-
-      //- Cost of goods breakdown
-      h3.section-title Wareneinsatz
-      .result-detail
-        template(v-for="(items, group) in inventoryBySupplier" :key="group")
-          .detail-row(v-if="groupInventoryValue(items) !== 0")
-            span {{ group }}
-            span.amount -{{ formatCurrency(groupInventoryValue(items)) }}
-        .detail-row.detail-total
-          span Wareneinsatz gesamt
-          strong.negative {{ formatCurrency(totalInventoryValue) }}
-
-      //- Expenses breakdown
-      h3.section-title Ausgaben
-      .result-detail
-        template(v-for="exp in expenses" :key="exp.description")
-          .detail-row(v-if="parseFloat(exp.amount || '0') !== 0")
-            span {{ exp.description || '(keine Beschreibung)' }}
-            span.amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-        .detail-row.detail-total
-          span Ausgaben gesamt
-          strong.negative {{ formatCurrency(totalExpenses) }}
-
-      //- Final result
       .result-summary
-        .result-row
-          span Einnahmen (gezählt)
+        .result-row.expandable(@click="resultExpandRevenue = !resultExpandRevenue")
+          span {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen (gezählt)
           strong {{ formatCurrency(totalRevenue) }}
-        .result-row(v-if="expensesPaidFromRegister > 0")
-          span + Aus Kassen bezahlt
+        template(v-if="resultExpandRevenue")
+          .result-row.detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
+            span {{ REVENUE_SOURCE_LABELS[rev.source] }}
+            span {{ formatCurrency(revenueNet(rev)) }}
+        .result-row.sub(v-if="expensesPaidFromRegister > 0")
+          span + Aus Kassen bezahlte Ausgaben
           strong {{ formatCurrency(expensesPaidFromRegister) }}
         .result-row
           span = Tatsächliche Einnahmen
           strong.positive {{ formatCurrency(adjustedRevenue) }}
-        .result-row
-          span − Wareneinsatz
+        .result-row.expandable(@click="resultExpandInventory = !resultExpandInventory")
+          span {{ resultExpandInventory ? '▼' : '▶' }} 📦 − Wareneinsatz
           strong.negative {{ formatCurrency(totalInventoryValue) }}
-        .result-row
-          span − Ausgaben
+        template(v-if="resultExpandInventory")
+          .result-row.detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
+            span {{ group }}
+            span -{{ formatCurrency(groupInventoryValue(items)) }}
+        .result-row.expandable(@click="resultExpandExpenses = !resultExpandExpenses")
+          span {{ resultExpandExpenses ? '▼' : '▶' }} 🧾 − Ausgaben
           strong.negative {{ formatCurrency(totalExpenses) }}
+        template(v-if="resultExpandExpenses")
+          .result-row.detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
+            span {{ exp.description || '(ohne Beschreibung)' }}
+            span {{ formatCurrency(parseFloat(exp.amount || '0')) }}
         .result-row
-          span Pfandrückgabe
+          span 🔄 + Pfandrückgabe
           .input-inline
             input.amount-input(
               v-model="depositReturn"
@@ -1254,11 +1260,11 @@ onMounted(() => {
             )
             span.unit €
         .result-row.result-total
-          span Ergebnis
+          span 🏆 Ergebnis
           strong(:class="result >= 0 ? 'positive' : 'negative'")
             | {{ formatCurrency(result) }}
 
-      h3.section-title Gewinnverteilung
+      h3.section-title 🤝 Gewinnverteilung
       .splits-table
         .split-row(v-for="(split, index) in splits" :key="index")
           .col-name
@@ -1825,6 +1831,48 @@ h2 {
   padding: 0 1rem 0 0;
 }
 
+.external-data-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 0.25rem solid black;
+  background: #f9f9f9;
+}
+
+.btn-fetch-all {
+  background: black;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-fetch-all:hover {
+  filter: brightness(130%);
+}
+
+.btn-fetch-all:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.external-data-status .success {
+  color: #00a844;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.external-data-summary {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
 .btn-pretix {
   background: white;
   color: black;
@@ -2005,6 +2053,12 @@ h2 {
   font-size: 0.75rem;
   color: #555;
   margin-left: 0.5rem;
+}
+
+.paypal-txn-count {
+  font-size: 0.8rem;
+  color: #666;
+  margin-right: 0.75rem;
 }
 
 .paypal-cat-actions {
@@ -2514,6 +2568,22 @@ h2 {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid black;
   font-size: 1rem;
+}
+
+.result-row.expandable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.result-row.expandable:hover {
+  background: #f5f5f5;
+}
+
+.result-row.detail {
+  padding: 0.4rem 1rem 0.4rem 2.5rem;
+  font-size: 0.85rem;
+  color: #444;
+  border-bottom: 1px solid #eee;
 }
 
 .result-row:last-child {
