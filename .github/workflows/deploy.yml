@@ -1,0 +1,31 @@
+name: Deploy to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Copy index to 404 for SPA routing
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy to GitHub Pages repo
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.DEPLOY_TOKEN }}
+          external_repository: autohaus-heidelberg/autohaus-heidelberg.github.io
+          publish_branch: main
+          publish_dir: ./dist
+          force_orphan: true
+          commit_message: 'deploy'
