@@ -82,11 +82,12 @@ export interface InventoryEntry {
   recorded_at?: string
 }
 
-export type ExpensePaidFrom = 'entrance_cash' | 'bar_cash' | 'other'
+export type ExpensePaidFrom = 'entrance_cash' | 'bar_cash' | 'other_paid' | 'other'
 
 export const EXPENSE_PAID_FROM_LABELS: Record<ExpensePaidFrom, string> = {
   entrance_cash: 'Einlasskasse',
   bar_cash: 'Barkasse',
+  other_paid: 'Sonstiges',
   other: 'Offen',
 }
 
