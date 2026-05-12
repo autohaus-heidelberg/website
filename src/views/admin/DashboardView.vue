@@ -1,21 +1,61 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { eventService, artistService } from '@/services'
+import { eventService, artistService, accountingService, stockService, anfrageService } from '@/services'
+import type { StockEntry } from '@/types/accounting'
 
 const authStore = useAuthStore()
 const eventsCount = ref(0)
 const artistsCount = ref(0)
+const unreadAnfragen = ref(0)
+const draftCount = ref(0)
+const nextEvent = ref<{ title: string; date: string } | null>(null)
+const stockSummary = ref<{ count: number; value: number } | null>(null)
 const isLoading = ref(true)
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function formatCurrency(val: number): string {
+  return val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
 
 onMounted(async () => {
   try {
-    const [eventsData, artistsData] = await Promise.all([
+    const [eventsData, artistsData, accountingsData, stockData, unreadCount] = await Promise.all([
       eventService.getAll(),
-      artistService.getAll()
+      artistService.getAll(),
+      accountingService.getAll(),
+      stockService.getAll(),
+      anfrageService.getUnreadCount().catch(() => 0),
     ])
     eventsCount.value = eventsData.count
     artistsCount.value = artistsData.count
+    unreadAnfragen.value = unreadCount as number
+    draftCount.value = accountingsData.results.filter(a => a.status === 'draft').length
+
+    // Find next upcoming event
+    const now = new Date()
+    const upcoming = eventsData.results
+      .filter(e => new Date(e.date) > now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    if (upcoming.length > 0) {
+      nextEvent.value = { title: upcoming[0].title, date: upcoming[0].date }
+    }
+
+    // Stock summary
+    const withQty = (stockData as StockEntry[]).filter(e => e.quantity > 0)
+    stockSummary.value = {
+      count: withQty.length,
+      value: withQty.reduce((s, e) => s + parseFloat(e.stock_value || '0'), 0),
+    }
   } catch (e) {
     console.error('Failed to load stats:', e)
   } finally {
@@ -41,15 +81,47 @@ onMounted(async () => {
         .stat-label Künstler
       router-link.stat-link(to="/admin/artists") Künstler verwalten
 
+    .stat-card(:class="{ highlight: unreadAnfragen > 0 }")
+      .stat-info
+        .stat-value {{ unreadAnfragen }}
+        .stat-label Ungelesene Anfragen
+      router-link.stat-link(to="/admin/anfragen") Anfragen ansehen
+
+    .stat-card
+      .stat-info
+        .stat-value {{ draftCount }}
+        .stat-label Offene Abrechnungen
+      router-link.stat-link(to="/admin/events") Abrechnungen verwalten
+
+    .stat-card(v-if="stockSummary")
+      .stat-info
+        .stat-value {{ stockSummary.count }}
+        .stat-label Getränke im Lager
+      .stat-subtitle Warenwert: {{ formatCurrency(stockSummary.value) }}
+      router-link.stat-link(to="/admin/stock") Lagerbestand ansehen
+
+    .stat-card(v-if="nextEvent")
+      .stat-info
+        .stat-value-small {{ nextEvent.title }}
+        .stat-label Nächstes Event
+      .stat-subtitle {{ formatDate(nextEvent.date) }}
+      router-link.stat-link(:to="`/admin/events`") Events verwalten
+
   .loading(v-else) Lade Statistiken...
 
   .quick-actions
     h3 Schnellaktionen
     .actions-grid
       router-link.action-btn(to="/admin/events/create")
-        span Neue Veranstaltung erstellen
+        span Neue Veranstaltung
       router-link.action-btn(to="/admin/artists/create")
-        span Neuen Künstler erstellen
+        span Neuer Künstler
+      router-link.action-btn(to="/admin/purchases/create")
+        span Neuer Einkauf
+      router-link.action-btn(to="/admin/stock")
+        span Lagerbestand
+      router-link.action-btn(to="/admin/anfragen")
+        span Anfragen
 </template>
 
 <style scoped>
@@ -66,24 +138,44 @@ h2 {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
 
 .stat-card {
   background: white;
-  padding: 2rem;
+  padding: 1.5rem;
   border: 0.5rem solid black;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   transition: transform 0.2s;
-  transform: rotate(1deg);
+  transform: rotate(0.5deg);
+}
+
+.stat-card:nth-child(even) {
+  transform: rotate(-0.5deg);
 }
 
 .stat-card:hover {
-  transform: rotate(-1deg);
+  transform: rotate(0deg);
+}
+
+.stat-card.highlight {
+  background: black;
+  color: white;
+}
+
+.stat-card.highlight .stat-value,
+.stat-card.highlight .stat-label,
+.stat-card.highlight .stat-subtitle {
+  color: white;
+}
+
+.stat-card.highlight .stat-link {
+  color: white;
+  border-color: white;
 }
 
 .stat-info {
@@ -95,12 +187,28 @@ h2 {
   font-weight: 900;
   color: black;
   line-height: 1;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.stat-value-small {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: black;
+  line-height: 1.2;
+  margin-bottom: 0.4rem;
 }
 
 .stat-label {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: black;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-subtitle {
+  font-size: 0.85rem;
+  color: #555;
   font-weight: 600;
 }
 
@@ -108,7 +216,9 @@ h2 {
   color: black;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  padding-top: 0.5rem;
+  border-top: 0.15rem solid black;
   transition: filter 0.2s;
 }
 
@@ -126,7 +236,6 @@ h2 {
   background: white;
   padding: 2rem;
   border: 0.5rem solid black;
-  transform: rotate(-1deg);
 }
 
 h3 {
@@ -138,7 +247,7 @@ h3 {
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
 
@@ -146,13 +255,13 @@ h3 {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem 1.5rem;
+  padding: 1rem 1.25rem;
   background: black;
   color: white;
   text-decoration: none;
   font-weight: 600;
   transition: filter 0.2s;
-  letter-spacing: 0.2em;
+  font-size: 0.9rem;
 }
 
 .action-btn:hover {
