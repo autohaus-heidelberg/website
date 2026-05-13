@@ -262,9 +262,10 @@ onMounted(() => {
 
         .event-footer
           .event-meta
-            a.fee(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank") VVK: {{ event.fee }} €
-            span.fee(v-else-if="event.fee") VVK: {{ event.fee }} €
-            span.fee-ak(v-if="event.feeAk") / AK: {{ event.feeAk }} €
+            span.fee-group(v-if="event.fee || event.feeAk")
+              a(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank" class="fee") VVK: {{ event.fee }} €
+              span.fee(v-else-if="event.fee") VVK: {{ event.fee }} €
+              span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
 
           .event-actions
             router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
@@ -276,7 +277,7 @@ onMounted(() => {
               v-else
               @click="createAccounting(event.id)"
             ) Abrechnung starten
-            button.btn-delete(@click="deleteEvent(event)") Löschen
+            button.btn-delete(@click="deleteEvent(event)") Veranstaltung löschen
 
     .empty(v-else) Keine Veranstaltungen gefunden
 
