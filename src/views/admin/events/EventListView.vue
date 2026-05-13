@@ -264,7 +264,7 @@ onMounted(() => {
           .event-meta
             a.fee(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank") VVK: {{ event.fee }} €
             span.fee(v-else-if="event.fee") VVK: {{ event.fee }} €
-            span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
+            span.fee-ak(v-if="event.feeAk") / AK: {{ event.feeAk }} €
 
           .event-actions
             router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
