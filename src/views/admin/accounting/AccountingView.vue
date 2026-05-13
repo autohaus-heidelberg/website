@@ -714,7 +714,7 @@ async function finalizeAccounting() {
     saveSuccess.value = 'Abrechnung abgeschlossen!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
   } catch (e: any) {
-    error.value = e.message || 'Fehler beim Speichern'
+    error.value = e.response?.data?.error || e.message || 'Fehler beim Abschließen'
   }
 }
 
@@ -724,7 +724,18 @@ async function reopenAccounting() {
     await accountingService.update(accounting.value.id, { status: 'draft' })
     accounting.value.status = 'draft'
   } catch (e: any) {
-    error.value = e.message || 'Fehler beim Speichern'
+    error.value = e.response?.data?.error || e.message || 'Fehler beim Wieder-Öffnen'
+  }
+}
+
+async function deleteAccounting() {
+  if (!accounting.value?.id) return
+  if (!confirm('Abrechnung wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) return
+  try {
+    await accountingService.delete(accounting.value.id)
+    router.push('/admin/accounting')
+  } catch (e: any) {
+    error.value = e.response?.data?.error || e.message || 'Fehler beim Löschen'
   }
 }
 
@@ -932,6 +943,7 @@ onMounted(() => {
         button.btn-save(@click="saveAll" :disabled="isSaving || accounting.status === 'final'")
           | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
         button.btn-finalize(v-if="accounting.status === 'draft'" @click="finalizeAccounting") Abschließen
+        button.btn-delete-accounting(v-if="accounting.status === 'draft'" @click="deleteAccounting") Löschen
         button.btn-reopen(v-if="accounting.status === 'final'" @click="reopenAccounting") Wieder öffnen
 
     .error(v-if="error") {{ error }}
@@ -1780,6 +1792,21 @@ h2 {
 
 .btn-reopen:hover {
   background: black;
+  color: white;
+}
+
+.btn-delete-accounting {
+  padding: 0.5rem 1rem;
+  border: 0.25rem solid #c00;
+  background: white;
+  color: #c00;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete-accounting:hover {
+  background: #c00;
   color: white;
 }
 
