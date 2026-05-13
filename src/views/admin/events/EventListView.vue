@@ -79,13 +79,13 @@ async function loadEvents() {
 
 async function createAccounting(eventId: string) {
   try {
-    const accounting = await accountingService.create({
+    await accountingService.create({
       event: eventId,
       status: 'draft',
       notes: '',
       deposit_return: '0.00',
     })
-    accountings.value.push(accounting)
+    router.push(`/admin/events/${eventId}?tab=accounting`)
   } catch (e: any) {
     const msg = e.response?.data?.error || e.message
     alert('Fehler beim Erstellen: ' + msg)
@@ -181,10 +181,9 @@ onMounted(() => {
 
         .event-actions
           router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
-          router-link.btn-docs(:to="`/admin/events/${event.id}/documents`") 📎 Dokumente
           router-link.btn-accounting(
             v-if="event.accounting"
-            :to="`/admin/accounting/${event.id}`"
+            :to="`/admin/events/${event.id}?tab=accounting`"
           ) Abrechnung öffnen
           button.btn-accounting-start(
             v-else
