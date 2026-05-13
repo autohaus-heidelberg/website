@@ -1,19 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
 import { defineComponent } from 'vue'
-
-// Mock localStorage before auth store initializes
-const localStorageMock = {
-  getItem: vi.fn(() => null),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(() => null),
-}
-Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock, writable: true })
 
 const Stub = defineComponent({ template: '<div />' })
 
