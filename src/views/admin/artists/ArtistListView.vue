@@ -57,15 +57,13 @@ onMounted(() => {
 
 <template lang="pug">
 .artist-list-view
-  .header
-    h2 Künstler
-    .header-actions
-      input.search-input(
-        v-model="searchQuery"
-        type="text"
-        placeholder="Künstler suchen..."
-      )
-      router-link.btn-primary(to="/admin/artists/create") Künstler erstellen
+  .toolbar
+    input.search-input(
+      v-model="searchQuery"
+      type="text"
+      placeholder="Künstler suchen..."
+    )
+    router-link.btn-primary(to="/admin/artists/create") + Neuer Künstler
 
   .loading(v-if="isLoading") Künstler werden geladen...
   .error(v-else-if="error") {{ error }}
@@ -101,12 +99,7 @@ onMounted(() => {
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 h2 {
@@ -116,10 +109,12 @@ h2 {
   font-weight: 900;
 }
 
-.header-actions {
+.toolbar {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
@@ -128,6 +123,8 @@ h2 {
   font-size: 0.95rem;
   min-width: 250px;
   font-weight: 600;
+  flex: 1;
+  max-width: 400px;
 }
 
 .search-input:focus {
@@ -137,7 +134,7 @@ h2 {
 }
 
 .btn-primary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.7em;
   background: black;
   color: white;
   text-decoration: none;
