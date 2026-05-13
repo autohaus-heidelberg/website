@@ -9,6 +9,8 @@
     "preview": "vite  --host",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "deploy": "node scripts/gh-pages-deploy.js"
   },
   "dependencies": {
@@ -29,12 +31,15 @@
     "@types/node": "^20.12.5",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue-leaflet/vue-leaflet": "^0.10.1",
+    "@vue/test-utils": "^2.4.10",
     "@vue/tsconfig": "^0.5.1",
     "execa": "^9.0.2",
+    "happy-dom": "^20.9.0",
     "leaflet": "^1.9.4",
     "npm-run-all2": "^6.1.2",
     "typescript": "~5.4.0",
     "vite": "^5.2.8",
+    "vitest": "^4.1.6",
     "vue-tsc": "^2.0.11"
   }
 }

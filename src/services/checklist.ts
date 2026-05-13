@@ -16,7 +16,7 @@ export interface ChecklistInstanceItem {
   name: string
   stage: string
   phase: 'before' | 'during' | 'after'
-  status: 'initial' | 'inProgress' | 'blocked' | 'done'
+  status: 'initial' | 'inProgress' | 'blocked' | 'done' | 'unnecessary'
   created?: string
   modified?: string
   edited_by?: number

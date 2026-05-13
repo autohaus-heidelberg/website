@@ -65,7 +65,7 @@ async function loadBeverages() {
 }
 
 async function deleteBeverage(item: BeverageItem) {
-  if (!confirm(t('beverages.confirmDelete', { name: item.name }))) return
+  if (!confirm(`"${item.name}" wirklich löschen?`)) return
   try {
     await beverageService.delete(item.id!)
     if (beveragesData.value) {

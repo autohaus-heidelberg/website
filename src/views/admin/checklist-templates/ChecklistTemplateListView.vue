@@ -143,7 +143,7 @@ async function saveNew() {
 }
 
 async function deleteTemplate(template: ChecklistTemplateItem) {
-  if (!confirm(t('checklists.confirmDelete', { name: template.name }))) return
+  if (!confirm(`"${template.name}" wirklich löschen?`)) return
 
   try {
     await checklistTemplateService.delete(template.id!)
