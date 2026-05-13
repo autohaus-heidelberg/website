@@ -175,8 +175,9 @@ onMounted(() => {
 
       .event-footer
         .event-meta
-          span.fee(v-if="event.fee") {{ event.fee }} €
-          a.shop-link(v-if="event.shopLink" :href="event.shopLink" target="_blank") Tickets
+          a.fee(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank") VVK: {{ event.fee }} €
+          span.fee(v-else-if="event.fee") VVK: {{ event.fee }} €
+          span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
 
         .event-actions
           router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
@@ -407,18 +408,19 @@ h2 {
 
 .fee {
   font-weight: 600;
-  color: black;
-}
-
-.shop-link {
+  font-size: 0.875rem;
   color: black;
   text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 600;
 }
 
-.shop-link:hover {
+a.fee:hover {
   text-decoration: underline;
+}
+
+.fee-ak {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: black;
 }
 
 .event-actions {

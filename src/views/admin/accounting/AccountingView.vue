@@ -938,6 +938,10 @@ onMounted(() => {
       .header-left
         router-link.btn-back(to="/admin/accounting") ← Zurück
         h2 {{ event?.title || props.eventId }}
+        .event-details(v-if="event")
+          span.detail(v-if="event.artists.length") {{ event.artists.map(a => a.name).join(', ') }}
+          span.detail(v-if="event.fee") VVK: {{ event.fee }} €
+          span.detail(v-if="event.feeAk") AK: {{ event.feeAk }} €
       .header-right
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveAll" :disabled="isSaving || accounting.status === 'final'")
@@ -1703,6 +1707,19 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.event-details {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: #555;
+  width: 100%;
+}
+
+.event-details .detail {
+  font-weight: 500;
 }
 
 .header-right {
