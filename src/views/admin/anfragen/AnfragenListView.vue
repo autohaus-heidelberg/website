@@ -268,7 +268,7 @@ onMounted(() => {
               | Antworten
             button.btn-action.btn-delete(@click.stop="deleteAnfrage(anfrage)")
               span 🗑️
-              | Löschen
+              | Anfrage löschen
 
           .reply-success(v-if="replySuccess === anfrage.id")
             span ✓ Antwort gesendet an {{ anfrage.contactEmail }}

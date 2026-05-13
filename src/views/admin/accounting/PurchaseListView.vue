@@ -188,7 +188,7 @@ onMounted(() => {
       .purchase-footer
         .purchase-actions
           router-link.btn-edit(:to="`/admin/purchases/${p.id}`") Öffnen
-          button.btn-delete(@click="deletePurchase(p.id)") Löschen
+          button.btn-delete(@click="deletePurchase(p.id)") Einkauf löschen
 
   .empty(v-else) Keine Einkäufe gefunden
 </template>
@@ -316,9 +316,9 @@ h2 {
 
 .btn-delete {
   padding: 0.625rem 1rem;
-  border: 0.25rem solid black;
+  border: 0.25rem solid #c00;
   background: white;
-  color: black;
+  color: #c00;
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -326,7 +326,7 @@ h2 {
 }
 
 .btn-delete:hover {
-  background: black;
+  background: #c00;
   color: white;
 }
 

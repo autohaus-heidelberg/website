@@ -270,7 +270,7 @@ onMounted(() => {
                 ) Speichern
                 button.btn-cancel(@click="cancelEdit") Abbrechen
               .action-buttons(v-else)
-                button.btn-delete(@click="deleteTemplate(template)") Löschen
+                button.btn-delete(@click="deleteTemplate(template)") Vorlage löschen
 
           // Add new row
           tr.add-row(v-if="addingPhase === phase")
@@ -574,13 +574,14 @@ h2 {
 
 .btn-delete {
   background: white;
-  color: black;
+  color: #c00;
+  border-color: #c00;
 }
 
 .btn-delete:hover {
-  background: #dc2626;
+  background: #c00;
   color: white;
-  border-color: #dc2626;
+  border-color: #c00;
 }
 
 .empty {
