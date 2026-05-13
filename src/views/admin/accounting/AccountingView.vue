@@ -769,8 +769,8 @@ async function createAccounting() {
     })
     // Default splits
     splits.value = [
-      { accounting: accounting.value!.id, participant_name: 'Bernd', share_percentage: '33' },
-      { accounting: accounting.value!.id, participant_name: 'Carousel e.V.', share_percentage: '67' },
+      { accounting: accounting.value!.id!, participant_name: 'Bernd', share_percentage: '33' },
+      { accounting: accounting.value!.id!, participant_name: 'Carousel e.V.', share_percentage: '67' },
     ]
   } catch (e: any) {
     error.value = e.response?.data?.error || e.message || 'Fehler beim Erstellen'
