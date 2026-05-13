@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { eventService, artistService, accountingService, stockService, anfrageService } from '@/services'
-import type { StockEntry } from '@/types/accounting'
+import { eventService, artistService, accountingService, stockService, anfrageService, grantService } from '@/services'
+import type { StockEntry, GrantSummary } from '@/types/accounting'
 
 const authStore = useAuthStore()
 const eventsCount = ref(0)
@@ -11,6 +11,7 @@ const unreadAnfragen = ref(0)
 const draftCount = ref(0)
 const nextEvent = ref<{ title: string; date: string } | null>(null)
 const stockSummary = ref<{ count: number; value: number } | null>(null)
+const grantStats = ref<GrantSummary | null>(null)
 const isLoading = ref(true)
 
 function formatDate(dateStr: string): string {
@@ -29,12 +30,13 @@ function formatCurrency(val: number): string {
 
 onMounted(async () => {
   try {
-    const [eventsData, artistsData, accountingsData, stockData, unreadCount] = await Promise.all([
+    const [eventsData, artistsData, accountingsData, stockData, unreadCount, grantSummary] = await Promise.all([
       eventService.getAll(),
       artistService.getAll(),
       accountingService.getAll(),
       stockService.getAll(),
       anfrageService.getUnreadCount().catch(() => 0),
+      grantService.getSummary(new Date().getFullYear()).catch(() => null),
     ])
     eventsCount.value = eventsData.count
     artistsCount.value = artistsData.count
@@ -55,6 +57,11 @@ onMounted(async () => {
     stockSummary.value = {
       count: withQty.length,
       value: withQty.reduce((s, e) => s + parseFloat(e.stock_value || '0'), 0),
+    }
+
+    // Grant summary
+    if (grantSummary) {
+      grantStats.value = grantSummary as GrantSummary
     }
   } catch (e) {
     console.error('Failed to load stats:', e)
@@ -99,6 +106,13 @@ onMounted(async () => {
         .stat-label Getränke im Lager
       .stat-subtitle Warenwert: {{ formatCurrency(stockSummary.value) }}
       router-link.stat-link(to="/admin/stock") Lagerbestand ansehen
+
+    .stat-card(v-if="grantStats")
+      .stat-info
+        .stat-value {{ grantStats.grant_count }}
+        .stat-label Förderanträge {{ new Date().getFullYear() }}
+      .stat-subtitle Beantragt: {{ formatCurrency(grantStats.total_requested) }}
+      router-link.stat-link(to="/admin/events?view=grants") Förderungen ansehen
 
     .stat-card(v-if="nextEvent")
       .stat-info

@@ -67,7 +67,6 @@ const grantSummary = ref<GrantSummary | null>(null)
 const grantSubTab = ref<'antrag' | 'nachweis'>('antrag')
 const rentFlatAmount = ref(134.46)
 const approvedAmount = ref<number | null>(null)
-const grantSaving = ref(false)
 const grantDownloading = ref<string | null>(null)
 
 // Zuwendungsbescheid
@@ -802,67 +801,55 @@ async function saveAll() {
         .filter(split => split.participant_name || split.id),
     })
 
+    // Also save grant data if grant tab has data
+    if (activeTab.value === 'grant' || grantRecord.value) {
+      const budgetPlan = {
+        expenses: {
+          kuenstlerhonorar: budgetKuenstler.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
+          sachkosten: budgetSachkosten.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
+          sonstiges: budgetSonstiges.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
+        },
+        revenues: {
+          zuwendung: budgetGrantAmount.value,
+          eintritt: parseFloat(budgetRevEintritt.value) || 0,
+          getraenke: parseFloat(budgetRevGetraenke.value) || 0,
+          eigenmittel: parseFloat(budgetRevEigenmittel.value) || 0,
+          drittmittel: parseFloat(budgetRevDrittmittel.value) || 0,
+          sonstige: parseFloat(budgetRevSonstige.value) || 0,
+        },
+      }
+
+      const data: Partial<GrantApplication> = {
+        event: props.eventId,
+        requested_amount: budgetGrantAmount.value.toFixed(2),
+        eligible_expenses: grantTotalEligible.value.toFixed(2),
+        own_revenue: grantTotalOwnRevenue.value.toFixed(2),
+        annual_rent_costs: rentFlatAmount.value.toFixed(2),
+        approved_amount: approvedAmount.value != null ? approvedAmount.value.toFixed(2) : null,
+        zuwendungsbescheid_date: zuwendungsbescheidDate.value || null,
+        auszahlung_amount: auszahlungAmount.value != null ? auszahlungAmount.value.toFixed(2) : null,
+        actual_admission_revenue: grantAdmissionRevenue.value.toFixed(2),
+        actual_beverage_revenue: grantBarContribution.value.toFixed(2),
+        sachbericht: sachbericht.value,
+        notes: grantNotes.value,
+        budget_plan: budgetPlan,
+      }
+      if (grantRecord.value?.id) {
+        grantRecord.value = await grantService.update(grantRecord.value.id, data)
+      } else {
+        grantRecord.value = await grantService.create(data)
+      }
+
+      const eventYear = event.value?.date ? new Date(event.value.date).getFullYear() : new Date().getFullYear()
+      grantSummary.value = await grantService.getSummary(eventYear)
+    }
+
     saveSuccess.value = 'Gespeichert!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
   } catch (e: any) {
     error.value = e.message || 'Fehler beim Speichern'
   } finally {
     isSaving.value = false
-  }
-}
-
-async function saveGrant() {
-  grantSaving.value = true
-  error.value = ''
-  try {
-    // Save accounting first so grant uses persisted data
-    await saveAll()
-
-    const budgetPlan = {
-      expenses: {
-        kuenstlerhonorar: budgetKuenstler.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
-        sachkosten: budgetSachkosten.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
-        sonstiges: budgetSonstiges.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
-      },
-      revenues: {
-        zuwendung: budgetGrantAmount.value,
-        eintritt: parseFloat(budgetRevEintritt.value) || 0,
-        getraenke: parseFloat(budgetRevGetraenke.value) || 0,
-        eigenmittel: parseFloat(budgetRevEigenmittel.value) || 0,
-        drittmittel: parseFloat(budgetRevDrittmittel.value) || 0,
-        sonstige: parseFloat(budgetRevSonstige.value) || 0,
-      },
-    }
-
-    const data: Partial<GrantApplication> = {
-      event: props.eventId,
-      requested_amount: budgetGrantAmount.value.toFixed(2),
-      eligible_expenses: grantTotalEligible.value.toFixed(2),
-      own_revenue: grantTotalOwnRevenue.value.toFixed(2),
-      annual_rent_costs: rentFlatAmount.value.toFixed(2),
-      approved_amount: approvedAmount.value != null ? approvedAmount.value.toFixed(2) : null,
-      zuwendungsbescheid_date: zuwendungsbescheidDate.value || null,
-      auszahlung_amount: auszahlungAmount.value != null ? auszahlungAmount.value.toFixed(2) : null,
-      actual_admission_revenue: grantAdmissionRevenue.value.toFixed(2),
-      actual_beverage_revenue: grantBarContribution.value.toFixed(2),
-      sachbericht: sachbericht.value,
-      notes: grantNotes.value,
-      budget_plan: budgetPlan,
-    }
-    if (grantRecord.value?.id) {
-      grantRecord.value = await grantService.update(grantRecord.value.id, data)
-    } else {
-      grantRecord.value = await grantService.create(data)
-    }
-    saveSuccess.value = 'Gespeichert!'
-    setTimeout(() => { saveSuccess.value = '' }, 3000)
-
-    const eventYear = event.value?.date ? new Date(event.value.date).getFullYear() : new Date().getFullYear()
-    grantSummary.value = await grantService.getSummary(eventYear)
-  } catch (e: any) {
-    error.value = e.message || 'Fehler beim Speichern'
-  } finally {
-    grantSaving.value = false
   }
 }
 
@@ -883,7 +870,7 @@ async function downloadVerwendungsnachweis() {
   grantDownloading.value = 'verwendungsnachweis'
   error.value = ''
   try {
-    await saveGrant()
+    await saveAll()
     await grantService.downloadVerwendungsnachweis(props.eventId)
   } catch (e: any) {
     error.value = e.message || 'Download fehlgeschlagen'
@@ -1512,12 +1499,10 @@ onMounted(() => {
               strong {{ formatCurrency(budgetGrantAmount) }}
             .max-note Max. 1.000 € pro Veranstaltung / 3.000 € pro Jahr (6.000 € bei >24 Veranstaltungen/Jahr)
 
-          //- ── Save & Download Antrag ──
+          //- ── Download Antrag ──
           .grant-actions
-            button.btn-save(@click="saveGrant" :disabled="grantSaving")
-              | {{ grantSaving ? 'Speichern...' : 'Förderung speichern' }}
             button.btn-pdf(@click="downloadAntrag" :disabled="grantDownloading !== null || !grantRecord?.id")
-              | {{ grantDownloading === 'antrag' ? 'Lade...' : 'Antrag PDF' }}
+              | {{ grantDownloading === 'antrag' ? 'Lade...' : '⬇ Antrag PDF' }}
 
         //- ════════════════════════════════════════════════════════
         //- ── Sub-Tab: Verwendungsnachweis ──
@@ -1637,12 +1622,10 @@ onMounted(() => {
             rows="3"
           )
 
-          //- ── Save & Download Verwendungsnachweis ──
+          //- ── Download Verwendungsnachweis ──
           .grant-actions
-            button.btn-save(@click="saveGrant" :disabled="grantSaving")
-              | {{ grantSaving ? 'Speichern...' : 'Förderung speichern' }}
             button.btn-pdf(@click="downloadVerwendungsnachweis" :disabled="grantDownloading !== null || !grantRecord?.id")
-              | {{ grantDownloading === 'verwendungsnachweis' ? 'Lade...' : 'Verwendungsnachweis PDF' }}
+              | {{ grantDownloading === 'verwendungsnachweis' ? 'Lade...' : '⬇ Verwendungsnachweis PDF' }}
 
         //- ── Summary (visible in both sub-tabs) ──
         .summary-section(v-if="grantSummary")
