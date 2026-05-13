@@ -1,16 +1,6 @@
 # autohaus
 
-This is the website for autohaus. 
-
-# Editing dates
-We aren't using a backend dates are stored in `/src/events.ts`. 
-New events can be added freely, fields are defined in the file as type. 
-NOTE: date and name are used to create a hash and thus have to be unique together.
-
-Only the dates that are after yesterday are being shown. 
-
-
-In order to run the project:
+Website für das Autohaus Heidelberg.
 
 ## Project Setup
 
@@ -18,20 +8,29 @@ In order to run the project:
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### Entwicklung
 
 ```sh
 npm run dev
 ```
 
-# Deploying to github pages
-In order to deploy the git remote 
-```
-gh-pages        https://github.com/autohaus-heidelberg/autohaus-heidelberg.github.io (push)
-```
-has to be set.
+## Deployment
 
+Das Deployment auf GitHub Pages läuft über eine **GitHub Action** (`Actions → Deploy to GitHub Pages → Run workflow`).
+
+Die Action baut das Projekt, kopiert `index.html` → `404.html` (für SPA-Routing) und pusht nach `autohaus-heidelberg/autohaus-heidelberg.github.io`.
+
+**Voraussetzung:** Ein `DEPLOY_TOKEN` Secret muss im Repository konfiguriert sein (Personal Access Token mit `repo`-Scope).
+
+### Manuell deployen (Legacy)
+
+Falls die Action nicht funktioniert, kann man auch lokal deployen — dafür muss das Git-Remote `gh-pages` gesetzt sein:
 
 ```sh
+git remote add gh-pages https://github.com/autohaus-heidelberg/autohaus-heidelberg.github.io
 npm run deploy
 ```
+
+## Events bearbeiten
+
+Events werden über das Admin-Panel verwaltet (Backend auf `content.hopfner.cc`). Die Website lädt Events dynamisch per API.
