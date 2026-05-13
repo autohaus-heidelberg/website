@@ -426,3 +426,47 @@ Wenn die API steht, muss nur **eine Datei** geändert werden:
 API-Calls ersetzen (der originale API-basierte Code ist im Git-Verlauf).
 
 Die Views und Types bleiben unverändert.
+
+---
+
+## 8. Inventur & FIFO-Bestandsführung
+
+### Grundprinzip
+
+Getränkebestände werden über `PurchaseItem.remaining_quantity` verwaltet.
+Beim Finalisieren einer Abrechnung wird der Verbrauch (= `quantity_before − quantity_after`)
+per **FIFO** (älteste Lots zuerst) von den Einkaufs-Positionen abgezogen.
+
+### Inventursperre
+
+- Es darf zu jedem Zeitpunkt **maximal eine** Abrechnung im Status `draft` existieren.
+- Während ein Draft offen ist, können keine neuen Einkäufe angelegt oder gelöscht werden.
+- Grund: Der Draft-Inventurstand spiegelt den aktuellen physischen Bestand wider;
+  parallele Änderungen würden zu Inkonsistenzen führen.
+
+### Wieder-Öffnen (Un-Finalisieren)
+
+- Beim Übergang `final → draft` werden die FIFO-Abzüge rückgängig gemacht (`restore_fifo`).
+- **LIFO-Regel:** Nur die **chronologisch letzte** finalisierte Abrechnung (nach Event-Datum)
+  darf wieder geöffnet werden. Nachfolgende Veranstaltungen haben den Bestand bereits
+  weiter verbraucht — ein Wieder-Öffnen einer älteren Abrechnung würde die FIFO-Kette brechen.
+- Beispiel: Event A (3. Mai) finalisiert → Event B (10. Mai) finalisiert → nur B darf wieder geöffnet werden.
+- **Wichtig:** Die Reihenfolge richtet sich nach dem Event-Datum, nicht danach wann die
+  Abrechnung erstellt oder finalisiert wurde.
+
+### Korrekturen älterer Abrechnungen
+
+Wird ein Fehler in einer älteren (nicht der letzten) Abrechnung entdeckt
+(z.B. „2 Flaschen Gin übersehen"), gibt es zwei Wege:
+
+1. **Kaskade:** Alle nachfolgenden Abrechnungen in umgekehrter Reihenfolge wieder öffnen,
+   korrigieren, dann in chronologischer Reihenfolge erneut finalisieren.
+   (manuell, aber korrekt)
+2. **Inventur-Korrektur (zukünftig):** Eine eigenständige Korrekturbuchung,
+   die den Bestand nachträglich anpasst, ohne die alten Abrechnungen anzutasten.
+
+### Löschen einer Draft-Abrechnung
+
+Eine Abrechnung im Status `draft` kann jederzeit gelöscht werden (DELETE-Endpoint).
+Da noch keine FIFO-Konsumption stattgefunden hat, ist dies gefahrlos.
+Use Case: versehentlich gestartete Abrechnung zurücknehmen.
