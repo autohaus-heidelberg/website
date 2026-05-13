@@ -657,17 +657,12 @@ async function loadData() {
       }
       splits.value = acc.splits ?? []
     } catch {
-      // No accounting yet — create one
-      accounting.value = await accountingService.create({
-        event: props.eventId,
-        status: 'draft',
-        notes: '',
-        deposit_return: '0.00',
-      })
+      // No accounting yet — leave null, user can create manually
+      accounting.value = null
     }
 
     // Default splits: Bernd 33%, Carousel e.V. 67%
-    if (splits.value.length === 0) {
+    if (accounting.value && splits.value.length === 0) {
       splits.value.push(
         {
           accounting: accounting.value?.id || 0,
@@ -754,9 +749,31 @@ async function deleteAccounting() {
   if (!confirm('Abrechnung wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) return
   try {
     await accountingService.delete(accounting.value.id)
-    router.push('/admin/events')
+    accounting.value = null
+    revenues.value = []
+    inventory.value = []
+    expenses.value = []
+    splits.value = []
   } catch (e: any) {
     error.value = e.response?.data?.error || e.message || 'Fehler beim Löschen'
+  }
+}
+
+async function createAccounting() {
+  try {
+    accounting.value = await accountingService.create({
+      event: props.eventId,
+      status: 'draft',
+      notes: '',
+      deposit_return: '0.00',
+    })
+    // Default splits
+    splits.value = [
+      { accounting: accounting.value!.id, participant_name: 'Bernd', share_percentage: '33' },
+      { accounting: accounting.value!.id, participant_name: 'Carousel e.V.', share_percentage: '67' },
+    ]
+  } catch (e: any) {
+    error.value = e.response?.data?.error || e.message || 'Fehler beim Erstellen'
   }
 }
 
@@ -954,7 +971,10 @@ onMounted(() => {
 <template lang="pug">
 .accounting-view
   .loading(v-if="isLoading") Abrechnung wird geladen...
-  template(v-else-if="accounting")
+  .no-accounting(v-else-if="!accounting")
+    p Noch keine Abrechnung für diese Veranstaltung.
+    button.btn-save(@click="createAccounting") Abrechnung starten
+  template(v-else)
     .accounting-header
       .tabs
         button.tab(
@@ -1696,6 +1716,16 @@ onMounted(() => {
 <style scoped>
 .accounting-view {
   background: white;
+}
+
+.no-accounting {
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.no-accounting p {
+  margin-bottom: 1rem;
+  color: #555;
 }
 
 .loading {
