@@ -246,6 +246,7 @@ onMounted(() => {
         v-for="event in filteredEvents"
         :key="event.id"
         :class="{ 'has-draft': event.accounting?.status === 'draft', 'has-final': event.accounting?.status === 'final' }"
+        @click="$router.push(`/admin/events/${event.id}`)"
       )
         .event-header
           .event-id {{ event.id }}
@@ -263,11 +264,11 @@ onMounted(() => {
         .event-footer
           .event-meta
             span.fee-group(v-if="event.fee || event.feeAk")
-              a(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank" class="fee") VVK: {{ event.fee }} €
+              a(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank" class="fee" @click.stop) VVK: {{ event.fee }} €
               span.fee(v-else-if="event.fee") VVK: {{ event.fee }} €
               span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
 
-          .event-actions
+          .event-actions(@click.stop)
             router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
             router-link.btn-accounting(
               v-if="event.accounting"
@@ -277,7 +278,6 @@ onMounted(() => {
               v-else
               @click="createAccounting(event.id)"
             ) Abrechnung starten
-            button.btn-delete(@click="deleteEvent(event)") Veranstaltung löschen
 
     .empty(v-else) Keine Veranstaltungen gefunden
 
@@ -464,6 +464,7 @@ h2 {
   transition: all 0.2s;
   transform: rotate(0.5deg);
   border-left: 0.25rem solid black;
+  cursor: pointer;
 }
 
 .event-card.has-draft {
@@ -591,7 +592,7 @@ a.fee:hover {
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 600;
-  transition: filter 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-edit {
@@ -600,7 +601,13 @@ a.fee:hover {
 }
 
 .btn-delete {
-  background: black;
+  background: white;
+  color: #c00;
+  border-color: #c00;
+}
+
+.btn-delete:hover {
+  background: #c00;
   color: white;
 }
 
@@ -620,7 +627,7 @@ a.fee:hover {
   color: black;
 }
 
-.btn-edit:hover, .btn-delete:hover, .btn-accounting:hover, .btn-accounting-start:hover, .btn-docs:hover {
+.btn-edit:hover, .btn-accounting:hover, .btn-accounting-start:hover, .btn-docs:hover {
   filter: brightness(120%);
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { eventService, artistService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
@@ -48,6 +48,9 @@ const form = ref<Partial<AppEvent>>({
 
 const isLoading = ref(false)
 const error = ref('')
+const showOverflow = ref(false)
+const pendingDelete = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
+const deleteError = ref('')
 const imageFile = ref<File | null>(null)
 const imagePreview = ref<string | null>(null)
 const isCreatingShopLink = ref(false)
@@ -307,6 +310,49 @@ const previewEvent = computed(() => {
   } as AppEvent
 })
 
+function deleteEvent() {
+  showOverflow.value = false
+  if (!props.id) return
+
+  // Cancel any previous pending delete
+  if (pendingDelete.value) {
+    clearTimeout(pendingDelete.value.timer)
+    commitDelete()
+  }
+
+  // Schedule actual deletion after 5 seconds
+  const timer = setTimeout(async () => {
+    await commitDelete()
+  }, 5000)
+
+  pendingDelete.value = { timer }
+}
+
+function undoDelete() {
+  if (!pendingDelete.value) return
+  clearTimeout(pendingDelete.value.timer)
+  pendingDelete.value = null
+}
+
+async function commitDelete() {
+  if (!props.id) return
+  try {
+    await eventService.delete(props.id)
+    pendingDelete.value = null
+    router.push('/admin/events')
+  } catch (e: any) {
+    const msg = e.response?.data?.error || e.message || 'Unbekannter Fehler'
+    deleteError.value = msg
+    pendingDelete.value = null
+  }
+}
+
+function closeOverflow(e: MouseEvent) {
+  if (!(e.target as HTMLElement).closest('.overflow-menu')) {
+    showOverflow.value = false
+  }
+}
+
 onMounted(async () => {
   await loadEvent()
 
@@ -317,6 +363,12 @@ onMounted(async () => {
   } else if (tabParam && ['details', 'checklist'].includes(tabParam)) {
     activeTab.value = tabParam
   }
+
+  document.addEventListener('click', closeOverflow)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeOverflow)
 })
 </script>
 
@@ -473,6 +525,10 @@ onMounted(async () => {
             )
               | {{ isLoading ? 'Speichern...' : (isEditing ? 'Veranstaltung aktualisieren' : 'Veranstaltung erstellen') }}
             router-link.btn-secondary(to="/admin/events") Abbrechen
+            .overflow-menu(v-if="isEditing")
+              button.btn-overflow(type="button" @click="showOverflow = !showOverflow") ⋯
+              .overflow-dropdown(v-if="showOverflow")
+                button.overflow-item.overflow-danger(type="button" @click="deleteEvent") Veranstaltung löschen
 
       .preview-section
         .preview-header
@@ -488,6 +544,16 @@ onMounted(async () => {
 
   .tab-content(v-if="isEditing" v-show="activeSection === 'accounting'")
     AccountingView(:eventId="props.id")
+
+  //- ── Undo Delete Snackbar ──
+  transition(name="snackbar")
+    .undo-snackbar(v-if="pendingDelete")
+      span „{{ form.title }}" wird gelöscht.
+      button.undo-btn(@click="undoDelete") Rückgängig
+  transition(name="snackbar")
+    .undo-snackbar.snackbar-error(v-if="deleteError")
+      span ⚠️ {{ deleteError }}
+      button.undo-btn(@click="deleteError = ''") OK
 </template>
 
 <style scoped>
@@ -829,5 +895,111 @@ input:disabled {
   .artist-select {
     grid-template-columns: 1fr;
   }
+}
+
+.overflow-menu {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.btn-overflow {
+  padding: 0.875rem 1.25rem;
+  border: 0.25rem solid black;
+  background: white;
+  color: black;
+  font-weight: 900;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.btn-overflow:hover {
+  background: black;
+  color: white;
+}
+
+.overflow-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.25rem;
+  background: white;
+  border: 0.25rem solid black;
+  z-index: 100;
+  min-width: 12rem;
+}
+
+.overflow-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: white;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.overflow-danger {
+  color: #c00;
+}
+
+.overflow-danger:hover {
+  background: #c00;
+  color: white;
+}
+
+.undo-snackbar {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: black;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.undo-btn {
+  background: transparent;
+  color: white;
+  border: 0.15rem solid white;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: background 0.15s;
+}
+
+.undo-btn:hover {
+  background: white;
+  color: black;
+}
+
+.snackbar-error {
+  background: #c00;
+}
+
+.snackbar-enter-active,
+.snackbar-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.snackbar-enter-from,
+.snackbar-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(1rem);
 }
 </style>

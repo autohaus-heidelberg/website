@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
@@ -35,6 +35,8 @@ const props = defineProps<{
 
 const router = useRouter()
 const activeTab = ref('cashcount')
+const showOverflow = ref(false)
+const pendingFinalize = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
 
 // ── State ────────────────────────────────────────────────────────
 const event = ref<Event | null>(null)
@@ -720,16 +722,44 @@ async function loadData() {
   }
 }
 
-async function finalizeAccounting() {
+function finalizeAccounting() {
   if (!accounting.value?.id) return
-  if (!confirm('Abrechnung wirklich abschließen? Danach kann sie nur noch im Lesemodus geöffnet werden.')) return
+
+  // Cancel any previous pending finalize
+  if (pendingFinalize.value) {
+    clearTimeout(pendingFinalize.value.timer)
+    commitFinalize()
+  }
+
+  // Optimistically mark as final in UI
+  accounting.value.status = 'final'
+
+  // Schedule actual finalize after 5 seconds
+  const timer = setTimeout(() => {
+    commitFinalize()
+    pendingFinalize.value = null
+  }, 5000)
+
+  pendingFinalize.value = { timer }
+}
+
+function undoFinalize() {
+  if (!pendingFinalize.value || !accounting.value) return
+  clearTimeout(pendingFinalize.value.timer)
+  pendingFinalize.value = null
+  accounting.value.status = 'draft'
+}
+
+async function commitFinalize() {
+  if (!accounting.value?.id) return
   try {
     await accountingService.update(accounting.value.id, { status: 'final' })
-    accounting.value.status = 'final'
     saveSuccess.value = 'Abrechnung abgeschlossen!'
     setTimeout(() => { saveSuccess.value = '' }, 3000)
   } catch (e: any) {
     error.value = e.response?.data?.error || e.message || 'Fehler beim Abschließen'
+    // Revert on failure
+    if (accounting.value) accounting.value.status = 'draft'
   }
 }
 
@@ -744,6 +774,7 @@ async function reopenAccounting() {
 }
 
 async function deleteAccounting() {
+  showOverflow.value = false
   if (!accounting.value?.id) return
   if (!confirm('Abrechnung wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) return
   try {
@@ -949,9 +980,20 @@ async function deleteDocument(doc: EventDocument) {
   }
 }
 
+function closeOverflow(e: MouseEvent) {
+  if (!(e.target as HTMLElement).closest('.btn-overflow') && !(e.target as HTMLElement).closest('.overflow-dropdown')) {
+    showOverflow.value = false
+  }
+}
+
 onMounted(() => {
   loadData()
   loadDocuments()
+  document.addEventListener('click', closeOverflow)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeOverflow)
 })
 </script>
 
@@ -961,6 +1003,7 @@ onMounted(() => {
   .no-accounting(v-else-if="!accounting")
     p Noch keine Abrechnung für diese Veranstaltung.
     button.btn-save(@click="createAccounting") Abrechnung starten
+    .error(v-if="error") ⚠️ {{ error }}
   template(v-else)
     .accounting-header
       .tabs
@@ -993,8 +1036,10 @@ onMounted(() => {
         button.btn-save(@click="saveAll" :disabled="isSaving || accounting.status === 'final'")
           | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
         button.btn-finalize(v-if="accounting.status === 'draft'" @click="finalizeAccounting") Abschließen
-        button.btn-delete-accounting(v-if="accounting.status === 'draft'" @click="deleteAccounting") Löschen
         button.btn-reopen(v-if="accounting.status === 'final'" @click="reopenAccounting") Wieder öffnen
+        button.btn-overflow(v-if="accounting.status === 'draft'" @click="showOverflow = !showOverflow") ⋯
+        .overflow-dropdown(v-if="showOverflow")
+          button.overflow-item.overflow-danger(@click="deleteAccounting") Abrechnung löschen
 
     .error(v-if="error") {{ error }}
 
@@ -1694,6 +1739,12 @@ onMounted(() => {
           p Noch keine Belege hochgeladen.
 
         .loading(v-if="isLoadingDocs") Belege werden geladen…
+
+  //- ── Undo Finalize Snackbar ──
+  transition(name="snackbar")
+    .undo-snackbar(v-if="pendingFinalize")
+      span Abrechnung abgeschlossen – ab jetzt nur noch im Lesemodus.
+      button.undo-btn(@click="undoFinalize") Rückgängig
 </template>
 
 <style scoped>
@@ -1711,6 +1762,12 @@ onMounted(() => {
   color: #555;
 }
 
+.no-accounting .error {
+  display: inline-block;
+  text-align: left;
+  margin-top: 1rem;
+}
+
 .loading {
   padding: 3rem;
   text-align: center;
@@ -1719,7 +1776,7 @@ onMounted(() => {
 .accounting-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding-top: 0.5rem;
@@ -1731,6 +1788,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  position: relative;
 }
 
 h2 {
@@ -1805,18 +1863,52 @@ h2 {
   color: white;
 }
 
-.btn-delete-accounting {
+.btn-overflow {
   padding: 0.4rem 0.75rem;
-  border: 0.2rem solid #c00;
+  border: 0.2rem solid black;
   background: white;
-  color: #c00;
+  color: black;
   font-weight: 600;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
+  line-height: 1.2;
 }
 
-.btn-delete-accounting:hover {
+.btn-overflow:hover {
+  background: black;
+  color: white;
+}
+
+.overflow-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.25rem;
+  background: white;
+  border: 0.25rem solid black;
+  z-index: 100;
+  min-width: 12rem;
+}
+
+.overflow-item {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: white;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.overflow-danger {
+  color: #c00;
+}
+
+.overflow-danger:hover {
   background: #c00;
   color: white;
 }
@@ -3094,5 +3186,51 @@ h2 {
   text-align: center;
   padding: 2rem;
   opacity: 0.6;
+}
+
+.undo-snackbar {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: black;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.undo-btn {
+  background: transparent;
+  color: white;
+  border: 0.15rem solid white;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: background 0.15s;
+}
+
+.undo-btn:hover {
+  background: white;
+  color: black;
+}
+
+.snackbar-enter-active,
+.snackbar-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.snackbar-enter-from,
+.snackbar-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(1rem);
 }
 </style>

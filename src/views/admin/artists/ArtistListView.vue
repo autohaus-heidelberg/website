@@ -258,7 +258,7 @@ h2 {
   text-align: center;
   font-size: 0.875rem;
   font-weight: 600;
-  transition: filter 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-edit {
@@ -267,12 +267,18 @@ h2 {
 }
 
 .btn-delete {
-  background: black;
-  color: white;
+  background: white;
+  color: #c00;
+  border-color: #c00;
 }
 
-.btn-edit:hover, .btn-delete:hover {
+.btn-edit:hover {
   filter: brightness(120%);
+}
+
+.btn-delete:hover {
+  background: #c00;
+  color: white;
 }
 
 @media (max-width: 768px) {
