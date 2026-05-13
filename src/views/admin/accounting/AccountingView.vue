@@ -82,15 +82,34 @@ function generateDefaultSachbericht() {
   if (!event.value) return
   const e = event.value
   const dateStr = new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })
+  const weekday = new Date(e.date).toLocaleDateString('de-DE', { weekday: 'long' })
   const artistNames = e.artists.map(a => a.name)
-  let text = `Am ${dateStr} veranstaltete der Carousel e.V. die Veranstaltung „${e.title}" im Alten Autohaus Heidelberg.`
+  const hasDJ = artistNames.some(n => /\bdj\b/i.test(n))
+  const isWeekend = [5, 6].includes(new Date(e.date).getDay()) // Fr=5, Sa=6
+  const startTime = isWeekend ? '21:00' : '20:00'
+
+  let text = `Die Veranstaltung „${e.title}" fand am ${weekday}, den ${dateStr} im Alten Autohaus Heidelberg statt. `
+  text += `Sie wurde über soziale Medien, die Webseite, den Newsletter und Plakatierung beworben und zog ein Publikum aus Heidelberg und der Großregion an. `
+  text += `Dank reibungslosem Einsatz der ehrenamtlichen Helfer*innen konnte das Konzert nach Aufbau, Soundcheck und hausgemachtem Abendessen pünktlich gegen ${startTime} beginnen. `
+
   if (artistNames.length === 1) {
-    text += ` Es trat ${artistNames[0]} auf.`
-  } else if (artistNames.length > 1) {
-    const last = artistNames.pop()
-    text += ` Es traten ${artistNames.join(', ')} und ${last} auf.`
+    text += `${artistNames[0]} boten einen mitreißenden Auftritt, der das Publikum begeisterte. `
+  } else if (artistNames.length >= 2) {
+    text += `${artistNames[0]} eröffneten den Abend und wussten dem Publikum ordentlich einzuheizen. `
+    for (let i = 1; i < artistNames.length - 1; i++) {
+      text += `Im Anschluss begeisterten ${artistNames[i]} das Publikum mit einem energiegeladenen Auftritt. `
+    }
+    const last = artistNames[artistNames.length - 1]
+    text += `${last} legten nochmal eine Schippe drauf und boten einen Auftritt der Superlative. `
   }
-  text += ' Die Veranstaltung war gut besucht und wurde vom Publikum positiv aufgenommen.'
+
+  const endTime = isWeekend ? '03:00' : '01:00'
+  if (hasDJ) {
+    text += `Nach Ende des Konzertes wurde rasch aufgeräumt, bevor die Gäste und Künstler*innen glücklich und zufrieden gegen ${endTime} die Heimreise bzw. den Weg ins Hotel antraten.`
+  } else {
+    text += `Nach Ende des Konzertes wurde rasch aufgeräumt, bevor die Gäste und Künstler*innen glücklich und zufrieden gegen ${endTime} die Heimreise bzw. den Weg ins Hotel antraten.`
+  }
+
   sachbericht.value = text
 }
 
@@ -695,6 +714,8 @@ async function loadData() {
         budgetRevDrittmittel.value = String(bpRev.drittmittel || '0')
         budgetRevSonstige.value = String(bpRev.sonstige || '0')
       }
+      // Auto-generate Sachbericht if empty (also for new grants)
+      if (!sachbericht.value) generateDefaultSachbericht()
       const eventYear = ev.date ? new Date(ev.date).getFullYear() : new Date().getFullYear()
       grantSummary.value = await grantService.getSummary(eventYear)
     } catch { /* grant data is optional */ }
@@ -733,7 +754,7 @@ async function deleteAccounting() {
   if (!confirm('Abrechnung wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) return
   try {
     await accountingService.delete(accounting.value.id)
-    router.push('/admin/accounting')
+    router.push('/admin/events')
   } catch (e: any) {
     error.value = e.response?.data?.error || e.message || 'Fehler beim Löschen'
   }
@@ -934,15 +955,33 @@ onMounted(() => {
 .accounting-view
   .loading(v-if="isLoading") Abrechnung wird geladen...
   template(v-else-if="accounting")
-    .page-header
-      .header-left
-        router-link.btn-back(to="/admin/accounting") ← Zurück
-        h2 {{ event?.title || props.eventId }}
-        .event-details(v-if="event")
-          span.detail(v-if="event.artists.length") {{ event.artists.map(a => a.name).join(', ') }}
-          span.detail(v-if="event.fee") VVK: {{ event.fee }} €
-          span.detail(v-if="event.feeAk") AK: {{ event.feeAk }} €
-      .header-right
+    .accounting-header
+      .tabs
+        button.tab(
+          :class="{ active: activeTab === 'cashcount' }"
+          @click="activeTab = 'cashcount'"
+        ) 💰 Kassenzählung
+        button.tab(
+          :class="{ active: activeTab === 'inventory' }"
+          @click="activeTab = 'inventory'"
+        ) 📦 Inventur
+        button.tab(
+          :class="{ active: activeTab === 'expenses' }"
+          @click="activeTab = 'expenses'"
+        ) 🧾 Ausgaben
+        button.tab(
+          :class="{ active: activeTab === 'documents' }"
+          @click="activeTab = 'documents'"
+        ) 📎 Belege
+        button.tab(
+          :class="{ active: activeTab === 'result' }"
+          @click="activeTab = 'result'"
+        ) 📊 Ergebnis
+        button.tab.tab-grant(
+          :class="{ active: activeTab === 'grant' }"
+          @click="activeTab = 'grant'"
+        ) 🏛️ Förderung
+      .accounting-actions
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         button.btn-save(@click="saveAll" :disabled="isSaving || accounting.status === 'final'")
           | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
@@ -951,32 +990,6 @@ onMounted(() => {
         button.btn-reopen(v-if="accounting.status === 'final'" @click="reopenAccounting") Wieder öffnen
 
     .error(v-if="error") {{ error }}
-
-    .tabs
-      button.tab(
-        :class="{ active: activeTab === 'cashcount' }"
-        @click="activeTab = 'cashcount'"
-      ) 💰 Kassenzählung
-      button.tab(
-        :class="{ active: activeTab === 'inventory' }"
-        @click="activeTab = 'inventory'"
-      ) 📦 Inventur
-      button.tab(
-        :class="{ active: activeTab === 'expenses' }"
-        @click="activeTab = 'expenses'"
-      ) 🧾 Ausgaben
-      button.tab(
-        :class="{ active: activeTab === 'documents' }"
-        @click="activeTab = 'documents'"
-      ) 📎 Belege
-      button.tab(
-        :class="{ active: activeTab === 'result' }"
-        @click="activeTab = 'result'"
-      ) 📊 Ergebnis
-      button.tab.tab-grant(
-        :class="{ active: activeTab === 'grant' }"
-        @click="activeTab = 'grant'"
-      ) 🏛️ Förderung
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
@@ -1589,9 +1602,7 @@ onMounted(() => {
               strong {{ formatCurrency(grantAmount) }}
 
           //- ── Sachbericht (for Verwendungsnachweis) ──
-          .section-header-row
-            h3.section-title Sachbericht
-            button.btn-generate(@click="generateDefaultSachbericht" v-if="!sachbericht") Vorschlag generieren
+          h3.section-title Sachbericht
           textarea.notes-input(
             v-model="sachbericht"
             placeholder="Kurze Beschreibung der Veranstaltung, Programm, Besucherzahl..."
@@ -1685,8 +1696,6 @@ onMounted(() => {
 <style scoped>
 .accounting-view {
   background: white;
-  padding: 2rem;
-  border: 0.5rem solid black;
 }
 
 .loading {
@@ -1694,52 +1703,21 @@ onMounted(() => {
   text-align: center;
 }
 
-.page-header {
+.accounting-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
+  gap: 1rem;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  padding-top: 0.5rem;
   flex-wrap: wrap;
 }
 
-.event-details {
-  display: flex;
-  gap: 0.75rem;
-  font-size: 0.8rem;
-  color: #555;
-  width: 100%;
-}
-
-.event-details .detail {
-  font-weight: 500;
-}
-
-.header-right {
+.accounting-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
-}
-
-.btn-back {
-  padding: 0.5rem 1rem;
-  border: 0.25rem solid black;
-  text-decoration: none;
-  color: black;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.btn-back:hover {
-  background: black;
-  color: white;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 h2 {
@@ -1752,19 +1730,19 @@ h2 {
 .save-success {
   color: black;
   font-weight: 900;
-  padding: 0.5rem 1rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.75rem;
+  border: 0.2rem solid black;
+  font-size: 0.8rem;
 }
 
 .btn-save {
-  padding: 0.75rem 1.5rem;
+  padding: 0.4rem 1rem;
   background: black;
   color: white;
-  border: 0.25rem solid black;
+  border: 0.2rem solid black;
   cursor: pointer;
-  font-weight: 900;
-  font-size: 1rem;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: 0.8rem;
   transition: filter 0.2s;
 }
 
@@ -1783,11 +1761,12 @@ h2 {
 }
 
 .btn-finalize {
-  padding: 0.5rem 1rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.75rem;
+  border: 0.2rem solid black;
   background: black;
   color: white;
   font-weight: 600;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -1798,11 +1777,12 @@ h2 {
 }
 
 .btn-reopen {
-  padding: 0.5rem 1rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.75rem;
+  border: 0.2rem solid black;
   background: white;
   color: black;
   font-weight: 600;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -1813,11 +1793,12 @@ h2 {
 }
 
 .btn-delete-accounting {
-  padding: 0.5rem 1rem;
-  border: 0.25rem solid #c00;
+  padding: 0.4rem 0.75rem;
+  border: 0.2rem solid #c00;
   background: white;
   color: #c00;
   font-weight: 600;
+  font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -1839,26 +1820,22 @@ h2 {
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
-  margin-bottom: 0;
-  border-bottom: 0.25rem solid black;
+  gap: 0.25rem;
 }
 
 .tab {
-  padding: 0.75rem 1.5rem;
-  background: white;
+  padding: 0.5rem 1.25rem;
+  background: #f0f0f0;
   color: black;
-  border: 0.25rem solid black;
-  border-bottom: none;
+  border: none;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-  margin-bottom: -0.25rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: background 0.2s;
 }
 
 .tab:hover {
-  background: #f5f5f5;
+  background: #ddd;
 }
 
 .tab.active {

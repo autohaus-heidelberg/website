@@ -6,6 +6,7 @@ import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
+import AccountingView from '@/views/admin/accounting/AccountingView.vue'
 
 // Import TinyMCE components (must be before Editor import)
 import 'tinymce/tinymce'
@@ -29,6 +30,7 @@ const props = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const isEditing = ref(!!props.id)
+const activeSection = ref<'event' | 'accounting'>('event')
 const activeTab = ref('details')
 
 const form = ref<Partial<AppEvent>>({
@@ -308,9 +310,11 @@ const previewEvent = computed(() => {
 onMounted(async () => {
   await loadEvent()
 
-  // Check for tab query parameter and set active tab
+  // Check for tab query parameter and set active section/tab
   const tabParam = route.query.tab as string
-  if (tabParam && ['details', 'checklist'].includes(tabParam)) {
+  if (tabParam === 'accounting') {
+    activeSection.value = 'accounting'
+  } else if (tabParam && ['details', 'checklist'].includes(tabParam)) {
     activeTab.value = tabParam
   }
 })
@@ -323,18 +327,31 @@ onMounted(async () => {
     router-link.btn-cancel(to="/admin/events") Abbrechen
 
   .event-tabs(v-if="isEditing")
-    button.tab(
+    button.tab.tab-section(
+      :class="{ active: activeSection === 'event' }"
+      @click="activeSection = 'event'"
+      type="button"
+    ) Veranstaltung
+    button.tab.tab-section(
+      :class="{ active: activeSection === 'accounting' }"
+      @click="activeSection = 'accounting'"
+      type="button"
+    ) Abrechnung
+
+  //- Sub-tabs for Veranstaltung
+  .event-sub-tabs(v-if="isEditing && activeSection === 'event'")
+    button.sub-tab(
       :class="{ active: activeTab === 'details' }"
       @click="activeTab = 'details'"
       type="button"
-    ) Veranstaltungsdetails
-    button.tab(
+    ) 📝 Details
+    button.sub-tab(
       :class="{ active: activeTab === 'checklist' }"
       @click="activeTab = 'checklist'"
       type="button"
-    ) Checkliste
+    ) ✅ Checkliste
 
-  .tab-content(v-show="activeTab === 'details'")
+  .tab-content(v-show="activeSection === 'event' && activeTab === 'details'")
     .form-container
       .form-section
         form.event-form(@submit.prevent="handleSubmit")
@@ -466,8 +483,11 @@ onMounted(async () => {
           .preview-empty(v-else)
             p Formular ausfüllen für Vorschau
 
-  .tab-content(v-if="isEditing" v-show="activeTab === 'checklist'")
+  .tab-content(v-if="isEditing" v-show="activeSection === 'event' && activeTab === 'checklist'")
     EventChecklistTab(:eventId="props.id")
+
+  .tab-content(v-if="isEditing" v-show="activeSection === 'accounting'")
+    AccountingView(:eventId="props.id")
 </template>
 
 <style scoped>
@@ -491,9 +511,36 @@ onMounted(async () => {
 .event-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
   border-bottom: 0.25rem solid black;
   padding-bottom: 0;
+}
+
+.event-sub-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0 0;
+}
+
+.sub-tab {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: #f0f0f0;
+  color: black;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.sub-tab:hover {
+  background: #ddd;
+}
+
+.sub-tab.active {
+  background: black;
+  color: white;
 }
 
 .tab {

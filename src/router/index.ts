@@ -150,8 +150,7 @@ const router = createRouter({
         {
           path: 'accounting/:eventId',
           name: 'admin-accounting-detail',
-          component: () => import('../views/admin/accounting/AccountingView.vue'),
-          props: true
+          redirect: (to: any) => ({ path: `/admin/events/${to.params.eventId}`, query: { tab: 'accounting' } })
         },
         // Stock & Purchase routes
         {
