@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { beverageService } from '@/services'
 import type { BeverageItem } from '@/types/accounting'
@@ -27,6 +27,9 @@ const form = ref<Partial<BeverageItem>>({
 
 const isLoading = ref(false)
 const error = ref('')
+
+const isSingleBottle = computed(() => (form.value.units_per_crate ?? 1) <= 1)
+const purchasePriceLabel = computed(() => isSingleBottle.value ? 'EK / Flasche' : 'EK / Kiste')
 
 const supplierSuggestions = [
   'Getränkestation',
@@ -110,46 +113,8 @@ onMounted(() => {
       datalist#supplier-suggestions
         option(v-for="s in supplierSuggestions" :key="s" :value="s")
 
-    h3.section-title Preise
-    .form-row
-      .form-group
-        label(for="purchase_price") EK / Kiste
-        .input-with-unit
-          input#purchase_price(
-            v-model="form.purchase_price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            required
-          )
-          span.unit €
-
-      .form-group
-        label(for="selling_price") VK / Flasche
-        .input-with-unit
-          input#selling_price(
-            v-model="form.selling_price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-          )
-          span.unit €
-
-      .form-group
-        label(for="deposit") Pfand
-        .input-with-unit
-          input#deposit(
-            v-model="form.deposit"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-          )
-          span.unit €
-
     h3.section-title Gebinde & Flasche
+    .hint.section-hint Einzelflasche (z.B. Spirituosen): Fl./Kiste = 1. Kistenware (z.B. Bier): Fl./Kiste = Anzahl Flaschen.
     .form-row
       .form-group
         label(for="units_per_crate") Fl. / Kiste
@@ -170,8 +135,49 @@ onMounted(() => {
           placeholder="0.33"
         )
 
+    h3.section-title Preise
+    .hint.section-hint {{ isSingleBottle ? 'Einzelflasche — Einkaufspreis pro Flasche eintragen.' : 'Kistenware — Einkaufspreis für die ganze Kiste eintragen.' }}
+    .form-row
+      .form-group
+        label(for="purchase_price") {{ purchasePriceLabel }}
+        .input-with-unit
+          input#purchase_price(
+            v-model="form.purchase_price"
+            type="number"
+            step="0.01"
+            min="0"
+            :placeholder="isSingleBottle ? 'z.B. 16.99' : 'z.B. 18.50'"
+            required
+          )
+          span.unit €
+
+      .form-group
+        label(for="selling_price") VK / Flasche
+        .input-with-unit
+          input#selling_price(
+            v-model="form.selling_price"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+          )
+          span.unit €
+        .hint(v-if="isSingleBottle") Leer lassen wenn Ausschank portionsweise
+
+      .form-group
+        label(for="deposit") Pfand
+        .input-with-unit
+          input#deposit(
+            v-model="form.deposit"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+          )
+          span.unit €
+
     h3.section-title Ausschank
-    .hint.section-hint Nur nötig wenn aus einer Flasche mehrere Portionen ausgeschenkt werden
+    .hint.section-hint Nur nötig bei Spirituosen o.ä. — wenn aus einer Flasche mehrere Portionen ausgeschenkt werden (z.B. 14× 4cl aus 0,7L Gin)
     .form-row
       .form-group
         label(for="portions_per_bottle") Portionen / Fl.
