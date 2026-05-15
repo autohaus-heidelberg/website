@@ -1198,10 +1198,10 @@ onUnmounted(() => {
 
     //- ── Inventory Tab ──
     .tab-content(v-if="activeTab === 'inventory'")
-      .inventory-toolbar
+      .inventory-toolbar.mobile-only
         label.hide-zero-toggle
           input(type="checkbox" v-model="hideZeroStock")
-          span Nur mit Bestand
+          span Leere ausblenden
 
       .section(v-for="(items, group) in inventoryBySupplier" :key="group")
         h3.section-title {{ group }}
@@ -2477,11 +2477,10 @@ h2 {
 /* ── Mobile Inventory Cards ── */
 
 .mobile-only {
-  display: none;
+  display: none !important;
 }
 
 .inventory-cards {
-  display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
@@ -2489,8 +2488,9 @@ h2 {
 .inv-card {
   border: 2px solid black;
   border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.75rem;
   background: white;
+  overflow: hidden;
 }
 
 .inv-card-header {
@@ -2541,29 +2541,37 @@ h2 {
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .stepper-group {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.3rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
 }
 
 .stepper-btn {
-  width: 48px;
-  height: 48px;
+  all: unset;
+  width: 40px;
+  height: 40px;
   border: 2px solid black;
   border-radius: 0.4rem;
   background: white;
-  font-size: 1.4rem;
+  color: black;
+  font-size: 1.3rem;
   font-weight: 900;
+  letter-spacing: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.1s;
+  transition: background 0.1s, color 0.1s;
+  box-sizing: border-box;
 }
 
 .stepper-btn:active {
@@ -2580,10 +2588,11 @@ h2 {
 }
 
 .stepper-unit {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #555;
-  min-width: 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #333;
+  min-width: 1.5rem;
+  margin-left: 0.2rem;
 }
 
 .inv-card-footer {
@@ -3055,11 +3064,11 @@ h2 {
 
   /* Show mobile cards, hide desktop table */
   .desktop-only {
-    display: none;
+    display: none !important;
   }
 
   .mobile-only {
-    display: flex;
+    display: flex !important;
   }
 }
 
