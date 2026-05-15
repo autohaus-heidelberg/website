@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
@@ -375,14 +375,14 @@ const inventoryBySupplier = computed(() => {
     if (!groups[group]) groups[group] = []
     let entry = inventory.value.find(i => i.beverage_item === bev.id)
     if (!entry) {
-      // Auto-fill quantity_before from current stock
+      // Auto-fill quantity_before from current stock, pre-fill after = before
       const stock = stockData.value[bev.id!]
       const stockQty = stock ? stock.quantity : 0
       entry = {
         accounting: accounting.value?.id || 0,
         beverage_item: bev.id!,
         quantity_before: String(stockQty),
-        quantity_after: '0',
+        quantity_after: String(stockQty),
       }
       inventory.value.push(entry)
     }
@@ -420,12 +420,14 @@ function groupInventoryValue(items: { beverage: BeverageItem; entry: InventoryEn
 
 // ── Mobile Inventory Helpers ─────────────────────────────────────
 const hideZeroStock = ref(true)
+const confirmedInventory = reactive(new Set<number>())
 
 function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
   const state = getOrInitCrateState(beverage.id!, beverage.units_per_crate || 1, entry)
   const key = field === 'after' ? 'afterCrates' : 'beforeCrates'
   state[key] = Math.max(0, state[key] + delta)
   updateEntryFromCrates(entry, beverage)
+  if (field === 'after') confirmedInventory.add(beverage.id!)
 }
 
 function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
@@ -442,6 +444,7 @@ function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after
     if (field === 'after') entry.quantity_after = String(newVal)
     else entry.quantity_before = String(newVal)
   }
+  if (field === 'after') confirmedInventory.add(beverage.id!)
 }
 
 function inventoryItemVisible(entry: InventoryEntry): boolean {
@@ -451,8 +454,8 @@ function inventoryItemVisible(entry: InventoryEntry): boolean {
 
 function inventoryProgress(items: { beverage: BeverageItem; entry: InventoryEntry }[]): string {
   const visible = items.filter(({ entry }) => inventoryItemVisible(entry))
-  const counted = visible.filter(({ entry }) => parseFloat(entry.quantity_after || '0') > 0)
-  return `${counted.length}/${visible.length}`
+  const confirmed = visible.filter(({ beverage }) => confirmedInventory.has(beverage.id!))
+  return `${confirmed.length}/${visible.length}`
 }
 
 const totalInventoryValue = computed(() => {
@@ -682,6 +685,12 @@ async function loadData() {
       // Nested data is included in the accounting response
       revenues.value = acc.revenues ?? []
       inventory.value = acc.inventory_entries ?? []
+      // Mark loaded entries as confirmed if quantity_after differs from quantity_before
+      for (const entry of inventory.value) {
+        if (entry.quantity_after !== entry.quantity_before) {
+          confirmedInventory.add(entry.beverage_item)
+        }
+      }
       expenses.value = acc.expenses ?? []
       // Auto-assign grant_category for known expense types
       for (const exp of expenses.value) {
@@ -1198,7 +1207,7 @@ onUnmounted(() => {
 
     //- ── Inventory Tab ──
     .tab-content(v-if="activeTab === 'inventory'")
-      .inventory-toolbar.mobile-only
+      .inventory-toolbar
         label.hide-zero-toggle
           input(type="checkbox" v-model="hideZeroStock")
           span Leere ausblenden
@@ -1218,7 +1227,7 @@ onUnmounted(() => {
             .col-inv-num.sortable(@click="invSort.toggle('consumed')") Verbraucht{{ invSort.indicator('consumed') }}
             .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
 
-          .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)")
+          .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': confirmedInventory.has(beverage.id), 'inv-pending': !confirmedInventory.has(beverage.id) }")
             .col-inv-name
               .bev-name {{ beverage.name }}
               .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
@@ -1258,7 +1267,7 @@ onUnmounted(() => {
                     min="0"
                     step="1"
                     placeholder="0"
-                    @input="updateEntryFromCrates(entry, beverage)"
+                    @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                   )
                   span.input-label K
                 .crate-input
@@ -1268,7 +1277,7 @@ onUnmounted(() => {
                     min="0"
                     step="1"
                     placeholder="0"
-                    @input="updateEntryFromCrates(entry, beverage)"
+                    @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                   )
                   span.input-label Fl
 
@@ -1289,6 +1298,7 @@ onUnmounted(() => {
                   type="number"
                   min="0"
                   step="0.5"
+                  @input="confirmedInventory.add(beverage.id)"
                   placeholder="0"
                 )
                 span.input-label Fl.
@@ -1299,7 +1309,7 @@ onUnmounted(() => {
 
         //- Mobile cards
         .inventory-cards.mobile-only
-          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)")
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': confirmedInventory.has(beverage.id), 'inv-pending': !confirmedInventory.has(beverage.id) }")
             .inv-card-header
               .inv-card-name {{ beverage.name }}
               .inv-card-meta(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}er Kiste
@@ -2464,10 +2474,15 @@ h2 {
 
 .inventory-row {
   border-bottom: 1px solid #ddd;
+  transition: background 0.2s;
 }
 
-.inventory-row:nth-child(even) {
-  background: #f5f5f5;
+.inventory-row.inv-pending {
+  background: #fff8e1;
+}
+
+.inventory-row.inv-confirmed {
+  background: #e8f5e9;
 }
 
 .inventory-row:last-child {
@@ -2491,6 +2506,17 @@ h2 {
   padding: 0.6rem 0.75rem;
   background: white;
   overflow: hidden;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.inv-card.inv-pending {
+  background: #fff8e1;
+  border-color: #f9a825;
+}
+
+.inv-card.inv-confirmed {
+  background: #e8f5e9;
+  border-color: #43a047;
 }
 
 .inv-card-header {
