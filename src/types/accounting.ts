@@ -101,7 +101,6 @@ export interface ExpenseEntry {
   grant_category?: GrantCategory | null
   tax_sphere?: TaxSphere | null
   vat_rate?: VatRate | null
-  is_paid_out?: boolean
 }
 
 export interface AccountingSplit {

@@ -471,7 +471,6 @@ function addExpense() {
     amount: '0.00',
     notes: '',
     paid_from: 'bar_cash',
-    is_paid_out: false,
   })
 }
 
