@@ -418,6 +418,43 @@ function groupInventoryValue(items: { beverage: BeverageItem; entry: InventoryEn
   return items.reduce((sum, { beverage, entry }) => sum + inventoryValue(entry, beverage), 0)
 }
 
+// ── Mobile Inventory Helpers ─────────────────────────────────────
+const hideZeroStock = ref(true)
+
+function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
+  const state = getOrInitCrateState(beverage.id!, beverage.units_per_crate || 1, entry)
+  const key = field === 'after' ? 'afterCrates' : 'beforeCrates'
+  state[key] = Math.max(0, state[key] + delta)
+  updateEntryFromCrates(entry, beverage)
+}
+
+function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
+  const upc = beverage.units_per_crate || 1
+  if (upc > 1) {
+    const state = getOrInitCrateState(beverage.id!, upc, entry)
+    const key = field === 'after' ? 'afterBottles' : 'beforeBottles'
+    state[key] = Math.max(0, state[key] + delta)
+    updateEntryFromCrates(entry, beverage)
+  } else {
+    const current = parseFloat(entry[field === 'after' ? 'quantity_after' : 'quantity_before'] || '0')
+    const step = 0.5
+    const newVal = Math.max(0, current + delta * step)
+    if (field === 'after') entry.quantity_after = String(newVal)
+    else entry.quantity_before = String(newVal)
+  }
+}
+
+function inventoryItemVisible(entry: InventoryEntry): boolean {
+  if (!hideZeroStock.value) return true
+  return parseFloat(entry.quantity_before || '0') > 0 || parseFloat(entry.quantity_after || '0') > 0
+}
+
+function inventoryProgress(items: { beverage: BeverageItem; entry: InventoryEntry }[]): string {
+  const visible = items.filter(({ entry }) => inventoryItemVisible(entry))
+  const counted = visible.filter(({ entry }) => parseFloat(entry.quantity_after || '0') > 0)
+  return `${counted.length}/${visible.length}`
+}
+
 const totalInventoryValue = computed(() => {
   return Object.values(inventoryBySupplier.value).reduce(
     (sum, items) => sum + groupInventoryValue(items), 0
@@ -1161,9 +1198,17 @@ onUnmounted(() => {
 
     //- ── Inventory Tab ──
     .tab-content(v-if="activeTab === 'inventory'")
+      .inventory-toolbar.mobile-only
+        label.hide-zero-toggle
+          input(type="checkbox" v-model="hideZeroStock")
+          span Leere ausblenden
+
       .section(v-for="(items, group) in inventoryBySupplier" :key="group")
         h3.section-title {{ group }}
-        .inventory-table
+          span.inv-progress {{ inventoryProgress(items) }}
+
+        //- Desktop table
+        .inventory-table.desktop-only
           .inventory-header
             .col-inv-name.sortable(@click="invSort.toggle('name')") Getränk{{ invSort.indicator('name') }}
             .col-inv-info Kiste
@@ -1173,7 +1218,7 @@ onUnmounted(() => {
             .col-inv-num.sortable(@click="invSort.toggle('consumed')") Verbraucht{{ invSort.indicator('consumed') }}
             .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
 
-          .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
+          .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)")
             .col-inv-name
               .bev-name {{ beverage.name }}
               .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
@@ -1251,6 +1296,44 @@ onUnmounted(() => {
             .col-inv-num {{ entry.quantity_before }}
             .col-inv-num {{ inventoryConsumption(entry) }}
             .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
+
+        //- Mobile cards
+        .inventory-cards.mobile-only
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)")
+            .inv-card-header
+              .inv-card-name {{ beverage.name }}
+              .inv-card-meta(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}er Kiste
+              .inv-card-meta(v-else) Einzelflasche
+            .inv-card-before
+              span.inv-card-label Vorher:
+              span.inv-card-value(v-if="(beverage.units_per_crate || 1) > 1") {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles }}Fl = {{ entry.quantity_before }}
+              span.inv-card-value(v-else) {{ entry.quantity_before }} Fl.
+            .inv-card-after
+              span.inv-card-label Nachher:
+              //- Crate stepper
+              template(v-if="(beverage.units_per_crate || 1) > 1")
+                .stepper-row
+                  .stepper-group
+                    button.stepper-btn(@click="stepCrate(beverage, entry, 'after', -1)") −
+                    span.stepper-value {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates }}
+                    button.stepper-btn(@click="stepCrate(beverage, entry, 'after', 1)") +
+                    span.stepper-unit K
+                  .stepper-group
+                    button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
+                    span.stepper-value {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles }}
+                    button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
+                    span.stepper-unit Fl
+              //- Bottle stepper
+              template(v-else)
+                .stepper-row
+                  .stepper-group
+                    button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
+                    span.stepper-value {{ entry.quantity_after }}
+                    button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
+                    span.stepper-unit Fl.
+            .inv-card-footer
+              span Δ {{ inventoryConsumption(entry) }}
+              span {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
         .group-total
           span Zwischensumme {{ group }}:
@@ -2251,6 +2334,34 @@ h2 {
 
 /* ── Inventory Table ── */
 
+.inventory-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.hide-zero-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hide-zero-toggle input {
+  width: 1rem;
+  height: 1rem;
+}
+
+.inv-progress {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #666;
+  margin-left: 0.5rem;
+}
+
 .inventory-table {
   border: 0.25rem solid black;
   border-top: none;
@@ -2361,6 +2472,137 @@ h2 {
 
 .inventory-row:last-child {
   border-bottom: none;
+}
+
+/* ── Mobile Inventory Cards ── */
+
+.mobile-only {
+  display: none !important;
+}
+
+.inventory-cards {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.inv-card {
+  border: 2px solid black;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: white;
+  overflow: hidden;
+}
+
+.inv-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.inv-card-name {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.inv-card-meta {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.inv-card-before {
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.inv-card-label {
+  font-weight: 700;
+  margin-right: 0.25rem;
+}
+
+.inv-card-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.inv-card-after {
+  margin-bottom: 0.5rem;
+}
+
+.inv-card-after > .inv-card-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.stepper-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stepper-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.stepper-btn {
+  all: unset;
+  width: 40px;
+  height: 40px;
+  border: 2px solid black;
+  border-radius: 0.4rem;
+  background: white;
+  color: black;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s, color 0.1s;
+  box-sizing: border-box;
+}
+
+.stepper-btn:active {
+  background: black;
+  color: white;
+}
+
+.stepper-value {
+  min-width: 2rem;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper-unit {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #333;
+  min-width: 1.5rem;
+  margin-left: 0.2rem;
+}
+
+.inv-card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+  padding-top: 0.4rem;
+  border-top: 1px solid #eee;
 }
 
 /* ── Expenses Table ── */
@@ -2818,6 +3060,15 @@ h2 {
 
   .col-price, .col-qty, .col-amount {
     text-align: left;
+  }
+
+  /* Show mobile cards, hide desktop table */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
   }
 }
 
