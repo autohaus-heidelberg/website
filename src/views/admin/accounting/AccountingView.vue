@@ -1508,17 +1508,6 @@ onUnmounted(() => {
     .tab-content(v-if="activeTab === 'grant'")
       .grant-tab
 
-        .event-info
-          .info-row
-            span.label Veranstaltung
-            span.value {{ event?.title }}
-          .info-row
-            span.label Datum
-            span.value {{ event?.date ? new Date(event.date).toLocaleDateString('de-DE') : '–' }}
-          .info-row
-            span.label Künstler
-            span.value {{ event?.artists?.map(a => a.name).join(', ') || '–' }}
-
         //- ── Sub-Tab Navigation ──
         .grant-sub-tabs
           button.grant-sub-tab(
@@ -3387,12 +3376,18 @@ h2 {
   gap: 0.5rem;
 }
 .btn-upload {
-  background: var(--color-accent, #4f46e5);
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px;
+  padding: 0.625rem 1rem;
+  background: white;
+  color: black;
+  border: 0.25rem solid black;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+.btn-upload:hover {
+  background: black;
+  color: white;
 }
 .btn-secondary {
   background: transparent;
