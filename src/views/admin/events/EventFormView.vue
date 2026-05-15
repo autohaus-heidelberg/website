@@ -375,7 +375,13 @@ onUnmounted(() => {
 <template lang="pug">
 .event-form-view
   .form-header
-    h2 {{ isEditing ? 'Veranstaltung bearbeiten' : 'Veranstaltung erstellen' }}
+    .form-header-left
+      h2 {{ isEditing ? 'Veranstaltung bearbeiten' : 'Veranstaltung erstellen' }}
+      span.event-subtitle(v-if="isEditing && form.title")
+        | {{ form.title }}
+        template(v-if="form.date")  · {{ new Date(form.date).toLocaleDateString('de-DE') }}
+        template(v-if="form.fee")  · VVK {{ form.fee }}€
+        template(v-if="form.feeAk")  / AK {{ form.feeAk }}€
     router-link.btn-cancel(to="/admin/events") Abbrechen
 
   .event-tabs(v-if="isEditing")
@@ -568,10 +574,22 @@ onUnmounted(() => {
 .form-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1.5rem;
   padding-bottom: 1.5rem;
   border-bottom: 0.25rem solid black;
+}
+
+.form-header-left {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.event-subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 0.15rem;
 }
 
 .event-tabs {
