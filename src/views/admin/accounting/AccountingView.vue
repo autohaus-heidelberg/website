@@ -36,6 +36,7 @@ const props = defineProps<{
 const router = useRouter()
 const activeTab = ref('cashcount')
 const showOverflow = ref(false)
+const expandedSources = ref<Set<string>>(new Set())
 const pendingFinalize = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
 
 // ── State ────────────────────────────────────────────────────────
@@ -331,6 +332,21 @@ function groupRevenue(sources: RevenueSource[]): number {
   return revenues.value
     .filter(r => sources.includes(r.source))
     .reduce((sum, r) => sum + revenueNet(r), 0)
+}
+
+function groupRevenueGross(sources: RevenueSource[]): number {
+  const net = groupRevenue(sources)
+  const cashSources = sources.filter(s => s.endsWith('_cash'))
+  const paidOut = cashSources.reduce((sum, s) => sum + expensesFromSource(s), 0)
+  return net + paidOut
+}
+
+function toggleSourceExpanded(source: string) {
+  if (expandedSources.value.has(source)) {
+    expandedSources.value.delete(source)
+  } else {
+    expandedSources.value.add(source)
+  }
 }
 
 // ── Computed: Inventory ──────────────────────────────────────────
@@ -1148,62 +1164,82 @@ onUnmounted(() => {
                     placeholder="0.00"
                   )
               .col-amount.col-computed {{ formatCurrency(revenueNet(getRevenue(source))) }}
-            template(v-if="(source === 'entrance_cash' || source === 'bar_cash') && expensesFromSource(source) > 0")
-              .revenue-row.sub-row.register-payout
-                .col-source.sub-source └ Aus Kasse bezahlt
-                .col-amount.sub-val
-                .col-amount.sub-val
-                .col-amount.sub-val
-                .col-amount.sub-val.positive + {{ formatCurrency(expensesFromSource(source)) }}
-              .revenue-row.sub-row.register-gross
-                .col-source.sub-source = Einnahmen brutto
-                .col-amount.sub-val
-                .col-amount.sub-val
-                .col-amount.sub-val
-                .col-amount.sub-val
-                  strong {{ formatCurrency(revenueNet(getRevenue(source)) + expensesFromSource(source)) }}
             template(v-if="source === 'vvk_pretix' && pretixData")
-              .revenue-row.sub-row(v-for="(info, src) in pretixData.by_source" :key="src")
-                .col-source.sub-source {{ src === 'vvk_stripe' ? '└ Stripe' : src === 'vvk_paypal' ? '└ PayPal' : '└ ' + src }}
-                .col-amount.sub-val {{ formatCurrency(info.revenue) }}
-                .col-amount.sub-val —
-                .col-amount.sub-val {{ formatCurrency(info.fees) }}
+              .revenue-row.sub-row.expandable(@click="toggleSourceExpanded('pretix')")
+                .col-source.sub-source {{ expandedSources.has('pretix') ? '▾' : '▸' }} {{ Object.keys(pretixData.by_source).length }} Zahlungsquellen
                 .col-amount.sub-val
-              .revenue-row.sub-row
-                .col-source.sub-source └ Pretix-Gebühr
                 .col-amount.sub-val
-                .col-amount.sub-val —
-                .col-amount.sub-val {{ formatCurrency(pretixData.pretix_fee) }}
                 .col-amount.sub-val
+                .col-amount.sub-val
+              template(v-if="expandedSources.has('pretix')")
+                .revenue-row.sub-row(v-for="(info, src) in pretixData.by_source" :key="src")
+                  .col-source.sub-source &nbsp;&nbsp;{{ src === 'vvk_stripe' ? '└ Stripe' : src === 'vvk_paypal' ? '└ PayPal' : '└ ' + src }}
+                  .col-amount.sub-val {{ formatCurrency(info.revenue) }}
+                  .col-amount.sub-val —
+                  .col-amount.sub-val {{ formatCurrency(info.fees) }}
+                  .col-amount.sub-val
+                .revenue-row.sub-row
+                  .col-source.sub-source &nbsp;&nbsp;└ Pretix-Gebühr
+                  .col-amount.sub-val
+                  .col-amount.sub-val —
+                  .col-amount.sub-val {{ formatCurrency(pretixData.pretix_fee) }}
+                  .col-amount.sub-val
             template(v-if="(source === 'bar_paypal' || source === 'entrance_paypal') && paypalBarData && paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance').length")
-              .revenue-row.sub-row.paypal-cat-actions
+              .revenue-row.sub-row.paypal-cat-actions.expandable(@click="toggleSourceExpanded(source)")
                 .col-source.sub-source
-                  span.paypal-txn-count {{ paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance').length }} Transaktionen
-                  button.btn-cat-all(@click="setAllPaypalCategory(source === 'bar_paypal' ? 'entrance' : 'bar')") Alle → {{ source === 'bar_paypal' ? '🚪 Einlass' : '🍺 Bar' }}
+                  span {{ expandedSources.has(source) ? '▾' : '▸' }} {{ paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance').length }} Transaktionen
+                  button.btn-cat-all(@click.stop="setAllPaypalCategory(source === 'bar_paypal' ? 'entrance' : 'bar')") Alle → {{ source === 'bar_paypal' ? '🚪 Einlass' : '🍺 Bar' }}
                   span.entry-price-hint(v-if="source === 'entrance_paypal' && paypalBarData.entry_price") Eintritt: {{ paypalBarData.entry_price }}€{{ paypalBarData.entry_price_ak ? ' / AK ' + paypalBarData.entry_price_ak + '€' : '' }}
-              .revenue-row.sub-row.sub-detail(
-                v-for="{ txn, idx } in paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance')"
-                :key="idx"
-                :class="{ 'cat-entrance': txn.category === 'entrance', 'cat-bar': txn.category === 'bar' }"
-              )
-                .col-source.sub-source.sub-detail-source
-                  button.btn-cat-toggle(
-                    @click.stop="togglePaypalCategory(idx)"
-                    :title="source === 'bar_paypal' ? '→ Einlass verschieben' : '→ Bar verschieben'"
-                  ) {{ source === 'bar_paypal' ? '→ 🚪' : '→ 🍺' }}
-                  span {{ txn.name }} · {{ formatTime(txn.timestamp) }}
-                .col-amount.sub-val {{ formatCurrency(txn.amount) }}
-                .col-amount.sub-val —
-                .col-amount.sub-val {{ formatCurrency(txn.fee) }}
-                .col-amount.sub-val {{ formatCurrency(txn.net) }}
-                button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
+              template(v-if="expandedSources.has(source)")
+                .revenue-row.sub-row.sub-detail(
+                  v-for="{ txn, idx } in paypalTransactionsFor(source === 'bar_paypal' ? 'bar' : 'entrance')"
+                  :key="idx"
+                  :class="{ 'cat-entrance': txn.category === 'entrance', 'cat-bar': txn.category === 'bar' }"
+                )
+                  .col-source.sub-source.sub-detail-source
+                    button.btn-cat-toggle(
+                      @click.stop="togglePaypalCategory(idx)"
+                      :title="source === 'bar_paypal' ? '→ Einlass verschieben' : '→ Bar verschieben'"
+                    ) {{ source === 'bar_paypal' ? '→ 🚪' : '→ 🍺' }}
+                    span {{ txn.name }} · {{ formatTime(txn.timestamp) }}
+                  .col-amount.sub-val {{ formatCurrency(txn.amount) }}
+                  .col-amount.sub-val —
+                  .col-amount.sub-val {{ formatCurrency(txn.fee) }}
+                  .col-amount.sub-val {{ formatCurrency(txn.net) }}
+                  button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
         .group-total
           span Gesamt {{ group.label }}:
           strong {{ formatCurrency(groupRevenue(group.sources)) }}
 
-      .grand-total
-        span Gesamteinnahmen:
-        strong {{ formatCurrency(totalRevenue) }}
+      .section.section-summary
+        .section-title-row
+          h3.section-title Zusammenfassung
+        .summary-list
+          .summary-line
+            span.summary-label Getränkeverkauf
+            span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
+          .summary-line.summary-expandable(@click="toggleSourceExpanded('entrance_detail')")
+            span.summary-label {{ expandedSources.has('entrance_detail') ? '▾' : '▸' }} Eintritt
+            span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
+          template(v-if="expensesFromSource('entrance_cash') > 0 && expandedSources.has('entrance_detail')")
+            .summary-line.summary-sub
+              span.summary-label Gezählt (netto)
+              span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
+            .summary-line.summary-sub
+              span.summary-label + Aus Kasse bezahlt (z.B. Honorare)
+              span.summary-value + {{ formatCurrency(expensesFromSource('entrance_cash')) }}
+            .summary-line.summary-sub.summary-highlight
+              span.summary-label = Eintritt brutto
+              span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources)) }}
+            .summary-line.summary-sub
+              span.summary-label davon USt (7%)
+              span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources) - groupRevenueGross(REVENUE_GROUPS[1].sources) / 1.07) }}
+            .summary-line.summary-sub
+              span.summary-label Netto (abzgl. 7% USt)
+              span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources) / 1.07) }}
+          .summary-line.summary-total
+            span.summary-label Gesamteinnahmen (gezählt)
+            span.summary-value {{ formatCurrency(totalRevenue) }}
 
     //- ── Inventory Tab ──
     .tab-content(v-if="activeTab === 'inventory'")
@@ -2216,6 +2252,16 @@ h2 {
   border-bottom: 1px dashed #ccc;
 }
 
+.revenue-row.sub-row.expandable {
+  cursor: pointer;
+  font-weight: 600;
+  color: #333;
+  user-select: none;
+}
+.revenue-row.sub-row.expandable:hover {
+  background: #eaeaea;
+}
+
 .revenue-row.sub-toggle {
   cursor: pointer;
   font-weight: 600;
@@ -2901,6 +2947,136 @@ h2 {
   color: black;
   font-weight: 700;
   font-size: 0.95rem;
+}
+
+.group-detail {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.375rem 1rem;
+  font-size: 0.85rem;
+  color: #444;
+  gap: 1rem;
+}
+
+.vat-hint {
+  font-size: 0.75rem;
+  color: #888;
+  margin-left: auto;
+}
+
+.cashcount-summary {
+  margin-top: 1.5rem;
+  border: 0.25rem solid black;
+  padding: 1rem;
+}
+
+.cashcount-summary .section-title {
+  margin-bottom: 0.75rem;
+}
+
+.summary-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.summary-line.summary-expandable {
+  cursor: pointer;
+  user-select: none;
+}
+.summary-line.summary-expandable:hover {
+  background: #f5f5f5;
+  margin: 0 -0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.summary-line.summary-sub {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #555;
+  padding: 0.25rem 0 0.25rem 1rem;
+}
+
+.summary-line.summary-sub.summary-highlight {
+  font-weight: 600;
+  color: black;
+  border-top: 1px solid #ddd;
+  padding-top: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.summary-line.summary-total {
+  border-top: 0.2rem solid black;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.summary-label {
+  text-align: left;
+}
+
+.summary-value {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  min-width: 100px;
+}
+
+.summary-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  font-size: 0.95rem;
+}
+
+.summary-row.summary-total {
+  border-top: 2px solid black;
+  padding-top: 0.75rem;
+  margin-top: 0.375rem;
+  font-size: 1.1rem;
+}
+
+.summary-row.summary-expandable {
+  cursor: pointer;
+  user-select: none;
+}
+.summary-row.summary-expandable:hover {
+  background: #f5f5f5;
+}
+
+.summary-row.summary-sub {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.summary-row.summary-highlight {
+  font-size: 0.85rem;
+  color: black;
+  border-top: 1px solid #ddd;
+  padding-top: 0.375rem;
+  margin-top: 0.25rem;
+}
+
+.summary-divider {
+  border-top: 1px dashed #ccc;
+  margin: 0.5rem 0;
 }
 
 .grand-total {

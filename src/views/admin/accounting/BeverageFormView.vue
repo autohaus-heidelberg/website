@@ -27,8 +27,10 @@ const form = ref<Partial<BeverageItem>>({
 
 const isLoading = ref(false)
 const error = ref('')
+const priceHistory = ref<{ date: string; unit_price: string; quantity: number; supplier: string }[]>([])
 
 const isSingleBottle = computed(() => (form.value.units_per_crate ?? 1) <= 1)
+const hasPurchases = computed(() => priceHistory.value.length > 0)
 const purchasePriceLabel = computed(() => isSingleBottle.value ? 'EK / Flasche' : 'EK / Kiste')
 
 const supplierSuggestions = [
@@ -44,6 +46,8 @@ async function loadBeverage() {
   try {
     const item = await beverageService.getById(Number(props.id))
     form.value = { ...item }
+    const data = await beverageService.getPriceHistory(Number(props.id))
+    priceHistory.value = data.history
   } catch (e: any) {
     error.value = 'Failed to load beverage'
   }
@@ -58,7 +62,7 @@ async function handleSubmit() {
     error.value = 'Bitte eine Lieferantengruppe eingeben'
     return
   }
-  if (!form.value.purchase_price) {
+  if (!form.value.purchase_price && !hasPurchases.value) {
     error.value = 'Bitte einen Einkaufspreis eingeben'
     return
   }
@@ -67,10 +71,15 @@ async function handleSubmit() {
   error.value = ''
 
   try {
+    const payload = { ...form.value }
+    // Don't send purchase_price if auto-managed by purchases
+    if (hasPurchases.value) {
+      delete payload.purchase_price
+    }
     if (isEditing) {
-      await beverageService.update(Number(props.id), form.value)
+      await beverageService.update(Number(props.id), payload)
     } else {
-      await beverageService.create(form.value)
+      await beverageService.create(payload)
     }
     router.push('/admin/beverages')
   } catch (e: any) {
@@ -136,7 +145,8 @@ onMounted(() => {
         )
 
     h3.section-title Preise
-    .hint.section-hint {{ isSingleBottle ? 'Einzelflasche — Einkaufspreis pro Flasche eintragen.' : 'Kistenware — Einkaufspreis für die ganze Kiste eintragen.' }}
+    .hint.section-hint(v-if="!hasPurchases") {{ isSingleBottle ? 'Einzelflasche — Einkaufspreis pro Flasche eintragen.' : 'Kistenware — Einkaufspreis für die ganze Kiste eintragen.' }}
+    .hint.section-hint(v-else) EK-Preis wird automatisch aus dem letzten Einkauf übernommen.
     .form-row
       .form-group
         label(for="purchase_price") {{ purchasePriceLabel }}
@@ -147,7 +157,9 @@ onMounted(() => {
             step="0.01"
             min="0"
             :placeholder="isSingleBottle ? 'z.B. 16.99' : 'z.B. 18.50'"
-            required
+            :required="!hasPurchases"
+            :readonly="hasPurchases"
+            :class="{ 'readonly-field': hasPurchases }"
           )
           span.unit €
 
@@ -223,6 +235,20 @@ onMounted(() => {
       button.btn-primary(type="submit" :disabled="isLoading")
         | {{ isLoading ? 'Speichern...' : (isEditing ? 'Aktualisieren' : 'Erstellen') }}
       router-link.btn-secondary(to="/admin/beverages") Abbrechen
+
+  .price-history(v-if="isEditing && priceHistory.length")
+    h3.section-title Preisverlauf (Einkäufe)
+    .history-table
+      .history-header
+        .history-col-date Datum
+        .history-col-price Preis
+        .history-col-qty Menge
+        .history-col-supplier Lieferant
+      .history-row(v-for="(entry, idx) in priceHistory" :key="idx")
+        .history-col-date {{ new Date(entry.date).toLocaleDateString('de-DE') }}
+        .history-col-price {{ parseFloat(entry.unit_price).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
+        .history-col-qty {{ entry.quantity }}
+        .history-col-supplier {{ entry.supplier }}
 </template>
 
 <style scoped>
@@ -399,5 +425,44 @@ input:focus {
   .form-row {
     grid-template-columns: 1fr;
   }
+}
+
+.price-history {
+  margin-top: 2rem;
+  border-top: 0.25rem solid black;
+  padding-top: 1.5rem;
+}
+
+.history-table {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.history-header {
+  display: grid;
+  grid-template-columns: 100px 90px 60px 1fr;
+  gap: 0.5rem;
+  font-weight: 900;
+  border-bottom: 2px solid black;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 100px 90px 60px 1fr;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.history-col-price {
+  font-weight: 600;
+}
+
+.readonly-field {
+  background: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
 }
 </style>
