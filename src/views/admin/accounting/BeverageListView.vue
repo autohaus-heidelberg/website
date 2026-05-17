@@ -73,7 +73,13 @@ async function deleteBeverage(item: BeverageItem) {
       beveragesData.value.count--
     }
   } catch (e: any) {
-    alert('Fehler beim Löschen: ' + e.message)
+    const data = e.response?.data
+    if (data?.references?.length) {
+      const refList = data.references.map((r: any) => `• ${r.label}`).join('\n')
+      alert(`${data.error}\n\nVerwendet in:\n${refList}`)
+    } else {
+      alert('Fehler beim Löschen: ' + (data?.error || e.message))
+    }
   }
 }
 
