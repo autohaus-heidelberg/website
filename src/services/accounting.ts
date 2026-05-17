@@ -74,6 +74,15 @@ export const beverageService = {
     await api.delete(`/api/drinks/${id}/`)
   },
 
+  async getPriceHistory(id: number): Promise<{
+    drink_id: number
+    drink_name: string
+    current_price: string
+    history: { date: string; unit_price: string; quantity: number; supplier: string }[]
+  }> {
+    return api.get(`/api/drinks/${id}/price-history/`)
+  },
+
   async seedIfEmpty(): Promise<void> {
     const { results } = await this.getAll()
     if (results.length > 0) return
