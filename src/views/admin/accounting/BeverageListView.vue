@@ -64,6 +64,21 @@ async function loadBeverages() {
   }
 }
 
+async function toggleActive(item: BeverageItem) {
+  const newState = !item.is_active
+  const action = newState ? 'aktivieren' : 'deaktivieren'
+  if (!confirm(`"${item.name}" wirklich ${action}?`)) return
+  try {
+    const updated = await beverageService.update(item.id!, { is_active: newState })
+    if (beveragesData.value) {
+      const idx = beveragesData.value.results.findIndex(b => b.id === item.id)
+      if (idx !== -1) beveragesData.value.results[idx] = { ...beveragesData.value.results[idx], ...updated }
+    }
+  } catch (e: any) {
+    alert('Fehler: ' + (e.response?.data?.error || e.message))
+  }
+}
+
 async function deleteBeverage(item: BeverageItem) {
   if (!confirm(`"${item.name}" wirklich löschen?`)) return
   try {
@@ -116,8 +131,10 @@ onMounted(() => {
           .col-price.sortable(@click="sort.toggle('deposit')") Pfand{{ sort.indicator('deposit') }}
           .col-actions
 
-        .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1 }" @click="router.push(`/admin/beverages/${item.id}`)")
-          .col-name {{ item.name }}
+        .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1, 'row-inactive': !item.is_active }" @click="router.push(`/admin/beverages/${item.id}`)")
+          .col-name
+            | {{ item.name }}
+            span.inactive-badge(v-if="!item.is_active") inaktiv
           .col-crate {{ item.units_per_crate || 1 }}St.
           .col-size {{ item.bottle_size ? item.bottle_size + 'L' : '' }}
           .col-price {{ formatPrice(item.purchase_price) }}
@@ -129,6 +146,7 @@ onMounted(() => {
           .col-price {{ formatPrice(item.deposit) }}
           .col-actions
             router-link.btn-edit(:to="`/admin/beverages/${item.id}`") ✎
+            button.btn-toggle(@click.stop="toggleActive(item)" :title="item.is_active ? 'Deaktivieren' : 'Aktivieren'") {{ item.is_active ? '◯' : '●' }}
             button.btn-delete(@click.stop="deleteBeverage(item)") ✕
 
   .empty(v-else) Keine Getränke gefunden
@@ -300,7 +318,23 @@ h2 {
   justify-content: flex-end;
 }
 
-.btn-edit, .btn-delete {
+.row-inactive {
+  opacity: 0.5;
+}
+
+.inactive-badge {
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: black;
+  color: white;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.btn-edit, .btn-delete, .btn-toggle {
   padding: 0.25rem 0.5rem;
   border: 0.2rem solid black;
   cursor: pointer;
@@ -317,12 +351,17 @@ h2 {
   color: black;
 }
 
+.btn-toggle {
+  background: white;
+  color: black;
+}
+
 .btn-delete {
   background: black;
   color: white;
 }
 
-.btn-edit:hover, .btn-delete:hover {
+.btn-edit:hover, .btn-delete:hover, .btn-toggle:hover {
   filter: brightness(120%);
 }
 
