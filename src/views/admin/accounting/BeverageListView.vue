@@ -253,8 +253,8 @@ h2 {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 45px 50px 80px 80px 80px 60px;
-  gap: 0.75rem;
+  grid-template-columns: 1fr 45px 50px 75px 75px 75px auto;
+  gap: 0.5rem;
   padding: 0.5rem 1rem;
   min-width: 0;
 }
@@ -314,8 +314,9 @@ h2 {
 
 .col-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.25rem;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .row-inactive {
@@ -335,15 +336,16 @@ h2 {
 }
 
 .btn-edit, .btn-delete, .btn-toggle {
-  padding: 0.25rem 0.5rem;
-  border: 0.2rem solid black;
+  padding: 0.2rem 0.4rem;
+  border: 2px solid black;
   cursor: pointer;
   text-decoration: none;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   transition: filter 0.2s;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .btn-edit {
