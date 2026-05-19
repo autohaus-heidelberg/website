@@ -801,7 +801,7 @@ async function saveAll(silent = false) {
       revenues: revenues.value
         .filter(rev => parseFloat(rev.total || '0') !== 0 || rev.id),
       inventory_entries: inventory.value
-        .filter(inv => parseFloat(inv.quantity_before || '0') !== 0 || parseFloat(inv.quantity_after || '0') !== 0 || inv.id),
+        .filter(inv => inv.id || confirmedInventory.has(inv.beverage_item) || !qtyEquals(inv.quantity_before, inv.quantity_after)),
       expenses: expenses.value
         .filter(exp => exp.description)
         .map(exp => ({ ...exp, amount: exp.amount || '0' })),
@@ -817,12 +817,19 @@ async function saveAll(silent = false) {
       for (const serverEntry of saved.inventory_entries) {
         const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
         if (!local) continue
+        const wasNew = !local.id
+        // Sync id for newly created entries
+        if (serverEntry.id && !local.id) {
+          local.id = serverEntry.id
+        }
         const serverBefore = normalizeQty(serverEntry.quantity_before)
         const serverAfter = normalizeQty(serverEntry.quantity_after)
         const beforeChanged = !qtyEquals(local.quantity_before, serverBefore)
         const afterChanged = !qtyEquals(local.quantity_after, serverAfter)
         if (beforeChanged || afterChanged) {
-          if (afterChanged) {
+          // Only show warning if the entry was already persisted (not first save)
+          // and the backend corrected quantity_after (real conflict)
+          if (afterChanged && !wasNew) {
             const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
             if (bev) correctedItems.push(bev.name)
           }
@@ -830,8 +837,12 @@ async function saveAll(silent = false) {
           local.quantity_after = serverAfter
           delete inventoryCrates.value[String(serverEntry.beverage_item)]
         }
+        // Always sync consumed_quantity from backend
+        if (serverEntry.consumed_quantity !== undefined) {
+          local.consumed_quantity = serverEntry.consumed_quantity
+        }
       }
-      if (correctedItems.length > 0) {
+      if (correctedItems.length > 0 && !silent) {
         stockChangedWarning.value = `Bestand extern geändert – Werte angepasst: ${correctedItems.join(', ')}`
         setTimeout(() => { stockChangedWarning.value = '' }, 6000)
       }
@@ -886,7 +897,12 @@ async function saveAll(silent = false) {
       setTimeout(() => { saveSuccess.value = '' }, 3000)
     }
   } catch (e: any) {
-    if (!silent) error.value = e.message || 'Fehler beim Speichern'
+    // Handle FIFO stock conflict (400 with conflicts array)
+    if (e.response?.status === 400 && e.response?.data?.conflicts) {
+      await refreshStockAndCorrect()
+    } else {
+      if (!silent) error.value = e.message || 'Fehler beim Speichern'
+    }
   } finally {
     isSaving.value = false
   }
@@ -1020,9 +1036,8 @@ watch(
   () => { scheduleAutoSave() }
 )
 
-// ── Refresh stock on tab focus (prevent stale quantity_before) ──
-async function handleVisibilityChange() {
-  if (document.visibilityState !== 'visible') return
+// ── Refresh stock and correct entries (used by conflict handler & focus) ──
+async function refreshStockAndCorrect() {
   if (!accounting.value) return
   try {
     const stockEntries = await stockService.getAll()
@@ -1030,26 +1045,53 @@ async function handleVisibilityChange() {
     for (const s of stockEntries) map[s.id] = s.quantity
 
     suppressAutoSave = true
+    let stockChanged = false
     const changedItems: string[] = []
     for (const entry of inventory.value) {
-      // Only refresh unsaved entries (no id = never persisted, purely auto-filled)
-      if (entry.id) continue
-      if (confirmedInventory.has(entry.beverage_item)) continue
       const liveQty = map[entry.beverage_item]
-      if (liveQty !== undefined && !qtyEquals(liveQty, entry.quantity_before)) {
-        const bev = beverages.value.find(b => b.id === entry.beverage_item)
-        if (bev) changedItems.push(bev.name)
-        entry.quantity_before = normalizeQty(liveQty)
-        entry.quantity_after = normalizeQty(liveQty)
-        delete inventoryCrates.value[String(entry.beverage_item)]
+      if (liveQty === undefined) continue
+
+      if (entry.id) {
+        // Persisted entries: only detect change, don't modify locally.
+        // The backend is the authority — trigger a save and let the response sync
+        // update before/after/consumed atomically.
+        const ownConsumed = parseFloat(entry.consumed_quantity || '0')
+        const newBefore = liveQty + ownConsumed
+        if (!qtyEquals(newBefore, entry.quantity_before)) {
+          stockChanged = true
+          const bev = beverages.value.find(b => b.id === entry.beverage_item)
+          if (bev) changedItems.push(bev.name)
+        }
+      } else {
+        // Unpersisted entries: safe to update locally (no backend state yet)
+        if (confirmedInventory.has(entry.beverage_item)) continue
+        if (!qtyEquals(liveQty, entry.quantity_before)) {
+          entry.quantity_before = normalizeQty(liveQty)
+          entry.quantity_after = normalizeQty(liveQty)
+          delete inventoryCrates.value[String(entry.beverage_item)]
+        }
       }
     }
     if (changedItems.length > 0) {
-      stockChangedWarning.value = `Bestand aktualisiert: ${changedItems.join(', ')}`
-      setTimeout(() => { stockChangedWarning.value = '' }, 5000)
+      stockChangedWarning.value = `Bestand extern geändert: ${changedItems.join(', ')} – wird synchronisiert…`
+      setTimeout(() => { stockChangedWarning.value = '' }, 6000)
     }
     setTimeout(() => { suppressAutoSave = false }, 0)
+    // Trigger immediate save so the backend returns authoritative values
+    if (stockChanged) {
+      setTimeout(() => { saveAll(true) }, 100)
+    }
   } catch { /* ignore – next save will catch it */ }
+}
+
+// ── Refresh stock on tab/window focus (prevent stale quantity_before) ──
+async function handleVisibilityChange() {
+  if (document.visibilityState !== 'visible') return
+  await refreshStockAndCorrect()
+}
+
+async function handleWindowFocus() {
+  await refreshStockAndCorrect()
 }
 
 onMounted(() => {
@@ -1057,11 +1099,13 @@ onMounted(() => {
   loadDocuments()
   document.addEventListener('click', closeOverflow)
   document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleWindowFocus)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', closeOverflow)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('focus', handleWindowFocus)
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
 })
 </script>
@@ -1877,6 +1921,13 @@ h2 {
   border-radius: 4px;
   font-size: 0.8rem;
   font-weight: 600;
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 .save-success {

@@ -75,6 +75,7 @@ export interface InventoryEntry {
   beverage_item_supplier_group?: string
   quantity_before: string
   quantity_after: string
+  consumed_quantity?: string
   snapshot_purchase_price?: string
   snapshot_selling_price?: string | null
   snapshot_deposit?: string
