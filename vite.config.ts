@@ -16,6 +16,7 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     setupFiles: ['./src/__tests__/setup.ts'],
+    exclude: ['e2e/**', 'node_modules/**'],
   },
   server: {
     proxy: {
