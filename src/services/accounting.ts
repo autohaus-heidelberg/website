@@ -130,7 +130,7 @@ export const accountingService = {
       total_revenue: '0', total_revenue_by_group: [],
       total_expenses: '0', total_inventory_value_before: '0',
       total_inventory_value_after: '0', total_consumption_value: '0',
-      deposit_return: '0', result: '0', splits: [],
+      result: '0', splits: [],
     }
   },
 

@@ -165,11 +165,7 @@ Die Preise werden zum Zeitpunkt der Abrechnung als **Snapshot** gespeichert (fal
 - `transfer` – per Überweisung
 - `other` – Offen (= noch nicht bezahlt)
 
-### 4.5 Pfandrückgabe
-
-Ein separates Feld `deposit_return` erfasst den Pfanderlös nach Rückgabe der leeren Kisten.
-
-### 4.6 Beteiligungsteilung (Splits)
+### 4.5 Beteiligungsteilung (Splits)
 
 Falls Einnahmen zwischen Veranstaltern aufgeteilt werden:
 - Teilnehmer-Name + Anteil in %

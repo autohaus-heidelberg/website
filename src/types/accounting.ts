@@ -119,7 +119,6 @@ export interface EventAccounting {
   event_date?: string
   status: AccountingStatus
   notes: string
-  deposit_return: string
   created_by?: number
   created_at?: string
   updated_at?: string
@@ -136,7 +135,6 @@ export interface AccountingSummary {
   total_inventory_value_before: string
   total_inventory_value_after: string
   total_consumption_value: string
-  deposit_return: string
   result: string
   splits: { participant_name: string; amount: string }[]
 }

@@ -59,7 +59,6 @@ class EventAccounting(models.Model):
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     notes = models.TextField(blank=True, default='')
-    deposit_return = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True
@@ -218,8 +217,7 @@ und Zugehörigkeit zur Gruppe **`website`**.
 {
   "event": "uuid-des-events",
   "status": "draft",
-  "notes": "",
-  "deposit_return": "0.00"
+  "notes": ""
 }
 ```
 

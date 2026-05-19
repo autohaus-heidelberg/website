@@ -527,13 +527,6 @@ function removeExpense(index: number) {
 
 // ── Computed: Result ─────────────────────────────────────────────
 
-const depositReturn = computed({
-  get: () => accounting.value?.deposit_return || '0.00',
-  set: (val) => {
-    if (accounting.value) accounting.value.deposit_return = val
-  },
-})
-
 // True revenue = cash counted + expenses paid from registers (which reduced the count)
 const adjustedRevenue = computed(() => {
   return totalRevenue.value + expensesPaidFromRegister.value
@@ -544,7 +537,7 @@ const artistHospitality = computed(() => {
 })
 
 const result = computed(() => {
-  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value + parseFloat(depositReturn.value || '0')
+  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value
 })
 
 function addSplit() {
@@ -805,7 +798,6 @@ async function saveAll(silent = false) {
     // Build all nested data and save in one PUT
     const saved = await accountingService.update(accId, {
       notes: accounting.value.notes,
-      deposit_return: accounting.value.deposit_return,
       revenues: revenues.value
         .filter(rev => parseFloat(rev.total || '0') !== 0 || rev.id),
       inventory_entries: inventory.value
@@ -1024,7 +1016,7 @@ watch(
   { deep: true }
 )
 watch(
-  () => [accounting.value?.notes, accounting.value?.deposit_return],
+  () => [accounting.value?.notes],
   () => { scheduleAutoSave() }
 )
 
@@ -1477,17 +1469,6 @@ onUnmounted(() => {
           .result-row.detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
             span {{ exp.description || '(ohne Beschreibung)' }}
             span {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-        .result-row
-          span 🔄 + Pfandrückgabe
-          .input-inline
-            input.amount-input(
-              v-model="depositReturn"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-            )
-            span.unit €
         .result-row.result-total
           span 🏆 Ergebnis
           strong(:class="result >= 0 ? 'positive' : 'negative'")
