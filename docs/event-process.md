@@ -79,7 +79,7 @@ Der aktuelle Bestand pro Getränk ergibt sich aus der **letzten finalisierten Ab
 | Stückpreis | EK-Preis pro Kiste (wird automatisch vom Getränk übernommen) |
 | Gesamtpreis | Menge × Stückpreis |
 
-> **Inventursperre:** Während eine Abrechnung im Status „Draft" ist, können **keine** neuen Einkäufe angelegt oder gelöscht werden. Erst nach Finalisierung oder Löschung des Drafts.
+> **Kein Inventursperre mehr:** Mehrere Abrechnungen können gleichzeitig im Draft-Status existieren. Einkäufe können jederzeit angelegt werden.
 
 ### 3.3 Neues Getränk anlegen
 
@@ -88,9 +88,14 @@ Falls beim Einkauf ein Getränk fehlt:
 2. Je nach Typ (Kiste oder Einzelflasche) die Felder ausfüllen
 3. Danach im Einkauf als Position hinzufügen
 
-### 3.4 FIFO-Verbrauch
+### 3.4 Live-FIFO-Verbrauch
 
-Beim Finalisieren einer Abrechnung wird der Verbrauch (= `quantity_before − quantity_after`) automatisch per **FIFO** von den ältesten Einkaufs-Lots abgezogen. Das ermöglicht korrekte Wareneinsatz-Berechnung.
+Der Verbrauch wird **bei jedem Speichern** (Auto-Save alle 2s) automatisch per FIFO von den ältesten Einkaufs-Lots abgezogen — nicht erst beim Finalisieren. Das ermöglicht:
+- Echtzeit-Bestandsanzeige
+- Mehrere parallele Abrechnungen ohne Inventursperre
+- Sofortige Korrektur bei Tippfehlern (Restore bei höherem Nachher-Wert)
+
+**Parallelitätsschutz:** Bei gleichzeitiger Bearbeitung in mehreren Tabs wird die „Absicht" (= `quantity_before − quantity_after` wie der Client sie sieht) verwendet, nicht der absolute Wert. So geht kein Verbrauch verloren, auch wenn der lokale Bestand veraltet ist.
 
 ---
 
@@ -100,7 +105,8 @@ Beim Finalisieren einer Abrechnung wird der Verbrauch (= `quantity_before − qu
 
 ### 4.1 Abrechnung erstellen
 
-- Pro Event gibt es **maximal eine Abrechnung im Status „Draft"** (Inventursperre)
+- Pro Event gibt es **eine Abrechnung** (wird automatisch bei erstem Zugriff erstellt)
+- Mehrere Events können gleichzeitig offene Abrechnungen haben
 - Beim Erstellen wird eine leere Abrechnung mit den aktiven Getränken vorbefüllt
 
 ### 4.2 Kassensturz (Einnahmen / Revenues)
@@ -130,12 +136,16 @@ Einnahmen werden nach **Quelle** erfasst:
 
 | Feld | Beschreibung |
 |------|-------------|
-| Bestand vorher | Automatisch aus letzter Abrechnung |
+| Bestand vorher | Aktueller FIFO-Bestand + bisheriger Verbrauch dieses Items |
 | Bestand nachher | Manuell zählen nach der Veranstaltung |
 | Verbrauch | Wird berechnet: vorher − nachher |
 | Warenwert | Verbrauch × EK-Preis (Kiste) ÷ Flaschen/Kiste |
 
 Die Preise werden zum Zeitpunkt der Abrechnung als **Snapshot** gespeichert (falls sich der EK ändert, bleibt die alte Abrechnung korrekt).
+
+**Auto-Save:** Änderungen werden automatisch alle 2 Sekunden gespeichert. Der FIFO-Verbrauch wird bei jedem Save live angepasst.
+
+**Tab-Wechsel:** Beim Zurückkehren zum Browser-Tab wird der aktuelle Bestand automatisch für noch nicht bestätigte Einträge aktualisiert.
 
 ### 4.4 Ausgaben (Expenses / Posten)
 

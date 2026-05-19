@@ -108,6 +108,10 @@ export const accountingService = {
     return results.find(a => a.event === eventId) ?? null
   },
 
+  async getOrCreateByEvent(eventId: string): Promise<EventAccounting> {
+    return api.get<EventAccounting>(`/api/abrechnungen/by-event/${eventId}/`)
+  },
+
   async create(data: Partial<EventAccounting>): Promise<EventAccounting> {
     return api.post<EventAccounting>('/api/abrechnungen/', data)
   },
