@@ -14,6 +14,33 @@ npm install
 npm run dev
 ```
 
+## Tests
+
+### Unit Tests
+
+```sh
+npm run test
+```
+
+### E2E Tests (Playwright)
+
+Voraussetzungen:
+1. Backend läuft auf `localhost:8000` (Django dev server mit aktiviertem venv)
+2. Frontend läuft auf `localhost:5173` (`npm run dev`)
+
+```sh
+# Playwright-Browser installieren (einmalig)
+npx playwright install chromium
+
+# Alle E2E-Tests ausführen
+npm run test:e2e
+
+# Mit UI-Modus (interaktiv debuggen)
+npm run test:e2e:ui
+```
+
+Die Tests nutzen `workers: 1`, da sie eine gemeinsame SQLite-Datenbank verwenden.
+
 ## Deployment
 
 Das Deployment auf GitHub Pages läuft über eine **GitHub Action** (`Actions → Deploy to GitHub Pages → Run workflow`).
