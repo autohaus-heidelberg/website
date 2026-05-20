@@ -410,7 +410,8 @@ const inventoryBySupplier = computed(() => {
 })
 
 function inventoryConsumption(entry: InventoryEntry): number {
-  return parseFloat(entry.quantity_before || '0') - parseFloat(entry.quantity_after || '0')
+  const val = parseFloat(entry.quantity_before || '0') - parseFloat(entry.quantity_after || '0')
+  return Math.round(val * 100) / 100
 }
 
 function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
@@ -446,7 +447,7 @@ function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after
     updateEntryFromCrates(entry, beverage)
   } else {
     const current = parseFloat(entry[field === 'after' ? 'quantity_after' : 'quantity_before'] || '0')
-    const step = 0.5
+    const step = 0.25
     const newVal = Math.max(0, current + delta * step)
     if (field === 'after') entry.quantity_after = String(newVal)
     else entry.quantity_before = String(newVal)
@@ -648,6 +649,11 @@ const budgetGrantAmount = computed(() => {
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
+
+function formatQty(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val
+  return isNaN(n) ? '0' : n.toLocaleString('de-DE')
 }
 
 function formatTime(isoString: string): string {
@@ -1328,7 +1334,7 @@ onUnmounted(() => {
                   span.qty-display {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}
                   span.input-label K
                 .crate-input
-                  span.qty-display {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles }}
+                  span.qty-display {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}
                   span.input-label Fl
               .col-inv-pair
                 .crate-input
@@ -1355,21 +1361,21 @@ onUnmounted(() => {
             //- Bottle mode (units_per_crate = 1)
             template(v-else)
               .col-inv-pair.bottle-mode.readonly-before
-                span.qty-display {{ entry.quantity_before || '0' }}
+                span.qty-display {{ formatQty(entry.quantity_before || '0') }}
                 span.input-label Fl.
               .col-inv-pair.bottle-mode
                 input.qty-input(
                   v-model="entry.quantity_after"
                   type="number"
                   min="0"
-                  step="0.5"
+                  step="0.1"
                   @input="confirmedInventory.add(beverage.id)"
                   placeholder="0"
                 )
                 span.input-label Fl.
 
-            .col-inv-num {{ entry.quantity_before }}
-            .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ inventoryConsumption(entry) }}
+            .col-inv-num {{ formatQty(entry.quantity_before) }}
+            .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatQty(inventoryConsumption(entry)) }}
               span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
             .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
@@ -1382,8 +1388,8 @@ onUnmounted(() => {
               .inv-card-meta(v-else) Einzelflasche
             .inv-card-before
               span.inv-card-label Vorher:
-              span.inv-card-value(v-if="(beverage.units_per_crate || 1) > 1") {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles }}Fl = {{ entry.quantity_before }}
-              span.inv-card-value(v-else) {{ entry.quantity_before }} Fl.
+              span.inv-card-value(v-if="(beverage.units_per_crate || 1) > 1") {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}Fl = {{ formatQty(entry.quantity_before) }}
+              span.inv-card-value(v-else) {{ formatQty(entry.quantity_before) }} Fl.
             .inv-card-after
               span.inv-card-label Nachher:
               //- Crate stepper
@@ -1396,7 +1402,7 @@ onUnmounted(() => {
                     span.stepper-unit K
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles }}
+                    span.stepper-value {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles) }}
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl
               //- Bottle stepper
@@ -1404,11 +1410,11 @@ onUnmounted(() => {
                 .stepper-row
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ entry.quantity_after }}
+                    span.stepper-value {{ formatQty(entry.quantity_after) }}
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl.
             .inv-card-footer
-              span(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ inventoryConsumption(entry) }}
+              span(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ formatQty(inventoryConsumption(entry)) }}
                 span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠ Nachher > Vorher!
               span {{ formatCurrency(inventoryValue(entry, beverage)) }}
 

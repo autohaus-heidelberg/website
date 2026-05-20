@@ -113,18 +113,17 @@ async function handleSave() {
 .settings-view
   .settings-header
     h2 Einstellungen
-
-  .tabs-nav
-    button.tab-button(
-      :class="{ active: activeTab === 'helferpad' }"
-      @click="activeTab = 'helferpad'"
-    )
-      | Helferpad
-    button.tab-button(
-      :class="{ active: activeTab === 'euer' }"
-      @click="activeTab = 'euer'; if (!taxSummary) loadTaxSummary()"
-    )
-      | EÜR / Steuer-Export
+    .tab-bar
+      button.tab(
+        :class="{ active: activeTab === 'helferpad' }"
+        @click="activeTab = 'helferpad'"
+      )
+        | Helferpad
+      button.tab(
+        :class="{ active: activeTab === 'euer' }"
+        @click="activeTab = 'euer'; if (!taxSummary) loadTaxSummary()"
+      )
+        | EÜR / Steuer-Export
 
   .tab-content(v-show="activeTab === 'helferpad'")
     .section-description
@@ -227,7 +226,9 @@ async function handleSave() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .settings-header h2 {
@@ -237,33 +238,35 @@ async function handleSave() {
   margin: 0;
 }
 
-.tabs-nav {
+.tab-bar {
   display: flex;
-  gap: 0.5rem;
-  border-bottom: 0.5rem solid black;
-  margin-bottom: 2rem;
+  gap: 0;
+  border: 0.25rem solid black;
 }
 
-.tab-button {
-  padding: 0.875rem 1.5rem;
-  border: 0.25rem solid black;
+.tab {
+  padding: 0.625rem 1.25rem;
   background: white;
   color: black;
+  border: none;
+  border-right: 0.25rem solid black;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s;
-  font-size: 1rem;
+  transition: all 0.15s;
 }
 
-.tab-button:hover {
-  background: black;
-  color: white;
+.tab:last-child {
+  border-right: none;
 }
 
-.tab-button.active {
+.tab:hover {
+  background: #f0f0f0;
+}
+
+.tab.active {
   background: black;
   color: white;
-  transform: rotate(-1deg);
 }
 
 .tab-content {
@@ -516,13 +519,14 @@ textarea:disabled {
     padding: 1rem;
   }
 
-  .tabs-nav {
-    border-bottom-width: 0.25rem;
+  .tab-bar {
+    border-width: 0.2rem;
   }
 
-  .tab-button {
-    padding: 0.625rem 1rem;
-    font-size: 0.875rem;
+  .tab {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+    border-right-width: 0.2rem;
   }
 }
 </style>

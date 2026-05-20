@@ -18,24 +18,25 @@ const visibleEntries = computed(() => {
     const q = searchQuery.value.toLowerCase()
     entries = entries.filter(e =>
       e.name.toLowerCase().includes(q) ||
+      (e.category || '').toLowerCase().includes(q) ||
       e.supplier_group.toLowerCase().includes(q)
     )
   }
   return entries
 })
 
-const stockGrouped = computed(() => {
-  const groups: Record<string, StockEntry[]> = {}
+const stockByCategory = computed(() => {
+  const groups: Record<string, { emoji: string; items: StockEntry[] }> = {}
   for (const e of visibleEntries.value) {
-    const key = e.supplier_group || 'Sonstige'
-    if (!groups[key]) groups[key] = []
-    groups[key].push(e)
+    const cat = e.category || 'Sonstige'
+    if (!groups[cat]) groups[cat] = { emoji: e.category_emoji || '📦', items: [] }
+    groups[cat].items.push(e)
   }
   return groups
 })
 
 const totalQuantity = computed(() =>
-  visibleEntries.value.reduce((s, e) => s + (e.quantity || 0), 0)
+  Math.round(visibleEntries.value.reduce((s, e) => s + (e.quantity || 0), 0) * 100) / 100
 )
 
 const totalStockValue = computed(() =>
@@ -54,8 +55,13 @@ function formatPrice(val: string | number): string {
   return formatCurrency(parseFloat(String(val) || '0'))
 }
 
-function groupQuantity(items: StockEntry[]): number {
-  return items.reduce((s, e) => s + (e.quantity || 0), 0)
+function formatQty(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val
+  return isNaN(n) ? '0' : n.toLocaleString('de-DE')
+}
+
+function groupQuantity(items: StockEntry[]): string {
+  return formatQty(Math.round(items.reduce((s, e) => s + (e.quantity || 0), 0) * 100) / 100)
 }
 
 function groupStockValue(items: StockEntry[]): number {
@@ -64,6 +70,13 @@ function groupStockValue(items: StockEntry[]): number {
 
 function groupDepositValue(items: StockEntry[]): number {
   return items.reduce((s, e) => s + parseFloat(e.deposit_value || '0'), 0)
+}
+
+function stockLevel(item: StockEntry): string {
+  if (item.quantity <= 0) return 'empty'
+  if (item.quantity <= 3) return 'low'
+  if (item.quantity <= 10) return 'medium'
+  return 'full'
 }
 
 async function loadData() {
@@ -85,18 +98,16 @@ onMounted(() => {
 
 <template lang="pug">
 .stock-view
-  .header
-    h2 Lagerbestand
-    .header-actions
-      input.search-input(
-        v-model="searchQuery"
-        type="text"
-        placeholder="Getränk suchen..."
-      )
-      label.toggle-empty
-        input(type="checkbox" v-model="showEmpty")
-        |  Leere anzeigen
-      router-link.btn-primary(to="/admin/purchases/create") + Neuer Einkauf
+  .stock-toolbar
+    input.search-input(
+      v-model="searchQuery"
+      type="text"
+      placeholder="Getränk suchen..."
+    )
+    label.toggle-empty
+      input(type="checkbox" v-model="showEmpty")
+      |  Leere anzeigen
+    router-link.btn-primary(to="/admin/purchases/create") + Neuer Einkauf
 
   .loading(v-if="isLoading") Lagerbestand wird geladen...
   .error(v-else-if="error") {{ error }}
@@ -104,7 +115,7 @@ onMounted(() => {
   template(v-else)
     .summary-bar(v-if="visibleEntries.length")
       .summary-item
-        .summary-value {{ totalQuantity }}
+        .summary-value {{ formatQty(totalQuantity) }}
         .summary-label Flaschen gesamt
       .summary-item
         .summary-value {{ formatPrice(totalStockValue) }}
@@ -117,10 +128,14 @@ onMounted(() => {
         .summary-label Gesamtwert
 
     template(v-if="visibleEntries.length")
-      .stock-group(v-for="(items, groupName) in stockGrouped" :key="groupName")
-        h3.group-title {{ groupName }}
+      .stock-group(v-for="(group, catName) in stockByCategory" :key="catName")
+        h3.group-title
+          span.group-emoji {{ group.emoji }}
+          |  {{ catName }}
+          span.group-count ({{ group.items.length }})
         .stock-table
           .table-header
+            span.col-status
             span.col-name Getränk
             span.col-size Flasche
             span.col-stock Bestand
@@ -128,33 +143,43 @@ onMounted(() => {
             span.col-deposit Pfand
             span.col-value Warenwert
             span.col-deposit-val Pfandwert
-          .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1, 'row-empty': item.quantity === 0 }")
+          .table-row(
+            v-for="(item, idx) in group.items"
+            :key="item.id"
+            :class="['level-' + stockLevel(item), { 'row-even': idx % 2 === 1 }]"
+          )
+            span.col-status
+              span.status-dot(:class="'dot-' + stockLevel(item)")
             span.col-name {{ item.name }}
-            span.col-size {{ item.bottle_size ? item.bottle_size + 'L' : '—' }}
+            span.col-size {{ item.bottle_size ? formatQty(item.bottle_size) + 'L' : '—' }}
             .col-stock
-              span.stock-qty {{ item.quantity }}
-              span.stock-hint(v-if="item.crates && item.quantity > 0")
+              span.stock-qty {{ formatQty(item.quantity) }}
+              span.stock-hint(v-if="item.units_per_crate > 1 && item.crates && item.quantity > 0")
                 | ({{ item.crates }}×{{ item.units_per_crate }}{{ item.loose_bottles ? ' +' + item.loose_bottles : '' }})
+              span.stock-hint(v-else-if="item.units_per_crate <= 1 && item.quantity > 0")
+                | Fl.
             span.col-fifo {{ formatPrice(item.fifo_price) }}
             span.col-deposit {{ formatPrice(item.deposit) }}
             span.col-value {{ formatPrice(item.stock_value) }}
             span.col-deposit-val {{ formatPrice(item.deposit_value) }}
           .table-row.row-subtotal
-            span.col-name Σ {{ groupName }}
+            span.col-status
+            span.col-name {{ group.emoji }} Σ {{ catName }}
             span.col-size
             .col-stock
-              span.stock-qty {{ groupQuantity(items) }}
+              span.stock-qty {{ groupQuantity(group.items) }}
             span.col-fifo
             span.col-deposit
-            span.col-value {{ formatPrice(groupStockValue(items)) }}
-            span.col-deposit-val {{ formatPrice(groupDepositValue(items)) }}
+            span.col-value {{ formatPrice(groupStockValue(group.items)) }}
+            span.col-deposit-val {{ formatPrice(groupDepositValue(group.items)) }}
 
       .stock-table.total-table
         .table-row.row-total
+          span.col-status
           span.col-name Gesamt
           span.col-size
           .col-stock
-            span.stock-qty {{ totalQuantity }}
+            span.stock-qty {{ formatQty(totalQuantity) }}
           span.col-fifo
           span.col-deposit
           span.col-value {{ formatPrice(totalStockValue) }}
@@ -166,31 +191,15 @@ onMounted(() => {
 <style scoped>
 .stock-view {
   background: white;
-  padding: 2rem;
-  border: 0.5rem solid black;
 }
 
-.header {
+.stock-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-h2 {
-  font-size: 1.75rem;
-  color: black;
-  margin: 0;
-  font-weight: 900;
-}
-
-.header-actions {
-  display: flex;
   gap: 1rem;
   align-items: center;
   flex-wrap: wrap;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
@@ -199,6 +208,8 @@ h2 {
   font-size: 0.95rem;
   min-width: 180px;
   font-weight: 600;
+  flex: 1;
+  max-width: 400px;
 }
 
 .search-input:focus {
@@ -221,10 +232,15 @@ h2 {
   background: black;
   color: white;
   text-decoration: none;
-  font-weight: 900;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 0.9rem;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  background: #333;
 }
 
 .loading, .error, .empty {
@@ -278,6 +294,20 @@ h2 {
   background: #333;
   color: white;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.group-emoji {
+  font-size: 1.1rem;
+}
+
+.group-count {
+  font-weight: 500;
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-left: 0.5rem;
 }
 
 .stock-table {
@@ -288,7 +318,7 @@ h2 {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 60px 130px 90px 80px 90px 90px;
+  grid-template-columns: 20px 1fr 60px 130px 90px 80px 90px 90px;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
   align-items: center;
@@ -311,8 +341,16 @@ h2 {
   background: #f5f5f5;
 }
 
-.row-empty {
+.level-empty {
   opacity: 0.4;
+}
+
+.level-low {
+  background: #fff5f5;
+}
+
+.level-low.row-even {
+  background: #ffebee;
 }
 
 .row-subtotal {
@@ -331,6 +369,29 @@ h2 {
 
 .total-table {
   margin-top: 0;
+}
+
+/* Status dot */
+.col-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-full { background: #4caf50; }
+.dot-medium { background: #ff9800; }
+.dot-low { background: #f44336; animation: pulse 1.5s infinite; }
+.dot-empty { background: #ccc; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .col-size,
@@ -363,7 +424,7 @@ h2 {
 @media (max-width: 900px) {
   .table-header,
   .table-row {
-    grid-template-columns: 1fr 50px 100px 80px 70px 80px 80px;
+    grid-template-columns: 16px 1fr 50px 100px 80px 70px 80px 80px;
     font-size: 0.75rem;
     gap: 0.25rem;
     padding: 0.35rem 0.5rem;
@@ -377,7 +438,7 @@ h2 {
 @media (max-width: 600px) {
   .table-header,
   .table-row {
-    grid-template-columns: 1fr 80px 80px;
+    grid-template-columns: 16px 1fr 80px 80px;
   }
 
   .col-fifo, .col-deposit, .col-deposit-val, .col-size {

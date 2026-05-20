@@ -33,6 +33,13 @@ function beverageLabel(bev: BeverageItem): string {
   return upc > 1 ? `${bev.name} (${upc}er Kiste)` : bev.name
 }
 
+function isSingleBottleRow(idx: number): boolean {
+  const item = form.value.items?.[idx]
+  if (!item) return false
+  const bev = beverages.value.find(b => b.id === item.beverage_item)
+  return (bev?.units_per_crate || 1) <= 1
+}
+
 // Inline new-beverage creation
 const showNewBeverage = ref(false)
 const newBevIdx = ref(-1) // which item row triggered it
@@ -97,16 +104,30 @@ async function scanReceipt(event: Event) {
       const upc = bev?.units_per_crate || 1
       const crates = scanned.quantity_crates || 0
       const unitPrice = scanned.unit_price?.toString() || bev?.purchase_price || '0.00'
-      const totalPrice = (parseFloat(unitPrice) * crates).toFixed(2)
 
-      form.value.items!.push({
-        beverage_item: bev?.id ?? 0,
-        quantity: crates * upc,
-        unit_price: unitPrice,
-        total_price: totalPrice,
-      })
-      itemCrates.value.push(crates)
-      itemLoose.value.push(0)
+      if (upc <= 1) {
+        // Single bottle: treat scanned crates as bottles
+        const qty = crates
+        const totalPrice = (parseFloat(unitPrice) * qty).toFixed(2)
+        form.value.items!.push({
+          beverage_item: bev?.id ?? 0,
+          quantity: qty,
+          unit_price: unitPrice,
+          total_price: totalPrice,
+        })
+        itemCrates.value.push(0)
+        itemLoose.value.push(qty)
+      } else {
+        const totalPrice = (parseFloat(unitPrice) * crates).toFixed(2)
+        form.value.items!.push({
+          beverage_item: bev?.id ?? 0,
+          quantity: crates * upc,
+          unit_price: unitPrice,
+          total_price: totalPrice,
+        })
+        itemCrates.value.push(crates)
+        itemLoose.value.push(0)
+      }
     }
   } catch (e: any) {
     scanError.value = e.response?.data?.error || e.message || 'Scan fehlgeschlagen'
@@ -118,6 +139,11 @@ async function scanReceipt(event: Event) {
 
 function formatCurrency(val: number): string {
   return val.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
+
+function formatQty(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val
+  return isNaN(n) ? '0' : n.toLocaleString('de-DE', { maximumFractionDigits: 0 })
 }
 
 const computedTotal = computed(() => {
@@ -155,18 +181,27 @@ function onBeverageChange(item: PurchaseItem, idx: number) {
   if (bev) {
     item.unit_price = bev.purchase_price ?? '0.00'
   }
+  // Reset crate/loose when switching between crate and single-bottle items
+  itemCrates.value[idx] = 0
+  itemLoose.value[idx] = 0
   recalcItem(item, idx)
 }
 
 function recalcItem(item: PurchaseItem, idx: number) {
   const bev = beverages.value.find(b => b.id === item.beverage_item)
   const upc = bev?.units_per_crate || 1
-  const crates = itemCrates.value[idx] || 0
-  const loose = itemLoose.value[idx] || 0
-  item.quantity = crates * upc + loose
-  item.total_price = (
-    parseFloat(item.unit_price || '0') * crates
-  ).toFixed(2)
+  if (upc <= 1) {
+    // Single bottle: quantity = loose field directly, price per bottle
+    const qty = itemLoose.value[idx] || 0
+    item.quantity = qty
+    item.total_price = (parseFloat(item.unit_price || '0') * qty).toFixed(2)
+  } else {
+    // Crate item: quantity = crates * upc + loose
+    const crates = itemCrates.value[idx] || 0
+    const loose = itemLoose.value[idx] || 0
+    item.quantity = crates * upc + loose
+    item.total_price = (parseFloat(item.unit_price || '0') * crates).toFixed(2)
+  }
 }
 
 function beverageName(id: number): string {
@@ -192,8 +227,15 @@ async function loadData() {
       for (const item of (purchase.items ?? [])) {
         const bev = beverages.value.find(b => b.id === item.beverage_item)
         const upc = bev?.units_per_crate || 1
-        itemCrates.value.push(Math.floor(item.quantity / upc))
-        itemLoose.value.push(item.quantity % upc)
+        if (upc <= 1) {
+          // Single bottle: all goes to loose
+          itemCrates.value.push(0)
+          itemLoose.value.push(Math.round(Number(item.quantity)))
+        } else {
+          const qty = Math.round(Number(item.quantity))
+          itemCrates.value.push(Math.floor(qty / upc))
+          itemLoose.value.push(qty % upc)
+        }
       }
     }
   } catch (e: any) {
@@ -217,7 +259,7 @@ async function handleSubmit() {
     } else {
       await purchaseService.create(form.value)
     }
-    router.push('/admin/purchases')
+    router.push('/admin/lager?tab=einkaufe')
   } catch (e: any) {
     error.value = e.response?.data?.error || e.message || 'Fehler beim Speichern'
   } finally {
@@ -234,7 +276,7 @@ onMounted(() => {
 .purchase-form-view
   .form-header
     h2 {{ isEditing ? 'Einkauf bearbeiten' : '+ Neuer Einkauf' }}
-    router-link.btn-cancel(to="/admin/purchases") ← Zurück
+    router-link.btn-cancel(to="/admin/lager?tab=einkaufe") ← Zurück
 
   .error-msg(v-if="error") {{ error }}
 
@@ -279,9 +321,9 @@ onMounted(() => {
     .items-header
       span.col-bev Getränk
       span.col-crates Kisten
-      span.col-loose Einzelfl.
+      span.col-loose Flaschen
       span.col-qty Einheiten
-      span.col-price Preis / Kiste (€)
+      span.col-price Preis / Einh. (€)
       span.col-total Gesamt (€)
       span.col-action &nbsp;
 
@@ -290,19 +332,31 @@ onMounted(() => {
         option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
           | {{ beverageLabel(bev) }}
         option(:value="-1") + Neues Getränk…
-      input.col-crates(
-        v-model.number="itemCrates[idx]"
-        type="number"
-        min="0"
-        @input="recalcItem(item, idx)"
-      )
-      input.col-loose(
-        v-model.number="itemLoose[idx]"
-        type="number"
-        min="0"
-        @input="recalcItem(item, idx)"
-      )
-      span.col-qty {{ item.quantity }}
+      //- Crate mode: show crates + loose bottles
+      template(v-if="!isSingleBottleRow(idx)")
+        input.col-crates(
+          v-model.number="itemCrates[idx]"
+          type="number"
+          min="0"
+          @input="recalcItem(item, idx)"
+        )
+        input.col-loose(
+          v-model.number="itemLoose[idx]"
+          type="number"
+          min="0"
+          @input="recalcItem(item, idx)"
+        )
+      //- Single bottle mode: no crates, just bottles
+      template(v-else)
+        span.col-crates.disabled-cell —
+        input.col-loose(
+          v-model.number="itemLoose[idx]"
+          type="number"
+          min="0"
+          step="1"
+          @input="recalcItem(item, idx)"
+        )
+      span.col-qty {{ formatQty(item.quantity) }}
       input.col-price(
         v-model="item.unit_price"
         type="number"
@@ -325,8 +379,9 @@ onMounted(() => {
           .form-group
             label Flaschen / Kiste
             input(v-model.number="newBev.units_per_crate" type="number" min="1")
+            .hint 1 = Einzelflasche (Wein, Spirituosen)
           .form-group
-            label EK-Preis / Kiste (€)
+            label {{ newBev.units_per_crate <= 1 ? 'EK-Preis / Flasche (€)' : 'EK-Preis / Kiste (€)' }}
             input(v-model="newBev.purchase_price" type="number" step="0.01" min="0")
         .dialog-actions
           button.btn-save(type="button" @click="saveNewBeverage") Anlegen
@@ -609,5 +664,17 @@ h2 {
 .btn-cancel-dialog:hover {
   background: black;
   color: white;
+}
+
+.disabled-cell {
+  text-align: center;
+  color: #999;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 0.25rem;
 }
 </style>

@@ -175,6 +175,8 @@ export interface StockEntry {
   id: number
   name: string
   supplier_group: string
+  category: string
+  category_emoji: string
   units_per_crate: number
   bottle_size: string | null
   quantity: number

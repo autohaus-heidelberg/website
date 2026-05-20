@@ -33,6 +33,11 @@ const isSingleBottle = computed(() => (form.value.units_per_crate ?? 1) <= 1)
 const hasPurchases = computed(() => priceHistory.value.length > 0)
 const purchasePriceLabel = computed(() => isSingleBottle.value ? 'EK / Flasche' : 'EK / Kiste')
 
+function formatQty(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val
+  return isNaN(n) ? '0' : n.toLocaleString('de-DE')
+}
+
 const supplierSuggestions = [
   'Getränkestation',
   'Kaufland',
@@ -81,7 +86,7 @@ async function handleSubmit() {
     } else {
       await beverageService.create(payload)
     }
-    router.push('/admin/beverages')
+    router.push('/admin/lager?tab=getranke')
   } catch (e: any) {
     error.value = e.message || 'Fehler beim Speichern'
   } finally {
@@ -98,7 +103,7 @@ onMounted(() => {
 .beverage-form-view
   .form-header
     h2 {{ isEditing ? 'Getränk bearbeiten' : 'Neues Getränk' }}
-    router-link.btn-cancel(to="/admin/beverages") Abbrechen
+    router-link.btn-cancel(to="/admin/lager?tab=getranke") Abbrechen
 
   form.beverage-form(@submit.prevent="handleSubmit")
     .form-group.full
@@ -234,7 +239,7 @@ onMounted(() => {
     .form-actions
       button.btn-primary(type="submit" :disabled="isLoading")
         | {{ isLoading ? 'Speichern...' : (isEditing ? 'Aktualisieren' : 'Erstellen') }}
-      router-link.btn-secondary(to="/admin/beverages") Abbrechen
+      router-link.btn-secondary(to="/admin/lager?tab=getranke") Abbrechen
 
   .price-history(v-if="isEditing && priceHistory.length")
     h3.section-title Preisverlauf (Einkäufe)
@@ -247,7 +252,7 @@ onMounted(() => {
       .history-row(v-for="(entry, idx) in priceHistory" :key="idx")
         .history-col-date {{ new Date(entry.date).toLocaleDateString('de-DE') }}
         .history-col-price {{ parseFloat(entry.unit_price).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
-        .history-col-qty {{ entry.quantity }}
+        .history-col-qty {{ formatQty(entry.quantity) }}
         .history-col-supplier {{ entry.supplier }}
 </template>
 

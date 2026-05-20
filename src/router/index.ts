@@ -118,8 +118,7 @@ const router = createRouter({
         // Accounting routes
         {
           path: 'beverages',
-          name: 'admin-beverages',
-          component: () => import('../views/admin/accounting/BeverageListView.vue')
+          redirect: { name: 'admin-lager', query: { tab: 'getranke' } }
         },
         {
           path: 'beverages/create',
@@ -154,14 +153,17 @@ const router = createRouter({
         },
         // Stock & Purchase routes
         {
+          path: 'lager',
+          name: 'admin-lager',
+          component: () => import('../views/admin/accounting/InventoryView.vue')
+        },
+        {
           path: 'stock',
-          name: 'admin-stock',
-          component: () => import('../views/admin/accounting/StockView.vue')
+          redirect: { name: 'admin-lager', query: { tab: 'bestand' } }
         },
         {
           path: 'purchases',
-          name: 'admin-purchases',
-          component: () => import('../views/admin/accounting/PurchaseListView.vue')
+          redirect: { name: 'admin-lager', query: { tab: 'einkaufe' } }
         },
         {
           path: 'purchases/create',

@@ -190,9 +190,10 @@ onMounted(() => {
 <template lang="pug">
 .event-list-view
   .header
-    .view-tabs
-      button.view-tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") 📅 Veranstaltungen
-      button.view-tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") 🏛️ Förderungen
+    h2 Veranstaltungen
+    .tab-bar
+      button.tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") Veranstaltungen
+      button.tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") Förderungen
 
   //- ── Events View ──
   template(v-if="activeView === 'events'")
@@ -344,7 +345,7 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
@@ -364,17 +365,19 @@ h2 {
 }
 
 .btn-primary {
-  padding: 0.7em;
+  padding: 0.625rem 1.25rem;
   background: black;
   color: white;
   text-decoration: none;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  transition: filter 0.2s;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-primary:hover {
-  filter: brightness(120%);
+  background: #333;
 }
 
 .filter-chips {
@@ -580,28 +583,34 @@ a.fee:hover {
   filter: brightness(120%);
 }
 
-/* ── View Tabs ── */
-.view-tabs {
+/* ── Tab Bar ── */
+.tab-bar {
   display: flex;
-  gap: 0.25rem;
+  gap: 0;
+  border: 0.25rem solid black;
 }
 
-.view-tab {
-  padding: 0.5rem 1.25rem;
-  border: none;
-  background: #f0f0f0;
+.tab {
+  padding: 0.625rem 1.25rem;
+  background: white;
   color: black;
+  border: none;
+  border-right: 0.25rem solid black;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.2s;
+  transition: all 0.15s;
 }
 
-.view-tab:hover:not(.active) {
-  background: #ddd;
+.tab:last-child {
+  border-right: none;
 }
 
-.view-tab.active {
+.tab:hover {
+  background: #f0f0f0;
+}
+
+.tab.active {
   background: black;
   color: white;
 }

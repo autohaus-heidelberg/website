@@ -105,7 +105,7 @@ onMounted(async () => {
         .stat-value {{ stockSummary.count }}
         .stat-label Getränke im Lager
       .stat-subtitle Warenwert: {{ formatCurrency(stockSummary.value) }}
-      router-link.stat-link(to="/admin/stock") Lagerbestand ansehen
+      router-link.stat-link(to="/admin/lager") Lagerbestand ansehen
 
     .stat-card(v-if="grantStats")
       .stat-info
@@ -132,8 +132,8 @@ onMounted(async () => {
         span Neuer Künstler
       router-link.action-btn(to="/admin/purchases/create")
         span Neuer Einkauf
-      router-link.action-btn(to="/admin/stock")
-        span Lagerbestand
+      router-link.action-btn(to="/admin/lager")
+        span Lagerverwaltung
       router-link.action-btn(to="/admin/anfragen")
         span Anfragen
 </template>
