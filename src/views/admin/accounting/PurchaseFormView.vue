@@ -42,6 +42,9 @@ function isSingleBottleRow(idx: number): boolean {
   return (bev?.units_per_crate || 1) <= 1
 }
 
+// Track scanned names for unmatched items
+const scannedNames = ref<string[]>([])
+
 // Inline new-beverage creation
 const showNewBeverage = ref(false)
 const newBevIdx = ref(-1) // which item row triggered it
@@ -49,7 +52,8 @@ const newBev = ref({ name: '', units_per_crate: 6, purchase_price: '0.00' })
 
 function openNewBeverage(idx: number) {
   newBevIdx.value = idx
-  newBev.value = { name: '', units_per_crate: 6, purchase_price: '0.00' }
+  const suggestedName = scannedNames.value[idx] || ''
+  newBev.value = { name: suggestedName, units_per_crate: 6, purchase_price: '0.00' }
   showNewBeverage.value = true
 }
 
@@ -111,14 +115,17 @@ async function scanReceipt(event: Event) {
     itemCrates.value = []
     itemLoose.value = []
 
+    scannedNames.value = []
     for (const scanned of (result.items ?? [])) {
       const matchedBev = scanned.drink_id
         ? beverages.value.find(b => b.id === scanned.drink_id)
         : null
-      const bev = matchedBev || activeBeverages.value[0]
+      const bev = matchedBev || null
       const upc = bev?.units_per_crate || 1
       const crates = scanned.quantity_crates || 0
       const unitPrice = scanned.unit_price?.toString() || bev?.purchase_price || '0.00'
+
+      scannedNames.value.push(scanned.name || '')
 
       if (upc <= 1) {
         // Single bottle: treat scanned crates as bottles
@@ -352,7 +359,9 @@ onMounted(() => {
       span.col-action &nbsp;
 
     .item-row(v-for="(item, idx) in form.items" :key="idx")
-      select.col-bev(v-model.number="item.beverage_item" @change="item.beverage_item === -1 ? openNewBeverage(idx) : onBeverageChange(item, idx)")
+      select.col-bev(v-model.number="item.beverage_item" :class="{ unmatched: !item.beverage_item }" @change="item.beverage_item === -1 ? openNewBeverage(idx) : onBeverageChange(item, idx)")
+        option(v-if="!item.beverage_item" :value="0" disabled)
+          | {{ scannedNames[idx] ? `⚠️ ${scannedNames[idx]}` : '— Getränk wählen —' }}
         option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
           | {{ beverageLabel(bev) }}
         option(:value="-1") + Neues Getränk…
@@ -585,6 +594,11 @@ h2 {
   cursor: pointer;
   font-weight: 900;
   padding: 0.25rem;
+}
+
+select.unmatched {
+  border: 2px solid #e67e22;
+  background: #fef9e7;
 }
 
 .btn-add {
