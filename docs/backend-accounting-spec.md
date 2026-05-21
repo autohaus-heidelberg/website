@@ -59,7 +59,6 @@ class EventAccounting(models.Model):
     )
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     notes = models.TextField(blank=True, default='')
-    deposit_return = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, blank=True
@@ -112,11 +111,11 @@ class InventoryEntry(models.Model):
     )
     quantity_before = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     quantity_after = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    recorded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True
-    )
-    recorded_at = models.DateTimeField(auto_now=True)
+    consumed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Price snapshots — frozen at time of creation
+    snapshot_purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    snapshot_selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    snapshot_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
         unique_together = ['accounting', 'beverage_item']
@@ -124,11 +123,12 @@ class InventoryEntry(models.Model):
     @property
     def consumption(self):
         return self.quantity_before - self.quantity_after
-
-    @property
-    def value(self):
-        return self.consumption * self.beverage_item.purchase_price
 ```
+
+> **Hinweis:** `quantity_before` wird vom Backend automatisch auf `effective_before`
+> (= aktueller FIFO-Stock + consumed_quantity) gesetzt. Der Client sendet seinen
+> lokalen Wert, der für die Intent-Berechnung verwendet wird. Die Response enthält
+> immer den korrekten Server-Wert.
 
 ### 1.5 `ExpenseEntry` – Ausgaben
 
@@ -217,8 +217,7 @@ und Zugehörigkeit zur Gruppe **`website`**.
 {
   "event": "uuid-des-events",
   "status": "draft",
-  "notes": "",
-  "deposit_return": "0.00"
+  "notes": ""
 }
 ```
 
@@ -434,39 +433,55 @@ Die Views und Types bleiben unverändert.
 ### Grundprinzip
 
 Getränkebestände werden über `PurchaseItem.remaining_quantity` verwaltet.
-Beim Finalisieren einer Abrechnung wird der Verbrauch (= `quantity_before − quantity_after`)
-per **FIFO** (älteste Lots zuerst) von den Einkaufs-Positionen abgezogen.
+Der Verbrauch wird **live bei jedem Speichern** (nicht erst beim Finalisieren) per
+**FIFO** (älteste Lots zuerst) von den Einkaufs-Positionen abgezogen.
 
-### Inventursperre
+Jedes `AbrechnungsItem` trackt seinen eigenen Verbrauch in `consumed_quantity`,
+sodass Korrekturen (z.B. Nachher-Wert erhöhen) den Verbrauch automatisch
+zurückbuchen können.
 
-- Es darf zu jedem Zeitpunkt **maximal eine** Abrechnung im Status `draft` existieren.
-- Während ein Draft offen ist, können keine neuen Einkäufe angelegt oder gelöscht werden.
-- Grund: Der Draft-Inventurstand spiegelt den aktuellen physischen Bestand wider;
-  parallele Änderungen würden zu Inkonsistenzen führen.
+### Kein Inventursperre mehr
 
-### Wieder-Öffnen (Un-Finalisieren)
+- Mehrere Abrechnungen können gleichzeitig im Status `draft` existieren.
+- Einkäufe können jederzeit angelegt oder geändert werden.
+- Die Konsistenz wird durch atomares Locking (`select_for_update`) auf
+  PurchaseItem-Lot-Ebene gewährleistet.
 
-- Beim Übergang `final → draft` werden die FIFO-Abzüge rückgängig gemacht (`restore_fifo`).
-- **LIFO-Regel:** Nur die **chronologisch letzte** finalisierte Abrechnung (nach Event-Datum)
-  darf wieder geöffnet werden. Nachfolgende Veranstaltungen haben den Bestand bereits
-  weiter verbraucht — ein Wieder-Öffnen einer älteren Abrechnung würde die FIFO-Kette brechen.
-- Beispiel: Event A (3. Mai) finalisiert → Event B (10. Mai) finalisiert → nur B darf wieder geöffnet werden.
-- **Wichtig:** Die Reihenfolge richtet sich nach dem Event-Datum, nicht danach wann die
-  Abrechnung erstellt oder finalisiert wurde.
+### Intent-basierter Verbrauch (Parallelitätsschutz)
 
-### Korrekturen älterer Abrechnungen
+Wenn mehrere Tabs dieselben Getränke gleichzeitig bearbeiten:
 
-Wird ein Fehler in einer älteren (nicht der letzten) Abrechnung entdeckt
-(z.B. „2 Flaschen Gin übersehen"), gibt es zwei Wege:
+1. Der Client sendet `quantity_before` (seinen lokalen Stand) und `quantity_after`
+2. Das Backend berechnet die **Absicht**: `intended = quantity_before − quantity_after`
+3. Reicht der Bestand aus (`intended ≤ effective_before`): Verbrauch wird normal gebucht
+4. Reicht der Bestand **nicht** aus (`intended > effective_before`): **HTTP 400** mit
+   Konflikt-Details — nichts wird gespeichert, der User erhält eine Fehlermeldung
 
-1. **Kaskade:** Alle nachfolgenden Abrechnungen in umgekehrter Reihenfolge wieder öffnen,
-   korrigieren, dann in chronologischer Reihenfolge erneut finalisieren.
-   (manuell, aber korrekt)
-2. **Inventur-Korrektur (zukünftig):** Eine eigenständige Korrekturbuchung,
-   die den Bestand nachträglich anpasst, ohne die alten Abrechnungen anzutasten.
+**Formel pro Item bei jedem Save:**
+```
+effective_before = current_stock + consumed_quantity (des Items)
+intended = client_before − quantity_after     (wenn client_before > 0)
+desired  = min(intended, effective_before)
+actual_after = effective_before − desired
+delta = desired − old_consumed
+  → delta > 0: consume_fifo(delta)
+  → delta < 0: restore_fifo(|delta|)
+```
 
-### Löschen einer Draft-Abrechnung
+### Wieder-Öffnen / Korrektur
 
-Eine Abrechnung im Status `draft` kann jederzeit gelöscht werden (DELETE-Endpoint).
-Da noch keine FIFO-Konsumption stattgefunden hat, ist dies gefahrlos.
-Use Case: versehentlich gestartete Abrechnung zurücknehmen.
+- Da FIFO live funktioniert, gibt es kein separates „Wieder-Öffnen".
+- Jede Änderung am `quantity_after` wird sofort in FIFO-Lots reflektiert.
+- **LIFO-Regel für Restore:** Beim Zurückbuchen werden die neuesten Lots zuerst aufgefüllt.
+
+### Löschen einer Abrechnung
+
+Beim Löschen werden alle `consumed_quantity`-Werte der Abrechnung per
+`restore_fifo` zurückgebucht. Der Bestand wird vollständig wiederhergestellt.
+
+### Einkauf-Update und FIFO
+
+Beim Aktualisieren eines Einkaufs werden bestehende Items per ID/Drink gematcht:
+- Bereits verbrauchte Mengen (`consumed = quantity − remaining`) bleiben erhalten
+- Neuer remaining = `max(0, neue_menge − consumed)`
+- Items mit Verbrauch können nicht entfernt werden

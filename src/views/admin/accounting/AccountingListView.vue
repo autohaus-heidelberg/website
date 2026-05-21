@@ -38,31 +38,6 @@ function formatDate(date: string) {
   })
 }
 
-function statusLabel(status?: string): string {
-  if (!status) return 'Nicht erstellt'
-  return status === 'final' ? 'Abgeschlossen' : 'Entwurf'
-}
-
-function statusClass(status?: string): string {
-  if (!status) return 'status-none'
-  return status === 'final' ? 'status-final' : 'status-draft'
-}
-
-async function createAccounting(eventId: string) {
-  try {
-    const accounting = await accountingService.create({
-      event: eventId,
-      status: 'draft',
-      notes: '',
-      deposit_return: '0.00',
-    })
-    accountings.value.push(accounting)
-  } catch (e: any) {
-    const msg = e.response?.data?.error || e.message
-    alert('Fehler beim Erstellen: ' + msg)
-  }
-}
-
 async function loadData() {
   isLoading.value = true
   error.value = ''
@@ -104,8 +79,7 @@ onMounted(() => {
     .event-card(v-for="event in filteredEvents" :key="event.id")
       .event-header
         .event-date {{ formatDate(event.date) }}
-        span.status-badge(:class="statusClass(event.accounting?.status)")
-          | {{ statusLabel(event.accounting?.status) }}
+        span.status-badge(v-if="event.accounting") ✓ Abrechnung
 
       h3.event-title {{ event.title }}
 
@@ -116,13 +90,8 @@ onMounted(() => {
 
         .event-actions
           router-link.btn-edit(
-            v-if="event.accounting"
             :to="`/admin/accounting/${event.id}`"
-          ) Abrechnung öffnen
-          button.btn-primary(
-            v-else
-            @click="createAccounting(event.id)"
-          ) Abrechnung starten
+          ) {{ event.accounting ? 'Abrechnung öffnen' : 'Abrechnung starten' }}
 
   .empty(v-else) Keine Veranstaltungen gefunden
 </template>

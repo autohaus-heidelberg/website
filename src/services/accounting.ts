@@ -108,6 +108,10 @@ export const accountingService = {
     return results.find(a => a.event === eventId) ?? null
   },
 
+  async getOrCreateByEvent(eventId: string): Promise<EventAccounting> {
+    return api.get<EventAccounting>(`/api/abrechnungen/by-event/${eventId}/`)
+  },
+
   async create(data: Partial<EventAccounting>): Promise<EventAccounting> {
     return api.post<EventAccounting>('/api/abrechnungen/', data)
   },
@@ -126,7 +130,7 @@ export const accountingService = {
       total_revenue: '0', total_revenue_by_group: [],
       total_expenses: '0', total_inventory_value_before: '0',
       total_inventory_value_after: '0', total_consumption_value: '0',
-      deposit_return: '0', result: '0', splits: [],
+      result: '0', splits: [],
     }
   },
 
@@ -287,11 +291,17 @@ export const purchaseService = {
     await api.delete(`/api/purchases/${id}/`)
   },
 
-  async scanReceipt(imageFile: File, eventId?: string): Promise<{ items: any[], raw: string, drive_upload?: { file_id: string, url: string } }> {
+  async scanReceipt(imageFile: File, eventId?: string): Promise<{
+    items: any[], raw: string,
+    supplier?: string, invoice_number?: string, date?: string,
+    invoice_total?: number, net_amount?: number, vat_amount?: number,
+    deposit_new?: number, deposit_returned?: number,
+    drive_upload?: { file_id: string, url: string }
+  }> {
     const formData = new FormData()
     formData.append('image', imageFile)
     if (eventId) formData.append('event_id', eventId)
-    return api.post<{ items: any[], raw: string, drive_upload?: { file_id: string, url: string } }>('/api/purchases/scan/', formData)
+    return api.post('/api/purchases/scan/', formData)
   },
 }
 

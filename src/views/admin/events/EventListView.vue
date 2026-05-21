@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { eventService, accountingService, grantService, type Event } from '@/services'
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 
-const router = useRouter()
 const route = useRoute()
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const accountings = ref<EventAccounting[]>([])
@@ -13,7 +12,7 @@ const grants = ref<GrantApplication[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
-const activeFilter = ref<'all' | 'draft' | 'final' | 'none'>('all')
+const activeFilter = ref<'all' | 'with' | 'none'>('all')
 const activeView = ref<'events' | 'grants'>('events')
 const selectedYear = ref(new Date().getFullYear())
 
@@ -22,8 +21,7 @@ const pendingDelete = ref<{ event: Event; timer: ReturnType<typeof setTimeout> }
 
 const filters = [
   { key: 'all' as const, label: 'Alle' },
-  { key: 'draft' as const, label: 'In Abrechnung' },
-  { key: 'final' as const, label: 'Abgeschlossen' },
+  { key: 'with' as const, label: 'Mit Abrechnung' },
   { key: 'none' as const, label: 'Ohne Abrechnung' },
 ]
 
@@ -39,10 +37,8 @@ const eventsWithAccounting = computed(() => {
 const filteredEvents = computed(() => {
   let list = eventsWithAccounting.value
 
-  if (activeFilter.value === 'draft') {
-    list = list.filter(e => e.accounting?.status === 'draft')
-  } else if (activeFilter.value === 'final') {
-    list = list.filter(e => e.accounting?.status === 'final')
+  if (activeFilter.value === 'with') {
+    list = list.filter(e => !!e.accounting)
   } else if (activeFilter.value === 'none') {
     list = list.filter(e => !e.accounting)
   }
@@ -60,8 +56,7 @@ const filteredEvents = computed(() => {
 function filterCount(key: string) {
   const list = eventsWithAccounting.value
   if (key === 'all') return list.length
-  if (key === 'draft') return list.filter(e => e.accounting?.status === 'draft').length
-  if (key === 'final') return list.filter(e => e.accounting?.status === 'final').length
+  if (key === 'with') return list.filter(e => !!e.accounting).length
   if (key === 'none') return list.filter(e => !e.accounting).length
   return 0
 }
@@ -84,20 +79,7 @@ async function loadEvents() {
   }
 }
 
-async function createAccounting(eventId: string) {
-  try {
-    await accountingService.create({
-      event: eventId,
-      status: 'draft',
-      notes: '',
-      deposit_return: '0.00',
-    })
-    router.push(`/admin/events/${eventId}?tab=accounting`)
-  } catch (e: any) {
-    const msg = e.response?.data?.error || e.message
-    alert('Fehler beim Erstellen: ' + msg)
-  }
-}
+
 
 async function deleteEvent(event: Event) {
   if (!confirm(`Veranstaltung "${event.title}" wirklich löschen?`)) return
@@ -160,15 +142,7 @@ function formatDate(date: string) {
   })
 }
 
-function statusLabel(status?: string): string {
-  if (!status) return ''
-  return status === 'final' ? 'Abgeschlossen' : 'Entwurf'
-}
 
-function statusClass(status?: string): string {
-  if (!status) return ''
-  return status === 'final' ? 'status-final' : 'status-draft'
-}
 
 // ── Grants ──
 const grantYears = computed(() => {
@@ -216,9 +190,10 @@ onMounted(() => {
 <template lang="pug">
 .event-list-view
   .header
-    .view-tabs
-      button.view-tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") 📅 Veranstaltungen
-      button.view-tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") 🏛️ Förderungen
+    h2 Veranstaltungen
+    .tab-bar
+      button.tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") Veranstaltungen
+      button.tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") Förderungen
 
   //- ── Events View ──
   template(v-if="activeView === 'events'")
@@ -245,14 +220,13 @@ onMounted(() => {
       .event-card(
         v-for="event in filteredEvents"
         :key="event.id"
-        :class="{ 'has-draft': event.accounting?.status === 'draft', 'has-final': event.accounting?.status === 'final' }"
+        :class="{ 'has-accounting': !!event.accounting }"
         @click="$router.push(`/admin/events/${event.id}`)"
       )
         .event-header
           .event-id {{ event.id }}
           .event-header-right
-            span.status-badge(v-if="event.accounting" :class="statusClass(event.accounting.status)")
-              | {{ statusLabel(event.accounting.status) }}
+            span.status-badge(v-if="event.accounting") ✓ Abrechnung
             .event-date {{ formatDate(event.date) }}
 
         h3.event-title {{ event.title }}
@@ -271,13 +245,8 @@ onMounted(() => {
           .event-actions(@click.stop)
             router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
             router-link.btn-accounting(
-              v-if="event.accounting"
               :to="`/admin/events/${event.id}?tab=accounting`"
-            ) Abrechnung öffnen
-            button.btn-accounting-start(
-              v-else
-              @click="createAccounting(event.id)"
-            ) Abrechnung starten
+            ) {{ event.accounting ? 'Abrechnung öffnen' : 'Abrechnung starten' }}
 
     .empty(v-else) Keine Veranstaltungen gefunden
 
@@ -376,7 +345,7 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
@@ -396,17 +365,19 @@ h2 {
 }
 
 .btn-primary {
-  padding: 0.7em;
+  padding: 0.625rem 1.25rem;
   background: black;
   color: white;
   text-decoration: none;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  transition: filter 0.2s;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .btn-primary:hover {
-  filter: brightness(120%);
+  background: #333;
 }
 
 .filter-chips {
@@ -467,11 +438,7 @@ h2 {
   cursor: pointer;
 }
 
-.event-card.has-draft {
-  border-left: 0.5rem solid #e67e22;
-}
-
-.event-card.has-final {
+.event-card.has-accounting {
   border-left: 0.5rem solid #27ae60;
 }
 
@@ -497,17 +464,8 @@ h2 {
   padding: 0.25rem 0.75rem;
   font-weight: 900;
   letter-spacing: 0.1em;
-}
-
-.status-draft {
   background: black;
   color: white;
-}
-
-.status-final {
-  background: black;
-  color: white;
-  text-decoration: underline;
 }
 
 .event-id {
@@ -585,7 +543,7 @@ a.fee:hover {
   gap: 0.75rem;
 }
 
-.btn-edit, .btn-delete, .btn-accounting, .btn-accounting-start, .btn-docs {
+.btn-edit, .btn-delete, .btn-accounting, .btn-docs {
   padding: 0.5rem 1rem;
   border: 0.25rem solid black;
   cursor: pointer;
@@ -616,43 +574,43 @@ a.fee:hover {
   color: black;
 }
 
-.btn-accounting-start {
-  background: white;
-  color: black;
-  border-style: dashed;
-}
-
 .btn-docs {
   background: white;
   color: black;
 }
 
-.btn-edit:hover, .btn-accounting:hover, .btn-accounting-start:hover, .btn-docs:hover {
+.btn-edit:hover, .btn-accounting:hover, .btn-docs:hover {
   filter: brightness(120%);
 }
 
-/* ── View Tabs ── */
-.view-tabs {
+/* ── Tab Bar ── */
+.tab-bar {
   display: flex;
-  gap: 0.25rem;
+  gap: 0;
+  border: 0.25rem solid black;
 }
 
-.view-tab {
-  padding: 0.5rem 1.25rem;
-  border: none;
-  background: #f0f0f0;
+.tab {
+  padding: 0.625rem 1.25rem;
+  background: white;
   color: black;
+  border: none;
+  border-right: 0.25rem solid black;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background 0.2s;
+  transition: all 0.15s;
 }
 
-.view-tab:hover:not(.active) {
-  background: #ddd;
+.tab:last-child {
+  border-right: none;
 }
 
-.view-tab.active {
+.tab:hover {
+  background: #f0f0f0;
+}
+
+.tab.active {
   background: black;
   color: white;
 }

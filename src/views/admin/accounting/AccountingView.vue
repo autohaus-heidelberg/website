@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
@@ -27,6 +27,7 @@ import {
   VAT_RATE_LABELS,
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
+import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 
 
 const props = defineProps<{
@@ -37,7 +38,6 @@ const router = useRouter()
 const activeTab = ref('cashcount')
 const showOverflow = ref(false)
 const expandedSources = ref<Set<string>>(new Set())
-const pendingFinalize = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
 
 // ── State ────────────────────────────────────────────────────────
 const event = ref<Event | null>(null)
@@ -53,6 +53,7 @@ const isLoading = ref(false)
 const isSaving = ref(false)
 const error = ref('')
 const saveSuccess = ref('')
+const stockChangedWarning = ref('')
 
 // ── Pretix VVK ───────────────────────────────────────────────────
 const pretixData = ref<PretixOrderSummary | null>(null)
@@ -409,17 +410,8 @@ const inventoryBySupplier = computed(() => {
 })
 
 function inventoryConsumption(entry: InventoryEntry): number {
-  return parseFloat(entry.quantity_before || '0') - parseFloat(entry.quantity_after || '0')
-}
-
-function stockWarning(bevId: number, entry: InventoryEntry): string | null {
-  const stock = stockData.value[bevId]
-  if (!stock) return null
-  const before = parseFloat(entry.quantity_before || '0')
-  if (before > stock.quantity) {
-    return `Bestand nur ${stock.quantity}, aber ${before} angegeben`
-  }
-  return null
+  const val = parseFloat(entry.quantity_before || '0') - parseFloat(entry.quantity_after || '0')
+  return Math.round(val * 100) / 100
 }
 
 function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
@@ -455,7 +447,7 @@ function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after
     updateEntryFromCrates(entry, beverage)
   } else {
     const current = parseFloat(entry[field === 'after' ? 'quantity_after' : 'quantity_before'] || '0')
-    const step = 0.5
+    const step = 0.25
     const newVal = Math.max(0, current + delta * step)
     if (field === 'after') entry.quantity_after = String(newVal)
     else entry.quantity_before = String(newVal)
@@ -536,13 +528,6 @@ function removeExpense(index: number) {
 
 // ── Computed: Result ─────────────────────────────────────────────
 
-const depositReturn = computed({
-  get: () => accounting.value?.deposit_return || '0.00',
-  set: (val) => {
-    if (accounting.value) accounting.value.deposit_return = val
-  },
-})
-
 // True revenue = cash counted + expenses paid from registers (which reduced the count)
 const adjustedRevenue = computed(() => {
   return totalRevenue.value + expensesPaidFromRegister.value
@@ -553,7 +538,7 @@ const artistHospitality = computed(() => {
 })
 
 const result = computed(() => {
-  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value + parseFloat(depositReturn.value || '0')
+  return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value
 })
 
 function addSplit() {
@@ -666,6 +651,11 @@ function formatCurrency(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
 }
 
+function formatQty(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val
+  return isNaN(n) ? '0' : n.toLocaleString('de-DE')
+}
+
 function formatTime(isoString: string): string {
   if (!isoString) return ''
   const d = new Date(isoString)
@@ -694,8 +684,7 @@ async function loadData() {
     } catch { /* stock is optional */ }
 
     try {
-      const acc = await accountingService.getByEvent(props.eventId)
-      if (!acc) throw new Error('not found')
+      const acc = await accountingService.getOrCreateByEvent(props.eventId)
       accounting.value = acc
 
       // Nested data is included in the accounting response
@@ -703,7 +692,9 @@ async function loadData() {
       inventory.value = acc.inventory_entries ?? []
       // Mark loaded entries as confirmed if quantity_after differs from quantity_before
       for (const entry of inventory.value) {
-        if (entry.quantity_after !== entry.quantity_before) {
+        entry.quantity_before = normalizeQty(entry.quantity_before)
+        entry.quantity_after = normalizeQty(entry.quantity_after)
+        if (!qtyEquals(entry.quantity_after, entry.quantity_before)) {
           confirmedInventory.add(entry.beverage_item)
         }
       }
@@ -718,9 +709,8 @@ async function loadData() {
         }
       }
       splits.value = acc.splits ?? []
-    } catch {
-      // No accounting yet — leave null, user can create manually
-      accounting.value = null
+    } catch (e: any) {
+      error.value = e.message || 'Abrechnung konnte nicht geladen werden'
     }
 
     // Default splits: Bernd 33%, Carousel e.V. 67%
@@ -780,57 +770,8 @@ async function loadData() {
     error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
-  }
-}
-
-function finalizeAccounting() {
-  if (!accounting.value?.id) return
-
-  // Cancel any previous pending finalize
-  if (pendingFinalize.value) {
-    clearTimeout(pendingFinalize.value.timer)
-    commitFinalize()
-  }
-
-  // Optimistically mark as final in UI
-  accounting.value.status = 'final'
-
-  // Schedule actual finalize after 5 seconds
-  const timer = setTimeout(() => {
-    commitFinalize()
-    pendingFinalize.value = null
-  }, 5000)
-
-  pendingFinalize.value = { timer }
-}
-
-function undoFinalize() {
-  if (!pendingFinalize.value || !accounting.value) return
-  clearTimeout(pendingFinalize.value.timer)
-  pendingFinalize.value = null
-  accounting.value.status = 'draft'
-}
-
-async function commitFinalize() {
-  if (!accounting.value?.id) return
-  try {
-    await accountingService.update(accounting.value.id, { status: 'final' })
-    saveSuccess.value = 'Abrechnung abgeschlossen!'
-    setTimeout(() => { saveSuccess.value = '' }, 3000)
-  } catch (e: any) {
-    error.value = e.response?.data?.error || e.message || 'Fehler beim Abschließen'
-    // Revert on failure
-    if (accounting.value) accounting.value.status = 'draft'
-  }
-}
-
-async function reopenAccounting() {
-  if (!accounting.value?.id) return
-  try {
-    await accountingService.update(accounting.value.id, { status: 'draft' })
-    accounting.value.status = 'draft'
-  } catch (e: any) {
-    error.value = e.response?.data?.error || e.message || 'Fehler beim Wieder-Öffnen'
+    // Enable auto-save after initial load is complete
+    suppressAutoSave = false
   }
 }
 
@@ -850,48 +791,69 @@ async function deleteAccounting() {
   }
 }
 
-async function createAccounting() {
-  try {
-    accounting.value = await accountingService.create({
-      event: props.eventId,
-      status: 'draft',
-      notes: '',
-      deposit_return: '0.00',
-    })
-    // Default splits
-    splits.value = [
-      { accounting: accounting.value!.id!, participant_name: 'Bernd', share_percentage: '33' },
-      { accounting: accounting.value!.id!, participant_name: 'Carousel e.V.', share_percentage: '67' },
-    ]
-  } catch (e: any) {
-    error.value = e.response?.data?.error || e.message || 'Fehler beim Erstellen'
-  }
-}
-
-async function saveAll() {
+async function saveAll(silent = false) {
   if (!accounting.value?.id) return
+  if (isSaving.value) return // prevent concurrent saves
   isSaving.value = true
-  error.value = ''
-  saveSuccess.value = ''
+  if (!silent) error.value = ''
+  if (!silent) saveSuccess.value = ''
 
   try {
     const accId = accounting.value.id
 
     // Build all nested data and save in one PUT
-    await accountingService.update(accId, {
-      status: accounting.value.status,
+    const saved = await accountingService.update(accId, {
       notes: accounting.value.notes,
-      deposit_return: accounting.value.deposit_return,
       revenues: revenues.value
         .filter(rev => parseFloat(rev.total || '0') !== 0 || rev.id),
       inventory_entries: inventory.value
-        .filter(inv => parseFloat(inv.quantity_before || '0') !== 0 || parseFloat(inv.quantity_after || '0') !== 0 || inv.id),
+        .filter(inv => inv.id || confirmedInventory.has(inv.beverage_item) || !qtyEquals(inv.quantity_before, inv.quantity_after)),
       expenses: expenses.value
         .filter(exp => exp.description)
         .map(exp => ({ ...exp, amount: exp.amount || '0' })),
       splits: splits.value
         .filter(split => split.participant_name || split.id),
     })
+
+    // Sync quantity_before and quantity_after from backend response
+    // The backend may recompute these based on live stock (parallel-tab handling)
+    if (saved.inventory_entries) {
+      suppressAutoSave = true
+      const correctedItems: string[] = []
+      for (const serverEntry of saved.inventory_entries) {
+        const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
+        if (!local) continue
+        const wasNew = !local.id
+        // Sync id for newly created entries
+        if (serverEntry.id && !local.id) {
+          local.id = serverEntry.id
+        }
+        const serverBefore = normalizeQty(serverEntry.quantity_before)
+        const serverAfter = normalizeQty(serverEntry.quantity_after)
+        const beforeChanged = !qtyEquals(local.quantity_before, serverBefore)
+        const afterChanged = !qtyEquals(local.quantity_after, serverAfter)
+        if (beforeChanged || afterChanged) {
+          // Only show warning if the entry was already persisted (not first save)
+          // and the backend corrected quantity_after (real conflict)
+          if (afterChanged && !wasNew) {
+            const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
+            if (bev) correctedItems.push(bev.name)
+          }
+          local.quantity_before = serverBefore
+          local.quantity_after = serverAfter
+          delete inventoryCrates.value[String(serverEntry.beverage_item)]
+        }
+        // Always sync consumed_quantity from backend
+        if (serverEntry.consumed_quantity !== undefined) {
+          local.consumed_quantity = serverEntry.consumed_quantity
+        }
+      }
+      if (correctedItems.length > 0 && !silent) {
+        stockChangedWarning.value = `Bestand extern geändert – Werte angepasst: ${correctedItems.join(', ')}`
+        setTimeout(() => { stockChangedWarning.value = '' }, 6000)
+      }
+      setTimeout(() => { suppressAutoSave = false }, 0)
+    }
 
     // Also save grant data if grant tab has data
     if (activeTab.value === 'grant' || grantRecord.value) {
@@ -936,10 +898,17 @@ async function saveAll() {
       grantSummary.value = await grantService.getSummary(eventYear)
     }
 
-    saveSuccess.value = 'Gespeichert!'
-    setTimeout(() => { saveSuccess.value = '' }, 3000)
+    if (!silent) {
+      saveSuccess.value = 'Gespeichert!'
+      setTimeout(() => { saveSuccess.value = '' }, 3000)
+    }
   } catch (e: any) {
-    error.value = e.message || 'Fehler beim Speichern'
+    // Handle FIFO stock conflict (400 with conflicts array)
+    if (e.response?.status === 400 && e.response?.data?.conflicts) {
+      await refreshStockAndCorrect()
+    } else {
+      if (!silent) error.value = e.message || 'Fehler beim Speichern'
+    }
   } finally {
     isSaving.value = false
   }
@@ -1047,25 +1016,111 @@ function closeOverflow(e: MouseEvent) {
   }
 }
 
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+const autoSaveDirty = ref(false)
+let suppressAutoSave = true // suppress during initial load
+
+function scheduleAutoSave() {
+  if (suppressAutoSave) return
+  if (!accounting.value?.id) return
+  autoSaveDirty.value = true
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
+  autoSaveTimer = setTimeout(() => {
+    autoSaveDirty.value = false
+    saveAll(true)
+  }, 2000)
+}
+
+// Watch data changes for auto-save
+watch(
+  [inventory, revenues, expenses, splits],
+  () => { scheduleAutoSave() },
+  { deep: true }
+)
+watch(
+  () => [accounting.value?.notes],
+  () => { scheduleAutoSave() }
+)
+
+// ── Refresh stock and correct entries (used by conflict handler & focus) ──
+async function refreshStockAndCorrect() {
+  if (!accounting.value) return
+  try {
+    const stockEntries = await stockService.getAll()
+    const map: Record<number, number> = {}
+    for (const s of stockEntries) map[s.id] = s.quantity
+
+    suppressAutoSave = true
+    let stockChanged = false
+    const changedItems: string[] = []
+    for (const entry of inventory.value) {
+      const liveQty = map[entry.beverage_item]
+      if (liveQty === undefined) continue
+
+      if (entry.id) {
+        // Persisted entries: only detect change, don't modify locally.
+        // The backend is the authority — trigger a save and let the response sync
+        // update before/after/consumed atomically.
+        const ownConsumed = parseFloat(entry.consumed_quantity || '0')
+        const newBefore = liveQty + ownConsumed
+        if (!qtyEquals(newBefore, entry.quantity_before)) {
+          stockChanged = true
+          const bev = beverages.value.find(b => b.id === entry.beverage_item)
+          if (bev) changedItems.push(bev.name)
+        }
+      } else {
+        // Unpersisted entries: safe to update locally (no backend state yet)
+        if (confirmedInventory.has(entry.beverage_item)) continue
+        if (!qtyEquals(liveQty, entry.quantity_before)) {
+          entry.quantity_before = normalizeQty(liveQty)
+          entry.quantity_after = normalizeQty(liveQty)
+          delete inventoryCrates.value[String(entry.beverage_item)]
+        }
+      }
+    }
+    if (changedItems.length > 0) {
+      stockChangedWarning.value = `Bestand extern geändert: ${changedItems.join(', ')} – wird synchronisiert…`
+      setTimeout(() => { stockChangedWarning.value = '' }, 6000)
+    }
+    setTimeout(() => { suppressAutoSave = false }, 0)
+    // Trigger immediate save so the backend returns authoritative values
+    if (stockChanged) {
+      setTimeout(() => { saveAll(true) }, 100)
+    }
+  } catch { /* ignore – next save will catch it */ }
+}
+
+// ── Refresh stock on tab/window focus (prevent stale quantity_before) ──
+async function handleVisibilityChange() {
+  if (document.visibilityState !== 'visible') return
+  await refreshStockAndCorrect()
+}
+
+async function handleWindowFocus() {
+  await refreshStockAndCorrect()
+}
+
 onMounted(() => {
   loadData()
   loadDocuments()
   document.addEventListener('click', closeOverflow)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleWindowFocus)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', closeOverflow)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('focus', handleWindowFocus)
+  if (autoSaveTimer) clearTimeout(autoSaveTimer)
 })
 </script>
 
 <template lang="pug">
 .accounting-view
   .loading(v-if="isLoading") Abrechnung wird geladen...
-  .no-accounting(v-else-if="!accounting")
-    p Noch keine Abrechnung für diese Veranstaltung.
-    button.btn-save(@click="createAccounting") Abrechnung starten
-    .error(v-if="error") ⚠️ {{ error }}
-  template(v-else)
+  .error(v-if="error") ⚠️ {{ error }}
+  template(v-else-if="accounting")
     .accounting-header
       .tabs
         button.tab(
@@ -1093,12 +1148,13 @@ onUnmounted(() => {
           @click="activeTab = 'grant'"
         ) 🏛️ Förderung
       .accounting-actions
+        span.stock-changed-warning(v-if="stockChangedWarning") ⚠️ {{ stockChangedWarning }}
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
-        button.btn-save(@click="saveAll" :disabled="isSaving || accounting.status === 'final'")
+        span.auto-save-indicator(v-else-if="isSaving") Speichert...
+        span.auto-save-indicator(v-else-if="autoSaveDirty") Ungespeichert
+        button.btn-save(@click="saveAll(false)" :disabled="isSaving")
           | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
-        button.btn-finalize(v-if="accounting.status === 'draft'" @click="finalizeAccounting") Abschließen
-        button.btn-reopen(v-if="accounting.status === 'final'" @click="reopenAccounting") Wieder öffnen
-        button.btn-overflow(v-if="accounting.status === 'draft'" @click="showOverflow = !showOverflow") ⋯
+        button.btn-overflow(@click="showOverflow = !showOverflow") ⋯
         .overflow-dropdown(v-if="showOverflow")
           button.overflow-item.overflow-danger(@click="deleteAccounting") Abrechnung löschen
 
@@ -1268,32 +1324,17 @@ onUnmounted(() => {
               .bev-name {{ beverage.name }}
               .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
               .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
-              .stock-warning(v-if="stockWarning(beverage.id, entry)") ⚠ {{ stockWarning(beverage.id, entry) }}
             .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
             .col-inv-info(v-else) Fl.
 
             //- Crate mode (units_per_crate > 1)
             template(v-if="(beverage.units_per_crate || 1) > 1")
-              .col-inv-pair
+              .col-inv-pair.readonly-before
                 .crate-input
-                  input.qty-input(
-                    v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    @input="updateEntryFromCrates(entry, beverage)"
-                  )
+                  span.qty-display {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}
                   span.input-label K
                 .crate-input
-                  input.qty-input(
-                    v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    @input="updateEntryFromCrates(entry, beverage)"
-                  )
+                  span.qty-display {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}
                   span.input-label Fl
               .col-inv-pair
                 .crate-input
@@ -1319,28 +1360,23 @@ onUnmounted(() => {
 
             //- Bottle mode (units_per_crate = 1)
             template(v-else)
-              .col-inv-pair.bottle-mode
-                input.qty-input(
-                  v-model="entry.quantity_before"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  placeholder="0"
-                )
+              .col-inv-pair.bottle-mode.readonly-before
+                span.qty-display {{ formatQty(entry.quantity_before || '0') }}
                 span.input-label Fl.
               .col-inv-pair.bottle-mode
                 input.qty-input(
                   v-model="entry.quantity_after"
                   type="number"
                   min="0"
-                  step="0.5"
+                  step="0.1"
                   @input="confirmedInventory.add(beverage.id)"
                   placeholder="0"
                 )
                 span.input-label Fl.
 
-            .col-inv-num {{ entry.quantity_before }}
-            .col-inv-num {{ inventoryConsumption(entry) }}
+            .col-inv-num {{ formatQty(entry.quantity_before) }}
+            .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatQty(inventoryConsumption(entry)) }}
+              span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
             .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
         //- Mobile cards
@@ -1352,8 +1388,8 @@ onUnmounted(() => {
               .inv-card-meta(v-else) Einzelflasche
             .inv-card-before
               span.inv-card-label Vorher:
-              span.inv-card-value(v-if="(beverage.units_per_crate || 1) > 1") {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles }}Fl = {{ entry.quantity_before }}
-              span.inv-card-value(v-else) {{ entry.quantity_before }} Fl.
+              span.inv-card-value(v-if="(beverage.units_per_crate || 1) > 1") {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}Fl = {{ formatQty(entry.quantity_before) }}
+              span.inv-card-value(v-else) {{ formatQty(entry.quantity_before) }} Fl.
             .inv-card-after
               span.inv-card-label Nachher:
               //- Crate stepper
@@ -1366,7 +1402,7 @@ onUnmounted(() => {
                     span.stepper-unit K
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles }}
+                    span.stepper-value {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles) }}
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl
               //- Bottle stepper
@@ -1374,11 +1410,12 @@ onUnmounted(() => {
                 .stepper-row
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ entry.quantity_after }}
+                    span.stepper-value {{ formatQty(entry.quantity_after) }}
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl.
             .inv-card-footer
-              span Δ {{ inventoryConsumption(entry) }}
+              span(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ formatQty(inventoryConsumption(entry)) }}
+                span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠ Nachher > Vorher!
               span {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
         .group-total
@@ -1482,17 +1519,6 @@ onUnmounted(() => {
           .result-row.detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
             span {{ exp.description || '(ohne Beschreibung)' }}
             span {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-        .result-row
-          span 🔄 + Pfandrückgabe
-          .input-inline
-            input.amount-input(
-              v-model="depositReturn"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-            )
-            span.unit €
         .result-row.result-total
           span 🏆 Ergebnis
           strong(:class="result >= 0 ? 'positive' : 'negative'")
@@ -1856,33 +1882,11 @@ onUnmounted(() => {
           p Noch keine Belege hochgeladen.
 
         .loading(v-if="isLoadingDocs") Belege werden geladen…
-
-  //- ── Undo Finalize Snackbar ──
-  transition(name="snackbar")
-    .undo-snackbar(v-if="pendingFinalize")
-      span Abrechnung abgeschlossen – ab jetzt nur noch im Lesemodus.
-      button.undo-btn(@click="undoFinalize") Rückgängig
 </template>
 
 <style scoped>
 .accounting-view {
   background: white;
-}
-
-.no-accounting {
-  padding: 2rem 0;
-  text-align: center;
-}
-
-.no-accounting p {
-  margin-bottom: 1rem;
-  color: #555;
-}
-
-.no-accounting .error {
-  display: inline-block;
-  text-align: left;
-  margin-top: 1rem;
 }
 
 .loading {
@@ -1915,12 +1919,39 @@ h2 {
   font-weight: 900;
 }
 
+.stock-changed-warning {
+  color: #856404;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
 .save-success {
   color: black;
   font-weight: 900;
   padding: 0.4rem 0.75rem;
   border: 0.2rem solid black;
   font-size: 0.8rem;
+}
+
+.auto-save-indicator {
+  color: #888;
+  font-size: 0.75rem;
+  font-style: italic;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  white-space: nowrap;
 }
 
 .btn-save {
@@ -1946,38 +1977,6 @@ h2 {
 .tab-grant {
   border-left: 0.15rem solid black;
   margin-left: auto;
-}
-
-.btn-finalize {
-  padding: 0.4rem 0.75rem;
-  border: 0.2rem solid black;
-  background: black;
-  color: white;
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-finalize:hover {
-  background: white;
-  color: black;
-}
-
-.btn-reopen {
-  padding: 0.4rem 0.75rem;
-  border: 0.2rem solid black;
-  background: white;
-  color: black;
-  font-weight: 600;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-reopen:hover {
-  background: black;
-  color: white;
 }
 
 .btn-overflow {
@@ -2400,6 +2399,16 @@ h2 {
   height: 1rem;
 }
 
+.negative-consumption {
+  color: #dc2626;
+  font-weight: 600;
+}
+.consumption-warning {
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-left: 0.25rem;
+}
+
 .inv-progress {
   font-size: 0.75rem;
   font-weight: 400;
@@ -2458,6 +2467,18 @@ h2 {
 .crate-input .qty-input {
   width: 100%;
   min-width: 0;
+}
+
+.qty-display {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.readonly-before {
+  opacity: 0.7;
 }
 
 .input-label {
@@ -3633,51 +3654,5 @@ h2 {
   text-align: center;
   padding: 2rem;
   opacity: 0.6;
-}
-
-.undo-snackbar {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: black;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.undo-btn {
-  background: transparent;
-  color: white;
-  border: 0.15rem solid white;
-  padding: 0.3rem 0.8rem;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  transition: background 0.15s;
-}
-
-.undo-btn:hover {
-  background: white;
-  color: black;
-}
-
-.snackbar-enter-active,
-.snackbar-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-.snackbar-enter-from,
-.snackbar-leave-to {
-  opacity: 0;
-  transform: translateX(-50%) translateY(1rem);
 }
 </style>

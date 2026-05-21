@@ -57,6 +57,9 @@ onMounted(() => {
 
 <template lang="pug">
 .artist-list-view
+  .header
+    h2 Künstler
+
   .toolbar
     input.search-input(
       v-model="searchQuery"
@@ -99,7 +102,12 @@ onMounted(() => {
 }
 
 .header {
-  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 h2 {
@@ -134,18 +142,19 @@ h2 {
 }
 
 .btn-primary {
-  padding: 0.7em;
+  padding: 0.625rem 1.25rem;
   background: black;
   color: white;
   text-decoration: none;
-  font-weight: 600;
-  transition: filter 0.2s;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
   white-space: nowrap;
-  letter-spacing: 0.2em;
 }
 
 .btn-primary:hover {
-  filter: brightness(120%);
+  background: #333;
 }
 
 .loading, .error, .empty {

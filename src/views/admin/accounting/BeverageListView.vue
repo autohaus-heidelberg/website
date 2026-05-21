@@ -52,6 +52,11 @@ function formatPrice(value: string | null | undefined): string {
   return parseFloat(value).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
 }
 
+function formatQty(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val
+  return isNaN(n) ? '0' : n.toLocaleString('de-DE')
+}
+
 async function loadBeverages() {
   isLoading.value = true
   error.value = ''
@@ -105,15 +110,13 @@ onMounted(() => {
 
 <template lang="pug">
 .beverage-list-view
-  .header
-    h2 Getränke
-    .header-actions
-      input.search-input(
-        v-model="searchQuery"
-        type="text"
-        placeholder="Suchen..."
-      )
-      router-link.btn-primary(to="/admin/beverages/create") Neues Getränk
+  .beverage-toolbar
+    input.search-input(
+      v-model="searchQuery"
+      type="text"
+      placeholder="Suchen..."
+    )
+    router-link.btn-primary(to="/admin/beverages/create") Neues Getränk
 
   .loading(v-if="isLoading") Getränke werden geladen...
   .error(v-else-if="error") {{ error }}
@@ -135,8 +138,8 @@ onMounted(() => {
           .col-name
             | {{ item.name }}
             span.inactive-badge(v-if="!item.is_active") inaktiv
-          .col-crate {{ item.units_per_crate || 1 }}St.
-          .col-size {{ item.bottle_size ? item.bottle_size + 'L' : '' }}
+          .col-crate {{ (item.units_per_crate || 1) > 1 ? (item.units_per_crate + 'er') : 'Einzel' }}
+          .col-size {{ item.bottle_size ? formatQty(item.bottle_size) + 'L' : '' }}
           .col-price {{ formatPrice(item.purchase_price) }}
           .col-price
             template(v-if="item.selling_price") {{ formatPrice(item.selling_price) }}
@@ -155,31 +158,15 @@ onMounted(() => {
 <style scoped>
 .beverage-list-view {
   background: white;
-  padding: 2rem;
-  border: 0.5rem solid black;
   overflow: hidden;
 }
 
-.header {
+.beverage-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-h2 {
-  font-size: 1.75rem;
-  color: black;
-  margin: 0;
-  font-weight: 900;
-}
-
-.header-actions {
-  display: flex;
   gap: 1rem;
   align-items: center;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
@@ -197,18 +184,19 @@ h2 {
 }
 
 .btn-primary {
-  padding: 0.75rem 1.5rem;
+  padding: 0.625rem 1.25rem;
   background: black;
   color: white;
   text-decoration: none;
-  font-weight: 600;
-  transition: filter 0.2s;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
   white-space: nowrap;
-  letter-spacing: 0.2em;
 }
 
 .btn-primary:hover {
-  filter: brightness(120%);
+  background: #333;
 }
 
 .loading, .error, .empty {

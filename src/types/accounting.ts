@@ -75,6 +75,7 @@ export interface InventoryEntry {
   beverage_item_supplier_group?: string
   quantity_before: string
   quantity_after: string
+  consumed_quantity?: string
   snapshot_purchase_price?: string
   snapshot_selling_price?: string | null
   snapshot_deposit?: string
@@ -119,7 +120,6 @@ export interface EventAccounting {
   event_date?: string
   status: AccountingStatus
   notes: string
-  deposit_return: string
   created_by?: number
   created_at?: string
   updated_at?: string
@@ -136,7 +136,6 @@ export interface AccountingSummary {
   total_inventory_value_before: string
   total_inventory_value_after: string
   total_consumption_value: string
-  deposit_return: string
   result: string
   splits: { participant_name: string; amount: string }[]
 }
@@ -161,6 +160,10 @@ export interface Purchase {
   invoice_total: string
   net_amount?: string | null
   vat_amount?: string | null
+  deposit_new?: string
+  deposit_returned?: string
+  receipt_drive_file_id?: string
+  receipt_drive_url?: string
   notes: string
   status: PurchaseStatus
   tax_sphere?: TaxSphere
@@ -176,6 +179,8 @@ export interface StockEntry {
   id: number
   name: string
   supplier_group: string
+  category: string
+  category_emoji: string
   units_per_crate: number
   bottle_size: string | null
   quantity: number
