@@ -26,9 +26,9 @@ const EVENT_A = 'zoomies-howileft'
 const EVENT_B = 'fivebucks-poopootalks'
 
 // Cola: crate-based (upc=24)
-const COLA = { id: 142, name: 'Cola', upc: 24 }
-// Rotwein (im Angebot): per-bottle (upc=1), supports decimal (0.5)
-const ROTWEIN = { id: 152, name: 'Rotwein (im Angebot)', upc: 1 }
+const COLA = { id: 5, name: 'Cola', upc: 24 }
+// Sekt Piccolo: per-bottle (upc=1), supports decimal (0.5)
+const ROTWEIN = { id: 22, name: 'Sekt Piccolo', upc: 1 }
 
 test.describe('Multi-round parallel consumption', () => {
   test.describe.configure({ timeout: 90_000 })

@@ -13,8 +13,8 @@ import { getOrCreateAbrechnung, deleteAbrechnung, getStock, saveInventory } from
 // Use two real events from the database
 const EVENT_A = 'zoomies-howileft'
 const EVENT_B = 'fivebucks-poopootalks'
-// Cola: upc=24, id=142
-const DRINK_ID = 142
+// Cola: upc=24, id=5
+const DRINK_ID = 5
 const DRINK_NAME = 'Cola'
 
 test.describe('Parallel-tab FIFO inventory', () => {
@@ -216,26 +216,26 @@ test.describe('Parallel-tab FIFO inventory', () => {
   })
 
   test('Decimal quantity (0.5 bottle) consumed correctly', async () => {
-    // Rotwein (im Angebot) id=152, upc=1 — supports 0.5 bottle steps
-    const ROTWEIN_ID = 152
-    const stock = await getStock(ROTWEIN_ID)
-    test.skip(stock < 1, `Need ≥1 Rotwein, have ${stock}`)
+    // Sekt Piccolo id=22, upc=1 — supports 0.5 bottle steps
+    const BOTTLE_DRINK_ID = 22
+    const stock = await getStock(BOTTLE_DRINK_ID)
+    test.skip(stock < 1, `Need ≥1 Sekt Piccolo, have ${stock}`)
 
     const abrA = await getOrCreateAbrechnung(EVENT_A)
     abrIdA = abrA.id
 
     // Consume 0.5 bottle
     const r1 = await saveInventory(abrA.id, [{
-      beverage_item: ROTWEIN_ID,
+      beverage_item: BOTTLE_DRINK_ID,
       quantity_before: stock,
       quantity_after: stock - 0.5,
     }])
     expect(r1.status).toBe(200)
-    const entry = r1.data.inventory_entries.find((e: any) => e.beverage_item === ROTWEIN_ID)
+    const entry = r1.data.inventory_entries.find((e: any) => e.beverage_item === BOTTLE_DRINK_ID)
     expect(Number(entry.consumed_quantity)).toBeCloseTo(0.5)
     expect(Number(entry.quantity_after)).toBeCloseTo(stock - 0.5)
 
-    const newStock = await getStock(ROTWEIN_ID)
+    const newStock = await getStock(BOTTLE_DRINK_ID)
     expect(newStock).toBeCloseTo(stock - 0.5)
   })
 })
