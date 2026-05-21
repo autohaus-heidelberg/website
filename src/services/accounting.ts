@@ -291,11 +291,16 @@ export const purchaseService = {
     await api.delete(`/api/purchases/${id}/`)
   },
 
-  async scanReceipt(imageFile: File, eventId?: string): Promise<{ items: any[], raw: string, drive_upload?: { file_id: string, url: string } }> {
+  async scanReceipt(imageFile: File, eventId?: string): Promise<{
+    items: any[], raw: string,
+    supplier?: string, invoice_number?: string, date?: string,
+    invoice_total?: number, net_amount?: number, vat_amount?: number,
+    drive_upload?: { file_id: string, url: string }
+  }> {
     const formData = new FormData()
     formData.append('image', imageFile)
     if (eventId) formData.append('event_id', eventId)
-    return api.post<{ items: any[], raw: string, drive_upload?: { file_id: string, url: string } }>('/api/purchases/scan/', formData)
+    return api.post('/api/purchases/scan/', formData)
   },
 }
 

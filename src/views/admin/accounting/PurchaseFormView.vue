@@ -91,6 +91,13 @@ async function scanReceipt(event: Event) {
 
   try {
     const result = await purchaseService.scanReceipt(file, eventId || undefined)
+
+    // Fill metadata from scan
+    if (result.supplier) form.value.supplier = result.supplier
+    if (result.invoice_number) form.value.invoice_number = result.invoice_number
+    if (result.date) form.value.date = result.date
+    if (result.invoice_total != null) form.value.invoice_total = String(result.invoice_total)
+
     // Clear existing items
     form.value.items = []
     itemCrates.value = []
