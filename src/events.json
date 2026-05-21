@@ -40,6 +40,37 @@
         ]
     },
     {
+        "id": "screensaver",
+        "date": "2026-06-11T17:00:00+00:00",
+        "title": "Screensaver (Post-Punk, Melbourne), Jellybones (Wave Pop, Karlsruhe)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Dunkle Wolken ziehen &uuml;bers Carousel, denn gegen den wavigen Post-Punk von Screensaver aus Melbourne oder die d&uuml;steren romantic wave Popper von Jellybones aus Karlsruhe kommt auch kein Heidelberger Fr&uuml;hsommer an.</p>\n<p>Flyer: <a href=\"https://www.instagram.com/joey.controlletti/\">Joey Controlletti</a></p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/screensaver/",
+        "img": "/img/6664c138-6495-43c0-8787-60d87d5634bf.webp",
+        "artists": [
+            {
+                "name": "Screensaver",
+                "link": "https://www.instagram.com/screensavermusic/",
+                "description": "Throwing off the shackles of existential dread with hypnotic beats, punk energy and swirling synths, screensaver take\nweighty themes about power, lies, corporate coercion and systemic failure and deliver them via their blend of maximalist\npost punk. With a dance heartbeat, a kraut-rock back bone and new wave glimmer, there\u2019s a catharsis in their anxiety\ninduced compositions that is both dark but danceable.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/qMJyJeKit4s",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=692116734/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/7e74b12d-5344-41e0-8ad6-a28607a20725.webp"
+            },
+            {
+                "name": "Jellybones",
+                "link": "https://www.instagram.com/best.jellybones.ever/",
+                "description": "After a line-up change in winter 2025, Jellybones are Thorsten, Jonas and Eva. They make New Romantic Wave Pop and with their EP \u201cDarkest Season\u201d they go deep into their inner being and explore the black tar lake.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/1YC5YS9vJ3A",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=283530791/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/a9540f0b-e6d8-4f75-9a37-8957ba6d786a.webp"
+            }
+        ]
+    },
+    {
         "id": "blackboxmassacre20260522",
         "date": "2026-05-22T18:00:00+00:00",
         "title": "Fuzz Sagrado, Z\u00fcndung",
