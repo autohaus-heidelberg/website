@@ -295,6 +295,7 @@ export const purchaseService = {
     items: any[], raw: string,
     supplier?: string, invoice_number?: string, date?: string,
     invoice_total?: number, net_amount?: number, vat_amount?: number,
+    deposit_new?: number, deposit_returned?: number,
     drive_upload?: { file_id: string, url: string }
   }> {
     const formData = new FormData()

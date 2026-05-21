@@ -18,6 +18,8 @@ const form = ref<Partial<Purchase>>({
   supplier: '',
   invoice_number: '',
   invoice_total: '0.00',
+  deposit_new: '0.00',
+  deposit_returned: '0.00',
   notes: '',
   items: [],
 })
@@ -97,6 +99,12 @@ async function scanReceipt(event: Event) {
     if (result.invoice_number) form.value.invoice_number = result.invoice_number
     if (result.date) form.value.date = result.date
     if (result.invoice_total != null) form.value.invoice_total = String(result.invoice_total)
+    if (result.deposit_new != null) form.value.deposit_new = String(result.deposit_new)
+    if (result.deposit_returned != null) form.value.deposit_returned = String(result.deposit_returned)
+    if (result.drive_upload) {
+      form.value.receipt_drive_file_id = result.drive_upload.file_id
+      form.value.receipt_drive_url = result.drive_upload.url
+    }
 
     // Clear existing items
     form.value.items = []
@@ -312,6 +320,14 @@ onMounted(() => {
 
     .form-row
       .form-group
+        label(for="deposit_new") Pfand neu (€)
+        input#deposit_new(v-model="form.deposit_new" type="number" step="0.01" min="0" placeholder="0.00")
+      .form-group
+        label(for="deposit_returned") Pfand-Rückgabe (€)
+        input#deposit_returned(v-model="form.deposit_returned" type="number" step="0.01" min="0" placeholder="0.00")
+
+    .form-row
+      .form-group
         label Berechnete Summe
         .computed-total {{ computedTotal }}
       .form-group
@@ -324,6 +340,7 @@ onMounted(() => {
         input(type="file" accept="image/*" capture="environment" @change="scanReceipt" hidden)
         | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
       span.scan-hint Foto vom Bon → KI füllt die Positionen aus
+      a.receipt-link(v-if="form.receipt_drive_url" :href="form.receipt_drive_url" target="_blank") 📄 Beleg ansehen
     .error-msg(v-if="scanError") {{ scanError }}
     .items-header
       span.col-bev Getränk

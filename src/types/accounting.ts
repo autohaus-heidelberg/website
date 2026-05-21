@@ -160,6 +160,10 @@ export interface Purchase {
   invoice_total: string
   net_amount?: string | null
   vat_amount?: string | null
+  deposit_new?: string
+  deposit_returned?: string
+  receipt_drive_file_id?: string
+  receipt_drive_url?: string
   notes: string
   status: PurchaseStatus
   tax_sphere?: TaxSphere
