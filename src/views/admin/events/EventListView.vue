@@ -76,9 +76,10 @@ async function loadEvents() {
     eventsData.value = evData
     accountings.value = accData.results
 
-    // Fetch VVK ticket counts for events with shopLink (fire & forget)
-    const eventsWithShop = evData.results.filter(e => e.shopLink)
-    eventsWithShop.forEach(ev => {
+    // Fetch VVK ticket counts only for upcoming events with shopLink
+    const now = new Date()
+    const upcomingWithShop = evData.results.filter(e => e.shopLink && new Date(e.date) > now)
+    upcomingWithShop.forEach(ev => {
       pretixService.getOrderSummary(ev.id).then(data => {
         vvkTickets.value[ev.id] = data.total_tickets
       }).catch(() => { /* ignore */ })

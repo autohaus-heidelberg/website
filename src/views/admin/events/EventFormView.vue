@@ -58,6 +58,7 @@ const isCreatingShopLink = ref(false)
 const shopLinkSuccess = ref('')
 const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
+const originalDate = ref<string | null>(null)
 const previewArtists = ref<Artist[]>([])
 const loadingArtists = ref(false)
 
@@ -119,6 +120,7 @@ async function loadEvent() {
       date: event.date.substring(0, 16),
       artist_ids: event.artists.map(a => a.id!)
     }
+    originalDate.value = event.date.substring(0, 16)
     // Set image preview if there's an existing image
     if (event.image_url) {
       imagePreview.value = event.image_url
@@ -303,6 +305,12 @@ async function handleSubmit() {
     isLoading.value = false
   }
 }
+
+// Warn if event time changed after helferpad was created
+const helferpadTimeWarning = computed(() => {
+  if (!form.value.helferpadLink || !originalDate.value) return false
+  return form.value.date !== originalDate.value
+})
 
 // Watch artist_ids and fetch full artist data for preview
 watch(() => form.value.artist_ids, async (newArtistIds) => {
@@ -536,6 +544,7 @@ onUnmounted(() => {
               .field-hint Benötigt: Event-ID
               .field-hint(v-if="!isEditing") Erstellt auch den Event in der Datenbank.
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
+            .warning-message(v-if="helferpadTimeWarning") ⚠️ Die Event-Zeit wurde geändert. Bitte Schichtzeiten im Helferpad überprüfen!
 
           .form-group
             label Künstlerauswahl
@@ -904,6 +913,15 @@ input:disabled {
   font-size: 0.95rem;
   padding: 0.75rem;
   background: #d4edda;
+  border: 0.25rem solid black;
+  margin-top: 0.5rem;
+}
+
+.warning-message {
+  color: black;
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  background: #fff3cd;
   border: 0.25rem solid black;
   margin-top: 0.5rem;
 }
