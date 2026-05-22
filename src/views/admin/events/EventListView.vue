@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { eventService, accountingService, grantService, type Event } from '@/services'
+import { eventService, accountingService, grantService, pretixService, type Event } from '@/services'
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 
@@ -18,6 +18,9 @@ const selectedYear = ref(new Date().getFullYear())
 
 // Undo delete
 const pendingDelete = ref<{ event: Event; timer: ReturnType<typeof setTimeout> } | null>(null)
+
+// VVK ticket counts
+const vvkTickets = ref<Record<string, number>>({})
 
 const filters = [
   { key: 'all' as const, label: 'Alle' },
@@ -72,6 +75,14 @@ async function loadEvents() {
     ])
     eventsData.value = evData
     accountings.value = accData.results
+
+    // Fetch VVK ticket counts for events with shopLink (fire & forget)
+    const eventsWithShop = evData.results.filter(e => e.shopLink)
+    eventsWithShop.forEach(ev => {
+      pretixService.getOrderSummary(ev.id).then(data => {
+        vvkTickets.value[ev.id] = data.total_tickets
+      }).catch(() => { /* ignore */ })
+    })
   } catch (e: any) {
     error.value = e.message || 'Failed to load events'
   } finally {
@@ -240,6 +251,11 @@ onMounted(() => {
             span.fee-group(v-if="event.fee || event.feeAk")
               a(v-if="event.fee && event.shopLink" :href="event.shopLink" target="_blank" class="fee" @click.stop) VVK: {{ event.fee }} €
               span.fee(v-else-if="event.fee") VVK: {{ event.fee }} €
+              router-link.vvk-sold(
+                v-if="vvkTickets[event.id] != null"
+                :to="`/admin/events/${event.id}?tab=vvk`"
+                @click.stop
+              ) ({{ vvkTickets[event.id] }} verkauft)
               span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
 
           .event-actions(@click.stop)
@@ -536,6 +552,19 @@ a.fee:hover {
   font-weight: 600;
   font-size: 0.875rem;
   color: black;
+}
+
+.vvk-sold {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #388e3c;
+  text-decoration: none;
+  margin-left: 0.25rem;
+}
+
+.vvk-sold:hover {
+  color: #2e7d32;
+  text-decoration: underline;
 }
 
 .event-actions {
