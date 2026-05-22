@@ -58,6 +58,7 @@ const isCreatingShopLink = ref(false)
 const shopLinkSuccess = ref('')
 const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
+const originalDate = ref<string | null>(null)
 const previewArtists = ref<Artist[]>([])
 const loadingArtists = ref(false)
 
@@ -119,6 +120,7 @@ async function loadEvent() {
       date: event.date.substring(0, 16),
       artist_ids: event.artists.map(a => a.id!)
     }
+    originalDate.value = event.date.substring(0, 16)
     // Set image preview if there's an existing image
     if (event.image_url) {
       imagePreview.value = event.image_url
@@ -303,6 +305,12 @@ async function handleSubmit() {
     isLoading.value = false
   }
 }
+
+// Warn if event time changed after helferpad was created
+const helferpadTimeWarning = computed(() => {
+  if (!form.value.helferpadLink || !originalDate.value) return false
+  return form.value.date !== originalDate.value
+})
 
 // Watch artist_ids and fetch full artist data for preview
 watch(() => form.value.artist_ids, async (newArtistIds) => {
@@ -636,6 +644,9 @@ onUnmounted(() => {
     .undo-snackbar.snackbar-error(v-if="deleteError")
       span ⚠️ {{ deleteError }}
       button.undo-btn(@click="deleteError = ''") OK
+  transition(name="snackbar")
+    .undo-snackbar.snackbar-error(v-if="helferpadTimeWarning")
+      span ⚠️ Schichtzeiten im Helferpad prüfen! Event-Zeit wurde geändert.
 </template>
 
 <style scoped>
