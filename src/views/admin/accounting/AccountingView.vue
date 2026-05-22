@@ -1219,7 +1219,7 @@ onUnmounted(() => {
           template(v-for="source in group.sources" :key="source")
             .revenue-row
               .col-source {{ REVENUE_SOURCE_LABELS[source] }}
-              .col-amount
+              .col-amount(data-label="Gesamt")
                 .amount-wrap
                   input.amount-input(
                     v-model="getRevenue(source).total"
@@ -1228,7 +1228,7 @@ onUnmounted(() => {
                     min="0"
                     placeholder="0.00"
                   )
-              .col-amount
+              .col-amount(data-label="Wechselgeld")
                 .amount-wrap(v-if="source.endsWith('_cash')")
                   input.amount-input(
                     v-model="getRevenue(source).change_money"
@@ -1238,7 +1238,7 @@ onUnmounted(() => {
                     placeholder="0.00"
                   )
                 span.no-field(v-else) —
-              .col-amount
+              .col-amount(data-label="Gebühren")
                 .amount-wrap
                   input.amount-input(
                     v-model="getRevenue(source).fees"
@@ -1247,7 +1247,7 @@ onUnmounted(() => {
                     min="0"
                     placeholder="0.00"
                   )
-              .col-amount.col-computed {{ formatCurrency(revenueNet(getRevenue(source))) }}
+              .col-amount.col-computed(data-label="Netto") {{ formatCurrency(revenueNet(getRevenue(source))) }}
             template(v-if="source === 'vvk_pretix' && pretixData")
               .revenue-row.sub-row.expandable(@click="toggleSourceExpanded('pretix')")
                 .col-source.sub-source {{ expandedSources.has('pretix') ? '▾' : '▸' }} {{ Object.keys(pretixData.by_source).length }} Zahlungsquellen
@@ -3283,6 +3283,13 @@ h2 {
     grid-template-columns: 1fr;
     gap: 0.25rem;
     padding: 0.75rem 1rem;
+  }
+
+  .revenue-row > .col-amount[data-label]::before {
+    content: attr(data-label) ": ";
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #555;
   }
 
   .expense-header {
