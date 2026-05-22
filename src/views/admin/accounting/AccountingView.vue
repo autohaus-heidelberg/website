@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
 import type { PretixOrderSummary, PayPalBarSummary, PayPalCategory, EventDocument } from '@/services/accounting'
@@ -1031,6 +1031,31 @@ function scheduleAutoSave() {
   }, 2000)
 }
 
+/** Immediately flush pending auto-save (e.g. before navigation) */
+function flushAutoSave() {
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer)
+    autoSaveTimer = null
+  }
+  if (autoSaveDirty.value) {
+    autoSaveDirty.value = false
+    saveAll(true)
+  }
+}
+
+// Warn before browser close/refresh if there are unsaved changes
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (autoSaveDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+// Flush auto-save on Vue route navigation
+onBeforeRouteLeave(() => {
+  flushAutoSave()
+})
+
 // Watch data changes for auto-save
 watch(
   [inventory, revenues, expenses, splits],
@@ -1106,12 +1131,15 @@ onMounted(() => {
   document.addEventListener('click', closeOverflow)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('focus', handleWindowFocus)
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
 onUnmounted(() => {
+  flushAutoSave()
   document.removeEventListener('click', closeOverflow)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('focus', handleWindowFocus)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
 })
 </script>
