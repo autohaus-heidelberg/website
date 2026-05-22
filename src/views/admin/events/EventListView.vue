@@ -75,19 +75,22 @@ async function loadEvents() {
     ])
     eventsData.value = evData
     accountings.value = accData.results
-
-    // Fetch VVK ticket counts only for upcoming events with shopLink
-    const now = new Date()
-    const upcomingWithShop = evData.results.filter(e => e.shopLink && new Date(e.date) > now)
-    upcomingWithShop.forEach(ev => {
-      pretixService.getOrderSummary(ev.id).then(data => {
-        vvkTickets.value[ev.id] = data.total_tickets
-      }).catch(() => { /* ignore */ })
-    })
   } catch (e: any) {
     error.value = e.message || 'Failed to load events'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function loadVvkData() {
+  if (!eventsData.value) return
+  const now = new Date()
+  const upcomingWithShop = eventsData.value.results.filter(e => e.shopLink && new Date(e.date) > now)
+  for (const ev of upcomingWithShop) {
+    try {
+      const data = await pretixService.getOrderSummary(ev.id)
+      vvkTickets.value[ev.id] = data.total_tickets
+    } catch { /* ignore */ }
   }
 }
 
@@ -190,12 +193,14 @@ async function downloadAntrag(grant: GrantApplication) {
   await grantService.downloadAntrag(grant.id, grant.event_title || grant.event)
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (route.query.view === 'grants') {
     activeView.value = 'grants'
   }
-  loadEvents()
+  await loadEvents()
   grantService.getAll().then(({ results }) => { grants.value = results })
+  // Load VVK data lazily after page is rendered
+  loadVvkData()
 })
 </script>
 
