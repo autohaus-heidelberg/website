@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { eventService, artistService } from '@/services'
+import { eventService, artistService, pretixService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
+import type { PretixOrderSummary } from '@/services/accounting'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
@@ -57,8 +58,14 @@ const isCreatingShopLink = ref(false)
 const shopLinkSuccess = ref('')
 const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
+const originalDate = ref<string | null>(null)
 const previewArtists = ref<Artist[]>([])
 const loadingArtists = ref(false)
+
+// Pretix VVK state
+const pretixData = ref<PretixOrderSummary | null>(null)
+const pretixLoading = ref(false)
+const pretixError = ref('')
 
 // TinyMCE configuration
 const editorConfig = {
@@ -73,6 +80,25 @@ const editorConfig = {
   promotion: false,
   skin: false,
   content_css: false,
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  vvk_stripe: 'Stripe',
+  vvk_paypal: 'PayPal',
+  vvk_pretix: 'Pretix (Überweisung etc.)',
+}
+
+async function loadPretixData() {
+  if (!props.id || !form.value.shopLink) return
+  pretixLoading.value = true
+  pretixError.value = ''
+  try {
+    pretixData.value = await pretixService.getOrderSummary(props.id)
+  } catch (e: any) {
+    pretixError.value = e.message || 'VVK-Daten konnten nicht geladen werden'
+  } finally {
+    pretixLoading.value = false
+  }
 }
 
 function handleIdInput(e: Event) {
@@ -94,6 +120,7 @@ async function loadEvent() {
       date: event.date.substring(0, 16),
       artist_ids: event.artists.map(a => a.id!)
     }
+    originalDate.value = event.date.substring(0, 16)
     // Set image preview if there's an existing image
     if (event.image_url) {
       imagePreview.value = event.image_url
@@ -279,6 +306,12 @@ async function handleSubmit() {
   }
 }
 
+// Warn if event time changed after helferpad was created
+const helferpadTimeWarning = computed(() => {
+  if (!form.value.helferpadLink || !originalDate.value) return false
+  return form.value.date !== originalDate.value
+})
+
 // Watch artist_ids and fetch full artist data for preview
 watch(() => form.value.artist_ids, async (newArtistIds) => {
   if (!newArtistIds || newArtistIds.length === 0) {
@@ -360,8 +393,11 @@ onMounted(async () => {
   const tabParam = route.query.tab as string
   if (tabParam === 'accounting') {
     activeSection.value = 'accounting'
-  } else if (tabParam && ['details', 'checklist'].includes(tabParam)) {
+  } else if (tabParam && ['details', 'checklist', 'vvk'].includes(tabParam)) {
     activeTab.value = tabParam
+    if (tabParam === 'vvk') {
+      loadPretixData()
+    }
   }
 
   document.addEventListener('click', closeOverflow)
@@ -403,6 +439,12 @@ onUnmounted(() => {
       @click="activeTab = 'details'"
       type="button"
     ) 📝 Details
+    button.sub-tab(
+      v-if="form.shopLink"
+      :class="{ active: activeTab === 'vvk' }"
+      @click="activeTab = 'vvk'; loadPretixData()"
+      type="button"
+    ) 🎟️ VVK
     button.sub-tab(
       :class="{ active: activeTab === 'checklist' }"
       @click="activeTab = 'checklist'"
@@ -548,6 +590,48 @@ onUnmounted(() => {
   .tab-content(v-if="isEditing" v-show="activeSection === 'event' && activeTab === 'checklist'")
     EventChecklistTab(:eventId="props.id")
 
+  .tab-content(v-if="isEditing && form.shopLink" v-show="activeSection === 'event' && activeTab === 'vvk'")
+    .vvk-overview
+      h3 VVK-Übersicht
+      .vvk-shop-link
+        a(:href="form.shopLink" target="_blank") {{ form.shopLink }}
+
+      .vvk-loading(v-if="pretixLoading") Lade VVK-Daten...
+      .vvk-error(v-else-if="pretixError") {{ pretixError }}
+      template(v-else-if="pretixData")
+        .vvk-summary-cards
+          .vvk-card
+            .vvk-card-value {{ pretixData.total_tickets }}
+            .vvk-card-label Tickets verkauft
+          .vvk-card
+            .vvk-card-value {{ pretixData.total_revenue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
+            .vvk-card-label Einnahmen (brutto)
+          .vvk-card
+            .vvk-card-value {{ pretixData.pretix_fee.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
+            .vvk-card-label Pretix-Gebühr
+
+        .vvk-breakdown(v-if="Object.keys(pretixData.by_source).length")
+          h4 Aufschlüsselung nach Zahlungsart
+          table.vvk-table
+            thead
+              tr
+                th Zahlungsart
+                th Tickets
+                th Einnahmen
+                th Gebühren
+            tbody
+              tr(v-for="(data, source) in pretixData.by_source" :key="source")
+                td {{ SOURCE_LABELS[source] || source }}
+                td {{ data.tickets }}
+                td {{ data.revenue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
+                td {{ data.fees.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
+
+        .vvk-warnings(v-if="pretixData.warnings?.length")
+          p.vvk-warning(v-for="w in pretixData.warnings" :key="w") ⚠️ {{ w }}
+
+      .vvk-empty(v-else)
+        p Klicke auf den Tab, um die aktuellen VVK-Daten zu laden.
+
   .tab-content(v-if="isEditing" v-show="activeSection === 'accounting'")
     AccountingView(:eventId="props.id")
 
@@ -560,6 +644,9 @@ onUnmounted(() => {
     .undo-snackbar.snackbar-error(v-if="deleteError")
       span ⚠️ {{ deleteError }}
       button.undo-btn(@click="deleteError = ''") OK
+  transition(name="snackbar")
+    .undo-snackbar.snackbar-error(v-if="helferpadTimeWarning")
+      span ⚠️ Schichtzeiten im Helferpad prüfen! Event-Zeit wurde geändert.
 </template>
 
 <style scoped>
@@ -1019,5 +1106,106 @@ input:disabled {
 .snackbar-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(1rem);
+}
+
+/* VVK Overview */
+.vvk-overview {
+  padding: 1rem 0;
+}
+
+.vvk-overview h3 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 0 0 1rem;
+}
+
+.vvk-overview h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.vvk-shop-link {
+  margin-bottom: 1.5rem;
+}
+
+.vvk-shop-link a {
+  color: black;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.vvk-loading,
+.vvk-empty p {
+  font-weight: 600;
+  color: #555;
+}
+
+.vvk-error {
+  padding: 0.75rem;
+  background: #fff0f0;
+  border: 0.25rem solid black;
+  font-weight: 600;
+}
+
+.vvk-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.vvk-card {
+  border: 0.25rem solid black;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+
+.vvk-card-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.vvk-card-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  color: #555;
+}
+
+.vvk-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 0.25rem solid black;
+}
+
+.vvk-table th,
+.vvk-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.vvk-table th {
+  background: black;
+  color: white;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vvk-warnings {
+  margin-top: 1rem;
+}
+
+.vvk-warning {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #856404;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
 }
 </style>
