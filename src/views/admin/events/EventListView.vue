@@ -90,7 +90,7 @@ async function loadVvkData() {
     try {
       const data = await pretixService.getOrderSummary(ev.id)
       vvkTickets.value[ev.id] = data.total_tickets
-    } catch { /* ignore */ }
+    } catch (_) { /* ignore */ }
   }
 }
 
@@ -193,14 +193,12 @@ async function downloadAntrag(grant: GrantApplication) {
   await grantService.downloadAntrag(grant.id, grant.event_title || grant.event)
 }
 
-onMounted(async () => {
+onMounted(() => {
   if (route.query.view === 'grants') {
     activeView.value = 'grants'
   }
-  await loadEvents()
+  loadEvents().then(() => loadVvkData())
   grantService.getAll().then(({ results }) => { grants.value = results })
-  // Load VVK data lazily after page is rendered
-  loadVvkData()
 })
 </script>
 
