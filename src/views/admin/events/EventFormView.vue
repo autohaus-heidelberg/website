@@ -544,7 +544,6 @@ onUnmounted(() => {
               .field-hint Benötigt: Event-ID
               .field-hint(v-if="!isEditing") Erstellt auch den Event in der Datenbank.
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
-            .warning-message(v-if="helferpadTimeWarning") ⚠️ Die Event-Zeit wurde geändert. Bitte Schichtzeiten im Helferpad überprüfen!
 
           .form-group
             label Künstlerauswahl
@@ -645,6 +644,9 @@ onUnmounted(() => {
     .undo-snackbar.snackbar-error(v-if="deleteError")
       span ⚠️ {{ deleteError }}
       button.undo-btn(@click="deleteError = ''") OK
+  transition(name="snackbar")
+    .undo-snackbar.snackbar-error(v-if="helferpadTimeWarning")
+      span ⚠️ Schichtzeiten im Helferpad prüfen! Event-Zeit wurde geändert.
 </template>
 
 <style scoped>
@@ -913,15 +915,6 @@ input:disabled {
   font-size: 0.95rem;
   padding: 0.75rem;
   background: #d4edda;
-  border: 0.25rem solid black;
-  margin-top: 0.5rem;
-}
-
-.warning-message {
-  color: black;
-  font-size: 0.95rem;
-  padding: 0.75rem;
-  background: #fff3cd;
   border: 0.25rem solid black;
   margin-top: 0.5rem;
 }

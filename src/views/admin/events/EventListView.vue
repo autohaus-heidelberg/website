@@ -90,7 +90,9 @@ async function loadVvkData() {
     try {
       const data = await pretixService.getOrderSummary(ev.id)
       vvkTickets.value[ev.id] = data.total_tickets
-    } catch (_) { /* ignore */ }
+    } catch (e) {
+      console.warn(`[VVK] Failed to load for ${ev.id}:`, e)
+    }
   }
 }
 
