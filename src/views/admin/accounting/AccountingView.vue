@@ -1412,25 +1412,46 @@ onUnmounted(() => {
           .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': confirmedInventory.has(beverage.id), 'inv-pending': !confirmedInventory.has(beverage.id) }")
             .inv-card-header
               .inv-card-name {{ beverage.name }}
-              .inv-card-meta(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}er Kiste
-              .inv-card-meta(v-else) Einzelflasche
-            .inv-card-before
-              span.inv-card-label Vorher:
-              span.inv-card-value(v-if="(beverage.units_per_crate || 1) > 1") {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}Fl = {{ formatQty(entry.quantity_before) }}
-              span.inv-card-value(v-else) {{ formatQty(entry.quantity_before) }} Fl.
+            .inv-card-info
+              span.inv-info-item
+                span.inv-info-label V:
+                template(v-if="(beverage.units_per_crate || 1) > 1")
+                  | {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}Fl
+                template(v-else)
+                  | {{ formatQty(entry.quantity_before) }}Fl
+              span.inv-info-sep ·
+              span.inv-info-item(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ formatQty(inventoryConsumption(entry)) }}
+                span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
+              span.inv-info-sep ·
+              span.inv-info-item
+                template(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}er
+                template(v-else) Fl.
+              span.inv-info-sep ·
+              span.inv-info-item.inv-info-price {{ formatCurrency(inventoryValue(entry, beverage)) }}
             .inv-card-after
-              span.inv-card-label Nachher:
               //- Crate stepper
               template(v-if="(beverage.units_per_crate || 1) > 1")
                 .stepper-row
                   .stepper-group
                     button.stepper-btn(@click="stepCrate(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates }}
+                    input.stepper-value(
+                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates"
+                      type="number"
+                      min="0"
+                      step="1"
+                      @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                    )
                     button.stepper-btn(@click="stepCrate(beverage, entry, 'after', 1)") +
                     span.stepper-unit K
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles) }}
+                    input.stepper-value(
+                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
+                      type="number"
+                      min="0"
+                      step="1"
+                      @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                    )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl
               //- Bottle stepper
@@ -1438,13 +1459,15 @@ onUnmounted(() => {
                 .stepper-row
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
-                    span.stepper-value {{ formatQty(entry.quantity_after) }}
+                    input.stepper-value(
+                      v-model.number="entry.quantity_after"
+                      type="number"
+                      min="0"
+                      step="0.25"
+                      @change="confirmedInventory.add(beverage.id)"
+                    )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl.
-            .inv-card-footer
-              span(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ formatQty(inventoryConsumption(entry)) }}
-                span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠ Nachher > Vorher!
-              span {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
         .group-total
           span Zwischensumme {{ group }}:
@@ -2607,7 +2630,7 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
 }
 
 .inv-card-name {
@@ -2615,25 +2638,33 @@ h2 {
   font-size: 1rem;
 }
 
-.inv-card-meta {
+.inv-card-info {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.75rem;
-  color: #666;
-  font-weight: 500;
+  color: #555;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
 }
 
-.inv-card-before {
-  font-size: 0.8rem;
-  color: #555;
-  margin-bottom: 0.5rem;
+.inv-info-label {
+  font-weight: 700;
+  margin-right: 0.15rem;
+}
+
+.inv-info-sep {
+  color: #bbb;
+}
+
+.inv-info-price {
+  font-weight: 600;
+  color: #333;
 }
 
 .inv-card-label {
   font-weight: 700;
   margin-right: 0.25rem;
-}
-
-.inv-card-value {
-  font-variant-numeric: tabular-nums;
 }
 
 .inv-card-after {
@@ -2690,11 +2721,22 @@ h2 {
 }
 
 .stepper-value {
-  min-width: 2rem;
+  width: 3rem;
   text-align: center;
   font-size: 1.3rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+  border: none;
+  background: transparent;
+  outline: none;
+  padding: 0;
+  -moz-appearance: textfield;
+}
+
+.stepper-value::-webkit-inner-spin-button,
+.stepper-value::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .stepper-unit {
@@ -2705,15 +2747,6 @@ h2 {
   margin-left: 0.2rem;
 }
 
-.inv-card-footer {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #444;
-  padding-top: 0.4rem;
-  border-top: 1px solid #eee;
-}
 
 /* ── Expenses Table ── */
 
