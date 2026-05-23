@@ -66,6 +66,7 @@ const paypalBarLoading = ref(false)
 const paypalBarError = ref('')
 
 // ── Grant (Förderung) ────────────────────────────────────────────
+const grantTouched = ref(false)
 const grantRecord = ref<GrantApplication | null>(null)
 const grantSummary = ref<GrantSummary | null>(null)
 const grantSubTab = ref<'antrag' | 'nachweis'>('antrag')
@@ -856,7 +857,7 @@ async function saveAll(silent = false) {
     }
 
     // Also save grant data if grant tab has data
-    if (activeTab.value === 'grant' || grantRecord.value) {
+    if (activeTab.value === 'grant' || grantRecord.value || grantTouched.value) {
       const budgetPlan = {
         expenses: {
           kuenstlerhonorar: budgetKuenstler.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
@@ -894,6 +895,7 @@ async function saveAll(silent = false) {
         grantRecord.value = await grantService.create(data)
       }
 
+      grantTouched.value = false
       const eventYear = event.value?.date ? new Date(event.value.date).getFullYear() : new Date().getFullYear()
       grantSummary.value = await grantService.getSummary(eventYear)
     }
@@ -1065,6 +1067,16 @@ watch(
 watch(
   () => [accounting.value?.notes],
   () => { scheduleAutoSave() }
+)
+watch(
+  [sachbericht, grantNotes, budgetKuenstler, budgetSachkosten, budgetSonstiges,
+   budgetRevEintritt, budgetRevGetraenke, budgetRevEigenmittel, budgetRevDrittmittel,
+   budgetRevSonstige, approvedAmount, zuwendungsbescheidDate, auszahlungAmount, rentFlatAmount],
+  () => {
+    grantTouched.value = true
+    scheduleAutoSave()
+  },
+  { deep: true }
 )
 
 // ── Refresh stock and correct entries (used by conflict handler & focus) ──
