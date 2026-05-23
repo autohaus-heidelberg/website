@@ -805,7 +805,7 @@ async function saveAll(silent = false) {
     const saved = await accountingService.update(accId, {
       notes: accounting.value.notes,
       revenues: revenues.value
-        .filter(rev => parseFloat(rev.total || '0') !== 0 || rev.id),
+        .filter(rev => rev.id || parseFloat(rev.total || '0') !== 0 || parseFloat(rev.change_money || '0') !== 0 || parseFloat(rev.fees || '0') !== 0),
       inventory_entries: inventory.value
         .filter(inv => inv.id || confirmedInventory.has(inv.beverage_item) || !qtyEquals(inv.quantity_before, inv.quantity_after)),
       expenses: expenses.value
