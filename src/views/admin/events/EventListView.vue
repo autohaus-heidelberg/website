@@ -193,7 +193,8 @@ async function commitDelete(event: Event) {
   try {
     await eventService.delete(event.id)
   } catch (e: any) {
-    alert('Fehler beim Löschen: ' + e.message)
+    const msg = e.response?.data?.error || e.message
+    alert('Fehler beim Löschen: ' + msg)
     // Re-add on failure
     if (eventsData.value) {
       eventsData.value.results.push(event)
