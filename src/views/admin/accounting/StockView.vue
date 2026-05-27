@@ -2,7 +2,9 @@
 import { ref, onMounted, computed } from 'vue'
 import { stockService } from '@/services'
 import type { StockEntry } from '@/types/accounting'
+import { useSort } from '@/composables/useSort'
 
+const sort = useSort<StockEntry>()
 const stockEntries = ref<StockEntry[]>([])
 const isLoading = ref(false)
 const error = ref('')
@@ -32,7 +34,26 @@ const stockByCategory = computed(() => {
     if (!groups[cat]) groups[cat] = { emoji: e.category_emoji || '📦', items: [] }
     groups[cat].items.push(e)
   }
-  return groups
+  for (const key in groups) {
+    groups[key].items = sort.sorted(groups[key].items, (item, k) => {
+      switch (k) {
+        case 'name': return item.name.toLowerCase()
+        case 'size': return parseFloat(String(item.bottle_size || '0'))
+        case 'stock': return item.quantity || 0
+        case 'fifo': return parseFloat(String(item.fifo_price || '0'))
+        case 'deposit': return parseFloat(String(item.deposit || '0'))
+        case 'value': return parseFloat(String(item.stock_value || '0'))
+        case 'deposit-val': return parseFloat(String(item.deposit_value || '0'))
+        default: return 0
+      }
+    })
+  }
+  // Sort groups alphabetically
+  const sorted: Record<string, { emoji: string; items: StockEntry[] }> = {}
+  for (const key of Object.keys(groups).sort((a, b) => a.localeCompare(b, 'de'))) {
+    sorted[key] = groups[key]
+  }
+  return sorted
 })
 
 const totalQuantity = computed(() =>
@@ -136,13 +157,13 @@ onMounted(() => {
         .stock-table
           .table-header
             span.col-status
-            span.col-name Getränk
-            span.col-size Flasche
-            span.col-stock Bestand
-            span.col-fifo FIFO-Preis
-            span.col-deposit Pfand
-            span.col-value Warenwert
-            span.col-deposit-val Pfandwert
+            span.col-name.sortable(@click="sort.toggle('name')") Getränk{{ sort.indicator('name') }}
+            span.col-size.sortable(@click="sort.toggle('size')") Flasche{{ sort.indicator('size') }}
+            span.col-stock.sortable(@click="sort.toggle('stock')") Bestand{{ sort.indicator('stock') }}
+            span.col-fifo.sortable(@click="sort.toggle('fifo')") FIFO-Preis{{ sort.indicator('fifo') }}
+            span.col-deposit.sortable(@click="sort.toggle('deposit')") Pfand{{ sort.indicator('deposit') }}
+            span.col-value.sortable(@click="sort.toggle('value')") Warenwert{{ sort.indicator('value') }}
+            span.col-deposit-val.sortable(@click="sort.toggle('deposit-val')") Pfandwert{{ sort.indicator('deposit-val') }}
           .table-row(
             v-for="(item, idx) in group.items"
             :key="item.id"
@@ -288,10 +309,10 @@ onMounted(() => {
 }
 
 .group-title {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   font-weight: 900;
   padding: 0.5rem 1rem;
-  background: #333;
+  background: black;
   color: white;
   margin: 0;
   display: flex;
@@ -318,27 +339,37 @@ onMounted(() => {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 20px 1fr 60px 130px 90px 80px 90px 90px;
+  grid-template-columns: 20px 2.5fr 0.7fr 1.5fr 1.2fr 1fr 1.3fr 1.3fr;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
   align-items: center;
 }
 
 .table-header {
-  border-bottom: 2px solid black;
+  border-bottom: 0.25rem solid black;
   font-weight: 900;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.sortable:hover {
+  text-decoration: underline;
+}
+
 .table-row {
   border-bottom: 1px solid #ddd;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .row-even {
-  background: #f5f5f5;
+  background: #f0f0f0;
 }
 
 .level-empty {
@@ -355,9 +386,10 @@ onMounted(() => {
 
 .row-subtotal {
   font-weight: 900;
-  border-bottom: 2px solid black;
+  border-top: 0.15rem solid black;
+  border-bottom: none;
   background: #eee;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
 }
 
 .row-total {
@@ -401,10 +433,17 @@ onMounted(() => {
 .col-value,
 .col-deposit-val {
   text-align: right;
+  white-space: nowrap;
 }
 
 .col-name {
   font-weight: 600;
+  text-align: left;
+}
+
+.table-header .col-name {
+  font-weight: 900;
+  text-align: left;
 }
 
 .stock-qty {
@@ -424,7 +463,7 @@ onMounted(() => {
 @media (max-width: 900px) {
   .table-header,
   .table-row {
-    grid-template-columns: 16px 1fr 50px 100px 80px 70px 80px 80px;
+    grid-template-columns: 16px 2.5fr 0.7fr 1.3fr 1fr 0.9fr 1.2fr 1.2fr;
     font-size: 0.75rem;
     gap: 0.25rem;
     padding: 0.35rem 0.5rem;

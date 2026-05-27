@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { eventService, artistService, pretixService } from '@/services'
+import { eventService, artistService, pretixService, accountingService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import type { PretixOrderSummary } from '@/services/accounting'
+import publishedEvents from '@/events.json'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
@@ -31,6 +32,8 @@ const props = defineProps<{
 const router = useRouter()
 const route = useRoute()
 const isEditing = ref(!!props.id)
+const isPublished = computed(() => publishedEvents.some((e: any) => e.id === props.id))
+const isAccounted = ref(false)
 const activeSection = ref<'event' | 'accounting'>('event')
 const activeTab = ref('details')
 
@@ -389,6 +392,12 @@ function closeOverflow(e: MouseEvent) {
 onMounted(async () => {
   await loadEvent()
 
+  // Check accounting status
+  if (props.id) {
+    const acc = await accountingService.getByEvent(props.id)
+    isAccounted.value = !!acc && !!acc.revenues && acc.revenues.length > 0
+  }
+
   // Check for tab query parameter and set active section/tab
   const tabParam = route.query.tab as string
   if (tabParam === 'accounting') {
@@ -418,7 +427,11 @@ onUnmounted(() => {
         template(v-if="form.date")  · {{ new Date(form.date).toLocaleDateString('de-DE') }}
         template(v-if="form.fee")  · VVK {{ form.fee }}€
         template(v-if="form.feeAk")  / AK {{ form.feeAk }}€
-    router-link.btn-cancel(to="/admin/events") Abbrechen
+    .form-header-right
+      span.status-badge.published(v-if="isEditing && isPublished") ✓ Live
+      span.status-badge.draft(v-else-if="isEditing") Entwurf
+      span.status-badge.result(v-if="isEditing && isAccounted") ✓ Abgerechnet
+      router-link.btn-cancel(to="/admin/events") Abbrechen
 
   .event-tabs(v-if="isEditing")
     button.tab.tab-section(
@@ -671,6 +684,36 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   text-align: left;
+}
+
+.form-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: black;
+  color: white;
+}
+
+.status-badge.published {
+  background: #16a34a;
+}
+
+.status-badge.draft {
+  background: white;
+  color: black;
+  border: 0.125rem solid black;
+}
+
+.status-badge.result {
+  background: #f59e0b;
+  color: black;
 }
 
 .event-subtitle {

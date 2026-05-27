@@ -48,12 +48,12 @@ const scannedNames = ref<string[]>([])
 // Inline new-beverage creation
 const showNewBeverage = ref(false)
 const newBevIdx = ref(-1) // which item row triggered it
-const newBev = ref({ name: '', units_per_crate: 24, purchase_price: '0.00' })
+const newBev = ref({ name: '', units_per_crate: 6, purchase_price: '0.00' })
 
 function openNewBeverage(idx: number) {
   newBevIdx.value = idx
   const suggestedName = scannedNames.value[idx] || ''
-  newBev.value = { name: suggestedName, units_per_crate: 24, purchase_price: '0.00' }
+  newBev.value = { name: suggestedName, units_per_crate: 6, purchase_price: '0.00' }
   showNewBeverage.value = true
 }
 
@@ -272,11 +272,6 @@ async function handleSubmit() {
     error.value = 'Bitte ein Datum eingeben'
     return
   }
-  const unmatched = (form.value.items ?? []).filter(i => !i.beverage_item || i.beverage_item <= 0)
-  if (unmatched.length) {
-    error.value = `${unmatched.length} Position(en) ohne Getränk-Zuordnung — bitte zuordnen oder entfernen`
-    return
-  }
   isLoading.value = true
   error.value = ''
 
@@ -366,7 +361,7 @@ onMounted(() => {
     .item-row(v-for="(item, idx) in form.items" :key="idx")
       select.col-bev(v-model.number="item.beverage_item" :class="{ unmatched: !item.beverage_item }" @change="item.beverage_item === -1 ? openNewBeverage(idx) : onBeverageChange(item, idx)")
         option(v-if="!item.beverage_item" :value="0" disabled)
-          | {{ scannedNames[idx] ? `⚠️ ${scannedNames[idx]} — bitte zuordnen oder [+] drücken` : '— Getränk wählen —' }}
+          | {{ scannedNames[idx] ? `⚠️ ${scannedNames[idx]}` : '— Getränk wählen —' }}
         option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
           | {{ beverageLabel(bev) }}
         option(:value="-1") + Neues Getränk…
@@ -403,26 +398,24 @@ onMounted(() => {
         @input="recalcItem(item, idx)"
       )
       span.col-total {{ formatItemTotal(item) }}
-      .col-action
-        button.btn-new-bev(v-if="!item.beverage_item" type="button" @click="openNewBeverage(idx)") +
-        button.btn-remove(type="button" @click="removeItem(idx)") ×
+      button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
 
     button.btn-add(type="button" @click="addItem") + Position hinzufügen
 
     .new-bev-overlay(v-if="showNewBeverage")
       .new-bev-dialog
         h3 Neues Getränk anlegen
-        .dialog-section
-          label Name
-          input(v-model="newBev.name" type="text" placeholder="z.B. Augustiner Hell" autofocus)
-        .dialog-section
-          .section-hint Einzelflasche (z.B. Spirituosen): Fl./Kiste = 1. Kistenware (z.B. Bier): Fl./Kiste = Anzahl Flaschen.
-          label Fl. / Kiste
-          input(v-model.number="newBev.units_per_crate" type="number" min="1" placeholder="24")
-        .dialog-section
-          .section-hint {{ newBev.units_per_crate <= 1 ? 'Einzelflasche — Einkaufspreis pro Flasche eintragen.' : 'Kistenware — Einkaufspreis für die ganze Kiste eintragen.' }}
-          label {{ newBev.units_per_crate <= 1 ? 'EK / Flasche (€)' : 'EK / Kiste (€)' }}
-          input(v-model="newBev.purchase_price" type="number" step="0.01" min="0" :placeholder="newBev.units_per_crate <= 1 ? 'z.B. 16.99' : 'z.B. 18.50'")
+        .form-row
+          .form-group
+            label Name
+            input(v-model="newBev.name" type="text" placeholder="z.B. Sekt" autofocus)
+          .form-group
+            label Flaschen / Kiste
+            input(v-model.number="newBev.units_per_crate" type="number" min="1")
+            .hint 1 = Einzelflasche (Wein, Spirituosen)
+          .form-group
+            label {{ newBev.units_per_crate <= 1 ? 'EK-Preis / Flasche (€)' : 'EK-Preis / Kiste (€)' }}
+            input(v-model="newBev.purchase_price" type="number" step="0.01" min="0")
         .dialog-actions
           button.btn-save(type="button" @click="saveNewBeverage") Anlegen
           button.btn-cancel-dialog(type="button" @click="showNewBeverage = false") Abbrechen
@@ -560,7 +553,7 @@ h2 {
 .items-header,
 .item-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 56px;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 40px;
   gap: 0.5rem;
   align-items: center;
   margin-bottom: 0.5rem;
@@ -588,58 +581,19 @@ h2 {
   color: white;
 }
 
-.item-row .col-total,
-.items-header .col-total {
+.item-row .col-total {
   font-weight: 900;
   text-align: right;
 }
 
 .btn-remove {
-  border: 2px solid black;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  margin: 0;
-  font-family: monospace;
-  font-size: 16px;
-  font-weight: 900;
-  cursor: pointer;
-  box-sizing: border-box;
-  display: grid;
-  place-items: center;
-  letter-spacing: 0;
-  -webkit-appearance: none;
-  appearance: none;
   background: black;
   color: white;
-}
-
-.btn-new-bev {
-  border: 2px solid black;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  margin: 0;
-  font-family: monospace;
-  font-size: 16px;
-  font-weight: 900;
+  border: none;
+  font-size: 1.25rem;
   cursor: pointer;
-  box-sizing: border-box;
-  display: grid;
-  place-items: center;
-  letter-spacing: 0;
-  -webkit-appearance: none;
-  appearance: none;
-  background: white;
-  color: black;
-}
-
-.col-action {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  justify-content: center;
-  margin-left: 1rem;
+  font-weight: 900;
+  padding: 0.25rem;
 }
 
 select.unmatched {
@@ -704,29 +658,14 @@ select.unmatched {
   box-sizing: border-box;
 }
 
+.new-bev-dialog .form-row {
+  grid-template-columns: 1fr;
+}
+
 .new-bev-dialog h3 {
   margin: 0 0 1.5rem;
   font-weight: 900;
   font-size: 1.25rem;
-}
-
-.dialog-section {
-  margin-bottom: 1.25rem;
-}
-
-.dialog-section label {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 0.25rem;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.section-hint {
-  font-size: 0.8rem;
-  color: #555;
-  margin-bottom: 0.5rem;
 }
 
 .new-bev-dialog input {

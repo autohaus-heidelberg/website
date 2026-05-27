@@ -2486,9 +2486,9 @@ h2 {
 
 .inventory-header, .inventory-row {
   display: grid;
-  grid-template-columns: 1fr 50px 160px 160px 60px 60px 90px;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  grid-template-columns: 2fr 45px 1.2fr 1.2fr 0.6fr 0.8fr 1fr;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
   align-items: center;
 }
 
@@ -2517,19 +2517,20 @@ h2 {
 
 .col-inv-pair {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.2rem;
+  justify-content: center;
 }
 
 .crate-input {
   display: flex;
   align-items: center;
-  gap: 0.15rem;
-  flex: 1;
+  gap: 0.1rem;
+  max-width: 80px;
 }
 
 .crate-input .qty-input {
-  width: 100%;
-  min-width: 0;
+  min-width: 58px;
+  width: auto;
 }
 
 .qty-display {
@@ -2554,12 +2555,13 @@ h2 {
 .bottle-mode {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
+  justify-content: center;
 }
 
 .bottle-mode .qty-input {
-  flex: 1;
-  min-width: 0;
+  min-width: 64px;
+  width: auto;
 }
 
 .sortable {
@@ -2573,22 +2575,31 @@ h2 {
 }
 
 .col-inv-num {
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   font-size: 0.85rem;
 }
 
 .col-inv-amount {
-  text-align: right;
+  text-align: center;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .inventory-header {
   font-weight: 900;
   font-size: 0.8rem;
   border-bottom: 0.25rem solid black;
+}
+
+.inventory-header .col-inv-pair,
+.inventory-header .col-inv-num,
+.inventory-header .col-inv-amount,
+.inventory-header .col-inv-info {
+  text-align: center;
+  justify-content: center;
 }
 
 .inventory-row {

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { eventService, accountingService, grantService, pretixService, type Event } from '@/services'
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
+import publishedEvents from '@/events.json'
 
 const route = useRoute()
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
@@ -12,7 +13,9 @@ const grants = ref<GrantApplication[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
-const activeFilter = ref<'all' | 'with' | 'none'>('all')
+const activeFilter = ref<'all' | 'upcoming' | 'past' | 'live' | 'draft' | 'accounted'>('upcoming')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+const now = new Date()
 const activeView = ref<'events' | 'grants'>('events')
 const selectedYear = ref(new Date().getFullYear())
 
@@ -24,27 +27,61 @@ const vvkTickets = ref<Record<string, number>>({})
 
 const filters = [
   { key: 'all' as const, label: 'Alle' },
-  { key: 'with' as const, label: 'Mit Abrechnung' },
-  { key: 'none' as const, label: 'Ohne Abrechnung' },
+  { key: 'upcoming' as const, label: 'Kommend' },
+  { key: 'past' as const, label: 'Vergangen' },
+  { key: 'live' as const, label: 'Live' },
+  { key: 'draft' as const, label: 'Entwurf' },
+  { key: 'accounted' as const, label: 'Abgerechnet' },
 ]
 
 const events = computed(() => eventsData.value?.results || [])
-
-const eventsWithAccounting = computed(() => {
-  return events.value.map(event => {
-    const accounting = accountings.value.find(a => a.event === event.id)
-    return { ...event, accounting }
-  })
+const publishedIds = computed(() => new Set(publishedEvents.map((e: any) => e.id)))
+const accountingByEvent = computed(() => {
+  const map = new Map<string, EventAccounting>()
+  for (const a of accountings.value) {
+    if (a.event) map.set(a.event, a)
+  }
+  return map
 })
 
-const filteredEvents = computed(() => {
-  let list = eventsWithAccounting.value
+function hasResult(eventId: string): boolean {
+  const acc = accountingByEvent.value.get(eventId)
+  return !!acc && !!acc.revenues && acc.revenues.length > 0
+}
 
-  if (activeFilter.value === 'with') {
-    list = list.filter(e => !!e.accounting)
-  } else if (activeFilter.value === 'none') {
-    list = list.filter(e => !e.accounting)
+function isUrgent(event: Event): boolean {
+  if (publishedIds.value.has(event.id)) return false
+  const eventDate = new Date(event.date)
+  if (eventDate <= now) return false
+  const threeWeeksBefore = new Date(eventDate)
+  threeWeeksBefore.setDate(threeWeeksBefore.getDate() - 21)
+  return now >= threeWeeksBefore
+}
+
+function daysUntil(event: Event): number {
+  const diff = new Date(event.date).getTime() - now.getTime()
+  return Math.ceil(diff / (1000 * 60 * 60 * 24))
+}
+
+const filteredEvents = computed(() => {
+  let list = events.value
+
+  if (activeFilter.value === 'upcoming') {
+    list = list.filter(e => new Date(e.date) > now)
+  } else if (activeFilter.value === 'past') {
+    list = list.filter(e => new Date(e.date) <= now)
+  } else if (activeFilter.value === 'live') {
+    list = list.filter(e => publishedIds.value.has(e.id))
+  } else if (activeFilter.value === 'draft') {
+    list = list.filter(e => !publishedIds.value.has(e.id))
+  } else if (activeFilter.value === 'accounted') {
+    list = list.filter(e => hasResult(e.id))
   }
+
+  list = [...list].sort((a, b) => {
+    const diff = new Date(a.date).getTime() - new Date(b.date).getTime()
+    return sortOrder.value === 'asc' ? diff : -diff
+  })
 
   if (!searchQuery.value) return list
 
@@ -57,11 +94,27 @@ const filteredEvents = computed(() => {
 })
 
 function filterCount(key: string) {
-  const list = eventsWithAccounting.value
+  const list = events.value
   if (key === 'all') return list.length
-  if (key === 'with') return list.filter(e => !!e.accounting).length
-  if (key === 'none') return list.filter(e => !e.accounting).length
+  if (key === 'upcoming') return list.filter(e => new Date(e.date) > now).length
+  if (key === 'past') return list.filter(e => new Date(e.date) <= now).length
+  if (key === 'live') return list.filter(e => publishedIds.value.has(e.id)).length
+  if (key === 'draft') return list.filter(e => !publishedIds.value.has(e.id)).length
+  if (key === 'accounted') return list.filter(e => hasResult(e.id)).length
   return 0
+}
+
+// Auto-set sort direction based on filter
+watch(activeFilter, (filter) => {
+  if (filter === 'upcoming' || filter === 'draft') {
+    sortOrder.value = 'asc'
+  } else {
+    sortOrder.value = 'desc'
+  }
+})
+
+function toggleSort() {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
 }
 
 async function loadEvents() {
@@ -86,12 +139,12 @@ async function loadVvkData() {
   if (!eventsData.value) return
   const now = new Date()
   const upcomingWithShop = eventsData.value.results.filter(e => e.shopLink && new Date(e.date) > now)
-  for (const ev of upcomingWithShop) {
-    try {
-      const data = await pretixService.getOrderSummary(ev.id)
-      vvkTickets.value[ev.id] = data.total_tickets
-    } catch (e) {
-      console.warn(`[VVK] Failed to load for ${ev.id}:`, e)
+  const results = await Promise.allSettled(
+    upcomingWithShop.map(ev => pretixService.getOrderSummary(ev.id).then(data => ({ id: ev.id, tickets: data.total_tickets })))
+  )
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      vvkTickets.value[result.value.id] = result.value.tickets
     }
   }
 }
@@ -229,6 +282,8 @@ onMounted(() => {
         :class="{ active: activeFilter === f.key }"
         @click="activeFilter = f.key"
       ) {{ f.label }} ({{ filterCount(f.key) }})
+      button.sort-btn(@click="toggleSort")
+        | {{ sortOrder === 'asc' ? '↑ Älteste zuerst' : '↓ Neueste zuerst' }}
 
     .loading(v-if="isLoading") Veranstaltungen werden geladen...
     .error(v-else-if="error") {{ error }}
@@ -237,13 +292,16 @@ onMounted(() => {
       .event-card(
         v-for="event in filteredEvents"
         :key="event.id"
-        :class="{ 'has-accounting': !!event.accounting }"
+        :class="{ 'is-past': new Date(event.date) <= now }"
         @click="$router.push(`/admin/events/${event.id}`)"
       )
         .event-header
           .event-id {{ event.id }}
           .event-header-right
-            span.status-badge(v-if="event.accounting") ✓ Abrechnung
+            span.status-badge.urgent(v-if="isUrgent(event)") ✗ in {{ daysUntil(event) }}d nicht live
+            span.status-badge.published(v-if="publishedIds.has(event.id)") ✓ Live
+            span.status-badge.draft(v-else) Entwurf
+            span.status-badge.result(v-if="hasResult(event.id)") ✓ Abgerechnet
             .event-date {{ formatDate(event.date) }}
 
         h3.event-title {{ event.title }}
@@ -263,12 +321,9 @@ onMounted(() => {
                 @click.stop
               ) ({{ vvkTickets[event.id] }} verkauft)
               span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
-
-          .event-actions(@click.stop)
-            router-link.btn-edit(:to="`/admin/events/${event.id}`") Bearbeiten
-            router-link.btn-accounting(
-              :to="`/admin/events/${event.id}?tab=accounting`"
-            ) {{ event.accounting ? 'Abrechnung öffnen' : 'Abrechnung starten' }}
+          .event-actions
+            router-link.btn-edit(:to="`/admin/events/${event.id}`" @click.stop) Bearbeiten
+            button.btn-delete(@click.stop="deleteEvent(event)") Löschen
 
     .empty(v-else) Keine Veranstaltungen gefunden
 
@@ -434,6 +489,23 @@ h2 {
   background: #f0f0f0;
 }
 
+.sort-btn {
+  margin-left: auto;
+  padding: 0.4rem 0.8rem;
+  border: 0.15rem solid #666;
+  background: white;
+  color: #333;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sort-btn:hover {
+  background: #f0f0f0;
+  border-color: black;
+}
+
 .loading, .error, .empty {
   padding: 3rem;
   text-align: center;
@@ -460,8 +532,25 @@ h2 {
   cursor: pointer;
 }
 
-.event-card.has-accounting {
-  border-left: 0.5rem solid #27ae60;
+.event-card.is-past {
+  opacity: 0.55;
+}
+
+.event-card.is-past:hover {
+  opacity: 1;
+}
+
+.status-badge.urgent {
+  background: #dc2626;
+  color: white;
+  letter-spacing: 0;
+  border: 0.125rem solid #dc2626;
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .event-card:hover {
@@ -488,6 +577,23 @@ h2 {
   letter-spacing: 0.1em;
   background: black;
   color: white;
+}
+
+.status-badge.published {
+  background: #16a34a;
+  border: 0.125rem solid #16a34a;
+}
+
+.status-badge.draft {
+  background: white;
+  color: black;
+  border: 0.125rem solid black;
+}
+
+.status-badge.result {
+  background: #f59e0b;
+  color: black;
+  border: 0.125rem solid #f59e0b;
 }
 
 .event-id {

@@ -26,14 +26,15 @@ const filteredBeverages = computed(() => {
 })
 
 const groupedBeverages = computed(() => {
-  const groups: Record<string, BeverageItem[]> = {}
+  const groups: Record<string, { emoji: string; items: BeverageItem[] }> = {}
   for (const b of filteredBeverages.value) {
-    if (!groups[b.supplier_group]) groups[b.supplier_group] = []
-    groups[b.supplier_group].push(b)
+    const cat = b.category || b.supplier_group || 'Sonstige'
+    if (!groups[cat]) groups[cat] = { emoji: b.category_emoji || '📦', items: [] }
+    groups[cat].items.push(b)
   }
   // Apply sort within each group
   for (const key in groups) {
-    groups[key] = sort.sorted(groups[key], (item, k) => {
+    groups[key].items = sort.sorted(groups[key].items, (item, k) => {
       switch (k) {
         case 'name': return item.name.toLowerCase()
         case 'crate': return item.units_per_crate || 1
@@ -44,7 +45,12 @@ const groupedBeverages = computed(() => {
       }
     })
   }
-  return groups
+  // Sort groups alphabetically
+  const sorted: Record<string, { emoji: string; items: BeverageItem[] }> = {}
+  for (const key of Object.keys(groups).sort((a, b) => a.localeCompare(b, 'de'))) {
+    sorted[key] = groups[key]
+  }
+  return sorted
 })
 
 function formatPrice(value: string | null | undefined): string {
@@ -122,8 +128,8 @@ onMounted(() => {
   .error(v-else-if="error") {{ error }}
 
   template(v-else-if="filteredBeverages.length")
-    .supplier-group(v-for="(items, group) in groupedBeverages" :key="group")
-      h3.group-title {{ group }}
+    .supplier-group(v-for="(group, groupName) in groupedBeverages" :key="groupName")
+      h3.group-title {{ group.emoji }} {{ groupName }} ({{ group.items.length }})
       .beverages-table
         .table-header
           .col-name.sortable(@click="sort.toggle('name')") Name{{ sort.indicator('name') }}
@@ -134,7 +140,7 @@ onMounted(() => {
           .col-price.sortable(@click="sort.toggle('deposit')") Pfand{{ sort.indicator('deposit') }}
           .col-actions
 
-        .table-row(v-for="(item, idx) in items" :key="item.id" :class="{ 'row-even': idx % 2 === 1, 'row-inactive': !item.is_active }" @click="router.push(`/admin/beverages/${item.id}`)")
+        .table-row(v-for="(item, idx) in group.items" :key="item.id" :class="{ 'row-even': idx % 2 === 1, 'row-inactive': !item.is_active }" @click="router.push(`/admin/beverages/${item.id}`)")
           .col-name
             | {{ item.name }}
             span.inactive-badge(v-if="!item.is_active") inaktiv
@@ -221,6 +227,7 @@ onMounted(() => {
   background: black;
   color: white;
   margin-bottom: 0;
+  text-align: left;
 }
 
 .beverages-table {
@@ -241,7 +248,7 @@ onMounted(() => {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 1fr 45px 50px 75px 75px 75px auto;
+  grid-template-columns: 2.5fr 0.6fr 0.6fr 1fr 1fr 0.9fr 1fr;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   min-width: 0;
@@ -253,10 +260,23 @@ onMounted(() => {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  align-items: center;
+}
+
+.table-header .col-price {
+  text-align: right;
+}
+
+.table-header .col-crate {
+  text-align: center;
+}
+
+.table-header .col-size {
+  text-align: right;
 }
 
 .table-row {
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid #ddd;
   align-items: center;
   font-weight: 600;
   font-size: 0.875rem;
@@ -278,11 +298,17 @@ onMounted(() => {
 }
 
 .table-row:hover {
-  background: #f5f5f5;
+  background: #e8e8e8;
 }
 
 .col-name {
   font-weight: 600;
+  text-align: left;
+}
+
+.table-header .col-name {
+  font-weight: 900;
+  text-align: left;
 }
 
 .col-size {
@@ -298,6 +324,7 @@ onMounted(() => {
 .col-price {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .col-actions {
