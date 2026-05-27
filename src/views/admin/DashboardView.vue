@@ -59,7 +59,7 @@ onMounted(async () => {
     const thisYear = now.getFullYear()
     totalRevenue.value = accountingsData.results
       .filter(a => a.revenues && a.revenues.length > 0)
-      .reduce((sum, a) => sum + (a.revenues || []).reduce((s, r) => s + parseFloat(r.amount || '0'), 0), 0)
+      .reduce((sum, a) => sum + (a.revenues || []).reduce((s, r) => s + parseFloat(r.total || '0'), 0), 0)
     if (upcoming.length > 0) {
       nextEvent.value = { title: upcoming[0].title, date: upcoming[0].date }
     }
