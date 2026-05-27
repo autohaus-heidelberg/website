@@ -11,6 +11,8 @@ export interface BeverageItem {
   bottle_size?: string | null
   portions_per_bottle?: number | null
   selling_price_portion?: string | null
+  category?: string
+  category_emoji?: string
   created_at?: string
   updated_at?: string
 }

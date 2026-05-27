@@ -8,7 +8,9 @@ const authStore = useAuthStore()
 const eventsCount = ref(0)
 const artistsCount = ref(0)
 const unreadAnfragen = ref(0)
-const draftCount = ref(0)
+const upcomingCount = ref(0)
+const lowStockCount = ref(0)
+const totalRevenue = ref(0)
 const nextEvent = ref<{ title: string; date: string } | null>(null)
 const stockSummary = ref<{ count: number; value: number } | null>(null)
 const grantStats = ref<GrantSummary | null>(null)
@@ -41,13 +43,23 @@ onMounted(async () => {
     eventsCount.value = eventsData.count
     artistsCount.value = artistsData.count
     unreadAnfragen.value = unreadCount as number
-    draftCount.value = accountingsData.results.filter(a => a.status === 'draft').length
 
-    // Find next upcoming event
+    // Upcoming events
     const now = new Date()
     const upcoming = eventsData.results
       .filter(e => new Date(e.date) > now)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    upcomingCount.value = upcoming.length
+
+    // Low stock count (≤3 bottles)
+    const allStock = stockData as StockEntry[]
+    lowStockCount.value = allStock.filter(e => e.quantity > 0 && e.quantity <= 3).length
+
+    // Total revenue this year
+    const thisYear = now.getFullYear()
+    totalRevenue.value = accountingsData.results
+      .filter(a => a.revenues && a.revenues.length > 0)
+      .reduce((sum, a) => sum + (a.revenues || []).reduce((s, r) => s + parseFloat(r.amount || '0'), 0), 0)
     if (upcoming.length > 0) {
       nextEvent.value = { title: upcoming[0].title, date: upcoming[0].date }
     }
@@ -75,51 +87,75 @@ onMounted(async () => {
 .dashboard
   h2 Willkommen, {{ authStore.user?.username || 'Admin' }}!
 
-  .stats-grid(v-if="!isLoading")
-    .stat-card
-      .stat-info
-        .stat-value {{ eventsCount }}
-        .stat-label Veranstaltungen
-      router-link.stat-link(to="/admin/events") Veranstaltungen verwalten
+  .dashboard-sections(v-if="!isLoading")
+    .section
+      .section-title Events
+      .stats-grid
+        .stat-card
+          .stat-info
+            .stat-value {{ upcomingCount }}
+            .stat-label Kommende Events
+          router-link.stat-link(to="/admin/events") Events verwalten
 
-    .stat-card
-      .stat-info
-        .stat-value {{ artistsCount }}
-        .stat-label Künstler
-      router-link.stat-link(to="/admin/artists") Künstler verwalten
+        .stat-card
+          .stat-info
+            .stat-value {{ eventsCount }}
+            .stat-label Veranstaltungen gesamt
+          router-link.stat-link(to="/admin/events") Alle anzeigen
 
-    .stat-card(:class="{ highlight: unreadAnfragen > 0 }")
-      .stat-info
-        .stat-value {{ unreadAnfragen }}
-        .stat-label Ungelesene Anfragen
-      router-link.stat-link(to="/admin/anfragen") Anfragen ansehen
+        .stat-card(v-if="nextEvent")
+          .stat-info
+            .stat-value-small {{ nextEvent.title }}
+            .stat-label Nächstes Event
+          .stat-subtitle {{ formatDate(nextEvent.date) }}
+          router-link.stat-link(to="/admin/events") Events verwalten
 
-    .stat-card
-      .stat-info
-        .stat-value {{ draftCount }}
-        .stat-label Offene Abrechnungen
-      router-link.stat-link(to="/admin/events") Abrechnungen verwalten
+        .stat-card
+          .stat-info
+            .stat-value {{ artistsCount }}
+            .stat-label Künstler
+          router-link.stat-link(to="/admin/artists") Künstler verwalten
 
-    .stat-card(v-if="stockSummary")
-      .stat-info
-        .stat-value {{ stockSummary.count }}
-        .stat-label Getränke im Lager
-      .stat-subtitle Warenwert: {{ formatCurrency(stockSummary.value) }}
-      router-link.stat-link(to="/admin/lager") Lagerbestand ansehen
+    .section
+      .section-title Finanzen
+      .stats-grid
+        .stat-card
+          .stat-info
+            .stat-value {{ formatCurrency(totalRevenue) }}
+            .stat-label Umsatz gesamt
+          router-link.stat-link(to="/admin/events") Abrechnungen ansehen
 
-    .stat-card(v-if="grantStats")
-      .stat-info
-        .stat-value {{ grantStats.grant_count }}
-        .stat-label Förderanträge {{ new Date().getFullYear() }}
-      .stat-subtitle Beantragt: {{ formatCurrency(grantStats.total_requested) }}
-      router-link.stat-link(to="/admin/events?view=grants") Förderungen ansehen
+        .stat-card(v-if="grantStats")
+          .stat-info
+            .stat-value {{ grantStats.grant_count }}
+            .stat-label Förderanträge {{ new Date().getFullYear() }}
+          .stat-subtitle Beantragt: {{ formatCurrency(grantStats.total_requested) }}
+          router-link.stat-link(to="/admin/events?view=grants") Förderungen ansehen
 
-    .stat-card(v-if="nextEvent")
-      .stat-info
-        .stat-value-small {{ nextEvent.title }}
-        .stat-label Nächstes Event
-      .stat-subtitle {{ formatDate(nextEvent.date) }}
-      router-link.stat-link(:to="`/admin/events`") Events verwalten
+    .section
+      .section-title Lager
+      .stats-grid
+        .stat-card(:class="{ highlight: lowStockCount > 0 }")
+          .stat-info
+            .stat-value {{ lowStockCount }}
+            .stat-label Getränke niedrig
+          router-link.stat-link(to="/admin/lager") Lager prüfen
+
+        .stat-card(v-if="stockSummary")
+          .stat-info
+            .stat-value {{ stockSummary.count }}
+            .stat-label Getränke im Lager
+          .stat-subtitle Warenwert: {{ formatCurrency(stockSummary.value) }}
+          router-link.stat-link(to="/admin/lager") Lagerbestand ansehen
+
+    .section
+      .section-title Kommunikation
+      .stats-grid
+        .stat-card(:class="{ highlight: unreadAnfragen > 0 }")
+          .stat-info
+            .stat-value {{ unreadAnfragen }}
+            .stat-label Ungelesene Anfragen
+          router-link.stat-link(to="/admin/anfragen") Anfragen ansehen
 
   .loading(v-else) Lade Statistiken...
 
@@ -150,11 +186,28 @@ h2 {
   font-weight: 900;
 }
 
+.dashboard-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: black;
+  margin-bottom: 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 0.2rem solid black;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 3rem;
 }
 
 .stat-card {
