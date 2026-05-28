@@ -189,6 +189,8 @@ export interface StockEntry {
   crates: number
   loose_bottles: number
   purchase_price: string
+  selling_price: string | null
+  selling_price_portion: string | null
   fifo_price: string
   deposit: string
   stock_value: string

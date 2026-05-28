@@ -10,6 +10,7 @@ const artistsCount = ref(0)
 const unreadAnfragen = ref(0)
 const upcomingCount = ref(0)
 const lowStockCount = ref(0)
+const outOfStockOnMenu = ref(0)
 const totalRevenue = ref(0)
 const nextEvent = ref<{ title: string; date: string } | null>(null)
 const stockSummary = ref<{ count: number; value: number } | null>(null)
@@ -54,6 +55,9 @@ onMounted(async () => {
     // Low stock count (≤3 bottles)
     const allStock = stockData as StockEntry[]
     lowStockCount.value = allStock.filter(e => e.quantity > 0 && e.quantity <= 3).length
+
+    // Out of stock but on menu (has selling_price or selling_price_portion)
+    outOfStockOnMenu.value = allStock.filter(e => e.quantity === 0 && (e.selling_price || e.selling_price_portion)).length
 
     // Total revenue this year
     const thisYear = now.getFullYear()
@@ -135,6 +139,12 @@ onMounted(async () => {
     .section
       .section-title Lager
       .stats-grid
+        .stat-card(:class="{ highlight: outOfStockOnMenu > 0 }" v-if="outOfStockOnMenu > 0")
+          .stat-info
+            .stat-value ⚠ {{ outOfStockOnMenu }}
+            .stat-label Auf der Karte ohne Bestand
+          router-link.stat-link(to="/admin/lager?filter=out-of-stock") Prüfen
+
         .stat-card(:class="{ highlight: lowStockCount > 0 }")
           .stat-info
             .stat-value {{ lowStockCount }}
