@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { purchaseService, beverageService } from '@/services'
 import type { Purchase, PurchaseItem, BeverageItem } from '@/types/accounting'
@@ -38,22 +38,56 @@ function beverageLabel(bev: BeverageItem): string {
 function isSingleBottleRow(idx: number): boolean {
   const item = form.value.items?.[idx]
   if (!item) return false
+  if (!item.beverage_item) {
+    // Unmatched: use scanned units_per_crate, default to crate mode
+    const scannedUpc = scannedUnitsPerCrate.value[idx]
+    return (scannedUpc || 6) <= 1
+  }
   const bev = beverages.value.find(b => b.id === item.beverage_item)
   return (bev?.units_per_crate || 1) <= 1
 }
 
-// Track scanned names for unmatched items
+// Track scanned names and units_per_crate for unmatched items
 const scannedNames = ref<string[]>([])
+const scannedUnitsPerCrate = ref<(number | null)[]>([])
 
 // Inline new-beverage creation
 const showNewBeverage = ref(false)
 const newBevIdx = ref(-1) // which item row triggered it
-const newBev = ref({ name: '', units_per_crate: 6, purchase_price: '0.00' })
+const newBev = ref({ name: '', units_per_crate: 6, bottle_size: '', purchase_price: '0.00' })
+
+function parseUnitsFromName(name: string): number | null {
+  // Match patterns like "20x0,5", "6x1,0", "24x0.33"
+  const m = name.match(/(\d+)\s*[xX×]\s*\d/)
+  return m ? parseInt(m[1], 10) : null
+}
+
+function parseBottleSizeFromName(name: string): string {
+  // Match patterns like "20x0,5", "6x0,7", "12x1,0"
+  const m = name.match(/\d+\s*[xX×]\s*(\d+[.,]\d+)/)
+  return m ? m[1].replace(',', '.') : ''
+}
+
+function cleanBeverageName(name: string): string {
+  // Remove size/crate patterns like "12 x 0,7", "20x0,5l", "6 X 1,0 Liter" etc.
+  return name
+    .replace(/\s*\d+\s*[xX×]\s*\d+[.,]\d+\s*(l(iter)?)?/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 function openNewBeverage(idx: number) {
   newBevIdx.value = idx
-  const suggestedName = scannedNames.value[idx] || ''
-  newBev.value = { name: suggestedName, units_per_crate: 6, purchase_price: '0.00' }
+  const rawName = scannedNames.value[idx] || ''
+  const suggestedName = cleanBeverageName(rawName)
+  // Determine units_per_crate: from scanner data, parsed from name, or default 6
+  const scannedUpc = scannedUnitsPerCrate.value[idx]
+  const parsedUpc = parseUnitsFromName(rawName)
+  const upc = scannedUpc || parsedUpc || 6
+  const item = form.value.items?.[idx]
+  const price = item?.unit_price || '0.00'
+  const bottleSize = parseBottleSizeFromName(rawName)
+  newBev.value = { name: suggestedName, units_per_crate: upc, bottle_size: bottleSize, purchase_price: price }
   showNewBeverage.value = true
 }
 
@@ -63,6 +97,7 @@ async function saveNewBeverage() {
     const created = await beverageService.create({
       name: newBev.value.name.trim(),
       units_per_crate: newBev.value.units_per_crate,
+      bottle_size: newBev.value.bottle_size || null,
       purchase_price: newBev.value.purchase_price,
       is_active: true,
       deposit: '0.00',
@@ -116,16 +151,18 @@ async function scanReceipt(event: Event) {
     itemLoose.value = []
 
     scannedNames.value = []
+    scannedUnitsPerCrate.value = []
     for (const scanned of (result.items ?? [])) {
       const matchedBev = scanned.drink_id
         ? beverages.value.find(b => b.id === scanned.drink_id)
         : null
       const bev = matchedBev || null
-      const upc = bev?.units_per_crate || 1
+      const upc = bev?.units_per_crate || scanned.units_per_crate || 1
       const crates = scanned.quantity_crates || 0
       const unitPrice = scanned.unit_price?.toString() || bev?.purchase_price || '0.00'
 
       scannedNames.value.push(scanned.name || '')
+      scannedUnitsPerCrate.value.push(scanned.units_per_crate ?? null)
 
       if (upc <= 1) {
         // Single bottle: treat scanned crates as bottles
@@ -174,6 +211,57 @@ const computedTotal = computed(() => {
   return formatCurrency(total)
 })
 
+const rawTotal = computed(() => {
+  return (form.value.items ?? [])
+    .reduce((sum, item) => sum + parseFloat(item.total_price || '0'), 0)
+})
+
+const invoiceMismatch = computed(() => {
+  const invoice = parseFloat(form.value.invoice_total || '0')
+  if (!invoice || !rawTotal.value) return false
+  const depositNew = parseFloat(form.value.deposit_new || '0')
+  const depositReturned = parseFloat(form.value.deposit_returned || '0')
+  const expectedTotal = rawTotal.value + depositNew - depositReturned
+  return Math.abs(invoice - expectedTotal) > 0.5
+})
+
+// Auto-sync invoice_total with computed sum until user manually edits it
+const invoiceManuallyEdited = ref(false)
+
+function onInvoiceTotalInput() {
+  invoiceManuallyEdited.value = true
+}
+
+watch([rawTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
+  if (!invoiceManuallyEdited.value && rawTotal.value > 0) {
+    const depositNew = parseFloat(form.value.deposit_new || '0')
+    const depositReturned = parseFloat(form.value.deposit_returned || '0')
+    form.value.invoice_total = (rawTotal.value + depositNew - depositReturned).toFixed(2)
+  }
+})
+
+// Keep breakdown line live in notes
+const BREAKDOWN_MARKER = '📋 '
+
+function buildBreakdownLine(): string {
+  if (rawTotal.value <= 0) return ''
+  const depositNew = parseFloat(form.value.deposit_new || '0')
+  const depositReturned = parseFloat(form.value.deposit_returned || '0')
+  const total = rawTotal.value + depositNew - depositReturned
+  let line = `${formatCurrency(rawTotal.value)} Positionen`
+  if (depositNew > 0) line += ` + ${formatCurrency(depositNew)} Pfand`
+  if (depositReturned > 0) line += ` − ${formatCurrency(depositReturned)} Rückgabe`
+  line += ` = ${formatCurrency(total)}`
+  return `${BREAKDOWN_MARKER}${line}`
+}
+
+watch([rawTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
+  const line = buildBreakdownLine()
+  const notes = form.value.notes || ''
+  const withoutOld = notes.replace(/\n?📋 .+/, '').trimEnd()
+  form.value.notes = line ? (withoutOld ? `${withoutOld}\n${line}` : line) : withoutOld
+}, { flush: 'post' })
+
 // Per-row crate/loose state (not sent to API, only for UI)
 const itemCrates = ref<number[]>([])
 const itemLoose = ref<number[]>([])
@@ -218,10 +306,9 @@ function recalcItem(item: PurchaseItem, idx: number) {
     item.quantity = qty
     item.total_price = (parseFloat(item.unit_price || '0') * qty).toFixed(2)
   } else {
-    // Crate item: quantity = crates * upc + loose
+    // Crate item: quantity = crates * upc, price per crate
     const crates = itemCrates.value[idx] || 0
-    const loose = itemLoose.value[idx] || 0
-    item.quantity = crates * upc + loose
+    item.quantity = crates * upc
     item.total_price = (parseFloat(item.unit_price || '0') * crates).toFixed(2)
   }
 }
@@ -243,6 +330,10 @@ async function loadData() {
     if (props.id) {
       const purchase = await purchaseService.getById(Number(props.id))
       form.value = { ...purchase }
+      // If existing purchase already has an invoice_total, don't auto-overwrite
+      if (purchase.invoice_total && parseFloat(String(purchase.invoice_total)) > 0) {
+        invoiceManuallyEdited.value = true
+      }
       // Reconstruct crates/loose from stored quantity
       itemCrates.value = []
       itemLoose.value = []
@@ -275,11 +366,17 @@ async function handleSubmit() {
   isLoading.value = true
   error.value = ''
 
+  // Normalize empty decimal fields to null
+  const payload = { ...form.value }
+  if (!payload.invoice_total) payload.invoice_total = null as any
+  if (!payload.net_amount) payload.net_amount = null as any
+  if (!payload.vat_amount) payload.vat_amount = null as any
+
   try {
     if (isEditing) {
-      await purchaseService.update(Number(props.id), form.value)
+      await purchaseService.update(Number(props.id), payload)
     } else {
-      await purchaseService.create(form.value)
+      await purchaseService.create(payload)
     }
     router.push('/admin/lager?tab=einkaufe')
   } catch (e: any) {
@@ -317,7 +414,7 @@ onMounted(() => {
     .form-row
       .form-group
         label(for="invoice_total") Rechnungsbetrag (€)
-        input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0")
+        input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0" @input="onInvoiceTotalInput")
       .form-group
         label(for="net_amount") Netto (€)
         input#net_amount(v-model="form.net_amount" type="number" step="0.01" min="0" placeholder="optional")
@@ -337,9 +434,10 @@ onMounted(() => {
       .form-group
         label Berechnete Summe
         .computed-total {{ computedTotal }}
+        .mismatch-warning(v-if="invoiceMismatch") ⚠ Weicht vom Rechnungsbetrag ab
       .form-group
         label(for="notes") Notizen
-        textarea#notes(v-model="form.notes" rows="2")
+        textarea#notes(v-model="form.notes" rows="3")
 
     h3.section-title Positionen
     .scan-area
@@ -359,13 +457,14 @@ onMounted(() => {
       span.col-action &nbsp;
 
     .item-row(v-for="(item, idx) in form.items" :key="idx")
-      select.col-bev(v-model.number="item.beverage_item" :class="{ unmatched: !item.beverage_item }" @change="item.beverage_item === -1 ? openNewBeverage(idx) : onBeverageChange(item, idx)")
-        option(v-if="!item.beverage_item" :value="0" disabled)
-          | {{ scannedNames[idx] ? `⚠️ ${scannedNames[idx]}` : '— Getränk wählen —' }}
-        option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
-          | {{ beverageLabel(bev) }}
-        option(:value="-1") + Neues Getränk…
-      //- Crate mode: show crates + loose bottles
+      .col-bev
+        select(v-model.number="item.beverage_item" :class="{ unmatched: !item.beverage_item }" @change="onBeverageChange(item, idx)")
+          option(v-if="!item.beverage_item" :value="0" disabled)
+            | {{ scannedNames[idx] ? `⚠️ ${scannedNames[idx]}` : '— Getränk wählen —' }}
+          option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
+            | {{ beverageLabel(bev) }}
+        button.btn-new-bev(v-if="!item.beverage_item" type="button" @click="openNewBeverage(idx)") + Anlegen
+      //- Crate mode: show only crates input
       template(v-if="!isSingleBottleRow(idx)")
         input.col-crates(
           v-model.number="itemCrates[idx]"
@@ -373,12 +472,7 @@ onMounted(() => {
           min="0"
           @input="recalcItem(item, idx)"
         )
-        input.col-loose(
-          v-model.number="itemLoose[idx]"
-          type="number"
-          min="0"
-          @input="recalcItem(item, idx)"
-        )
+        span.col-loose.disabled-cell —
       //- Single bottle mode: no crates, just bottles
       template(v-else)
         span.col-crates.disabled-cell —
@@ -413,6 +507,9 @@ onMounted(() => {
             label Flaschen / Kiste
             input(v-model.number="newBev.units_per_crate" type="number" min="1")
             .hint 1 = Einzelflasche (Wein, Spirituosen)
+          .form-group
+            label Flaschengröße (Liter)
+            input(v-model="newBev.bottle_size" type="number" step="0.01" min="0" placeholder="z.B. 0.5")
           .form-group
             label {{ newBev.units_per_crate <= 1 ? 'EK-Preis / Flasche (€)' : 'EK-Preis / Kiste (€)' }}
             input(v-model="newBev.purchase_price" type="number" step="0.01" min="0")
@@ -509,6 +606,25 @@ h2 {
   background: #f5f5f5;
 }
 
+.calc-breakdown {
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.calc-breakdown .calc-result {
+  font-weight: 700;
+  color: black;
+}
+
+.mismatch-warning {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
 .section-title {
   font-size: 1.1rem;
   font-weight: 900;
@@ -599,6 +715,34 @@ h2 {
 select.unmatched {
   border: 2px solid #e67e22;
   background: #fef9e7;
+}
+
+.col-bev {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.col-bev select {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-new-bev {
+  border: none;
+  background: #e67e22;
+  color: white;
+  font-weight: 700;
+  font-size: 0.7rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0.15rem 0.4rem;
+  white-space: nowrap;
+  border-radius: 999px;
+}
+
+.btn-new-bev:hover {
+  background: #d35400;
 }
 
 .btn-add {
