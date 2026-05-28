@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { stockService } from '@/services'
 import type { StockEntry } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 
+const route = useRoute()
 const sort = useSort<StockEntry>()
 const stockEntries = ref<StockEntry[]>([])
 const isLoading = ref(false)
@@ -14,7 +16,10 @@ const searchQuery = ref('')
 const visibleEntries = computed(() => {
   let entries = stockEntries.value
   if (!showEmpty.value) {
-    entries = entries.filter(e => (e.quantity || 0) > 0)
+    // Always show items on the menu, hide empty items not on menu
+    entries = entries.filter(e =>
+      (e.quantity || 0) > 0 || e.selling_price || e.selling_price_portion
+    )
   }
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
@@ -113,6 +118,9 @@ async function loadData() {
 }
 
 onMounted(() => {
+  if (route.query.filter === 'out-of-stock') {
+    showEmpty.value = true
+  }
   loadData()
 })
 </script>
@@ -167,7 +175,7 @@ onMounted(() => {
           .table-row(
             v-for="(item, idx) in group.items"
             :key="item.id"
-            :class="['level-' + stockLevel(item), { 'row-even': idx % 2 === 1 }]"
+            :class="['level-' + stockLevel(item), { 'row-even': idx % 2 === 1, 'on-menu-empty': item.quantity === 0 && (item.selling_price || item.selling_price_portion) }]"
           )
             span.col-status
               span.status-dot(:class="'dot-' + stockLevel(item)")
@@ -374,6 +382,12 @@ onMounted(() => {
 
 .level-empty {
   opacity: 0.4;
+}
+
+.level-empty.on-menu-empty {
+  opacity: 1;
+  background: #fff3e0;
+  border-left: 3px solid #e67e22;
 }
 
 .level-low {
