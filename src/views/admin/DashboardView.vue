@@ -12,7 +12,7 @@ const upcomingCount = ref(0)
 const lowStockCount = ref(0)
 const outOfStockOnMenu = ref(0)
 const totalRevenue = ref(0)
-const nextEvent = ref<{ title: string; date: string } | null>(null)
+const nextEvent = ref<{ id: string; title: string; date: string } | null>(null)
 const stockSummary = ref<{ count: number; value: number } | null>(null)
 const grantStats = ref<GrantSummary | null>(null)
 const isLoading = ref(true)
@@ -52,12 +52,39 @@ onMounted(async () => {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     upcomingCount.value = upcoming.length
 
-    // Low stock count (≤3 bottles)
+    // Helper: is the item on the menu?
     const allStock = stockData as StockEntry[]
-    lowStockCount.value = allStock.filter(e => e.quantity > 0 && e.quantity <= 3).length
+    const isOnMenu = (e: StockEntry) => parseFloat(e.selling_price || '0') > 0 || parseFloat(e.selling_price_portion || '0') > 0
 
-    // Out of stock but on menu (has selling_price or selling_price_portion)
-    outOfStockOnMenu.value = allStock.filter(e => e.quantity === 0 && (e.selling_price || e.selling_price_portion)).length
+    // Compute average consumption per beverage from past events
+    const consumptionMap = new Map<number, number[]>()
+    for (const acc of accountingsData.results) {
+      for (const entry of acc.inventory_entries || []) {
+        const consumed = parseFloat(entry.consumed_quantity || '0')
+        if (consumed > 0) {
+          const list = consumptionMap.get(entry.beverage_item) || []
+          list.push(consumed)
+          consumptionMap.set(entry.beverage_item, list)
+        }
+      }
+    }
+    const avgConsumption = new Map<number, number>()
+    for (const [id, values] of consumptionMap) {
+      avgConsumption.set(id, values.reduce((a, b) => a + b, 0) / values.length)
+    }
+
+    // Low stock: current quantity won't last 1 event (based on avg consumption)
+    // Falls back to 1 crate if no consumption history
+    const isLowStock = (e: StockEntry) => {
+      if (e.quantity === 0) return false
+      const avg = avgConsumption.get(e.id)
+      if (avg) return e.quantity < avg
+      return e.quantity <= (e.units_per_crate || 3)
+    }
+    lowStockCount.value = allStock.filter(e => isLowStock(e) && isOnMenu(e)).length
+
+    // Out of stock but on menu
+    outOfStockOnMenu.value = allStock.filter(e => e.quantity === 0 && isOnMenu(e)).length
 
     // Total revenue this year
     const thisYear = now.getFullYear()
@@ -65,7 +92,7 @@ onMounted(async () => {
       .filter(a => a.revenues && a.revenues.length > 0)
       .reduce((sum, a) => sum + (a.revenues || []).reduce((s, r) => s + parseFloat(r.total || '0'), 0), 0)
     if (upcoming.length > 0) {
-      nextEvent.value = { title: upcoming[0].title, date: upcoming[0].date }
+      nextEvent.value = { id: upcoming[0].id, title: upcoming[0].title, date: upcoming[0].date }
     }
 
     // Stock summary
@@ -95,77 +122,77 @@ onMounted(async () => {
     .section
       .section-title Events
       .stats-grid
-        .stat-card
-          .stat-info
-            .stat-value {{ upcomingCount }}
-            .stat-label Kommende Events
-          router-link.stat-link(to="/admin/events") Events verwalten
-
-        .stat-card
-          .stat-info
-            .stat-value {{ eventsCount }}
-            .stat-label Veranstaltungen gesamt
-          router-link.stat-link(to="/admin/events") Alle anzeigen
-
-        .stat-card(v-if="nextEvent")
+        router-link.stat-card(v-if="nextEvent" :to="`/admin/events/${nextEvent.id}`")
           .stat-info
             .stat-value-small {{ nextEvent.title }}
             .stat-label Nächstes Event
           .stat-subtitle {{ formatDate(nextEvent.date) }}
-          router-link.stat-link(to="/admin/events") Events verwalten
+          .stat-link Event öffnen
 
-        .stat-card
+        router-link.stat-card(to="/admin/events?filter=upcoming")
+          .stat-info
+            .stat-value {{ upcomingCount }}
+            .stat-label Kommende Events
+          .stat-link Events verwalten
+
+        router-link.stat-card(to="/admin/events?filter=all")
+          .stat-info
+            .stat-value {{ eventsCount }}
+            .stat-label Veranstaltungen gesamt
+          .stat-link Alle anzeigen
+
+        router-link.stat-card(to="/admin/artists")
           .stat-info
             .stat-value {{ artistsCount }}
             .stat-label Künstler
-          router-link.stat-link(to="/admin/artists") Künstler verwalten
+          .stat-link Künstler verwalten
 
     .section
       .section-title Finanzen
       .stats-grid
-        .stat-card
+        router-link.stat-card(to="/admin/events?filter=accounted")
           .stat-info
             .stat-value {{ formatCurrency(totalRevenue) }}
             .stat-label Umsatz gesamt
-          router-link.stat-link(to="/admin/events") Abrechnungen ansehen
+          .stat-link Abrechnungen ansehen
 
-        .stat-card(v-if="grantStats")
+        router-link.stat-card(v-if="grantStats" to="/admin/events?view=grants")
           .stat-info
             .stat-value {{ grantStats.grant_count }}
             .stat-label Förderanträge {{ new Date().getFullYear() }}
           .stat-subtitle Beantragt: {{ formatCurrency(grantStats.total_requested) }}
-          router-link.stat-link(to="/admin/events?view=grants") Förderungen ansehen
+          .stat-link Förderungen ansehen
 
     .section
       .section-title Lager
       .stats-grid
-        .stat-card(:class="{ highlight: outOfStockOnMenu > 0 }" v-if="outOfStockOnMenu > 0")
+        router-link.stat-card(:class="{ highlight: outOfStockOnMenu > 0 }" v-if="outOfStockOnMenu > 0" to="/admin/lager?filter=out-of-stock")
           .stat-info
             .stat-value ⚠ {{ outOfStockOnMenu }}
             .stat-label Auf der Karte ohne Bestand
-          router-link.stat-link(to="/admin/lager?filter=out-of-stock") Prüfen
+          .stat-link Prüfen
 
-        .stat-card(:class="{ highlight: lowStockCount > 0 }")
+        router-link.stat-card(:class="{ highlight: lowStockCount > 0 }" to="/admin/lager")
           .stat-info
             .stat-value {{ lowStockCount }}
             .stat-label Getränke niedrig
-          router-link.stat-link(to="/admin/lager") Lager prüfen
+          .stat-link Lager prüfen
 
-        .stat-card(v-if="stockSummary")
+        router-link.stat-card(v-if="stockSummary" to="/admin/lager")
           .stat-info
             .stat-value {{ stockSummary.count }}
             .stat-label Getränke im Lager
           .stat-subtitle Warenwert: {{ formatCurrency(stockSummary.value) }}
-          router-link.stat-link(to="/admin/lager") Lagerbestand ansehen
+          .stat-link Lagerbestand ansehen
 
     .section
       .section-title Kommunikation
       .stats-grid
-        .stat-card(:class="{ highlight: unreadAnfragen > 0 }")
+        router-link.stat-card(:class="{ highlight: unreadAnfragen > 0 }" to="/admin/anfragen")
           .stat-info
             .stat-value {{ unreadAnfragen }}
             .stat-label Ungelesene Anfragen
-          router-link.stat-link(to="/admin/anfragen") Anfragen ansehen
+          .stat-link Anfragen ansehen
 
   .loading(v-else) Lade Statistiken...
 
@@ -229,6 +256,9 @@ h2 {
   gap: 0.75rem;
   transition: transform 0.2s;
   transform: rotate(0.5deg);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .stat-card:nth-child(even) {
@@ -296,7 +326,6 @@ h2 {
   font-size: 0.8rem;
   padding-top: 0.5rem;
   border-top: 0.15rem solid black;
-  transition: filter 0.2s;
 }
 
 .stat-link:hover {
