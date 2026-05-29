@@ -252,6 +252,10 @@ onMounted(() => {
   if (route.query.view === 'grants') {
     activeView.value = 'grants'
   }
+  const filterParam = route.query.filter as string | undefined
+  if (filterParam && filters.some(f => f.key === filterParam)) {
+    activeFilter.value = filterParam as typeof activeFilter.value
+  }
   loadEvents().then(() => loadVvkData())
   grantService.getAll().then(({ results }) => { grants.value = results })
 })
