@@ -1,5 +1,27 @@
 [
     {
+        "id": "the-bats",
+        "date": "2026-08-03T17:00:00+00:00",
+        "title": "The Bats (Psych Pop, NZ)",
+        "fee": "18",
+        "feeAk": "20",
+        "descriptionShort": "<p dir=\"ltr\">Angefangen hatte alles mit einem Tipp von Karl:</p>\n<p dir=\"ltr\">&bdquo;H&ouml;r dir mal The Bats an.&ldquo;</p>\n<p dir=\"ltr\">Also h&ouml;rte ich mir The Bats an.</p>\n<p dir=\"ltr\">Und wie das manchmal so ist, wenn man aus Versehen die richtige T&uuml;r aufmacht, wurde daraus nicht einfach eine weitere Band, sondern eher so etwas wie eine Lebensbegleitung in allen Lagen.</p>\n<p dir=\"ltr\">Bahn verpasst. Kaugummi am Schuh. Existenzkrise im Baumarkt. Seekrank.</p>\n<p dir=\"ltr\">Wer kennt es nicht?</p>\n<p dir=\"ltr\">Und alles ein bisschen weniger tragisch, solange man The Bats dabei hat.</p>\n<p dir=\"ltr\">Die Band gibt es seit &uuml;ber 40 Jahren und was soll ich sagen: Sie hat mich ziemlich gut durchgebracht.</p>\n<p dir=\"ltr\">Zugegeben, aktuell gibt es einiges da drau&szlig;en, was einem den Schuh dr&uuml;ckt. Weshalb ich jetzt diesen einen Satz sage, von dem ich nie gedacht h&auml;tte, dass ich ihn einmal sagen darf:</p>\n<p dir=\"ltr\">The Bats spielen am 3. August im Autohaus!</p>\n<p dir=\"ltr\">Support: tba.</p>\n<p>&nbsp;</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/the-bats/",
+        "img": "/img/f99bf3dc-b00d-4815-8583-dfbd5ac65a77.webp",
+        "artists": [
+            {
+                "name": "The Bats",
+                "link": "http://thebats.co.nz/",
+                "description": "Spanning the last 38 years, The Bats have clocked ten incredible albums; each one seeing the band evolve with new material from the prolific songwriting hand of Robert Scott. Add to that tally the extra singles, b-sides, EPs, compilations and tribute songs they\u2019ve recorded, creating a succinct setlist is a nearly impossible task.\n\nThe Bats must hold a record in New Zealand (perhaps the whole world, once The Rolling Stones throw in the towel) as a band that has survived with the same line-up for 38 years. No split ups, no reforming for nostalgia\u2019s sake.\n\nSo far, half the band have spots in The New Zealand Music Hall Of Fame, vocalist/ guitarist Robert Scott (The Clean) and bassist/producer Paul Kean (Toy Love), and it\u2019s only a matter of time before lead guitarist Kaye Woodward and drummer Malcolm Grant find themselves in there too. The four-piece has created twisted wistful folk, psychedelic rock, bouncy twee pop, and everything in between, but whatever the genre, their sound is always distinctively, unmistakably The Bats.\n(Credits: Flying Nun Records)",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/y-8qpGLXfxo",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3748736734/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/320bacb1-4a0f-43e4-81e1-da4cf78b452f.jpeg"
+            }
+        ]
+    },
+    {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
         "title": "IWAN2 -ohne scheiss-",
@@ -69,48 +91,5 @@
                 "image": "/img/a9540f0b-e6d8-4f75-9a37-8957ba6d786a.webp"
             }
         ]
-    },
-    {
-        "id": "blackboxmassacre20260522",
-        "date": "2026-05-22T18:00:00+00:00",
-        "title": "Fuzz Sagrado, Z\u00fcndung",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p>Nachtigall, ick h&ouml;r dir trapsen - FUZZ SAGRADO. Quasi eine AllStar Band. Mit Christian Peters, dem ehemaligen Kopf von Samsara Blues Experiment und inzwischen in Brasilien beheimatet, Steffen Schneider von Spaceship Landing, Charlie Paschen von Coogans Bluff und Raphael Nigbur u.a. mit den letzten zwei genannten bei Blackbox Massacre. Aufmerksamen Liebhabern ausufernder Psychedelic-Stoner-Jams sollten die Namen durchaus gel&auml;ufig sein, treiben sie doch bereits seit geraumer Zeit ihr musikalisches Unwesen.</p>\n<p>Support gibt's von den Lokalmatadoren Z&Uuml;NDUNG (HD): M&uuml;helos verdichtet die 3erCombo mittels Hochspannungsfunken Garage Rock mit psychedelischem Stoner zu einem explosiven Gemisch. F&uuml;r eine effiziente akustische Entfaltung empfiehlt sich bestm&ouml;glicher Kraftstoffeinsatz bei h&ouml;chstem Verbrennungsdruck.</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/blackboxmassacre20260522/",
-        "img": "/img/6c769695-4160-42f8-a215-d75e6e317b95.jpeg",
-        "artists": [
-            {
-                "name": "Fuzz Sagrado",
-                "link": "",
-                "description": "Quasi eine AllStar Band. Mit Christian Peters, dem ehemaligen Kopf von Samsara Blues Experiment und inzwischen in Brasilien beheimatet, Steffen Schneider von Spaceship Landing, Charlie Paschen von Coogans Bluff und Raphael Nigbur u.a. mit den letzten zwei genannten bei Blackbox Massacre. Aufmerksamen Liebhabern ausufernder Psychedelic-Stoner-Jams sollten die Namen durchaus gel\u00e4ufig sein, treiben sie doch bereits seit geraumer Zeit ihr musikalisches Unwesen.",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "",
-                "image": ""
-            },
-            {
-                "name": "Z\u00fcndung",
-                "link": "",
-                "description": "M\u00fchelos verdichtet die heidelberger 3erCombo mittels Hochspannungsfunken Garage Rock mit psychedelischem Stoner, zu einem explosiven Gemisch. F\u00fcr eine effiziente akustische Entfaltung empfiehlt sich bestm\u00f6glicher Kraftstoffeinsatz bei h\u00f6chstem Verbrennungsdruck.",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/E8AfSq1EZls",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1521329932/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/030bc54f-b6ce-4083-9acc-06867216e6be.png"
-            }
-        ]
-    },
-    {
-        "id": "mm-260521",
-        "date": "2026-05-21T18:00:00+00:00",
-        "title": "Kino: Midnight Madness",
-        "fee": "5",
-        "feeAk": "5",
-        "descriptionShort": "<p><span data-olk-copy-source=\"MessageBody\">Ding-dong! Der Postbote ist da! </span></p>\n<p><span data-olk-copy-source=\"MessageBody\">Nur leider zur falschen Zeit am falschen Ort. Das klassische Wrong-Man-Szenario nimmt hier im Japan der 90er richtig Fahrt auf, denn der Regisseur wei&szlig;, wie man Rhythmus, Perspektive und Einstellungen so einsetzt, dass der Alltag unseres unbescholtenen B&uuml;rgers langsam, aber sicher v&ouml;llig entgleist. Absurd, witzig, einfallsreich, ein bisschen melancholisch, aber immer ziemlich charmant navigiert er durch zahllose Genres, von Slapstick &uuml;ber Action und Kom&ouml;die bis hin zur Romanze, und l&auml;sst es sich nicht nehmen, den Yakuza-Film mit seinen harten M&auml;nnern und noch h&auml;rteren Regeln liebevoll durch den Kakao zu ziehen &ndash; mit einem Hitman-Club, bei dem wir wohl alle gerne Mitglied w&auml;ren. </span></p>\n<p><span data-olk-copy-source=\"MessageBody\">Also: Schei&szlig; auf die Polizei. Werdet Yakuza. Oder folgt einfach dem abgeschnittenen Finger. Schwingt euch aufs Fahrrad und kommt am 21. Mai ins alte Autohaus.</span></p>\n<p><span style=\"color: #f1c40f;\" data-olk-copy-source=\"MessageBody\">Japanisch Original mit deutschen Untertiteln | <a class=\"Credits\" style=\"color: #f1c40f;\" href=\"https://www.karlstorkino.de/index.php?RUBRIK=4&amp;Document=40&amp;FSK=16\">FSK: 16</a>.</span></p>",
-        "descriptionLong": "",
-        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3516010506",
-        "img": "/img/4709b69e-471d-4900-9b14-8e5489b981bd.webp",
-        "artists": []
     }
 ]

@@ -1,5 +1,27 @@
 [
     {
+        "id": "the-bats",
+        "date": "2026-08-03T17:00:00+00:00",
+        "title": "The Bats (Psych Pop, NZ)",
+        "fee": "18",
+        "feeAk": "20",
+        "descriptionShort": "<p dir=\"ltr\">Angefangen hatte alles mit einem Tipp von Karl:</p>\n<p dir=\"ltr\">&bdquo;H&ouml;r dir mal The Bats an.&ldquo;</p>\n<p dir=\"ltr\">Also h&ouml;rte ich mir The Bats an.</p>\n<p dir=\"ltr\">Und wie das manchmal so ist, wenn man aus Versehen die richtige T&uuml;r aufmacht, wurde daraus nicht einfach eine weitere Band, sondern eher so etwas wie eine Lebensbegleitung in allen Lagen.</p>\n<p dir=\"ltr\">Bahn verpasst. Kaugummi am Schuh. Existenzkrise im Baumarkt. Seekrank.</p>\n<p dir=\"ltr\">Wer kennt es nicht?</p>\n<p dir=\"ltr\">Und alles ein bisschen weniger tragisch, solange man The Bats dabei hat.</p>\n<p dir=\"ltr\">Die Band gibt es seit &uuml;ber 40 Jahren und was soll ich sagen: Sie hat mich ziemlich gut durchgebracht.</p>\n<p dir=\"ltr\">Zugegeben, aktuell gibt es einiges da drau&szlig;en, was einem den Schuh dr&uuml;ckt. Weshalb ich jetzt diesen einen Satz sage, von dem ich nie gedacht h&auml;tte, dass ich ihn einmal sagen darf:</p>\n<p dir=\"ltr\">The Bats spielen am 3. August im Autohaus!</p>\n<p dir=\"ltr\">Support: tba.</p>\n<p>&nbsp;</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/the-bats/",
+        "img": "/img/f99bf3dc-b00d-4815-8583-dfbd5ac65a77.webp",
+        "artists": [
+            {
+                "name": "The Bats",
+                "link": "http://thebats.co.nz/",
+                "description": "Spanning the last 38 years, The Bats have clocked ten incredible albums; each one seeing the band evolve with new material from the prolific songwriting hand of Robert Scott. Add to that tally the extra singles, b-sides, EPs, compilations and tribute songs they\u2019ve recorded, creating a succinct setlist is a nearly impossible task.\n\nThe Bats must hold a record in New Zealand (perhaps the whole world, once The Rolling Stones throw in the towel) as a band that has survived with the same line-up for 38 years. No split ups, no reforming for nostalgia\u2019s sake.\n\nSo far, half the band have spots in The New Zealand Music Hall Of Fame, vocalist/ guitarist Robert Scott (The Clean) and bassist/producer Paul Kean (Toy Love), and it\u2019s only a matter of time before lead guitarist Kaye Woodward and drummer Malcolm Grant find themselves in there too. The four-piece has created twisted wistful folk, psychedelic rock, bouncy twee pop, and everything in between, but whatever the genre, their sound is always distinctively, unmistakably The Bats.\n(Credits: Flying Nun Records)",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/y-8qpGLXfxo",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3748736734/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/320bacb1-4a0f-43e4-81e1-da4cf78b452f.jpeg"
+            }
+        ]
+    },
+    {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
         "title": "IWAN2 -ohne scheiss-",
