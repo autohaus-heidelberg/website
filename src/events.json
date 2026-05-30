@@ -40,6 +40,46 @@
         ]
     },
     {
+        "id": "cherazade",
+        "date": "2026-06-20T18:00:00+00:00",
+        "title": "Cherazade, Schl\u00e4gertrupp, BIG GAINER, N-REEF, h3xe",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>End hd, start yoga - 3 live acts, 2 dj sets!</p>\n<p>Cherazade (DA) l&auml;dt dich ein, Synth-Waveforms, die 1001 Yacht in angeregte Zust&auml;nde versetzen und zum Bersten bringen, im Carousel zu resonieren.</p>\n<p>Das Darmst&auml;dter Postpunk-Sextett &ldquo;Schl&auml;gertrupp&rdquo; verbindet melancholische, melodische Kl&auml;nge mit bitters&uuml;&szlig;en Texten.&nbsp;Egal ob ihr dazu weinen oder tanzen wollt, oder beides auf einmal. Postpunk und Coldwave nehmen euch in den Arm. D&uuml;stere Synthies gepaart mit klirrenden Gitarren werden euer schwarzes Herz erbl&uuml;hen lassen.</p>\n<p>BIG GAINER aus Berlin bringen ihr neues DIY Album mit!</p>\n<p>&nbsp;N-Reef (HD) und h3xe (MA) bringen euch danach mit DJ-Sets zum Tanzen - bis 3 Uhr! Gleicher Preis an der T&uuml;r f&uuml;r Live-musik und Party, ab 0 Uhr 5&euro;.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/cherazade/",
+        "img": "/img/64046878-59b0-4a21-b2e3-e909baaa63e4.webp",
+        "artists": [
+            {
+                "name": "Cherazade",
+                "link": "https://linktr.ee/cherazade",
+                "description": "Cherazade\nDarmstadt, Germany",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/1e-Yc1_ak8g",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=111167092/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/b901ff80-06e1-4847-8ddc-a93358783d02.jpeg"
+            },
+            {
+                "name": "Schl\u00e4gertrupp",
+                "link": "",
+                "description": "Schl\u00e4gertrupp\nDarmstadt, Germany",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/77e1c237-44b4-4014-8b5b-2b8344c262c5.webp"
+            },
+            {
+                "name": "BIG GAINER",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3420736942/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/b0df5511-f672-4cab-aa4b-ca7f4347433e.webp"
+            }
+        ]
+    },
+    {
         "id": "screensaver",
         "date": "2026-06-11T17:00:00+00:00",
         "title": "Screensaver (Post-Punk, Melbourne), Jellybones (Wave Pop, Karlsruhe)",
