@@ -302,9 +302,11 @@ onMounted(() => {
         .event-header
           .event-id {{ event.id }}
           .event-header-right
-            span.status-badge.urgent(v-if="isUrgent(event)") ✗ in {{ daysUntil(event) }}d nicht live
             span.status-badge.published(v-if="publishedIds.has(event.id)") ✓ Live
-            span.status-badge.draft(v-else) Entwurf
+            span.status-badge.draft(
+              v-else
+              :class="{ urgent: isUrgent(event) }"
+            ) {{ isUrgent(event) ? `✗ in ${daysUntil(event)}d nicht live` : 'Entwurf' }}
             span.status-badge.result(v-if="hasResult(event.id)") ✓ Abgerechnet
             .event-date {{ formatDate(event.date) }}
 
@@ -544,19 +546,6 @@ h2 {
   opacity: 1;
 }
 
-.status-badge.urgent {
-  background: #dc2626;
-  color: white;
-  letter-spacing: 0;
-  border: 0.125rem solid #dc2626;
-  animation: pulse-urgent 2s ease-in-out infinite;
-}
-
-@keyframes pulse-urgent {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
 .event-card:hover {
   transform: rotate(-0.5deg);
 }
@@ -592,6 +581,19 @@ h2 {
   background: white;
   color: black;
   border: 0.125rem solid black;
+}
+
+.status-badge.draft.urgent {
+  background: #dc2626;
+  color: white;
+  letter-spacing: 0;
+  border: 0.125rem solid #dc2626;
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
 .status-badge.result {

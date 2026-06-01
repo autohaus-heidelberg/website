@@ -5,6 +5,8 @@ import { eventService, artistService, pretixService, accountingService } from '@
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import type { PretixOrderSummary } from '@/services/accounting'
 import publishedEvents from '@/events.json'
+import { useEventSource } from '@/composables/useEventSource'
+import DeployModal from '@/components/admin/DeployModal.vue'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
@@ -415,6 +417,76 @@ onMounted(async () => {
 onUnmounted(() => {
   document.removeEventListener('click', closeOverflow)
 })
+
+// ── Publish / Unpublish ──
+const { logs: deployLogs, error: deploySseError, connect: deployConnect, disconnect: deployDisconnect, clearLogs: deployClearLogs, clearError: deployClearError } = useEventSource()
+const isDeploying = ref(false)
+const deploySuccess = ref(false)
+const deployError = ref<string | null>(null)
+const showDeployModal = ref(false)
+
+function handlePublish() {
+  if (!props.id) return
+
+  const currentIds = publishedEvents.map((e: any) => e.id)
+  let eventIds: string[]
+
+  if (isPublished.value) {
+    // Unpublish: remove this event
+    eventIds = currentIds.filter((id: string) => id !== props.id)
+    if (!confirm('Event von der Website entfernen und deployen?')) return
+  } else {
+    // Publish: add this event
+    eventIds = [...currentIds, props.id]
+    if (!confirm('Event auf der Website veröffentlichen und deployen? Das kann einige Minuten dauern.')) return
+  }
+
+  isDeploying.value = true
+  deploySuccess.value = false
+  deployError.value = null
+  showDeployModal.value = true
+  deployClearLogs()
+  deployClearError()
+
+  const url = eventService.getWriteToWebsiteUrl(eventIds)
+
+  deployConnect(url, {
+    write_start: () => {},
+    processing: () => {},
+    git_pull: () => {},
+    json_write: () => {},
+    git_add: () => {},
+    git_commit: () => {},
+    git_push: () => {},
+    npm_deploy: () => {},
+    heartbeat: () => {},
+    write_complete: () => {
+      isDeploying.value = false
+      deploySuccess.value = true
+      deployDisconnect()
+    },
+    write_error: (data) => {
+      isDeploying.value = false
+      deployError.value = data.message || 'Deployment fehlgeschlagen'
+      deployDisconnect()
+    }
+  })
+
+  const stopWatching = watch(deploySseError, (newError) => {
+    if (newError) {
+      isDeploying.value = false
+      deployError.value = newError
+      stopWatching()
+    }
+  })
+}
+
+function closeDeployModal() {
+  showDeployModal.value = false
+  if (deploySuccess.value) {
+    window.location.reload()
+  }
+}
 </script>
 
 <template lang="pug">
@@ -428,8 +500,20 @@ onUnmounted(() => {
         template(v-if="form.fee")  · VVK {{ form.fee }}€
         template(v-if="form.feeAk")  / AK {{ form.feeAk }}€
     .form-header-right
-      span.status-badge.published(v-if="isEditing && isPublished") ✓ Live
-      span.status-badge.draft(v-else-if="isEditing") Entwurf
+      button.status-badge.published.clickable(
+        v-if="isEditing && isPublished"
+        @click="handlePublish"
+        :disabled="isDeploying"
+      )
+        span.badge-default ✓ Live
+        span.badge-hover ✗ Entfernen
+      button.status-badge.draft.clickable(
+        v-else-if="isEditing"
+        @click="handlePublish"
+        :disabled="isDeploying"
+      )
+        span.badge-default Veröffentlichen
+        span.badge-hover ▶ Veröffentlichen
       span.status-badge.result(v-if="isEditing && isAccounted") ✓ Abgerechnet
       router-link.btn-cancel(to="/admin/events") Abbrechen
 
@@ -660,6 +744,16 @@ onUnmounted(() => {
   transition(name="snackbar")
     .undo-snackbar.snackbar-error(v-if="helferpadTimeWarning")
       span ⚠️ Schichtzeiten im Helferpad prüfen! Event-Zeit wurde geändert.
+
+  //- ── Deploy Modal ──
+  DeployModal(
+    :visible="showDeployModal"
+    :logs="deployLogs"
+    :isDeploying="isDeploying"
+    :deploySuccess="deploySuccess"
+    :deployError="deployError"
+    @close="closeDeployModal"
+  )
 </template>
 
 <style scoped>
@@ -703,17 +797,19 @@ onUnmounted(() => {
 
 .status-badge.published {
   background: #16a34a;
+  border: 0.125rem solid #16a34a;
 }
 
 .status-badge.draft {
-  background: white;
-  color: black;
-  border: 0.125rem solid black;
+  background: #dc2626;
+  color: white;
+  border: 0.125rem solid #dc2626;
 }
 
 .status-badge.result {
   background: #f59e0b;
   color: black;
+  border: 0.125rem solid #f59e0b;
 }
 
 .event-subtitle {
@@ -1011,6 +1107,46 @@ input:disabled {
 .btn-secondary:hover, .btn-cancel:hover {
   background: black;
   color: white;
+}
+
+.status-badge.clickable {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0.125rem solid transparent;
+  font-family: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.status-badge.clickable .badge-hover {
+  display: none;
+}
+
+.status-badge.clickable:hover:not(:disabled) .badge-default {
+  display: none;
+}
+
+.status-badge.clickable:hover:not(:disabled) .badge-hover {
+  display: inline;
+}
+
+.status-badge.published.clickable:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+}
+
+.status-badge.draft.clickable:hover:not(:disabled) {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+}
+
+.status-badge.clickable:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {

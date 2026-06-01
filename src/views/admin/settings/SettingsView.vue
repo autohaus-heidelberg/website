@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { settingsService } from '@/services'
+import { eventService } from '@/services/events'
 import { taxExportService, type TaxSummaryResponse } from '@/services/accounting'
+import { useEventSource } from '@/composables/useEventSource'
+import EventSyncLog from '@/components/admin/EventSyncLog.vue'
 
 const route = useRoute()
 
 
 // State
-const initialTab = route.query.tab === 'euer' ? 'euer' : 'helferpad'
+const initialTab = route.query.tab === 'euer' ? 'euer' : route.query.tab === 'sync' ? 'sync' : 'helferpad'
 const activeTab = ref(initialTab)
 const helferpadContent = ref('')
 const settingId = ref<number>()
@@ -107,6 +110,52 @@ async function handleSave() {
     isSaving.value = false
   }
 }
+
+// ── Sync from Git ──
+const { logs: syncLogs, error: syncSseError, connect: syncConnect, disconnect: syncDisconnect, clearLogs: syncClearLogs, clearError: syncClearError } = useEventSource()
+const isSyncing = ref(false)
+const syncComplete = ref(false)
+const syncError = ref<string | null>(null)
+
+function handleSyncFromGit() {
+  if (!confirm('Events aus dem Git-Submodule in die Datenbank synchronisieren? Nur benutzen wenn ihr wisst was ihr tut!')) {
+    return
+  }
+
+  isSyncing.value = true
+  syncComplete.value = false
+  syncError.value = null
+  syncClearLogs()
+  syncClearError()
+
+  const url = eventService.getSyncFromGitUrl()
+
+  syncConnect(url, {
+    sync_start: () => {},
+    git_pull: () => {},
+    artist_sync: () => {},
+    event_sync: () => {},
+    heartbeat: () => {},
+    sync_complete: () => {
+      isSyncing.value = false
+      syncComplete.value = true
+      syncDisconnect()
+    },
+    sync_error: (data) => {
+      isSyncing.value = false
+      syncError.value = data.message || 'Sync fehlgeschlagen'
+      syncDisconnect()
+    }
+  })
+
+  const stopWatching = watch(syncSseError, (newError) => {
+    if (newError) {
+      isSyncing.value = false
+      syncError.value = newError
+      stopWatching()
+    }
+  })
+}
 </script>
 
 <template lang="pug">
@@ -124,6 +173,11 @@ async function handleSave() {
         @click="activeTab = 'euer'; if (!taxSummary) loadTaxSummary()"
       )
         | EÜR / Steuer-Export
+      button.tab(
+        :class="{ active: activeTab === 'sync' }"
+        @click="activeTab = 'sync'"
+      )
+        | Git-Sync
 
   .tab-content(v-show="activeTab === 'helferpad'")
     .section-description
@@ -212,6 +266,28 @@ async function handleSave() {
             span.value {{ formatCurrency(taxSummary.vat.zahllast) }}
 
     .empty(v-else) Keine Daten für {{ selectedYear }}
+
+  .tab-content(v-show="activeTab === 'sync'")
+    .section-description
+      p.sync-warning ⚠️ Diesen Button nur benutzen wenn ihr wisst was ihr tut!
+      p Synchronisiert Events aus dem Git-Submodule (website/src/events.json) in die Datenbank. Überschreibt bestehende Events mit den Daten aus der JSON-Datei.
+
+    .sync-actions
+      button.btn-danger(
+        @click="handleSyncFromGit"
+        :disabled="isSyncing"
+      )
+        span(v-if="!isSyncing") Von Git synchronisieren
+        span(v-else) Wird synchronisiert...
+
+    .sync-result(v-if="syncComplete")
+      p.success Sync erfolgreich abgeschlossen!
+      button.btn-primary(@click="() => window.location.reload()") Seite neu laden
+
+    .sync-result(v-if="syncError")
+      p.error {{ syncError }}
+
+    EventSyncLog(:logs="syncLogs")
 </template>
 
 <style scoped>
@@ -528,5 +604,40 @@ textarea:disabled {
     font-size: 0.8rem;
     border-right-width: 0.2rem;
   }
+}
+
+/* ── Sync Tab ── */
+.sync-warning {
+  font-weight: 700;
+  color: #dc2626;
+  margin-bottom: 0.5rem !important;
+}
+
+.sync-actions {
+  margin: 1.5rem 0;
+}
+
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #dc2626;
+  color: white;
+  border: 0.25rem solid #dc2626;
+  font-size: 1rem;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-result {
+  margin: 1rem 0;
 }
 </style>

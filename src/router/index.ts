@@ -90,11 +90,6 @@ const router = createRouter({
           props: true
         },
         {
-          path: 'sync',
-          name: 'admin-sync',
-          component: () => import('../views/admin/EventSyncView.vue')
-        },
-        {
           path: 'settings',
           name: 'admin-settings',
           component: () => import('../views/admin/settings/SettingsView.vue')
