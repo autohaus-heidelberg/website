@@ -76,8 +76,6 @@ watch(isMobileMenuOpen, (isOpen) => {
         span Veranstaltungen
       router-link.nav-link(to="/admin/artists" active-class="active" @click="handleNavigation")
         span Künstler
-      router-link.nav-link(to="/admin/sync" active-class="active" @click="handleNavigation")
-        span Event-Sync
       router-link.nav-link(to="/admin/newsletter" active-class="active" @click="handleNavigation")
         span Newsletter
       router-link.nav-link(to="/admin/anfragen" active-class="active" @click="handleNavigation")
