@@ -578,9 +578,9 @@ h2 {
 }
 
 .status-badge.draft {
-  background: white;
+  background: #f59e0b;
   color: black;
-  border: 0.125rem solid black;
+  border: 0.125rem solid #f59e0b;
 }
 
 .status-badge.draft.urgent {
@@ -597,9 +597,9 @@ h2 {
 }
 
 .status-badge.result {
-  background: #f59e0b;
-  color: black;
-  border: 0.125rem solid #f59e0b;
+  background: #2563eb;
+  color: white;
+  border: 0.125rem solid #2563eb;
 }
 
 .event-id {

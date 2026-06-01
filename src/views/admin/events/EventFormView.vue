@@ -787,8 +787,8 @@ function closeDeployModal() {
 }
 
 .status-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.9rem;
   font-weight: 900;
   letter-spacing: 0.1em;
   background: black;
@@ -801,15 +801,15 @@ function closeDeployModal() {
 }
 
 .status-badge.draft {
-  background: #dc2626;
-  color: white;
-  border: 0.125rem solid #dc2626;
-}
-
-.status-badge.result {
   background: #f59e0b;
   color: black;
   border: 0.125rem solid #f59e0b;
+}
+
+.status-badge.result {
+  background: #2563eb;
+  color: white;
+  border: 0.125rem solid #2563eb;
 }
 
 .event-subtitle {
@@ -1112,7 +1112,6 @@ input:disabled {
 .status-badge.clickable {
   appearance: none;
   -webkit-appearance: none;
-  border: 0.125rem solid transparent;
   font-family: inherit;
   line-height: 1;
   cursor: pointer;
