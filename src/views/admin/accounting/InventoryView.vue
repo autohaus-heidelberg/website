@@ -37,6 +37,10 @@ function switchTab(tab: Tab) {
         @click="switchTab(tab.id)"
       ) {{ tab.label }}
 
+  .sub-toolbar
+    router-link.btn-action(v-if="activeTab === 'bestand'" to="/admin/beverages/create") + Getränk
+    router-link.btn-action(v-if="activeTab === 'einkaufe'" to="/admin/purchases/create") + Einkauf
+
   StockView(v-if="activeTab === 'bestand'")
   PurchaseListView(v-else-if="activeTab === 'einkaufe'")
 </template>
@@ -62,6 +66,11 @@ h2 {
   color: black;
   margin: 0;
   font-weight: 900;
+}
+
+.sub-toolbar {
+  margin-bottom: 1rem;
+  text-align: right;
 }
 
 .tab-bar {
@@ -93,5 +102,21 @@ h2 {
 .tab.active {
   background: black;
   color: white;
+}
+
+.btn-action {
+  padding: 0.625rem 1.25rem;
+  background: black;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-action:hover {
+  background: #333;
 }
 </style>

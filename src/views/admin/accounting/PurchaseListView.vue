@@ -85,7 +85,6 @@ onMounted(() => {
       type="text"
       placeholder="Einkäufe suchen..."
     )
-    router-link.btn-primary(to="/admin/purchases/create") + Neuer Einkauf
 
   .loading(v-if="isLoading") Laden...
   .error(v-else-if="error") {{ error }}

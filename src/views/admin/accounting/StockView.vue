@@ -159,9 +159,6 @@ onMounted(() => {
     label.toggle-inactive
       input(type="checkbox" v-model="showInactive")
       |  Inaktive anzeigen
-    .toolbar-actions
-      router-link.btn-secondary(to="/admin/purchases/create") + Neuer Einkauf
-      router-link.btn-primary(to="/admin/beverages/create") + Neues Getränk
 
   .loading(v-if="isLoading") Lagerbestand wird geladen...
   .error(v-else-if="error") {{ error }}
@@ -295,43 +292,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  padding: 0.625rem 1.25rem;
-  background: black;
-  color: white;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-primary:hover {
-  background: #333;
-}
-
-.btn-secondary {
-  padding: 0.625rem 1.25rem;
-  background: white;
-  color: black;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border: 0.2rem solid black;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-secondary:hover {
-  background: #f0f0f0;
 }
 
 .loading, .error, .empty {
