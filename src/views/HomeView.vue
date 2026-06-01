@@ -88,10 +88,9 @@ p Wir sind das Carousel im alten Autohaus.
     template(v-if="upComingSmall.length > 0")
       h1 Noch mehr
       .events-small-container()
-        .events-small(v-for="ev in upComingSmall" :key="ev.id")
+        router-link.events-small(v-for="ev in upComingSmall" :key="ev.id" :to="{name: 'event', params: { id: encodeURI(ev.id) }}")
           .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
-          router-link(:to="{name: 'event', params: { id: encodeURI(ev.id) }}")
-            label {{ev.title}}
+          span {{ev.title}}
 
   .content
     .newsletter

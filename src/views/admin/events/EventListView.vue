@@ -140,7 +140,7 @@ async function loadVvkData() {
   const now = new Date()
   const upcomingWithShop = eventsData.value.results.filter(e => e.shopLink && new Date(e.date) > now)
   const results = await Promise.allSettled(
-    upcomingWithShop.map(ev => pretixService.getOrderSummary(ev.id).then(data => ({ id: ev.id, tickets: data.total_tickets })))
+    upcomingWithShop.map(ev => pretixService.getTicketCount(ev.id).then(data => ({ id: ev.id, tickets: data.total_tickets })))
   )
   for (const result of results) {
     if (result.status === 'fulfilled') {
