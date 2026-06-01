@@ -349,6 +349,9 @@ export const pretixService = {
   async getOrderSummary(eventSlug: string): Promise<PretixOrderSummary> {
     return api.get<PretixOrderSummary>(`/api/pretix/orders/${eventSlug}/`)
   },
+  async getTicketCount(eventSlug: string): Promise<{ event_slug: string; total_tickets: number }> {
+    return api.get(`/api/pretix/orders/${eventSlug}/?tickets_only=true`)
+  },
 }
 
 // ── PayPal Bar Transactions ─────────────────────────────────────
