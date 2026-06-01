@@ -1,25 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { stockService } from '@/services'
+import { useRoute, useRouter } from 'vue-router'
+import { stockService, beverageService } from '@/services'
 import type { StockEntry } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 
 const route = useRoute()
+const router = useRouter()
 const sort = useSort<StockEntry>()
 const stockEntries = ref<StockEntry[]>([])
 const isLoading = ref(false)
 const error = ref('')
-const showEmpty = ref(false)
+const showInactive = ref(false)
 const searchQuery = ref('')
 
 const visibleEntries = computed(() => {
   let entries = stockEntries.value
-  if (!showEmpty.value) {
-    // Always show items on the menu, hide empty items not on menu
-    entries = entries.filter(e =>
-      (e.quantity || 0) > 0 || e.selling_price || e.selling_price_portion
-    )
+  if (!showInactive.value) {
+    entries = entries.filter(e => e.is_active)
   }
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
@@ -117,10 +115,35 @@ async function loadData() {
   }
 }
 
-onMounted(() => {
-  if (route.query.filter === 'out-of-stock') {
-    showEmpty.value = true
+async function toggleActive(item: StockEntry, event: Event) {
+  event.stopPropagation()
+  const action = item.is_active ? 'deaktivieren' : 'aktivieren'
+  if (!confirm(`„${item.name}" ${action}?`)) return
+  try {
+    await beverageService.update(item.id, { is_active: !item.is_active })
+    item.is_active = !item.is_active
+  } catch (e: any) {
+    alert(e.message || 'Fehler beim Ändern des Status')
   }
+}
+
+async function deleteDrink(item: StockEntry, event: Event) {
+  event.stopPropagation()
+  if (!confirm(`„${item.name}" wirklich löschen?`)) return
+  try {
+    await beverageService.delete(item.id)
+    stockEntries.value = stockEntries.value.filter(e => e.id !== item.id)
+  } catch (e: any) {
+    const data = e.response?.data || e.data
+    if (data?.references) {
+      alert(data.error || 'Getränk kann nicht gelöscht werden — es hat Referenzen.')
+    } else {
+      alert(data?.error || e.message || 'Fehler beim Löschen')
+    }
+  }
+}
+
+onMounted(() => {
   loadData()
 })
 </script>
@@ -133,10 +156,12 @@ onMounted(() => {
       type="text"
       placeholder="Getränk suchen..."
     )
-    label.toggle-empty
-      input(type="checkbox" v-model="showEmpty")
-      |  Leere anzeigen
-    router-link.btn-primary(to="/admin/purchases/create") + Neuer Einkauf
+    label.toggle-inactive
+      input(type="checkbox" v-model="showInactive")
+      |  Inaktive anzeigen
+    .toolbar-actions
+      router-link.btn-secondary(to="/admin/purchases/create") + Neuer Einkauf
+      router-link.btn-primary(to="/admin/beverages/create") + Neues Getränk
 
   .loading(v-if="isLoading") Lagerbestand wird geladen...
   .error(v-else-if="error") {{ error }}
@@ -172,14 +197,19 @@ onMounted(() => {
             span.col-deposit.sortable(@click="sort.toggle('deposit')") Pfand{{ sort.indicator('deposit') }}
             span.col-value.sortable(@click="sort.toggle('value')") Warenwert{{ sort.indicator('value') }}
             span.col-deposit-val.sortable(@click="sort.toggle('deposit-val')") Pfandwert{{ sort.indicator('deposit-val') }}
+            span.col-actions
           .table-row(
             v-for="(item, idx) in group.items"
             :key="item.id"
-            :class="['level-' + stockLevel(item), { 'row-even': idx % 2 === 1, 'on-menu-empty': item.quantity === 0 && (item.selling_price || item.selling_price_portion) }]"
+            :class="['level-' + stockLevel(item), { 'row-even': idx % 2 === 1, 'row-inactive': !item.is_active, 'on-menu-empty': item.is_active && item.quantity === 0 }]"
+            @click="router.push('/admin/beverages/' + item.id)"
+            style="cursor: pointer"
           )
             span.col-status
               span.status-dot(:class="'dot-' + stockLevel(item)")
-            span.col-name {{ item.name }}
+            span.col-name
+              | {{ item.name }}
+              span.badge-inactive(v-if="!item.is_active")  inaktiv
             span.col-size {{ item.bottle_size ? formatQty(item.bottle_size) + 'L' : '—' }}
             .col-stock
               span.stock-qty {{ formatQty(item.quantity) }}
@@ -191,6 +221,15 @@ onMounted(() => {
             span.col-deposit {{ formatPrice(item.deposit) }}
             span.col-value {{ formatPrice(item.stock_value) }}
             span.col-deposit-val {{ formatPrice(item.deposit_value) }}
+            span.col-actions
+              button.action-btn(
+                @click="toggleActive(item, $event)"
+                :title="item.is_active ? 'Deaktivieren' : 'Aktivieren'"
+              ) {{ item.is_active ? '●' : '○' }}
+              button.action-btn.action-delete(
+                @click="deleteDrink(item, $event)"
+                title="Löschen"
+              ) ✕
           .table-row.row-subtotal
             span.col-status
             span.col-name {{ group.emoji }} Σ {{ catName }}
@@ -201,6 +240,7 @@ onMounted(() => {
             span.col-deposit
             span.col-value {{ formatPrice(groupStockValue(group.items)) }}
             span.col-deposit-val {{ formatPrice(groupDepositValue(group.items)) }}
+            span.col-actions
 
       .stock-table.total-table
         .table-row.row-total
@@ -213,8 +253,9 @@ onMounted(() => {
           span.col-deposit
           span.col-value {{ formatPrice(totalStockValue) }}
           span.col-deposit-val {{ formatPrice(totalDepositValue) }}
+          span.col-actions
 
-    .empty(v-else) Keine Getränke im Lager{{ showEmpty ? '' : ' — aktiviere "Leere anzeigen" für alle Getränke' }}
+    .empty(v-else) Keine Getränke gefunden.
 </template>
 
 <style scoped>
@@ -247,13 +288,18 @@ onMounted(() => {
   color: white;
 }
 
-.toggle-empty {
+.toggle-inactive {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.3rem;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .btn-primary {
@@ -270,6 +316,22 @@ onMounted(() => {
 
 .btn-primary:hover {
   background: #333;
+}
+
+.btn-secondary {
+  padding: 0.625rem 1.25rem;
+  background: white;
+  color: black;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 0.2rem solid black;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background: #f0f0f0;
 }
 
 .loading, .error, .empty {
@@ -347,7 +409,7 @@ onMounted(() => {
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 20px 2.5fr 0.7fr 1.5fr 1.2fr 1fr 1.3fr 1.3fr;
+  grid-template-columns: 20px 2.5fr 0.7fr 1.5fr 1.2fr 1fr 1.3fr 1.3fr 60px;
   gap: 0.5rem;
   padding: 0.4rem 1rem;
   align-items: center;
@@ -388,6 +450,25 @@ onMounted(() => {
   opacity: 1;
   background: #fff3e0;
   border-left: 3px solid #e67e22;
+}
+
+.row-inactive {
+  opacity: 0.45;
+}
+
+.row-inactive .col-name {
+  font-style: italic;
+}
+
+.badge-inactive {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #666;
+  color: white;
+  padding: 0.1rem 0.35rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
 }
 
 .level-low {
@@ -474,10 +555,42 @@ onMounted(() => {
   color: #aaa;
 }
 
+/* Actions */
+.col-actions {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+
+.table-row:hover .action-btn {
+  opacity: 1;
+}
+
+.action-btn:hover {
+  opacity: 1;
+}
+
+.action-delete:hover {
+  color: #e53935;
+}
+
 @media (max-width: 900px) {
   .table-header,
   .table-row {
-    grid-template-columns: 16px 2.5fr 0.7fr 1.3fr 1fr 0.9fr 1.2fr 1.2fr;
+    grid-template-columns: 16px 2.5fr 0.7fr 1.3fr 1fr 0.9fr 1.2fr 1.2fr 50px;
     font-size: 0.75rem;
     gap: 0.25rem;
     padding: 0.35rem 0.5rem;
@@ -491,10 +604,10 @@ onMounted(() => {
 @media (max-width: 600px) {
   .table-header,
   .table-row {
-    grid-template-columns: 16px 1fr 80px 80px;
+    grid-template-columns: 16px 1fr 80px 50px;
   }
 
-  .col-fifo, .col-deposit, .col-deposit-val, .col-size {
+  .col-fifo, .col-deposit, .col-deposit-val, .col-size, .col-value {
     display: none;
   }
 }
