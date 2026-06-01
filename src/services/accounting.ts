@@ -78,9 +78,13 @@ export const beverageService = {
     drink_id: number
     drink_name: string
     current_price: string
-    history: { date: string; unit_price: string; quantity: number; supplier: string }[]
+    history: { date: string; unit_price: string; quantity: number; remaining_quantity: number; supplier: string }[]
   }> {
     return api.get(`/api/drinks/${id}/price-history/`)
+  },
+
+  async merge(sourceId: number, targetId: number): Promise<{ message: string; target_id: number }> {
+    return api.post(`/api/drinks/${sourceId}/merge/`, { target_id: targetId })
   },
 
   async seedIfEmpty(): Promise<void> {

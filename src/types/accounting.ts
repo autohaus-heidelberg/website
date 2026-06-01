@@ -180,6 +180,7 @@ export interface Purchase {
 export interface StockEntry {
   id: number
   name: string
+  is_active: boolean
   supplier_group: string
   category: string
   category_emoji: string

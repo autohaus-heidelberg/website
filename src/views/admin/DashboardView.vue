@@ -54,7 +54,7 @@ onMounted(async () => {
 
     // Helper: is the item on the menu?
     const allStock = stockData as StockEntry[]
-    const isOnMenu = (e: StockEntry) => parseFloat(e.selling_price || '0') > 0 || parseFloat(e.selling_price_portion || '0') > 0
+    const isOnMenu = (e: StockEntry) => e.is_active
 
     // Compute average consumption per beverage from past events
     const consumptionMap = new Map<number, number[]>()
@@ -166,7 +166,7 @@ onMounted(async () => {
     .section
       .section-title Lager
       .stats-grid
-        router-link.stat-card(:class="{ highlight: outOfStockOnMenu > 0 }" v-if="outOfStockOnMenu > 0" to="/admin/lager?filter=out-of-stock")
+        router-link.stat-card(:class="{ highlight: outOfStockOnMenu > 0 }" v-if="outOfStockOnMenu > 0" to="/admin/lager")
           .stat-info
             .stat-value ⚠ {{ outOfStockOnMenu }}
             .stat-label Auf der Karte ohne Bestand

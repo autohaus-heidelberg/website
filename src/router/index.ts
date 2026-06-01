@@ -118,7 +118,7 @@ const router = createRouter({
         // Accounting routes
         {
           path: 'beverages',
-          redirect: { name: 'admin-lager', query: { tab: 'getranke' } }
+          redirect: { name: 'admin-lager' }
         },
         {
           path: 'beverages/create',

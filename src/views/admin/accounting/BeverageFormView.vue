@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { beverageService } from '@/services'
 import type { BeverageItem } from '@/types/accounting'
+import type { PaginatedResponse } from '@/types/api'
 
 const props = defineProps<{
   id?: string
@@ -27,7 +28,7 @@ const form = ref<Partial<BeverageItem>>({
 
 const isLoading = ref(false)
 const error = ref('')
-const priceHistory = ref<{ date: string; unit_price: string; quantity: number; supplier: string }[]>([])
+const priceHistory = ref<{ date: string; unit_price: string; quantity: number; remaining_quantity: number; supplier: string }[]>([])
 
 const isSingleBottle = computed(() => (form.value.units_per_crate ?? 1) <= 1)
 const hasPurchases = computed(() => priceHistory.value.length > 0)
@@ -55,6 +56,40 @@ async function loadBeverage() {
     priceHistory.value = data.history
   } catch (e: any) {
     error.value = 'Failed to load beverage'
+  }
+}
+
+// Merge functionality
+const showMerge = ref(false)
+const mergeTargetId = ref<number | null>(null)
+const allBeverages = ref<BeverageItem[]>([])
+const mergeLoading = ref(false)
+
+const mergeTargets = computed(() =>
+  allBeverages.value.filter(b => b.id !== Number(props.id))
+)
+
+async function openMerge() {
+  showMerge.value = true
+  if (allBeverages.value.length === 0) {
+    const data: PaginatedResponse<BeverageItem> = await beverageService.getAll()
+    allBeverages.value = data.results
+  }
+}
+
+async function executeMerge() {
+  if (!mergeTargetId.value) return
+  const target = allBeverages.value.find(b => b.id === mergeTargetId.value)
+  if (!target) return
+  if (!confirm(`„${form.value.name}" in „${target.name}" zusammenführen? Alle Einkäufe und Abrechnungen werden übertragen. Dieses Getränk wird gelöscht.`)) return
+  mergeLoading.value = true
+  try {
+    await beverageService.merge(Number(props.id), mergeTargetId.value)
+    router.push('/admin/lager')
+  } catch (e: any) {
+    alert(e.message || 'Fehler beim Zusammenführen')
+  } finally {
+    mergeLoading.value = false
   }
 }
 
@@ -86,7 +121,7 @@ async function handleSubmit() {
     } else {
       await beverageService.create(payload)
     }
-    router.push('/admin/lager?tab=getranke')
+    router.push('/admin/lager')
   } catch (e: any) {
     error.value = e.message || 'Fehler beim Speichern'
   } finally {
@@ -103,7 +138,7 @@ onMounted(() => {
 .beverage-form-view
   .form-header
     h2 {{ isEditing ? 'Getränk bearbeiten' : 'Neues Getränk' }}
-    router-link.btn-cancel(to="/admin/lager?tab=getranke") Abbrechen
+    router-link.btn-cancel(to="/admin/lager") Abbrechen
 
   form.beverage-form(@submit.prevent="handleSubmit")
     .form-group.full
@@ -233,13 +268,14 @@ onMounted(() => {
             type="checkbox"
           )
           |  Aktiv
+        .hint Aktive Getränke erscheinen auf der Getränkekarte. Inaktive Getränke bleiben im Lagerbestand, sind aber nicht auf der Karte.
 
     .error(v-if="error") {{ error }}
 
     .form-actions
       button.btn-primary(type="submit" :disabled="isLoading")
         | {{ isLoading ? 'Speichern...' : (isEditing ? 'Aktualisieren' : 'Erstellen') }}
-      router-link.btn-secondary(to="/admin/lager?tab=getranke") Abbrechen
+      router-link.btn-secondary(to="/admin/lager") Abbrechen
 
   .price-history(v-if="isEditing && priceHistory.length")
     h3.section-title Preisverlauf (Einkäufe)
@@ -248,12 +284,28 @@ onMounted(() => {
         .history-col-date Datum
         .history-col-price Preis
         .history-col-qty Menge
+        .history-col-remaining Rest
         .history-col-supplier Lieferant
       .history-row(v-for="(entry, idx) in priceHistory" :key="idx")
         .history-col-date {{ new Date(entry.date).toLocaleDateString('de-DE') }}
         .history-col-price {{ parseFloat(entry.unit_price).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) }}
         .history-col-qty {{ formatQty(entry.quantity) }}
+        .history-col-remaining(:class="{ 'has-remaining': entry.remaining_quantity > 0 }") {{ formatQty(entry.remaining_quantity) }}
         .history-col-supplier {{ entry.supplier }}
+
+  .merge-section(v-if="isEditing")
+    h3.section-title Zusammenführen
+    p.hint Dieses Getränk mit einem anderen zusammenführen. Alle Einkäufe und Abrechnungen werden auf das Ziel-Getränk übertragen.
+    template(v-if="!showMerge")
+      button.btn-merge(@click="openMerge") Mit anderem Getränk zusammenführen…
+    template(v-else)
+      .merge-form
+        select.merge-select(v-model="mergeTargetId")
+          option(:value="null" disabled) Ziel-Getränk auswählen…
+          option(v-for="b in mergeTargets" :key="b.id" :value="b.id") {{ b.name }}
+        button.btn-danger(:disabled="!mergeTargetId || mergeLoading" @click="executeMerge")
+          | {{ mergeLoading ? 'Wird zusammengeführt...' : 'Zusammenführen' }}
+        button.btn-cancel-sm(@click="showMerge = false") Abbrechen
 </template>
 
 <style scoped>
@@ -445,7 +497,7 @@ input:focus {
 
 .history-header {
   display: grid;
-  grid-template-columns: 100px 90px 60px 1fr;
+  grid-template-columns: 90px 85px 55px 50px 1fr;
   gap: 0.5rem;
   font-weight: 900;
   border-bottom: 2px solid black;
@@ -455,7 +507,7 @@ input:focus {
 
 .history-row {
   display: grid;
-  grid-template-columns: 100px 90px 60px 1fr;
+  grid-template-columns: 90px 85px 55px 50px 1fr;
   gap: 0.5rem;
   padding: 0.375rem 0;
   border-bottom: 1px solid #eee;
@@ -465,9 +517,87 @@ input:focus {
   font-weight: 600;
 }
 
+.has-remaining {
+  font-weight: 700;
+  color: #2e7d32;
+}
+
 .readonly-field {
   background: #f5f5f5;
   color: #666;
   cursor: not-allowed;
+}
+
+/* Merge section */
+.merge-section {
+  margin-top: 2rem;
+  border-top: 0.25rem solid black;
+  padding-top: 1.5rem;
+}
+
+.merge-section .hint {
+  margin-bottom: 1rem;
+}
+
+.btn-merge {
+  padding: 0.625rem 1.25rem;
+  background: white;
+  color: black;
+  border: 0.2rem solid #666;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-merge:hover {
+  border-color: black;
+}
+
+.merge-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.merge-select {
+  padding: 0.5rem 0.75rem;
+  border: 0.2rem solid black;
+  font-size: 0.9rem;
+  font-weight: 600;
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn-danger {
+  padding: 0.625rem 1.25rem;
+  background: #e53935;
+  color: white;
+  border: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #c62828;
+}
+
+.btn-danger:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-cancel-sm {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel-sm:hover {
+  color: black;
 }
 </style>
