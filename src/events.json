@@ -62,6 +62,37 @@
         ]
     },
     {
+        "id": "goodflyingbirds",
+        "date": "2026-06-23T17:00:00+00:00",
+        "title": "Good Flying Birds (Garage Pop, Indianapolis) und K!tsch (Punk/NDW, Aschaffenburg)",
+        "fee": "12",
+        "feeAk": "15",
+        "descriptionShort": "<p>Die 90er sind zur&uuml;ck! Sei es die Gabber-artige BPM Zahl von Techno, Swatch Uhren, Baggy Pants oder Grunge, das Comeback scheint kein Ende zu haben. Was kommt als n&auml;chstes? Nehmen wir Crystal Pepsi oder Batida Kirsch ins Carousel Bar-Angebot mit auf? K&uuml;ndigen wir endlich Oasis in Heidelberg an?</p>\n<p>Naja, sagen wir mal, wir denken dar&uuml;ber nach&hellip; Jedenfalls erfreut sich auch ein deutlich untergeordneter Bereich der 90er Musikgeschichte zunehmender Beliebtheit, n&auml;mlich Indie Rock! Relativ obskure Bands wie Duster oder Slowdive werden pl&ouml;tzlich zu TikTok Superstars, genau wie Pavement.</p>\n<p>H&ouml;rt man Good Flying Birds&rsquo; (Indianapolis) Talulah&rsquo;s Tape, erinnert man sich an die nerdige Nische des Lo-Fi Indie Rocks, f&uuml;r die Pavement mit als Gr&uuml;nder gelten, v.a. aber auch Mark Ibolds Basslines klingen mit durch. Als weitere 90er Referenzen werden weitere Lo-Fi huldigende U.S. Bands wie Guided By Voices (Indizien: namensgebender Titel auf der Alien Lanes sowie geografische N&auml;he und Verfechter der Cut-Up Technik) und Further (deren Titel California Bummer checkt die meisten Boxes) . Die Einfl&uuml;sse beschr&auml;nken sich aber weder auf den eigenen Kontinent (Labrador Records&rsquo; Radio Dept, Sarah Records&rsquo; Another Sunny Day oder Heavenly und v.a. deren Vorg&auml;nger Talulah Gosh), noch sind aktuellere Inspirationsquellen zu &uuml;berh&ouml;ren. Z.B. Mark Winters D.L.I.M.C. Cassingles von vor knapp 10 Jahren enthalten &auml;hnlich verspielt und ausget&uuml;ftelte Gitarren wie man sie in Punk Subgenres selten zu h&ouml;ren kriegt.</p>\n<p>TL;DR: Good Flying Birds aus Indianapolis kommen ins Carousel und wir sind riesen Fans.</p>\n<p>Dazu konnten wir K!tsch aus Aschaffenburg gewinnen. Laut eigenen Anfangen erwartet uns die &ldquo;Kapelle des heiligen K!tsch / Feucht fr&ouml;hliches Klangerlebnis&rdquo; oder aber feministischer Punk mit NDW Einschlag. Instagram als Quell der Wahrheit kennt die Band erst seit einem halben Jahr, wir aber fragen uns, wieso wir sie jetzt erst entdecken.</p>\n<p>Flyer art by <a href=\"https://www.instagram.com/ola_surf/\">Ola</a></p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/goodflyingbirds/",
+        "img": "/img/cd1490f2-962f-451d-934d-c94b0ba13b71.webp",
+        "artists": [
+            {
+                "name": "Good Flying Birds",
+                "link": "https://goodflyingbirds.neocities.org/",
+                "description": "Good Flying Birds ist eine klirrend-laute Gitarren-Pop-Band aus dem Mittleren Westen der USA. Das Projekt begann im Dezember 2023 mit einer Reihe von 4-Spur-Kassettenaufnahmen und Stop-Motion-Videos, die unter dem Namen \u201eTalulah God\u201c auf YouTube hochgeladen wurden \u2013 begleitet von einer chaotischen, mit GIFs \u00fcbers\u00e4ten Website. In den folgenden Monaten wurden regelm\u00e4\u00dfig neue Songs ver\u00f6ffentlicht, was schlie\u00dflich die Aufmerksamkeit des einflussreichen Punk- und DIY-Labelchefs Martin Meyer auf sich zog.\n\nIm Januar 2025 erschien \u201eTalulah\u2019s Tape\u201c bei Rotten Apple \u2013 eine Zusammenstellung von Heimaufnahmen aus den Jahren 2020 bis 2024. Das Album zeigte eine breit gef\u00e4cherte Liebe zu unabh\u00e4ngiger Gitarrenmusik, cleverem Songwriting und einer charmant-chaotischen Twee-Punk-\u00c4sthetik. Die Ver\u00f6ffentlichung fand sofort gro\u00dfen Anklang in der Underground-Szene, lief im Radio und verkaufte sich innerhalb von weniger als einem Monat 300-mal auf Kassette.\n\nDie Band nutzte diesen Schwung und erspielte sich schnell einen Ruf als mitrei\u00dfende Live-Band. Das weckte gro\u00dfes Interesse bei Labels \u2013 schlie\u00dflich unterschrieben sie bei Carpark und Smoking Room. Gemeinsam ver\u00f6ffentlichten die Labels \u201eTalulah\u2019s Tape\u201c im Oktober 2025 erneut, diesmal auf Vinyl und im Streaming.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/j3x3IaBhQyw",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1550011207/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/8c940daf-6a11-430c-bb5d-6f19915f4b69.webp"
+            },
+            {
+                "name": "K!tsch",
+                "link": "https://www.instagram.com/st.kitsch/",
+                "description": "Feminist Punk/NDW aus Aschaffenburg",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/3ef3763b-f328-40d1-aa09-6168e17d7158.webp"
+            }
+        ]
+    },
+    {
         "id": "cherazade",
         "date": "2026-06-20T18:00:00+00:00",
         "title": "Cherazade, Schl\u00e4gertrupp, N-REEF, h3xe",
