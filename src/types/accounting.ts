@@ -1,3 +1,21 @@
+export interface StockHistoryEntry {
+  date: string
+  type: 'purchase' | 'consumption'
+  label: string
+  delta: number
+  balance: number
+  is_draft?: boolean
+  purchase_id?: number
+  abrechnung_id?: number
+}
+
+export interface StockHistory {
+  drink_id: number
+  drink_name: string
+  units_per_crate: number
+  timeline: StockHistoryEntry[]
+}
+
 export interface BeverageItem {
   id?: number
   name: string
@@ -75,8 +93,12 @@ export interface InventoryEntry {
   beverage_item: number
   beverage_item_name?: string
   beverage_item_supplier_group?: string
-  quantity_before: string
-  quantity_after: string
+  // Server-computed (chronological), present on every GET response. Optional
+  // because save payloads omit them — the server derives display values from
+  // `consumed_quantity` and the chronological context.
+  quantity_before?: string
+  quantity_after?: string
+  // Writable: the source of truth for inventory mutations.
   consumed_quantity?: string
   snapshot_purchase_price?: string
   snapshot_selling_price?: string | null

@@ -55,6 +55,12 @@ const error = ref('')
 const saveSuccess = ref('')
 const stockChangedWarning = ref('')
 
+// FIFO stock conflicts surfaced from the last save attempt. Keyed by drink_id.
+// Cleared per-drink when the user edits that drink's row, or globally on a
+// successful save.
+type InventoryConflict = { drink: string; available: number; requested: number }
+const inventoryConflicts = reactive(new Map<number, InventoryConflict>())
+
 // ── Pretix VVK ───────────────────────────────────────────────────
 const pretixData = ref<PretixOrderSummary | null>(null)
 const pretixLoading = ref(false)
@@ -377,12 +383,27 @@ function getOrInitCrateState(bevId: number, unitsPerCrate: number, entry: Invent
   return inventoryCrates.value[key]
 }
 
+/** Recompute and store consumed_quantity = max(0, before - after).
+ * This is the user-intent we persist; quantity_before may shift independently
+ * (parallel-tab corrections, retroactive purchases) without losing the intent.
+ *
+ * Also clears any sticky stock-conflict for this drink — the user has just
+ * acknowledged the warning by editing.
+ */
+function recomputeConsumed(entry: InventoryEntry) {
+  const before = parseFloat(entry.quantity_before || '0')
+  const after = parseFloat(entry.quantity_after || '0')
+  entry.consumed_quantity = String(Math.max(0, before - after))
+  inventoryConflicts.delete(entry.beverage_item)
+}
+
 function updateEntryFromCrates(entry: InventoryEntry, beverage: BeverageItem) {
   const state = inventoryCrates.value[String(beverage.id)]
   if (!state) return
   const upc = beverage.units_per_crate || 1
   entry.quantity_before = String(state.beforeCrates * upc + state.beforeBottles)
   entry.quantity_after = String(state.afterCrates * upc + state.afterBottles)
+  recomputeConsumed(entry)
 }
 
 const inventoryBySupplier = computed(() => {
@@ -393,14 +414,15 @@ const inventoryBySupplier = computed(() => {
     if (!groups[group]) groups[group] = []
     let entry = inventory.value.find(i => i.beverage_item === bev.id)
     if (!entry) {
-      // Auto-fill quantity_before from current stock, pre-fill after = before
-      const stock = stockData.value[bev.id!]
-      const stockQty = stock ? stock.quantity : 0
+      // Fallback only — the server now ships virtual entries with chronologically
+      // correct quantity_before for every active drink. This branch protects
+      // against an offline/stale state where the server response was incomplete.
       entry = {
         accounting: accounting.value?.id || 0,
         beverage_item: bev.id!,
-        quantity_before: String(stockQty),
-        quantity_after: String(stockQty),
+        quantity_before: '0',
+        quantity_after: '0',
+        consumed_quantity: '0',
       }
       inventory.value.push(entry)
     }
@@ -429,7 +451,17 @@ function groupInventoryValue(items: { beverage: BeverageItem; entry: InventoryEn
 
 // ── Mobile Inventory Helpers ─────────────────────────────────────
 const hideZeroStock = ref(true)
+// Tracks explicit user touch — used to keep the row in the save list even
+// when the user edited it back to consumed_quantity = 0 (so the persisted
+// row gets a real save instead of being silently filtered out).
 const confirmedInventory = reactive(new Set<number>())
+
+/** A row is visually "confirmed" (gelb) when the user has expressed an
+ *  intent — currently meaning consumed_quantity > 0. Resetting consumed back
+ *  to 0 reverts the row to "pending" appearance. */
+function isInventoryConfirmed(entry: InventoryEntry): boolean {
+  return parseFloat(entry.consumed_quantity || '0') > 0
+}
 
 function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
   const state = getOrInitCrateState(beverage.id!, beverage.units_per_crate || 1, entry)
@@ -452,6 +484,7 @@ function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after
     const newVal = Math.max(0, current + delta * step)
     if (field === 'after') entry.quantity_after = String(newVal)
     else entry.quantity_before = String(newVal)
+    recomputeConsumed(entry)
   }
   if (field === 'after') confirmedInventory.add(beverage.id!)
 }
@@ -463,7 +496,7 @@ function inventoryItemVisible(entry: InventoryEntry): boolean {
 
 function inventoryProgress(items: { beverage: BeverageItem; entry: InventoryEntry }[]): string {
   const visible = items.filter(({ entry }) => inventoryItemVisible(entry))
-  const confirmed = visible.filter(({ beverage }) => confirmedInventory.has(beverage.id!))
+  const confirmed = visible.filter(({ entry }) => isInventoryConfirmed(entry))
   return `${confirmed.length}/${visible.length}`
 }
 
@@ -691,11 +724,12 @@ async function loadData() {
       // Nested data is included in the accounting response
       revenues.value = acc.revenues ?? []
       inventory.value = acc.inventory_entries ?? []
-      // Mark loaded entries as confirmed if quantity_after differs from quantity_before
+      // Normalize and mark loaded entries as confirmed if they have consumption
       for (const entry of inventory.value) {
         entry.quantity_before = normalizeQty(entry.quantity_before)
         entry.quantity_after = normalizeQty(entry.quantity_after)
-        if (!qtyEquals(entry.quantity_after, entry.quantity_before)) {
+        entry.consumed_quantity = normalizeQty(entry.consumed_quantity ?? '0')
+        if (parseFloat(entry.consumed_quantity) > 0) {
           confirmedInventory.add(entry.beverage_item)
         }
       }
@@ -798,6 +832,9 @@ async function saveAll(silent = false) {
   isSaving.value = true
   if (!silent) error.value = ''
   if (!silent) saveSuccess.value = ''
+  // A new save attempt invalidates any previous per-drink conflicts; the
+  // server will re-issue them in the 400 response if they still apply.
+  inventoryConflicts.clear()
 
   try {
     const accId = accounting.value.id
@@ -808,7 +845,18 @@ async function saveAll(silent = false) {
       revenues: revenues.value
         .filter(rev => rev.id || parseFloat(rev.total || '0') !== 0 || parseFloat(rev.change_money || '0') !== 0 || parseFloat(rev.fees || '0') !== 0),
       inventory_entries: inventory.value
-        .filter(inv => inv.id || confirmedInventory.has(inv.beverage_item) || !qtyEquals(inv.quantity_before, inv.quantity_after)),
+        .filter(inv => inv.id || confirmedInventory.has(inv.beverage_item) || parseFloat(inv.consumed_quantity || '0') > 0)
+        .map(inv => {
+          // consumed_quantity is the user's intent, kept stable against
+          // parallel-tab corrections to quantity_before. The backend computes
+          // chronological quantity_before / quantity_after for display.
+          return {
+            id: inv.id,
+            accounting: inv.accounting,
+            beverage_item: inv.beverage_item,
+            consumed_quantity: inv.consumed_quantity ?? '0',
+          }
+        }),
       expenses: expenses.value
         .filter(exp => exp.description)
         .map(exp => ({ ...exp, amount: exp.amount || '0' })),
@@ -816,44 +864,30 @@ async function saveAll(silent = false) {
         .filter(split => split.participant_name || split.id),
     })
 
-    // Sync quantity_before and quantity_after from backend response
-    // The backend may recompute these based on live stock (parallel-tab handling)
+    // Sync from backend response.
+    //
+    // Design decision: do NOT overwrite the user's typed values
+    // (quantity_before, quantity_after) from the server response. The user
+    // owns those inputs while the form is open; rewriting them would cause
+    // visible "jumps" on parallel-tab edits.
+    //
+    // We do sync:
+    //   - server-assigned IDs for newly-created entries (so subsequent saves
+    //     update instead of recreate)
+    //   - consumed_quantity (server may have rounded it, e.g. 0.5 → 0.50);
+    //     used as the persisted intent on next render but NOT re-derived
+    //     from after-before.
     if (saved.inventory_entries) {
-      suppressAutoSave = true
-      const correctedItems: string[] = []
       for (const serverEntry of saved.inventory_entries) {
         const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
         if (!local) continue
-        const wasNew = !local.id
-        // Sync id for newly created entries
         if (serverEntry.id && !local.id) {
           local.id = serverEntry.id
         }
-        const serverBefore = normalizeQty(serverEntry.quantity_before)
-        const serverAfter = normalizeQty(serverEntry.quantity_after)
-        const beforeChanged = !qtyEquals(local.quantity_before, serverBefore)
-        const afterChanged = !qtyEquals(local.quantity_after, serverAfter)
-        if (beforeChanged || afterChanged) {
-          // Only show warning if the entry was already persisted (not first save)
-          // and the backend corrected quantity_after (real conflict)
-          if (afterChanged && !wasNew) {
-            const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
-            if (bev) correctedItems.push(bev.name)
-          }
-          local.quantity_before = serverBefore
-          local.quantity_after = serverAfter
-          delete inventoryCrates.value[String(serverEntry.beverage_item)]
-        }
-        // Always sync consumed_quantity from backend
         if (serverEntry.consumed_quantity !== undefined) {
-          local.consumed_quantity = serverEntry.consumed_quantity
+          local.consumed_quantity = normalizeQty(serverEntry.consumed_quantity)
         }
       }
-      if (correctedItems.length > 0 && !silent) {
-        stockChangedWarning.value = `Bestand extern geändert – Werte angepasst: ${correctedItems.join(', ')}`
-        setTimeout(() => { stockChangedWarning.value = '' }, 6000)
-      }
-      setTimeout(() => { suppressAutoSave = false }, 0)
     }
 
     // Also save grant data if grant tab has data
@@ -905,9 +939,34 @@ async function saveAll(silent = false) {
       setTimeout(() => { saveSuccess.value = '' }, 3000)
     }
   } catch (e: any) {
-    // Handle FIFO stock conflict (400 with conflicts array)
+    // FIFO stock conflict (400 with conflicts array).
+    //
+    // Design decision: NEVER mutate the user's typed values from inside the
+    // conflict handler. Doing so caused inputs to "jump" without user action
+    // (regression: "User input does not jump when a parallel save returns
+    // 400 conflict"). Instead we surface the conflicts inline at each affected
+    // row and pause auto-save until the user edits something.
     if (e.response?.status === 400 && e.response?.data?.conflicts) {
-      await refreshStockAndCorrect()
+      const conflicts = e.response.data.conflicts as Array<{
+        drink_id: number; drink: string; available: string; requested: string
+      }>
+      inventoryConflicts.clear()
+      for (const c of conflicts) {
+        inventoryConflicts.set(c.drink_id, {
+          drink: c.drink,
+          available: parseFloat(c.available),
+          requested: parseFloat(c.requested),
+        })
+      }
+      // Pause auto-save until user edits an entry again (the watcher resets
+      // this flag — see below).
+      autoSavePausedByConflict = true
+      // Clear the dirty timer so we don't keep retrying with the same values
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+        autoSaveTimer = null
+      }
+      autoSaveDirty.value = false
     } else {
       if (!silent) error.value = e.message || 'Fehler beim Speichern'
     }
@@ -1021,9 +1080,14 @@ function closeOverflow(e: MouseEvent) {
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
 const autoSaveDirty = ref(false)
 let suppressAutoSave = true // suppress during initial load
+// Set to true after a 400 stock conflict. Auto-save pauses until the user
+// edits an inventory entry again — preventing infinite save loops and giving
+// the user a stable read of their typed values.
+let autoSavePausedByConflict = false
 
 function scheduleAutoSave() {
   if (suppressAutoSave) return
+  if (autoSavePausedByConflict) return
   if (!accounting.value?.id) return
   autoSaveDirty.value = true
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
@@ -1061,7 +1125,13 @@ onBeforeRouteLeave(() => {
 // Watch data changes for auto-save
 watch(
   [inventory, revenues, expenses, splits],
-  () => { scheduleAutoSave() },
+  () => {
+    // Any data change is a fresh user intent — un-pause auto-save if it was
+    // halted by a previous 400 conflict. The next save attempt uses the
+    // user's latest values.
+    autoSavePausedByConflict = false
+    scheduleAutoSave()
+  },
   { deep: true }
 )
 watch(
@@ -1079,51 +1149,57 @@ watch(
   { deep: true }
 )
 
-// ── Refresh stock and correct entries (used by conflict handler & focus) ──
+// ── Refresh Vorher values from server (used on tab/window focus) ──
+//
+// Re-fetches the current Abrechnung from the server. The server computes
+// `quantity_before` chronologically (purchases up to event date minus
+// consumption of all earlier events), so this gives a correct Vorher even
+// when later events have been edited in parallel.
+//
+// We update only `quantity_before` for entries the user has not actively
+// confirmed (consumed_quantity == 0). For entries the user has touched
+// (consumed > 0), we leave their typed values alone — re-deriving Nachher
+// would surprise the user mid-edit. Vorher stays in display sync via the
+// next save cycle.
+//
+// Does NOT trigger an automatic save — that prevents a regression where
+// 400-conflict loops could cascade through refresh→save→400→refresh→…
 async function refreshStockAndCorrect() {
-  if (!accounting.value) return
+  if (!accounting.value?.id) return
   try {
-    const stockEntries = await stockService.getAll()
-    const map: Record<number, number> = {}
-    for (const s of stockEntries) map[s.id] = s.quantity
+    const fresh = await accountingService.getById(accounting.value.id)
+    const serverEntries = fresh.inventory_entries ?? []
 
     suppressAutoSave = true
-    let stockChanged = false
     const changedItems: string[] = []
-    for (const entry of inventory.value) {
-      const liveQty = map[entry.beverage_item]
-      if (liveQty === undefined) continue
+    for (const serverEntry of serverEntries) {
+      const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
+      if (!local) continue
+      const serverBefore = normalizeQty(serverEntry.quantity_before ?? '0')
+      const ownConsumed = parseFloat(local.consumed_quantity || '0')
 
-      if (entry.id) {
-        // Persisted entries: only detect change, don't modify locally.
-        // The backend is the authority — trigger a save and let the response sync
-        // update before/after/consumed atomically.
-        const ownConsumed = parseFloat(entry.consumed_quantity || '0')
-        const newBefore = liveQty + ownConsumed
-        if (!qtyEquals(newBefore, entry.quantity_before)) {
-          stockChanged = true
-          const bev = beverages.value.find(b => b.id === entry.beverage_item)
-          if (bev) changedItems.push(bev.name)
-        }
+      if (qtyEquals(serverBefore, local.quantity_before)) continue
+
+      if (ownConsumed === 0) {
+        // No user intent — safe to fully refresh both Vorher and Nachher.
+        local.quantity_before = serverBefore
+        local.quantity_after = serverBefore
+        delete inventoryCrates.value[String(serverEntry.beverage_item)]
       } else {
-        // Unpersisted entries: safe to update locally (no backend state yet)
-        if (confirmedInventory.has(entry.beverage_item)) continue
-        if (!qtyEquals(liveQty, entry.quantity_before)) {
-          entry.quantity_before = normalizeQty(liveQty)
-          entry.quantity_after = normalizeQty(liveQty)
-          delete inventoryCrates.value[String(entry.beverage_item)]
-        }
+        // User has typed a Nachher; keep their input. Update only Vorher and
+        // re-derive Nachher = Vorher - consumed so display stays consistent.
+        local.quantity_before = serverBefore
+        local.quantity_after = normalizeQty(Math.max(0, parseFloat(serverBefore) - ownConsumed))
+        delete inventoryCrates.value[String(serverEntry.beverage_item)]
+        const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
+        if (bev) changedItems.push(bev.name)
       }
     }
     if (changedItems.length > 0) {
-      stockChangedWarning.value = `Bestand extern geändert: ${changedItems.join(', ')} – wird synchronisiert…`
+      stockChangedWarning.value = `Bestand extern geändert: ${changedItems.join(', ')}`
       setTimeout(() => { stockChangedWarning.value = '' }, 6000)
     }
     setTimeout(() => { suppressAutoSave = false }, 0)
-    // Trigger immediate save so the backend returns authoritative values
-    if (stockChanged) {
-      setTimeout(() => { saveAll(true) }, 100)
-    }
   } catch { /* ignore – next save will catch it */ }
 }
 
@@ -1159,7 +1235,6 @@ onUnmounted(() => {
 <template lang="pug">
 .accounting-view
   .loading(v-if="isLoading") Abrechnung wird geladen...
-  .error(v-if="error") ⚠️ {{ error }}
   template(v-else-if="accounting")
     .accounting-header
       .tabs
@@ -1344,6 +1419,12 @@ onUnmounted(() => {
           input(type="checkbox" v-model="hideZeroStock")
           span Leere ausblenden
 
+      .conflict-banner(v-if="inventoryConflicts.size > 0")
+        .conflict-banner-icon ⚠️
+        .conflict-banner-text
+          strong {{ inventoryConflicts.size === 1 ? '1 Bestandskonflikt' : `${inventoryConflicts.size} Bestandskonflikte` }}
+          span  – Während du editiert hast, hat jemand anders parallel verbraucht. Bitte die rot markierten Werte unten anpassen.
+
       .section(v-for="(items, group) in inventoryBySupplier" :key="group")
         h3.section-title {{ group }}
           span.inv-progress {{ inventoryProgress(items) }}
@@ -1359,71 +1440,80 @@ onUnmounted(() => {
             .col-inv-num.sortable(@click="invSort.toggle('consumed')") Verbraucht{{ invSort.indicator('consumed') }}
             .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
 
-          .inventory-row(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': confirmedInventory.has(beverage.id), 'inv-pending': !confirmedInventory.has(beverage.id) }")
-            .col-inv-name
-              .bev-name {{ beverage.name }}
-              .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
-              .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
-            .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
-            .col-inv-info(v-else) Fl.
+          template(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
+            .inventory-row(v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id) }")
+              .col-inv-name
+                .bev-name {{ beverage.name }}
+                .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
+                .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
+              .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
+              .col-inv-info(v-else) Fl.
 
-            //- Crate mode (units_per_crate > 1)
-            template(v-if="(beverage.units_per_crate || 1) > 1")
-              .col-inv-pair.readonly-before
-                .crate-input
-                  span.qty-display {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}
-                  span.input-label K
-                .crate-input
-                  span.qty-display {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}
-                  span.input-label Fl
-              .col-inv-pair
-                .crate-input
+              //- Crate mode (units_per_crate > 1)
+              template(v-if="(beverage.units_per_crate || 1) > 1")
+                .col-inv-pair.readonly-before
+                  .crate-input
+                    span.qty-display {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}
+                    span.input-label K
+                  .crate-input
+                    span.qty-display {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}
+                    span.input-label Fl
+                .col-inv-pair
+                  .crate-input
+                    input.qty-input(
+                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates"
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="0"
+                      @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                    )
+                    span.input-label K
+                  .crate-input
+                    input.qty-input(
+                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="0"
+                      @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                    )
+                    span.input-label Fl
+
+              //- Bottle mode (units_per_crate = 1)
+              template(v-else)
+                .col-inv-pair.bottle-mode.readonly-before
+                  span.qty-display {{ formatQty(entry.quantity_before || '0') }}
+                  span.input-label Fl.
+                .col-inv-pair.bottle-mode
                   input.qty-input(
-                    v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates"
+                    v-model="entry.quantity_after"
                     type="number"
                     min="0"
-                    step="1"
+                    step="0.1"
+                    @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     placeholder="0"
-                    @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                   )
-                  span.input-label K
-                .crate-input
-                  input.qty-input(
-                    v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
-                  )
-                  span.input-label Fl
+                  span.input-label Fl.
 
-            //- Bottle mode (units_per_crate = 1)
-            template(v-else)
-              .col-inv-pair.bottle-mode.readonly-before
-                span.qty-display {{ formatQty(entry.quantity_before || '0') }}
-                span.input-label Fl.
-              .col-inv-pair.bottle-mode
-                input.qty-input(
-                  v-model="entry.quantity_after"
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  @input="confirmedInventory.add(beverage.id)"
-                  placeholder="0"
-                )
-                span.input-label Fl.
+              .col-inv-num {{ formatQty(entry.quantity_before) }}
+              .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatQty(inventoryConsumption(entry)) }}
+                span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
+              .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
-            .col-inv-num {{ formatQty(entry.quantity_before) }}
-            .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatQty(inventoryConsumption(entry)) }}
-              span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
-            .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
+            .inventory-row-conflict(v-if="inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
+              span.conflict-icon ⚠️
+              span.conflict-text
+                | {{ beverage.name }}: Du möchtest #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}] verbrauchen, aber aktuell sind nur noch #[strong {{ inventoryConflicts.get(beverage.id)?.available }}] verfügbar. Bitte „Nachher" um mindestens #[strong {{ ((inventoryConflicts.get(beverage.id)?.requested ?? 0) - (inventoryConflicts.get(beverage.id)?.available ?? 0)) }}] erhöhen.
 
         //- Mobile cards
         .inventory-cards.mobile-only
-          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': confirmedInventory.has(beverage.id), 'inv-pending': !confirmedInventory.has(beverage.id) }")
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id) }")
             .inv-card-header
               .inv-card-name {{ beverage.name }}
+            .inv-card-conflict(v-if="inventoryConflicts.has(beverage.id)")
+              span ⚠️
+              | {{ beverage.name }}: angefordert #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}], verfügbar #[strong {{ inventoryConflicts.get(beverage.id)?.available }}]. Nachher erhöhen.
             .inv-card-info
               span.inv-info-item
                 span.inv-info-label V:
@@ -1476,7 +1566,7 @@ onUnmounted(() => {
                       type="number"
                       min="0"
                       step="0.25"
-                      @change="confirmedInventory.add(beverage.id)"
+                      @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl.
@@ -1945,6 +2035,7 @@ onUnmounted(() => {
           p Noch keine Belege hochgeladen.
 
         .loading(v-if="isLoadingDocs") Belege werden geladen…
+  .error(v-else-if="error") ⚠️ {{ error }}
 </template>
 
 <style scoped>
@@ -2615,8 +2706,85 @@ h2 {
   background: #e8f5e9;
 }
 
+.inventory-row.inv-conflict {
+  background: #ffebee;
+  outline: 2px solid #d32f2f;
+  outline-offset: -2px;
+}
+
 .inventory-row:last-child {
   border-bottom: none;
+}
+
+/* Per-row conflict explanation, rendered as a sibling div right below the row. */
+.inventory-row-conflict {
+  background: #ffebee;
+  border-left: 4px solid #d32f2f;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  color: #b71c1c;
+  display: flex;
+  gap: 0.5em;
+  align-items: flex-start;
+}
+
+.inventory-row-conflict .conflict-icon {
+  flex-shrink: 0;
+  font-size: 1.1em;
+}
+
+.inventory-row-conflict .conflict-text {
+  line-height: 1.4;
+}
+
+.inventory-row-conflict .conflict-text strong {
+  color: #d32f2f;
+}
+
+/* Top banner shown when any drink has an unresolved conflict. */
+.conflict-banner {
+  background: #fff3e0;
+  border: 1px solid #ffb74d;
+  border-radius: 6px;
+  padding: 0.75em 1em;
+  margin: 0.5em 0 1em;
+  display: flex;
+  gap: 0.75em;
+  align-items: flex-start;
+}
+
+.conflict-banner-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.conflict-banner-text {
+  line-height: 1.4;
+  color: #5d4037;
+}
+
+.conflict-banner-text strong {
+  color: #d32f2f;
+}
+
+/* Mobile card variant */
+.inv-card.inv-conflict {
+  background: #ffebee;
+  border-color: #d32f2f;
+}
+
+.inv-card-conflict {
+  background: #ffcdd2;
+  color: #b71c1c;
+  font-size: 0.85em;
+  padding: 0.4em 0.6em;
+  border-radius: 4px;
+  margin: 0.4em 0;
+  line-height: 1.3;
+}
+
+.inv-card-conflict strong {
+  color: #d32f2f;
 }
 
 /* ── Mobile Inventory Cards ── */

@@ -10,9 +10,12 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test'
 import { loginPage } from './helpers/auth'
 import { getOrCreateAbrechnung, deleteAbrechnung, getStock, saveInventory } from './helpers/api'
 
-// Use two real events from the database
-const EVENT_A = 'zoomies-howileft'
-const EVENT_B = 'fivebucks-poopootalks'
+// Use two real events from the database. Both must be chronologically AFTER
+// every Cola purchase so quantity_before is positive (Cola has stock at the
+// event date), and ideally without other consumption between them so totals
+// stay deterministic.
+const EVENT_A = 'cherazade'           // 2026-06-20
+const EVENT_B = 'goodflyingbirds'     // 2026-06-23
 // Cola: upc=24, id=5
 const DRINK_ID = 5
 const DRINK_NAME = 'Cola'
@@ -116,8 +119,7 @@ test.describe('Parallel-tab FIFO inventory', () => {
     // Tab A consumes 1 crate (24 bottles)
     const resultA = await saveInventory(abrA.id, [{
       beverage_item: DRINK_ID,
-      quantity_before: initialStock,
-      quantity_after: initialStock - 24,
+      consumed_quantity: 24,
     }])
     expect(resultA.status).toBe(200)
 
@@ -125,11 +127,11 @@ test.describe('Parallel-tab FIFO inventory', () => {
     const stockAfterA = await getStock(DRINK_ID)
     expect(stockAfterA).toBe(initialStock - 24)
 
-    // Tab B also consumes 1 crate (sends stale quantity_before)
+    // Tab B also consumes 1 crate (independent — no stale-before inference needed
+    // with the new chronological semantics; the client owns consumed_quantity).
     const resultB = await saveInventory(abrB.id, [{
       beverage_item: DRINK_ID,
-      quantity_before: initialStock, // stale!
-      quantity_after: initialStock - 24,
+      consumed_quantity: 24,
     }])
     expect(resultB.status).toBe(200)
 
@@ -138,52 +140,47 @@ test.describe('Parallel-tab FIFO inventory', () => {
     expect(finalStock).toBe(initialStock - 48)
   })
 
-  test('Tab A sees warning after Tab B consumes same drink', async () => {
+  test('Tab B (later event) sees Vorher update after Tab A consumes earlier', async () => {
+    // Chronological semantics: when Tab A (earlier event) consumes, Tab B
+    // (later event) MUST see its Vorher decrease — Tab B's chronological
+    // before is "purchases up to B's date − consumption of all earlier
+    // events", and Tab A is one of those earlier events.
+    //
+    // EVENT_A is 2026-06-20 (cherazade), EVENT_B is 2026-06-23 (goodflyingbirds).
     const initialStock = await getStock(DRINK_ID)
     test.skip(initialStock < 48, `Need >= 48 Cola bottles, have ${initialStock}`)
 
-    // Navigate Tab A to its accounting page
-    await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-    await tabA.locator('button:has-text("Inventur")').click()
-    await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+    // Open Tab B (the later event) and read its initial Vorher.
+    await tabB.goto(`/admin/events/${EVENT_B}?tab=accounting`, { waitUntil: 'domcontentloaded' })
+    await tabB.locator('button:has-text("Inventur")').click()
+    await tabB.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
 
-    // Tab A: consume 1 crate via UI stepper (mobile card or desktop input)
-    const colaRow = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`)
-    if (await colaRow.isVisible()) {
-      const afterInput = colaRow.locator('input.qty-input').first()
-      const currentValue = await afterInput.inputValue()
-      const currentCrates = parseInt(currentValue || '0')
-      await afterInput.fill(String(currentCrates - 1))
-    }
+    const tabBRow = tabB.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
+    const vorherSelector = '.col-inv-pair.readonly-before .qty-display, .col-inv-pair.readonly-before .col-inv-num'
+    const tabBVorherBefore = (await tabBRow.locator(vorherSelector).first().textContent())?.trim()
 
-    // Wait for auto-save to complete
-    await tabA.waitForTimeout(3000)
+    // Tab A (earlier event) consumes 1 crate via API.
     const abrA = await getOrCreateAbrechnung(EVENT_A)
     abrIdA = abrA.id
-
-    // Tab B consumes 1 crate via API (simulates parallel user)
-    const abrB = await getOrCreateAbrechnung(EVENT_B)
-    abrIdB = abrB.id
-    await saveInventory(abrB.id, [{
+    await saveInventory(abrA.id, [{
       beverage_item: DRINK_ID,
-      quantity_before: initialStock,
-      quantity_after: initialStock - 24,
+      consumed_quantity: 24,
     }])
 
-    // Tab A: simulate returning to tab (trigger visibility change)
-    await tabA.evaluate(() => {
-      // Simulate visibilitychange event
+    // Trigger Tab B's focus refresh.
+    await tabB.evaluate(() => {
       Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true })
       document.dispatchEvent(new Event('visibilitychange'))
     })
+    await tabB.waitForTimeout(2000)
 
-    // Wait for stock refresh + immediate save
-    await tabA.waitForTimeout(2000)
+    // Tab B's Vorher should now be smaller (24 less in bottles).
+    const tabBVorherAfter = (await tabBRow.locator(vorherSelector).first().textContent())?.trim()
+    expect(tabBVorherAfter).not.toBe(tabBVorherBefore)
 
-    // Check that a warning appeared
-    const warning = tabA.locator('text=Bestand extern geändert')
-    const warningVisible = await warning.isVisible({ timeout: 5000 }).catch(() => false)
-    expect(warningVisible).toBe(true)
+    // Cleanup: pull Tab B's abr id
+    const abrB = await getOrCreateAbrechnung(EVENT_B)
+    abrIdB = abrB.id
   })
 
   test('Conflict when consuming more than available stock', async () => {
@@ -195,17 +192,15 @@ test.describe('Parallel-tab FIFO inventory', () => {
     abrIdA = abrA.id
     await saveInventory(abrA.id, [{
       beverage_item: DRINK_ID,
-      quantity_before: initialStock,
-      quantity_after: 0,
+      consumed_quantity: initialStock,
     }])
 
-    // Tab B tries to consume more than available (stale before)
+    // Tab B tries to consume more than available — stock now empty
     const abrB = await getOrCreateAbrechnung(EVENT_B)
     abrIdB = abrB.id
     const result = await saveInventory(abrB.id, [{
       beverage_item: DRINK_ID,
-      quantity_before: initialStock, // stale — thinks there's still stock
-      quantity_after: 0, // wants to consume all
+      consumed_quantity: initialStock, // wants to consume all again, but stock is 0
     }])
 
     // Should get 400 with conflicts
@@ -227,15 +222,259 @@ test.describe('Parallel-tab FIFO inventory', () => {
     // Consume 0.5 bottle
     const r1 = await saveInventory(abrA.id, [{
       beverage_item: BOTTLE_DRINK_ID,
-      quantity_before: stock,
-      quantity_after: stock - 0.5,
+      consumed_quantity: 0.5,
     }])
     expect(r1.status).toBe(200)
     const entry = r1.data.inventory_entries.find((e: any) => e.beverage_item === BOTTLE_DRINK_ID)
     expect(Number(entry.consumed_quantity)).toBeCloseTo(0.5)
-    expect(Number(entry.quantity_after)).toBeCloseTo(stock - 0.5)
-
+    // quantity_after is chronological (= chronological_before - 0.5), not necessarily
+    // related to the live global stock. Just verify consumed_quantity took effect on stock:
     const newStock = await getStock(BOTTLE_DRINK_ID)
     expect(newStock).toBeCloseTo(stock - 0.5)
+  })
+
+  test('User intent (consumed_quantity) survives parallel-tab Vorher updates', async ({ browser }) => {
+    // Henne-Ei regression test:
+    // 1. Tab A enters consumed=6 via UI
+    // 2. Tab B consumes 12 in parallel (via API)
+    // 3. Tab A's auto-save fires → server returns updated Vorher
+    // 4. Tab A's local consumed_quantity must REMAIN 6 (not be re-derived
+    //    from a now-stale before/after pair).
+    const initialStock = await getStock(DRINK_ID)
+    test.skip(initialStock < 48, `Need ≥48 ${DRINK_NAME}, have ${initialStock}`)
+
+    const ctx = await browser.newContext()
+    const tabA = await ctx.newPage()
+    try {
+      await loginPage(tabA)
+      await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
+      await tabA.locator('button:has-text("Inventur")').click()
+      await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+
+      // Step 1: Tab A reduces "Nachher" by 6 bottles via the bottle stepper input.
+      // For Cola (upc=24) the row has crate + bottle inputs; the bottles input
+      // is the second .qty-input under the editable col-inv-pair.
+      const colaRowA = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
+      const afterBottlesInput = colaRowA.locator('.col-inv-pair:not(.readonly-before) input.qty-input').nth(1)
+      const currentBottles = Number(await afterBottlesInput.inputValue())
+      await afterBottlesInput.fill(String(currentBottles - 6))
+      // Wait for first auto-save to complete (2s debounce + network)
+      await tabA.waitForResponse(
+        r => r.url().includes('/api/abrechnungen/') && r.request().method() === 'PUT' && r.status() === 200,
+        { timeout: 10_000 }
+      )
+
+      // Step 2: parallel API call — Tab B consumes 12 from EVENT_B
+      const abrB = await getOrCreateAbrechnung(EVENT_B)
+      abrIdB = abrB.id
+      const rB = await saveInventory(abrB.id, [{
+        beverage_item: DRINK_ID,
+        consumed_quantity: 12,
+      }])
+      expect(rB.status).toBe(200)
+
+      // Step 3: trigger Tab A re-fresh. visibilitychange refreshes stock and
+      // updates local Vorher (via refreshStockAndCorrect).
+      await tabA.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true })
+        document.dispatchEvent(new Event('visibilitychange'))
+      })
+      await tabA.waitForTimeout(2000)
+
+      // Step 4: re-fetch Tab A's abrechnung and verify consumed=6 persisted
+      const abrA = await getOrCreateAbrechnung(EVENT_A)
+      abrIdA = abrA.id
+      const colaEntry = abrA.inventory_entries.find((e: any) => e.beverage_item === DRINK_ID)
+      expect(colaEntry).toBeDefined()
+      expect(Number(colaEntry.consumed_quantity)).toBe(6)
+      // Stock dropped by 6 (Tab A) + 12 (Tab B) = 18
+      const finalStock = await getStock(DRINK_ID)
+      expect(finalStock).toBe(initialStock - 18)
+    } finally {
+      await ctx.close()
+    }
+  })
+
+  test('Editing a later event does not change earlier event Vorher on focus refresh', async ({ browser }) => {
+    // Regression test: when the user edits Tab B (later event chronologically)
+    // and switches back to Tab A (earlier event), Tab A's chronological Vorher
+    // must NOT change. Earlier events are not affected by later consumption.
+    //
+    // Background: refreshStockAndCorrect() previously computed
+    //   newBefore = liveGlobalStock + ownConsumed
+    // which is wrong — it pulls in consumption from chronologically-later
+    // events, since the global stock reflects all settlements regardless of
+    // event date.
+
+    // EVENT_A is 2026-06-20 (cherazade), EVENT_B is 2026-06-23 (goodflyingbirds).
+    // Tab A is the EARLIER event; Tab B is LATER. Editing Tab B must not
+    // change Tab A's Vorher.
+    const initialStock = await getStock(DRINK_ID)
+    test.skip(initialStock < 48, `Need ≥48 ${DRINK_NAME}, have ${initialStock}`)
+
+    const ctx = await browser.newContext()
+    const tabA = await ctx.newPage()
+    try {
+      await loginPage(tabA)
+      await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
+      await tabA.locator('button:has-text("Inventur")').click()
+      await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+
+      // Read Tab A's chronological Vorher BEFORE Tab B edits anything.
+      const tabARow = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
+      const tabAVorherBefore = await tabARow.locator('.col-inv-pair.readonly-before .qty-display, .col-inv-pair.readonly-before .col-inv-num').first().textContent()
+
+      // Tab B (later event) consumes via API, reducing global stock.
+      const abrB = await getOrCreateAbrechnung(EVENT_B)
+      abrIdB = abrB.id
+      const rB = await saveInventory(abrB.id, [{
+        beverage_item: DRINK_ID,
+        consumed_quantity: 24, // 1 crate
+      }])
+      expect(rB.status).toBe(200)
+
+      // Trigger Tab A's focus refresh.
+      await tabA.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true })
+        document.dispatchEvent(new Event('visibilitychange'))
+      })
+      await tabA.waitForTimeout(2000)
+
+      // Tab A's chronological Vorher MUST be unchanged.
+      const tabAVorherAfter = await tabARow.locator('.col-inv-pair.readonly-before .qty-display, .col-inv-pair.readonly-before .col-inv-num').first().textContent()
+      expect(tabAVorherAfter?.trim()).toBe(tabAVorherBefore?.trim())
+
+      const abrA = await getOrCreateAbrechnung(EVENT_A)
+      abrIdA = abrA.id
+    } finally {
+      await ctx.close()
+    }
+  })
+
+  test('Resetting consumed back to 0 unmarks the row as confirmed', async ({ browser }) => {
+    // Visual regression: the inv-confirmed (yellow) class should toggle off
+    // when the user resets consumed back to 0.
+    const initialStock = await getStock(DRINK_ID)
+    test.skip(initialStock < 24, `Need ≥24 ${DRINK_NAME}, have ${initialStock}`)
+
+    const ctx = await browser.newContext()
+    const tabA = await ctx.newPage()
+    try {
+      await loginPage(tabA)
+      await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
+      await tabA.locator('button:has-text("Inventur")').click()
+      await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+
+      const colaRowA = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
+      const afterBottlesInput = colaRowA.locator('.col-inv-pair:not(.readonly-before) input.qty-input').nth(1)
+      const startBottles = Number(await afterBottlesInput.inputValue())
+
+      // Step 1: reduce after by 1 → consumed = 1, row should be inv-confirmed
+      await afterBottlesInput.fill(String(startBottles - 1))
+      await tabA.waitForTimeout(300)
+      await expect(colaRowA).toHaveClass(/inv-confirmed/)
+
+      // Step 2: reset back to original → consumed = 0, row should be inv-pending
+      await afterBottlesInput.fill(String(startBottles))
+      await tabA.waitForTimeout(300)
+      await expect(colaRowA).toHaveClass(/inv-pending/)
+      await expect(colaRowA).not.toHaveClass(/inv-confirmed/)
+
+      const abrA = await getOrCreateAbrechnung(EVENT_A)
+      abrIdA = abrA.id
+    } finally {
+      await ctx.close()
+    }
+  })
+
+  test('User input does not jump when a parallel save returns 400 conflict', async ({ browser }) => {
+    // Regression test for the user-reported bug:
+    // Tab A enters a Nachher-value via UI. Tab B, in parallel, consumes enough
+    // from the same drink (via API) to push global stock below what Tab A
+    // implicitly claimed. Tab A's auto-save fires → server returns 400.
+    //
+    // BEFORE the fix: the conflict handler rewrote Tab A's local
+    // quantity_before / quantity_after, causing the visible input to "jump"
+    // without user action.
+    //
+    // AFTER the fix: Tab A's input-field value remains exactly what the user
+    // typed; only a warning surfaces. The user retains full control.
+
+    const SEKT_ID = 22
+    const SEKT_NAME = 'Sekt Piccolo'
+    const globalStock = await getStock(SEKT_ID)
+    test.skip(globalStock < 4, `Need ≥4 ${SEKT_NAME}, have ${globalStock}`)
+
+    const ctx = await browser.newContext()
+    const tabA = await ctx.newPage()
+    try {
+      await loginPage(tabA)
+      await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
+      await tabA.locator('button:has-text("Inventur")').click()
+      await tabA.locator(`.inventory-row:has-text("${SEKT_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+
+      const sektRow = tabA.locator(`.inventory-row:has-text("${SEKT_NAME}")`).first()
+
+      // Read Tab A's chronological "Vorher" from the UI (not the global stock,
+      // which differs in chronological-display mode).
+      const vorherText = await sektRow.locator('.col-inv-pair.readonly-before .qty-display').first().textContent()
+      const tabAVorher = parseFloat(vorherText?.trim() ?? '0')
+      test.skip(tabAVorher < 4, `Tab A's chronological Vorher must be ≥4, got ${tabAVorher}`)
+
+      // Tab A: type Nachher = Vorher - 1 → consumed=1.  Trigger an explicit
+      // save by clicking the "Speichern" button instead of waiting for the
+      // auto-save debounce (auto-save races with the page-hydration save).
+      const afterInput = sektRow.locator('.col-inv-pair.bottle-mode:not(.readonly-before) input.qty-input').first()
+      const firstNachher = String(tabAVorher - 1)
+      await afterInput.fill(firstNachher)
+      await afterInput.blur()
+      const saveBtn = tabA.locator('button.btn-save').first()
+      const wait200 = tabA.waitForResponse(
+        r => r.url().includes('/api/abrechnungen/') && r.request().method() === 'PUT' && r.status() === 200,
+        { timeout: 15_000 }
+      )
+      await saveBtn.click()
+      await wait200
+
+      // Tab B (via API) consumes the rest of global stock so it's near zero.
+      const abrB = await getOrCreateAbrechnung(EVENT_B)
+      abrIdB = abrB.id
+      const stockAfterTabA = await getStock(SEKT_ID)
+      const rB = await saveInventory(abrB.id, [{
+        beverage_item: SEKT_ID,
+        consumed_quantity: stockAfterTabA,
+      }])
+      expect(rB.status).toBe(200)
+      // Now global stock = 0; Tab A holds consumed=1.
+
+      // Tab A: type Nachher = 0 → consumed = Vorher (e.g. 7) — way more than
+      // available. Trigger an explicit save → expect 400 conflict.
+      // Tab A: type Nachher = 0 → consumed = Vorher (e.g. 7) — way more than
+      // available. Trigger an explicit save → expect 400 conflict.
+      const conflictNachher = '0'
+      await afterInput.fill(conflictNachher)
+      await afterInput.blur()
+      const wait400 = tabA.waitForResponse(
+        r => r.url().includes('/api/abrechnungen/') && r.request().method() === 'PUT' && r.status() === 400,
+        { timeout: 15_000 }
+      )
+      await saveBtn.click()
+      await wait400
+      // Allow post-conflict UI handling to settle.
+      await tabA.waitForTimeout(500)
+
+      // CRITICAL: the input field must still show the user-typed value.
+      // Re-locate the input fresh — the row may have re-rendered after the
+      // 400 error displayed.
+      const afterInputAfter = sektRow.locator('.col-inv-pair.bottle-mode:not(.readonly-before) input.qty-input').first()
+      const afterValue = await afterInputAfter.inputValue({ timeout: 5_000 })
+      expect(afterValue).toBe(conflictNachher)
+
+      // Cleanup: pull abr id for teardown
+      const abrA = await getOrCreateAbrechnung(EVENT_A)
+      abrIdA = abrA.id
+    } finally {
+      await ctx.close()
+    }
   })
 })
