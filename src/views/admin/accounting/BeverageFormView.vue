@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { beverageService } from '@/services'
-import type { BeverageItem } from '@/types/accounting'
+import type { BeverageItem, StockHistory, StockHistoryEntry } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 
 const props = defineProps<{
@@ -29,6 +29,7 @@ const form = ref<Partial<BeverageItem>>({
 const isLoading = ref(false)
 const error = ref('')
 const priceHistory = ref<{ date: string; unit_price: string; quantity: number; remaining_quantity: number; supplier: string }[]>([])
+const stockHistory = ref<StockHistory | null>(null)
 
 const isSingleBottle = computed(() => (form.value.units_per_crate ?? 1) <= 1)
 const hasPurchases = computed(() => priceHistory.value.length > 0)
@@ -47,13 +48,64 @@ const supplierSuggestions = [
   'Tegut',
 ]
 
+// ── Stock History Chart ────────────────────────────────────────
+const CHART_W = 600
+const CHART_H = 120
+const CHART_PAD = { top: 8, right: 8, bottom: 4, left: 8 }
+
+const chartData = computed(() => {
+  const timeline = stockHistory.value?.timeline
+  if (!timeline || timeline.length === 0) return null
+
+  const points: { x: number; y: number; entry: StockHistoryEntry }[] = []
+  const balances = timeline.map(e => e.balance)
+  const minB = Math.min(0, ...balances)
+  const maxB = Math.max(0, ...balances)
+  const rangeB = maxB - minB || 1
+
+  const innerW = CHART_W - CHART_PAD.left - CHART_PAD.right
+  const innerH = CHART_H - CHART_PAD.top - CHART_PAD.bottom
+  const n = timeline.length
+
+  timeline.forEach((entry, i) => {
+    // Single point: center horizontally
+    const x = CHART_PAD.left + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW)
+    const y = CHART_PAD.top + (1 - (entry.balance - minB) / rangeB) * innerH
+    points.push({ x, y, entry })
+  })
+
+  const polyline = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+  const zeroY = CHART_PAD.top + (1 - (0 - minB) / rangeB) * innerH
+  const bottomY = CHART_H - CHART_PAD.bottom
+  const leftX = CHART_PAD.left
+  const rightX = CHART_W - CHART_PAD.right
+
+  // Area polygon: line points + bottom-right + bottom-left
+  const areaPoints = polyline + ` ${rightX.toFixed(1)},${bottomY.toFixed(1)} ${leftX.toFixed(1)},${bottomY.toFixed(1)}`
+
+  return { points, polyline, areaPoints, zeroY, minB, maxB, leftX, rightX }
+})
+
+function fmtQty(val: number, upc: number): string {
+  if (upc <= 1) return val.toLocaleString('de-DE')
+  const crates = Math.floor(val / upc)
+  const loose = val % upc
+  if (crates === 0) return `${loose} Fl.`
+  if (loose === 0) return `${crates} Kisten`
+  return `${crates} Kisten + ${loose} Fl.`
+}
+
 async function loadBeverage() {
   if (!props.id) return
   try {
     const item = await beverageService.getById(Number(props.id))
     form.value = { ...item }
-    const data = await beverageService.getPriceHistory(Number(props.id))
-    priceHistory.value = data.history
+    const [priceData, histData] = await Promise.all([
+      beverageService.getPriceHistory(Number(props.id)),
+      beverageService.getStockHistory(Number(props.id)),
+    ])
+    priceHistory.value = priceData.history
+    stockHistory.value = histData
   } catch (e: any) {
     error.value = 'Failed to load beverage'
   }
@@ -293,6 +345,68 @@ onMounted(() => {
         .history-col-remaining(:class="{ 'has-remaining': entry.remaining_quantity > 0 }") {{ formatQty(entry.remaining_quantity) }}
         .history-col-supplier {{ entry.supplier }}
 
+  .stock-history(v-if="isEditing && stockHistory && stockHistory.timeline.length")
+    h3.section-title Bestandsverlauf
+    svg.stock-chart(
+      :viewBox="`0 0 ${CHART_W} ${CHART_H}`"
+      preserveAspectRatio="none"
+    )
+      //- Zero line
+      line(
+        v-if="chartData"
+        :x1="chartData.leftX" :y1="chartData.zeroY.toFixed(1)"
+        :x2="chartData.rightX" :y2="chartData.zeroY.toFixed(1)"
+        stroke="#ccc" stroke-width="1"
+      )
+      //- Area fill
+      polygon(
+        v-if="chartData"
+        :points="chartData.areaPoints"
+        fill="#e8f5e9" stroke="none"
+      )
+      //- Line
+      polyline(
+        v-if="chartData"
+        :points="chartData.polyline"
+        fill="none" stroke="black" stroke-width="2"
+      )
+      //- Dots
+      template(v-if="chartData")
+        circle(
+          v-for="(p, i) in chartData.points"
+          :key="i"
+          :cx="p.x.toFixed(1)" :cy="p.y.toFixed(1)"
+          r="3"
+          :fill="p.entry.type === 'purchase' ? 'black' : (p.entry.is_draft ? '#ef9a9a' : '#e53935')"
+          stroke="white" stroke-width="1.5"
+        )
+    .chart-legend
+      span.legend-purchase Einkauf
+      span.legend-consumption Verbrauch (abgeschlossen)
+      span.legend-draft Verbrauch (Entwurf)
+
+    .history-table.stock-table
+      .history-header
+        .col-date Datum
+        .col-type Art
+        .col-label Bezeichnung
+        .col-delta Menge
+        .col-balance Bestand
+      .history-row(
+        v-for="(entry, idx) in stockHistory.timeline"
+        :key="idx"
+        :class="[entry.type, { 'is-draft': entry.is_draft }]"
+      )
+        .col-date {{ new Date(entry.date + 'T00:00:00').toLocaleDateString('de-DE') }}
+        .col-type
+          span.badge(:class="[entry.type, { 'draft': entry.is_draft }]")
+            | {{ entry.type === 'purchase' ? 'Kauf' : 'Event' }}
+          span.draft-tag(v-if="entry.is_draft") Entwurf
+        .col-label {{ entry.label }}
+        .col-delta(:class="entry.delta > 0 ? 'positive' : 'negative'")
+          | {{ entry.delta > 0 ? '+' : '' }}{{ fmtQty(entry.delta, stockHistory.units_per_crate) }}
+        .col-balance(:class="{ 'draft-balance': entry.is_draft }") {{ fmtQty(entry.balance, stockHistory.units_per_crate) }}
+
   .merge-section(v-if="isEditing")
     h3.section-title Zusammenführen
     p.hint Dieses Getränk mit einem anderen zusammenführen. Alle Einkäufe und Abrechnungen werden auf das Ziel-Getränk übertragen.
@@ -526,6 +640,130 @@ input:focus {
   background: #f5f5f5;
   color: #666;
   cursor: not-allowed;
+}
+
+.stock-history {
+  margin-top: 2rem;
+  border-top: 0.25rem solid black;
+  padding-top: 1.5rem;
+}
+
+.stock-chart {
+  display: block;
+  width: 100%;
+  height: 120px;
+  border: 0.25rem solid black;
+  margin-top: 0.75rem;
+  background: white;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.legend-purchase::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: black;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.legend-consumption::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e53935;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.legend-draft::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef9a9a;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.stock-table {
+  margin-top: 1rem;
+}
+
+.stock-table .history-header,
+.stock-table .history-row {
+  grid-template-columns: 80px 55px 1fr 90px 90px;
+}
+
+.col-delta {
+  text-align: right;
+  font-weight: 700;
+}
+
+.col-balance {
+  text-align: right;
+  font-weight: 600;
+}
+
+.positive {
+  color: #2e7d32;
+}
+
+.negative {
+  color: #e53935;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge.purchase {
+  background: black;
+  color: white;
+}
+
+.badge.consumption {
+  background: #e53935;
+  color: white;
+}
+
+.badge.consumption.draft {
+  background: #ef9a9a;
+  color: white;
+}
+
+.draft-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #999;
+  text-transform: uppercase;
+  margin-left: 0.35rem;
+  letter-spacing: 0.05em;
+}
+
+.is-draft {
+  opacity: 0.7;
+}
+
+.draft-balance {
+  color: #999;
 }
 
 /* Merge section */
