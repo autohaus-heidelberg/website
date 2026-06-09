@@ -393,8 +393,15 @@ function getOrInitCrateState(bevId: number, unitsPerCrate: number, entry: Invent
 function recomputeConsumed(entry: InventoryEntry) {
   const before = parseFloat(entry.quantity_before || '0')
   const after = parseFloat(entry.quantity_after || '0')
-  entry.consumed_quantity = String(Math.max(0, before - after))
+  const consumed = Math.max(0, before - after)
+  entry.consumed_quantity = String(consumed)
   inventoryConflicts.delete(entry.beverage_item)
+  // If the user dialed consumption back to 0, the row is no longer "confirmed"
+  // (no user intent left). Without this the row would still pass the save
+  // filter and produce an empty AbrechnungsItem on the server.
+  if (consumed === 0) {
+    confirmedInventory.delete(entry.beverage_item)
+  }
 }
 
 function updateEntryFromCrates(entry: InventoryEntry, beverage: BeverageItem) {
@@ -412,20 +419,13 @@ const inventoryBySupplier = computed(() => {
     if (!bev.is_active) continue
     const group = bev.supplier_group || 'Sonstige'
     if (!groups[group]) groups[group] = []
-    let entry = inventory.value.find(i => i.beverage_item === bev.id)
-    if (!entry) {
-      // Fallback only — the server now ships virtual entries with chronologically
-      // correct quantity_before for every active drink. This branch protects
-      // against an offline/stale state where the server response was incomplete.
-      entry = {
-        accounting: accounting.value?.id || 0,
-        beverage_item: bev.id!,
-        quantity_before: '0',
-        quantity_after: '0',
-        consumed_quantity: '0',
-      }
-      inventory.value.push(entry)
-    }
+    const entry = inventory.value.find(i => i.beverage_item === bev.id)
+    // Server ships virtual inventory_entries (id=null, consumed=0) for every
+    // active drink, so this lookup should always hit. If it doesn't, the
+    // beverage is genuinely outside the current accounting context — skip
+    // rather than mutating `inventory.value` from inside a computed (which
+    // triggers re-evaluation cascades and leaves rows with no snapshot data).
+    if (!entry) continue
     getOrInitCrateState(bev.id!, bev.units_per_crate || 1, entry)
     groups[group].push({ beverage: bev, entry })
   }
@@ -850,11 +850,15 @@ async function saveAll(silent = false) {
           // consumed_quantity is the user's intent, kept stable against
           // parallel-tab corrections to quantity_before. The backend computes
           // chronological quantity_before / quantity_after for display.
+          // Normalize to 2 decimals before sending so a stepper-typed
+          // "3.333" doesn't round-trip differently than the server's
+          // quantized snapshot.
+          const consumed = parseFloat(inv.consumed_quantity ?? '0')
           return {
             id: inv.id,
             accounting: inv.accounting,
             beverage_item: inv.beverage_item,
-            consumed_quantity: inv.consumed_quantity ?? '0',
+            consumed_quantity: (isNaN(consumed) ? 0 : consumed).toFixed(2),
           }
         }),
       expenses: expenses.value
