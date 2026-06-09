@@ -28,6 +28,13 @@ const beverages = ref<BeverageItem[]>([])
 const isLoading = ref(false)
 const error = ref('')
 
+// "Bestandskorrektur"-Modus: erlaubt bei Kistengetränken zusätzlich Einzelflaschen-
+// Eingaben (z.B. "5 Kisten + 3 Flaschen"). Im normalen Einkauf gesperrt, da
+// Großhändler nie einzelne Flaschen verkaufen — würde fast nur Tippfehler bedeuten.
+// Use case: einmalige Bestandsaufnahme / Inventur-Korrektur außerhalb eines
+// regulären Wareneingangs.
+const inventoryCorrectionMode = ref(false)
+
 const activeBeverages = computed(() => beverages.value.filter(b => b.is_active))
 
 function beverageLabel(bev: BeverageItem): string {
@@ -297,6 +304,12 @@ function onBeverageChange(item: PurchaseItem, idx: number) {
   recalcItem(item, idx)
 }
 
+function recalcAllItems() {
+  // Wird beim Toggle des Bestandskorrektur-Modus aufgerufen, damit alle
+  // existierenden Zeilen ihre quantity / total_price neu berechnen.
+  ;(form.value.items ?? []).forEach((item, idx) => recalcItem(item, idx))
+}
+
 function recalcItem(item: PurchaseItem, idx: number) {
   const bev = beverages.value.find(b => b.id === item.beverage_item)
   const upc = bev?.units_per_crate || 1
@@ -306,10 +319,16 @@ function recalcItem(item: PurchaseItem, idx: number) {
     item.quantity = qty
     item.total_price = (parseFloat(item.unit_price || '0') * qty).toFixed(2)
   } else {
-    // Crate item: quantity = crates * upc, price per crate
+    // Crate item. Im Normalmodus: nur ganze Kisten. Im Bestandskorrektur-Modus
+    // dürfen zusätzlich Einzelflaschen mitgeführt werden (z.B. Anfangsbestand
+    // "6 Kisten + 4 Flaschen Faust Pils").
     const crates = itemCrates.value[idx] || 0
-    item.quantity = crates * upc
-    item.total_price = (parseFloat(item.unit_price || '0') * crates).toFixed(2)
+    const loose = inventoryCorrectionMode.value ? (itemLoose.value[idx] || 0) : 0
+    item.quantity = crates * upc + loose
+    // Preis: Kisten zum Kistenpreis, Einzelflaschen anteilig (unit_price / upc)
+    const cratePrice = parseFloat(item.unit_price || '0')
+    const bottlePrice = cratePrice / upc
+    item.total_price = (cratePrice * crates + bottlePrice * loose).toFixed(2)
   }
 }
 
@@ -439,7 +458,11 @@ onMounted(() => {
         label(for="notes") Notizen
         textarea#notes(v-model="form.notes" rows="3")
 
-    h3.section-title Positionen
+    .section-title-row
+      h3.section-title Positionen
+      label.correction-toggle(:title="'Erlaubt bei Kistengetränken zusätzlich Einzelflaschen-Eingaben. Nur für Bestandskorrektur / Anfangsbestand verwenden — Großhändler verkaufen keine einzelnen Flaschen.'")
+        input(type="checkbox" v-model="inventoryCorrectionMode" @change="recalcAllItems")
+        span 📦 Bestandskorrektur (Flaschen erlaubt)
     .scan-area
       label.btn-scan(:class="{ scanning: isScanning }")
         input(type="file" accept="image/*" capture="environment" @change="scanReceipt" hidden)
@@ -464,7 +487,7 @@ onMounted(() => {
           option(v-for="bev in activeBeverages" :key="bev.id" :value="bev.id")
             | {{ beverageLabel(bev) }}
         button.btn-new-bev(v-if="!item.beverage_item" type="button" @click="openNewBeverage(idx)") + Anlegen
-      //- Crate mode: show only crates input
+      //- Crate mode: crates input always; Flaschen nur im Bestandskorrektur-Modus
       template(v-if="!isSingleBottleRow(idx)")
         input.col-crates(
           v-model.number="itemCrates[idx]"
@@ -472,7 +495,15 @@ onMounted(() => {
           min="0"
           @input="recalcItem(item, idx)"
         )
-        span.col-loose.disabled-cell —
+        input.col-loose(
+          v-if="inventoryCorrectionMode"
+          v-model.number="itemLoose[idx]"
+          type="number"
+          min="0"
+          step="1"
+          @input="recalcItem(item, idx)"
+        )
+        span.col-loose.disabled-cell(v-else) —
       //- Single bottle mode: no crates, just bottles
       template(v-else)
         span.col-crates.disabled-cell —
@@ -631,6 +662,55 @@ h2 {
   margin: 2rem 0 1rem;
   border-bottom: 0.25rem solid black;
   padding-bottom: 0.5rem;
+}
+
+.section-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2rem 0 1rem;
+  border-bottom: 0.25rem solid black;
+  padding-bottom: 0.5rem;
+}
+
+.section-title-row .section-title {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.correction-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.3rem 0.6rem;
+  border: 0.15rem solid #ccc;
+  background: #fafafa;
+  transition: all 0.15s;
+}
+
+.correction-toggle:hover {
+  border-color: black;
+  color: black;
+}
+
+.correction-toggle:has(input:checked) {
+  background: #fff3cd;
+  border-color: #b78103;
+  color: #553a04;
+}
+
+.correction-toggle input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  cursor: pointer;
 }
 
 .scan-area {
