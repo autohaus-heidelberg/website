@@ -87,12 +87,17 @@ const chartData = computed(() => {
 })
 
 function fmtQty(val: number, upc: number): string {
-  if (upc <= 1) return val.toLocaleString('de-DE')
-  const crates = Math.floor(val / upc)
-  const loose = val % upc
-  if (crates === 0) return `${loose} Fl.`
-  if (loose === 0) return `${crates} Kisten`
-  return `${crates} Kisten + ${loose} Fl.`
+  // Wir brauchen Vorzeichen-konsistentes Formatieren — Math.floor(-3.4) = -4
+  // würde sonst "-4 Kisten + -8 Fl." produzieren statt "-3 Kisten - 8 Fl.".
+  // Lösung: Betrag formatieren, Vorzeichen vorneweg.
+  const abs = Math.abs(val)
+  const sign = val < 0 ? '−' : ''
+  if (upc <= 1) return sign + abs.toLocaleString('de-DE')
+  const crates = Math.floor(abs / upc)
+  const loose = Math.round((abs % upc) * 100) / 100
+  if (crates === 0) return `${sign}${loose} Fl.`
+  if (loose === 0) return `${sign}${crates} ${crates === 1 ? 'Kiste' : 'Kisten'}`
+  return `${sign}${crates} ${crates === 1 ? 'Kiste' : 'Kisten'} + ${loose} Fl.`
 }
 
 async function loadBeverage() {
@@ -401,10 +406,13 @@ onMounted(() => {
         .col-type
           span.badge(:class="[entry.type, { 'draft': entry.is_draft }]")
             | {{ entry.type === 'purchase' ? 'Kauf' : 'Event' }}
+          | &nbsp;
           span.draft-tag(v-if="entry.is_draft") Entwurf
         .col-label {{ entry.label }}
         .col-delta(:class="entry.delta > 0 ? 'positive' : 'negative'")
           | {{ entry.delta > 0 ? '+' : '' }}{{ fmtQty(entry.delta, stockHistory.units_per_crate) }}
+          //- fmtQty handhabt negatives Vorzeichen selbst (verwendet "−"),
+          //- für positive Werte hängen wir oben "+" davor.
         .col-balance(:class="{ 'draft-balance': entry.is_draft }") {{ fmtQty(entry.balance, stockHistory.units_per_crate) }}
 
   .merge-section(v-if="isEditing")
