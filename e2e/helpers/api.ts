@@ -86,12 +86,13 @@ export async function deleteAbrechnung(id: number) {
 }
 
 /**
- * Save inventory entries on an Abrechnung.
+ * Save inventory entries on an Abrechnung. The new chronological backend
+ * accepts only `consumed_quantity`; `quantity_before` / `quantity_after`
+ * are computed server-side and ignored on input.
  */
 export async function saveInventory(abrechnungId: number, entries: Array<{
   beverage_item: number
-  quantity_before: string | number
-  quantity_after: string | number
+  consumed_quantity: string | number
 }>) {
   return apiPut(`/api/abrechnungen/${abrechnungId}/`, {
     inventory_entries: entries,

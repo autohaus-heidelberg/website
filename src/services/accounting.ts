@@ -12,6 +12,7 @@ import type {
   StockEntry,
   GrantApplication,
   GrantSummary,
+  StockHistory,
 } from '@/types/accounting'
 
 // ── Seed-Daten: Standard-Getränke ──────────────────────────────
@@ -85,6 +86,10 @@ export const beverageService = {
 
   async merge(sourceId: number, targetId: number): Promise<{ message: string; target_id: number }> {
     return api.post(`/api/drinks/${sourceId}/merge/`, { target_id: targetId })
+  },
+
+  async getStockHistory(id: number): Promise<StockHistory> {
+    return api.get<StockHistory>(`/api/drinks/${id}/stock-history/`)
   },
 
   async seedIfEmpty(): Promise<void> {
@@ -190,8 +195,7 @@ export const accountingService = {
       entries.push({
         accounting: accountingId,
         beverage_item: entry.beverage_item || 0,
-        quantity_before: entry.quantity_before || '0',
-        quantity_after: entry.quantity_after || '0',
+        consumed_quantity: entry.consumed_quantity ?? '0',
       } as InventoryEntry)
     }
     const updated = await this.update(accountingId, { inventory_entries: entries })
@@ -202,8 +206,7 @@ export const accountingService = {
     const inventory_entries = entries.map(e => ({
       accounting: accountingId,
       beverage_item: e.beverage_item || 0,
-      quantity_before: e.quantity_before || '0',
-      quantity_after: e.quantity_after || '0',
+      consumed_quantity: e.consumed_quantity ?? '0',
     })) as InventoryEntry[]
     const updated = await this.update(accountingId, { inventory_entries })
     return updated.inventory_entries ?? []
