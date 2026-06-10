@@ -205,6 +205,7 @@ const externalDataLoaded = ref(false)
 const resultExpandRevenue = ref(false)
 const resultExpandInventory = ref(false)
 const resultExpandExpenses = ref(false)
+const resultExpandVat = ref(false)
 
 async function fetchAndApplyAllExternal() {
   if (!props.eventId) return
@@ -575,6 +576,59 @@ const result = computed(() => {
   return adjustedRevenue.value - totalExpenses.value - totalInventoryValue.value
 })
 
+// ── USt (Umsatzsteuer) ───────────────────────────────────────────
+// Output-USt (Erlöse): Eintritt 7%, Getränke 19%.
+// Berechnet aus den Brutto-Einnahmen (Netto + aus Kasse bezahlt).
+const vat7Entrance = computed(() => {
+  const gross = groupRevenueGross(REVENUE_GROUPS[1].sources)
+  return gross - gross / 1.07
+})
+
+const vat19Bar = computed(() => {
+  const gross = groupRevenueGross(REVENUE_GROUPS[0].sources)
+  return gross - gross / 1.19
+})
+
+const vatOutput = computed(() => {
+  return vat7Entrance.value + vat19Bar.value
+})
+
+// Vorsteuer (Eingänge): Wareneinsatz pauschal 19% (Getränke + Pfand),
+// Ausgaben gemäß ihrem vat_rate-Feld (none/7/19).
+const inputVatInventory = computed(() => {
+  // Wareneinsatz ist Brutto inkl. 19% — Vorsteuer = brutto * 19/119
+  return totalInventoryValue.value * 0.19 / 1.19
+})
+
+const inputVatExpenses = computed(() => {
+  return expenses.value.reduce((sum, e) => {
+    const amt = parseFloat(e.amount || '0')
+    if (!amt || !e.vat_rate || e.vat_rate === 'none') return sum
+    const rate = e.vat_rate === '7' ? 7 : e.vat_rate === '19' ? 19 : 0
+    if (!rate) return sum
+    return sum + amt * rate / (100 + rate)
+  }, 0)
+})
+
+const vatInput = computed(() => {
+  return inputVatInventory.value + inputVatExpenses.value
+})
+
+// Zahllast (oder Erstattung bei negativem Wert): Output-USt − Vorsteuer.
+const vatLiability = computed(() => {
+  return vatOutput.value - vatInput.value
+})
+
+// Backwards-compat alias used by existing template.
+const vatTotal = vatLiability
+
+// Wahres Ergebnis nach USt-Korrektur:
+//   echtes Netto-Ergebnis = result − (Output-USt − Vorsteuer)
+// Bei mehr Vorsteuer als Output-USt wird das Ergebnis besser (Erstattung).
+const resultAfterVat = computed(() => {
+  return result.value - vatLiability.value
+})
+
 function addSplit() {
   splits.value.push({
     accounting: accounting.value?.id || 0,
@@ -587,9 +641,13 @@ function removeSplit(index: number) {
   splits.value.splice(index, 1)
 }
 
+// Verteilungsbasis ist das Ergebnis nach USt — die USt-Zahllast gehört dem
+// Finanzamt und ist kein Gewinn der Beteiligten. Sie wird in der UI als
+// separate, nicht-editierbare „Finanzamt"-Position oben in der Splits-Tabelle
+// angezeigt; die %-Splits rechnen auf `resultAfterVat`.
 function splitAmount(split: AccountingSplit): number {
   const pct = parseFloat(split.share_percentage || '0')
-  return result.value * (pct / 100)
+  return resultAfterVat.value * (pct / 100)
 }
 
 const totalSplitPercentage = computed(() => {
@@ -597,7 +655,7 @@ const totalSplitPercentage = computed(() => {
 })
 
 const remainingAfterSplits = computed(() => {
-  return result.value - splits.value.reduce((sum, s) => sum + splitAmount(s), 0)
+  return resultAfterVat.value - splits.value.reduce((sum, s) => sum + splitAmount(s), 0)
 })
 
 // ── Grant computeds ──────────────────────────────────────────────
@@ -1390,20 +1448,36 @@ onUnmounted(() => {
         .section-title-row
           h3.section-title Zusammenfassung
         .summary-list
-          .summary-line
-            span.summary-label Getränkeverkauf
+          .summary-line.summary-expandable(@click="toggleSourceExpanded('beverage_detail')")
+            span.summary-label {{ expandedSources.has('beverage_detail') ? '▾' : '▸' }} Getränkeverkauf
             span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
+          template(v-if="expandedSources.has('beverage_detail')")
+            .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
+              span.summary-label Gezählt (netto)
+              span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
+            .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
+              span.summary-label + Aus Kasse bezahlt
+              span.summary-value + {{ formatCurrency(expensesFromSource('bar_cash')) }}
+            .summary-line.summary-sub.summary-highlight(v-if="expensesFromSource('bar_cash') > 0")
+              span.summary-label = Getränke brutto
+              span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources)) }}
+            .summary-line.summary-sub
+              span.summary-label davon USt (19%)
+              span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources) - groupRevenueGross(REVENUE_GROUPS[0].sources) / 1.19) }}
+            .summary-line.summary-sub
+              span.summary-label Netto (abzgl. 19% USt)
+              span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources) / 1.19) }}
           .summary-line.summary-expandable(@click="toggleSourceExpanded('entrance_detail')")
             span.summary-label {{ expandedSources.has('entrance_detail') ? '▾' : '▸' }} Eintritt
             span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
-          template(v-if="expensesFromSource('entrance_cash') > 0 && expandedSources.has('entrance_detail')")
-            .summary-line.summary-sub
+          template(v-if="expandedSources.has('entrance_detail')")
+            .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
               span.summary-label Gezählt (netto)
               span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
-            .summary-line.summary-sub
+            .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
               span.summary-label + Aus Kasse bezahlt (z.B. Honorare)
               span.summary-value + {{ formatCurrency(expensesFromSource('entrance_cash')) }}
-            .summary-line.summary-sub.summary-highlight
+            .summary-line.summary-sub.summary-highlight(v-if="expensesFromSource('entrance_cash') > 0")
               span.summary-label = Eintritt brutto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources)) }}
             .summary-line.summary-sub
@@ -1648,75 +1722,135 @@ onUnmounted(() => {
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
 
-      .result-summary
-        .result-row.expandable(@click="resultExpandRevenue = !resultExpandRevenue")
-          span {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen (gezählt)
-          strong {{ formatCurrency(totalRevenue) }}
-        template(v-if="resultExpandRevenue")
-          .result-row.detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
-            span {{ REVENUE_SOURCE_LABELS[rev.source] }}
-            span {{ formatCurrency(revenueNet(rev)) }}
-        .result-row.sub(v-if="expensesPaidFromRegister > 0")
-          span + Aus Kassen bezahlte Ausgaben
-          strong {{ formatCurrency(expensesPaidFromRegister) }}
-        .result-row
-          span = Tatsächliche Einnahmen
-          strong.positive {{ formatCurrency(adjustedRevenue) }}
-        .result-row.expandable(@click="resultExpandInventory = !resultExpandInventory")
-          span {{ resultExpandInventory ? '▼' : '▶' }} 📦 − Wareneinsatz
-          strong.negative {{ formatCurrency(totalInventoryValue) }}
-        template(v-if="resultExpandInventory")
-          .result-row.detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
-            span {{ group }}
-            span -{{ formatCurrency(groupInventoryValue(items)) }}
-        .result-row.expandable(@click="resultExpandExpenses = !resultExpandExpenses")
-          span {{ resultExpandExpenses ? '▼' : '▶' }} 🧾 − Ausgaben
-          strong.negative {{ formatCurrency(totalExpenses) }}
-        template(v-if="resultExpandExpenses")
-          .result-row.detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
-            span {{ exp.description || '(ohne Beschreibung)' }}
-            span {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-        .result-row.result-total
-          span 🏆 Ergebnis
-          strong(:class="result >= 0 ? 'positive' : 'negative'")
-            | {{ formatCurrency(result) }}
+      //- Block 1: Wirtschaftliches Ergebnis ────────────────────
+      .section
+        .section-title-row
+          h3.section-title 📊 Wirtschaftliches Ergebnis
+        .result-summary
+          .result-row.expandable(@click="resultExpandRevenue = !resultExpandRevenue")
+            span {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen (gezählt)
+            strong {{ formatCurrency(totalRevenue) }}
+          template(v-if="resultExpandRevenue")
+            .result-row.detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
+              span {{ REVENUE_SOURCE_LABELS[rev.source] }}
+              span {{ formatCurrency(revenueNet(rev)) }}
+          .result-row.sub(v-if="expensesPaidFromRegister > 0")
+            span + Aus Kassen bezahlte Ausgaben
+            strong {{ formatCurrency(expensesPaidFromRegister) }}
+          .result-row.intermediate(v-if="expensesPaidFromRegister > 0")
+            span = Tatsächliche Einnahmen
+            strong.positive {{ formatCurrency(adjustedRevenue) }}
+          .result-row.expandable(@click="resultExpandInventory = !resultExpandInventory")
+            span {{ resultExpandInventory ? '▼' : '▶' }} 📦 − Wareneinsatz
+            strong.negative {{ formatCurrency(totalInventoryValue) }}
+          template(v-if="resultExpandInventory")
+            .result-row.detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
+              span {{ group }}
+              span -{{ formatCurrency(groupInventoryValue(items)) }}
+          .result-row.expandable(@click="resultExpandExpenses = !resultExpandExpenses")
+            span {{ resultExpandExpenses ? '▼' : '▶' }} 🧾 − Ausgaben
+            strong.negative {{ formatCurrency(totalExpenses) }}
+          template(v-if="resultExpandExpenses")
+            .result-row.detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
+              span {{ exp.description || '(ohne Beschreibung)' }}
+              span {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+          .result-row.result-total
+            span 🏆 Ergebnis (vor USt)
+            strong(:class="result >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(result) }}
 
-      h3.section-title 🤝 Gewinnverteilung
-      .splits-table
-        .split-row(v-for="(split, index) in splits" :key="index")
-          .col-name
-            input.text-input(
-              v-model="split.participant_name"
-              type="text"
-              placeholder="Name"
-            )
-          .col-pct
-            input.amount-input(
-              v-model="split.share_percentage"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              placeholder="0"
-            )
-            span.unit %
-          .col-amount {{ formatCurrency(splitAmount(split)) }}
-          .col-action
-            button.btn-remove(@click="removeSplit(index)") ×
+      //- Block 2: Umsatzsteuer ─────────────────────────────────
+      .section(v-if="vatOutput !== 0 || vatInput !== 0")
+        .section-title-row
+          h3.section-title 🧮 Umsatzsteuer
+        .vat-card
+          .vat-grid
+            .vat-col
+              .vat-col-header Output-USt (an Finanzamt)
+              .vat-col-row(v-show="vat7Entrance !== 0")
+                span 7% auf Eintritt
+                span {{ formatCurrency(vat7Entrance) }}
+              .vat-col-row(v-show="vat19Bar !== 0")
+                span 19% auf Getränkeverkauf
+                span {{ formatCurrency(vat19Bar) }}
+              .vat-col-total
+                span Σ Output-USt
+                strong {{ formatCurrency(vatOutput) }}
+            .vat-col
+              .vat-col-header − Vorsteuer (vom Finanzamt)
+              .vat-col-row(v-show="inputVatInventory !== 0")
+                span 19% Wareneinsatz
+                span -{{ formatCurrency(inputVatInventory) }}
+              .vat-col-row(v-show="inputVatExpenses !== 0")
+                span Ausgaben (lt. Beleg)
+                span -{{ formatCurrency(inputVatExpenses) }}
+              .vat-col-row(v-show="vatInput === 0")
+                span.vat-empty Keine Vorsteuer (USt-Sätze auf Ausgaben pflegen)
+                span
+              .vat-col-total
+                span Σ Vorsteuer
+                strong -{{ formatCurrency(vatInput) }}
+          .vat-result(:class="{ 'liability': vatLiability >= 0, 'refund': vatLiability < 0 }")
+            span.vat-result-label {{ vatLiability >= 0 ? 'USt-Zahllast (an Finanzamt)' : 'USt-Erstattung (vom Finanzamt)' }}
+            strong.vat-result-value {{ formatCurrency(Math.abs(vatLiability)) }}
+          p.vat-note Hinweis: Vorsteuer-Abzug nur möglich, wenn Belege ordnungsgemäß sind und Verein vorsteuerabzugsberechtigt ist (wirtschaftlicher Geschäftsbetrieb).
 
-      button.btn-add(@click="addSplit") + Anteil hinzufügen
+      //- Block 3: Endergebnis nach USt ─────────────────────────
+      .final-result(v-if="vatLiability !== 0")
+        .final-result-label 💼 Verfügbares Ergebnis (nach USt)
+        .final-result-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
 
-      .splits-summary(v-if="splits.length")
-        .result-row
-          span Verteilt ({{ totalSplitPercentage.toFixed(1) }}%)
-          strong {{ formatCurrency(result - remainingAfterSplits) }}
-        .result-row.result-total
-          span Verbleibend
-          strong(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
-            | {{ formatCurrency(remainingAfterSplits) }}
+      //- Block 4: Gewinnverteilung ─────────────────────────────
+      .section
+        .section-title-row
+          h3.section-title 🤝 Gewinnverteilung
+        p.splits-note(v-if="vatLiability !== 0")
+          | Verteilungsbasis ist das Ergebnis nach USt ({{ formatCurrency(resultAfterVat) }}). Die USt-Zahllast ist als feste Position für das Finanzamt reserviert.
+        .splits-table
+          //- Fixed pseudo-split for tax authority — non-editable, automatic from vatLiability.
+          .split-row.split-fixed(v-if="vatLiability > 0")
+            .col-name
+              span.fixed-name 🏛️ Finanzamt (USt-Zahllast)
+            .col-pct
+              span.fixed-pct —
+            .col-amount {{ formatCurrency(vatLiability) }}
+            .col-action
+          .split-row(v-for="(split, index) in splits" :key="index")
+            .col-name
+              input.text-input(
+                v-model="split.participant_name"
+                type="text"
+                placeholder="Name"
+              )
+            .col-pct
+              input.amount-input(
+                v-model="split.share_percentage"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="0"
+              )
+              span.unit %
+            .col-amount {{ formatCurrency(splitAmount(split)) }}
+            .col-action
+              button.btn-remove(@click="removeSplit(index)") ×
 
-      .notes-section
-        h3.section-title Notizen
+        button.btn-add(@click="addSplit") + Anteil hinzufügen
+
+        .splits-summary(v-if="splits.length")
+          .result-row
+            span Verteilt ({{ totalSplitPercentage.toFixed(1) }}%)
+            strong {{ formatCurrency(resultAfterVat - remainingAfterSplits) }}
+          .result-row.result-total
+            span Verbleibend
+            strong(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(remainingAfterSplits) }}
+
+      //- Block 5: Notizen ──────────────────────────────────────
+      .section
+        .section-title-row
+          h3.section-title 📝 Notizen
         textarea.notes-input(
           v-model="accounting.notes"
           placeholder="Notizen zu dieser Abrechnung..."
@@ -3018,6 +3152,7 @@ h2 {
 
 .splits-table {
   border: 0.25rem solid black;
+  border-top: none;
   margin-bottom: 1rem;
 }
 
@@ -3036,6 +3171,40 @@ h2 {
 
 .split-row:last-child {
   border-bottom: none;
+}
+
+/* Fixed (non-editable) split row for tax authority. */
+.split-row.split-fixed {
+  background: #f0f4f8;
+  border-bottom: 0.2rem solid black;
+  font-weight: 700;
+}
+.split-row.split-fixed:nth-child(even) {
+  background: #f0f4f8;
+}
+.split-row.split-fixed .fixed-name {
+  font-weight: 700;
+  color: #333;
+}
+.split-row.split-fixed .fixed-pct {
+  color: #888;
+  font-size: 0.85rem;
+  text-align: center;
+  display: block;
+}
+
+/* Hinweis unter dem Section-Title — visuell als verbundener Streifen. */
+.splits-note {
+  font-size: 0.8rem;
+  color: #555;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  font-style: italic;
+  background: #f9f9f9;
+  border: 0.25rem solid black;
+  border-top: none;
+  border-bottom: none;
+  line-height: 1.4;
 }
 
 /* ── Inputs ── */
@@ -3443,8 +3612,9 @@ h2 {
 
 .result-summary {
   border: 0.25rem solid black;
+  border-top: none;
   margin-bottom: 2rem;
-  margin-top: 1.5rem;
+  margin-top: 0;
 }
 
 .result-row {
@@ -3498,6 +3668,178 @@ h2 {
 
 .notes-section {
   margin-top: 2rem;
+}
+
+/* Intermediate result row inside .result-summary (not bold black border). */
+.result-row.intermediate {
+  background: #f5f5f5;
+  font-weight: 700;
+  border-bottom: 1px solid black;
+}
+
+/* ── USt-Karte (zwei-Spalten) ─────────────────────────── */
+.vat-card {
+  border: 0.25rem solid black;
+  border-top: none;
+}
+
+.vat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.vat-col {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem;
+}
+
+.vat-col + .vat-col {
+  border-left: 0.15rem solid black;
+}
+
+.vat-col-header {
+  font-weight: 900;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.vat-col-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vat-col-row .vat-empty {
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+}
+
+.vat-col-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 0.2rem solid black;
+  font-weight: 700;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vat-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-top: 0.25rem solid black;
+  font-size: 1.05rem;
+  font-weight: 900;
+}
+
+.vat-result.liability {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.vat-result.refund {
+  background: #d4edda;
+  color: #155724;
+}
+
+.vat-result-label {
+  font-weight: 700;
+}
+
+.vat-result-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.vat-note {
+  margin: 0;
+  padding: 0.6rem 1rem;
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
+  border-top: 1px dashed #ccc;
+  background: #fafafa;
+  line-height: 1.4;
+}
+
+/* ── Endergebnis nach USt (prominenter Block) ─────────── */
+.final-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  border: 0.3rem solid black;
+  background: white;
+  color: black;
+}
+
+.final-result-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.final-result-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.final-result-value.positive {
+  color: #2e7d32;
+}
+
+.final-result-value.negative {
+  color: #c00;
+}
+
+/* Total-Zeilen im Result-Tab: weiß mit dicker Top-Border statt schwarz,
+   damit nicht mit den schwarzen Section-Headern konkurriert. */
+.result-summary .result-row.result-total,
+.splits-summary .result-row.result-total {
+  background: white;
+  color: black;
+  border-top: 0.3rem solid black;
+  border-bottom: none;
+  font-size: 1.15rem;
+  font-weight: 900;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.result-summary .result-row.result-total .positive,
+.splits-summary .result-row.result-total .positive {
+  color: #2e7d32;
+}
+
+.result-summary .result-row.result-total .negative,
+.splits-summary .result-row.result-total .negative {
+  color: #c00;
+}
+
+@media (max-width: 700px) {
+  .vat-grid {
+    grid-template-columns: 1fr;
+  }
+  .vat-col + .vat-col {
+    border-left: none;
+    border-top: 0.15rem solid black;
+  }
+  .final-result {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 
 /* ── Responsive ── */
@@ -3556,34 +3898,29 @@ h2 {
 
 .grant-sub-tabs {
   display: flex;
-  gap: 0;
-  border: 0.25rem solid black;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0 0;
 }
 
 .grant-sub-tab {
-  flex: 1;
-  padding: 0.6rem 1rem;
-  background: white;
-  color: black;
+  padding: 0.5rem 1.25rem;
   border: none;
-  border-right: 0.25rem solid black;
+  background: #f0f0f0;
+  color: black;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 0.9rem;
-  transition: all 0.15s;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.2s;
 }
 
-.grant-sub-tab:last-child {
-  border-right: none;
+.grant-sub-tab:hover {
+  background: #ddd;
 }
 
 .grant-sub-tab.active {
   background: black;
   color: white;
-}
-
-.grant-sub-tab:not(.active):hover {
-  background: #f0f0f0;
 }
 
 .event-info {
@@ -3917,5 +4254,136 @@ h2 {
   text-align: center;
   padding: 2rem;
   opacity: 0.6;
+}
+
+/* ── Einheitliche Typografie über alle Abrechnungs-Tabs ─────────────
+   Eine zentrale Skala mit nur 5 Schriftgrößen + 3 Gewichten.
+   Diese Block überschreibt punktuell ältere, inkonsistente Werte
+   in den oben definierten Selektoren.
+   Skala (1rem ≈ 16px):
+     --fs-xs   0.75rem  Hilfstexte, Footnotes, Hinweise, Indikatoren
+     --fs-sm   0.85rem  Sub-Rows, Details, Tabellen-Header
+     --fs-base 0.95rem  Standard-Inhaltszeilen, Inputs, Selects
+     --fs-md   1.05rem  Total/Summen-Zeilen, Section-Titles
+     --fs-xl   1.5rem   Final-Result, große Akzent-Beträge
+*/
+.accounting-view {
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.85rem;
+  --fs-base: 0.95rem;
+  --fs-md: 1.05rem;
+  --fs-xl: 1.5rem;
+}
+
+/* Section-Titles (Container-Header) — überall gleich groß. */
+.accounting-view .section-title {
+  font-size: var(--fs-md);
+}
+
+/* Tabellen-Header (Spalten-Beschriftungen). */
+.accounting-view .revenue-header,
+.accounting-view .inventory-header,
+.accounting-view .expense-header,
+.accounting-view .vat-col-header {
+  font-size: var(--fs-sm);
+  font-weight: 900;
+}
+
+/* Standard-Inhaltszeilen / -Inputs. */
+.accounting-view .revenue-row,
+.accounting-view .inventory-row,
+.accounting-view .expense-row,
+.accounting-view .split-row,
+.accounting-view .detail-row,
+.accounting-view .summary-line,
+.accounting-view .result-row,
+.accounting-view .group-total,
+.accounting-view .group-detail,
+.accounting-view .grand-total,
+.accounting-view .text-input,
+.accounting-view .amount-input,
+.accounting-view .qty-input,
+.accounting-view .select-input,
+.accounting-view .col-source,
+.accounting-view .col-name,
+.accounting-view .col-amount,
+.accounting-view .col-pct,
+.accounting-view .col-desc,
+.accounting-view .col-inv-name,
+.accounting-view .col-inv-amount {
+  font-size: var(--fs-base);
+}
+
+/* Sub-Rows, Details, kleine Hinweise auf Reihen-Ebene. */
+.accounting-view .summary-line.summary-sub,
+.accounting-view .result-row.detail,
+.accounting-view .revenue-row.sub-row,
+.accounting-view .vat-col-row,
+.accounting-view .col-inv-num,
+.accounting-view .col-inv-info,
+.accounting-view .bev-info {
+  font-size: var(--fs-sm);
+}
+
+/* Total-/Summen-Zeilen — durch Größe + Border, nicht durch Schwarz. */
+.accounting-view .summary-line.summary-total,
+.accounting-view .summary-row.summary-total,
+.accounting-view .vat-col-total,
+.accounting-view .vat-result,
+.accounting-view .result-row.intermediate,
+.accounting-view .result-summary .result-row.result-total,
+.accounting-view .splits-summary .result-row.result-total,
+.accounting-view .final-result-label,
+.accounting-view .grant-summary .result-row.result-total,
+.accounting-view .grant-summary .result-row,
+.accounting-view .expense-row.expense-total,
+.accounting-view .detail-row.detail-total {
+  font-size: var(--fs-md);
+}
+
+/* Hilfstexte, Footnotes, kleine Hinweise. */
+.accounting-view .footnote,
+.accounting-view .footnote p,
+.accounting-view .footnote li,
+.accounting-view .vat-note,
+.accounting-view .max-note,
+.accounting-view .splits-note,
+.accounting-view .auto-save-indicator,
+.accounting-view .entry-price-hint,
+.accounting-view .vat-empty,
+.accounting-view .external-data-summary,
+.accounting-view .external-data-status,
+.accounting-view .pretix-error,
+.accounting-view .pretix-warning,
+.accounting-view .save-success,
+.accounting-view .stock-changed-warning,
+.accounting-view .inv-progress,
+.accounting-view .inv-card-info,
+.accounting-view .stock-warning {
+  font-size: var(--fs-xs);
+}
+
+/* Sehr kleine deeply-nested Details (z.B. PayPal-Transaktionszeilen). */
+.accounting-view .revenue-row.sub-detail {
+  font-size: var(--fs-xs);
+}
+
+/* Großer Akzent-Betrag im Endergebnis. */
+.accounting-view .final-result-value {
+  font-size: var(--fs-xl);
+}
+
+/* Mobile-Steppertasten dürfen größer bleiben — User-tap-target. */
+.accounting-view .stepper-value {
+  font-size: var(--fs-md);
+}
+
+/* Konsistente Schrift-Familie überall (erbt vom App-Root,
+   stellt aber sicher dass keine browser-default-fonts in Inputs erscheinen). */
+.accounting-view input,
+.accounting-view select,
+.accounting-view textarea,
+.accounting-view button {
+  font-family: inherit;
 }
 </style>
