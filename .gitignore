@@ -29,3 +29,4 @@ coverage
 
 *.tsbuildinfo
 .env.backup
+test-results/.last-run.json
