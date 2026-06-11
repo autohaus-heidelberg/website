@@ -28,6 +28,7 @@ import {
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
+import { useAuthStore } from '@/stores/auth'
 
 
 const props = defineProps<{
@@ -35,6 +36,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const authStore = useAuthStore()
 const activeTab = ref('cashcount')
 const showOverflow = ref(false)
 const expandedSources = ref<Set<string>>(new Set())
@@ -807,7 +809,11 @@ async function loadData() {
     }
 
     // Default splits: Bernd 33%, Carousel e.V. 67%
-    if (accounting.value && splits.value.length === 0) {
+    // Only initialize for treasurers — non-treasurers receive splits=[] from
+    // the backend and we must not seed default splits that would later be
+    // sent on save (which the backend would silently drop, but it's cleaner
+    // not to populate them at all).
+    if (accounting.value && splits.value.length === 0 && authStore.isTreasurer) {
       splits.value.push(
         {
           accounting: accounting.value?.id || 0,
@@ -897,8 +903,11 @@ async function saveAll(silent = false) {
   try {
     const accId = accounting.value.id
 
-    // Build all nested data and save in one PUT
-    const saved = await accountingService.update(accId, {
+    // Build all nested data and save in one PUT.
+    // Splits are only sent for treasurers — for everyone else we omit the
+    // field entirely so the backend doesn't see splits=[] (which the backend
+    // already ignores for non-treasurers, but omitting is cleaner).
+    const payload: any = {
       notes: accounting.value.notes,
       revenues: revenues.value
         .filter(rev => rev.id || parseFloat(rev.total || '0') !== 0 || parseFloat(rev.change_money || '0') !== 0 || parseFloat(rev.fees || '0') !== 0),
@@ -922,9 +931,11 @@ async function saveAll(silent = false) {
       expenses: expenses.value
         .filter(exp => exp.description)
         .map(exp => ({ ...exp, amount: exp.amount || '0' })),
-      splits: splits.value
-        .filter(split => split.participant_name || split.id),
-    })
+    }
+    if (authStore.isTreasurer) {
+      payload.splits = splits.value.filter(split => split.participant_name || split.id)
+    }
+    const saved = await accountingService.update(accId, payload)
 
     // Sync from backend response.
     //
@@ -1801,7 +1812,9 @@ onUnmounted(() => {
         .final-result-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
 
       //- Block 4: Gewinnverteilung ─────────────────────────────
-      .section
+      //- Nur für Treasurer sichtbar — Backend liefert splits=[] für andere
+      //- und ignoriert eingehende splits stillschweigend.
+      .section(v-if="authStore.isTreasurer")
         .section-title-row
           h3.section-title 🤝 Gewinnverteilung
         p.splits-note(v-if="vatLiability !== 0")

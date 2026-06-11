@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { settingsService } from '@/services'
 import { eventService } from '@/services/events'
 import { taxExportService, type TaxSummaryResponse } from '@/services/accounting'
 import { useEventSource } from '@/composables/useEventSource'
+import { useAuthStore } from '@/stores/auth'
 import EventSyncLog from '@/components/admin/EventSyncLog.vue'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 
 // State
-const initialTab = route.query.tab === 'euer' ? 'euer' : route.query.tab === 'sync' ? 'sync' : 'helferpad'
+// Honor ?tab= query param, but fall back to 'helferpad' if a non-treasurer
+// asks for the EÜR tab (e.g. shared link). The tab is hidden + the tax_export
+// endpoint refuses non-treasurers, so landing on it would just show empty.
+const requestedTab = route.query.tab
+const initialTab =
+  requestedTab === 'euer'
+    ? (authStore.isTreasurer ? 'euer' : 'helferpad')
+    : requestedTab === 'sync' ? 'sync' : 'helferpad'
 const activeTab = ref(initialTab)
 const helferpadContent = ref('')
 const settingId = ref<number>()
@@ -58,6 +67,38 @@ async function downloadCsv() {
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+}
+
+function formatPercent(value: number): string {
+  return value.toLocaleString('de-DE', { style: 'percent', maximumFractionDigits: 1 })
+}
+
+const profitDistribution = computed(() => {
+  if (!taxSummary.value) return []
+  const spheres = taxSummary.value.spheres
+  const totalResult = Object.values(spheres).reduce((s, v) => s + v.result, 0)
+  return Object.entries(spheres)
+    .filter(([, v]) => v.income || v.expense)
+    .map(([key, v]) => ({
+      key,
+      label: v.label,
+      result: v.result,
+      share: totalResult !== 0 ? v.result / totalResult : 0,
+    }))
+    .sort((a, b) => b.result - a.result)
+})
+
+const participantTotal = computed(() => {
+  if (!taxSummary.value?.participants) return 0
+  return taxSummary.value.participants.reduce((s, p) => s + p.amount, 0)
+})
+
+function participantBarWidth(amount: number): number {
+  const max = taxSummary.value?.participants
+    ? Math.max(...taxSummary.value.participants.map(p => Math.abs(p.amount)))
+    : 0
+  if (max === 0) return 0
+  return Math.min((Math.abs(amount) / max) * 100, 100)
 }
 
 // Load helferpad setting on mount
@@ -169,6 +210,7 @@ function handleSyncFromGit() {
       )
         | Helferpad
       button.tab(
+        v-if="authStore.isTreasurer"
         :class="{ active: activeTab === 'euer' }"
         @click="activeTab = 'euer'; if (!taxSummary) loadTaxSummary()"
       )
@@ -214,7 +256,7 @@ function handleSyncFromGit() {
         )
           | {{ isSaving ? 'Speichern...' : 'Änderungen speichern' }}
 
-  .tab-content(v-show="activeTab === 'euer'")
+  .tab-content(v-if="authStore.isTreasurer" v-show="activeTab === 'euer'")
     .euer-header
       select.year-select(v-model="selectedYear" @change="loadTaxSummary")
         option(v-for="y in years" :key="y" :value="y") {{ y }}
@@ -264,6 +306,94 @@ function handleSyncFromGit() {
           .vat-row.total
             span.label Zahllast
             span.value {{ formatCurrency(taxSummary.vat.zahllast) }}
+
+      .profit-section
+        h3 Gewinnverteilung
+        .profit-table
+          .profit-row.profit-header
+            span.col-label Sphäre
+            span.col-result Ergebnis
+            span.col-bar
+            span.col-share Anteil
+          .profit-row(
+            v-for="item in profitDistribution"
+            :key="item.key"
+            :class="item.result >= 0 ? 'positive-row' : 'negative-row'"
+          )
+            span.col-label {{ item.label }}
+            span.col-result(:class="item.result >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(item.result) }}
+            span.col-bar
+              .bar-track
+                .bar-fill(
+                  :style="{ width: Math.min(Math.abs(item.share) * 100, 100) + '%' }"
+                  :class="item.result >= 0 ? 'bar-positive' : 'bar-negative'"
+                )
+            span.col-share {{ formatPercent(item.share) }}
+          .profit-row.profit-total
+            span.col-label Gesamt
+            span.col-result(
+              :class="Object.values(taxSummary.spheres).reduce((s, v) => s + v.result, 0) >= 0 ? 'positive' : 'negative'"
+            )
+              | {{ formatCurrency(Object.values(taxSummary.spheres).reduce((s, v) => s + v.result, 0)) }}
+            span.col-bar
+            span.col-share
+
+      .events-section
+        h3 Ergebnis nach Event
+        .events-table
+          .event-row.event-header
+            span.col-date Datum
+            span.col-event Event
+            span.col-income Einnahmen
+            span.col-expense Ausgaben
+            span.col-result Ergebnis
+          .event-row(
+            v-for="item in taxSummary.events"
+            :key="item.event || '_purchases'"
+          )
+            span.col-date {{ item.date ? new Date(item.date).toLocaleDateString('de-DE') : '–' }}
+            span.col-event {{ item.event || 'Sonstige Einkäufe' }}
+            span.col-income {{ formatCurrency(item.income) }}
+            span.col-expense {{ formatCurrency(item.expense) }}
+            span.col-result(:class="item.result >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(item.result) }}
+          .event-row.event-sum(v-if="taxSummary.events.length")
+            span.col-date
+            span.col-event Gesamt
+            span.col-income {{ formatCurrency(taxSummary.events.reduce((s, e) => s + e.income, 0)) }}
+            span.col-expense {{ formatCurrency(taxSummary.events.reduce((s, e) => s + e.expense, 0)) }}
+            span.col-result(:class="taxSummary.events.reduce((s, e) => s + e.result, 0) >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(taxSummary.events.reduce((s, e) => s + e.result, 0)) }}
+
+      .participants-section(v-if="taxSummary.participants && taxSummary.participants.length")
+        h3 Gewinnverteilung nach Teilnehmer
+        .participants-table
+          .participant-row.participant-header
+            span.col-name Teilnehmer
+            span.col-amount Betrag
+            span.col-pbar
+            span.col-pshare Anteil
+          .participant-row(
+            v-for="item in taxSummary.participants"
+            :key="item.participant"
+          )
+            span.col-name {{ item.participant }}
+            span.col-amount(:class="item.amount >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(item.amount) }}
+            span.col-pbar
+              .bar-track
+                .bar-fill(
+                  :style="{ width: participantBarWidth(item.amount) + '%' }"
+                  :class="item.amount >= 0 ? 'bar-positive' : 'bar-negative'"
+                )
+            span.col-pshare {{ formatPercent(participantTotal !== 0 ? item.amount / participantTotal : 0) }}
+          .participant-row.participant-sum
+            span.col-name Gesamt
+            span.col-amount(:class="participantTotal >= 0 ? 'positive' : 'negative'")
+              | {{ formatCurrency(participantTotal) }}
+            span.col-pbar
+            span.col-pshare
 
     .empty(v-else) Keine Daten für {{ selectedYear }}
 
@@ -640,4 +770,156 @@ textarea:disabled {
 .sync-result {
   margin: 1rem 0;
 }
+
+/* ── Gewinnverteilung ── */
+.profit-section {
+  margin-bottom: 2rem;
+}
+
+.profit-section h3 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  font-weight: 700;
+}
+
+.profit-table {
+  border: 0.2rem solid black;
+  max-width: 640px;
+}
+
+.profit-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 120px 70px;
+  padding: 0.4rem 1rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profit-header {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 0.2rem solid black;
+  background: #f5f5f5;
+}
+
+.profit-total {
+  border-top: 0.2rem solid black;
+  font-weight: 800;
+}
+
+.col-result { text-align: right; font-variant-numeric: tabular-nums; }
+.col-share { text-align: right; font-size: 0.85rem; color: #555; }
+
+.bar-track {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.bar-positive { background: #16a34a; }
+.bar-negative { background: #dc2626; }
+
+/* ── Ergebnis nach Event ── */
+.events-section {
+  margin-bottom: 2rem;
+}
+
+.events-section h3 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  font-weight: 700;
+}
+
+.events-table {
+  border: 0.2rem solid black;
+  overflow-x: auto;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 130px 130px 130px;
+  padding: 0.4rem 1rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.event-row:last-child { border-bottom: none; }
+
+.event-header {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 0.2rem solid black;
+  background: #f5f5f5;
+}
+
+.col-date { font-size: 0.85rem; color: #555; }
+.col-income, .col-expense { text-align: right; font-variant-numeric: tabular-nums; color: #555; font-size: 0.9rem; }
+.col-result { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+@media (max-width: 640px) {
+  .profit-row { grid-template-columns: 1fr 110px 0 60px; }
+  .col-bar { display: none; }
+  .event-row { grid-template-columns: 80px 1fr 100px; }
+  .col-income, .col-expense { display: none; }
+}
+
+/* ── Summenzeilen ── */
+.profit-row.profit-total,
+.event-row.event-sum,
+.participant-row.participant-sum {
+  border-top: 0.2rem solid black;
+  font-weight: 800;
+}
+
+/* ── Teilnehmer-Tabelle ── */
+.participants-section {
+  margin-bottom: 2rem;
+}
+
+.participants-section h3 {
+  font-size: 1.25rem;
+  margin: 0 0 1rem;
+  font-weight: 700;
+}
+
+.participants-table {
+  border: 0.2rem solid black;
+  max-width: 560px;
+}
+
+.participant-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 120px 70px;
+  padding: 0.4rem 1rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.participant-row:last-child { border-bottom: none; }
+
+.participant-header {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 0.2rem solid black;
+  background: #f5f5f5;
+}
+
+.col-name { font-weight: 600; }
+.col-amount { text-align: right; font-variant-numeric: tabular-nums; }
+.col-pshare { text-align: right; font-size: 0.85rem; color: #555; }
+.col-pbar .bar-track { height: 8px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
 </style>

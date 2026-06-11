@@ -14,6 +14,8 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
   const hasWebsiteGroup = computed(() => user.value?.groups.includes('website') ?? false)
   const canManage = computed(() => isAuthenticated.value && hasWebsiteGroup.value)
+  // Treasurer = darf Gewinnverteilung sehen/bearbeiten (Untermenge der Veranstalter)
+  const isTreasurer = computed(() => user.value?.groups.includes('treasurer') ?? false)
 
   // Actions
   async function login(credentials: LoginCredentials): Promise<boolean> {
@@ -96,6 +98,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     hasWebsiteGroup,
     canManage,
+    isTreasurer,
 
     // Actions
     login,
