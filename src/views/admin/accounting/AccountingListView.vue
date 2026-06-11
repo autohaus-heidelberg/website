@@ -79,7 +79,11 @@ onMounted(() => {
     .event-card(v-for="event in filteredEvents" :key="event.id")
       .event-header
         .event-date {{ formatDate(event.date) }}
-        span.status-badge(v-if="event.accounting") ✓ Abrechnung
+        span.status-badge(
+          v-if="event.accounting"
+          :class="event.accounting.status === 'final' ? 'status-final' : 'status-draft'"
+        )
+          | {{ event.accounting.status === 'final' ? '✓ Abgeschlossen' : 'Entwurf' }}
 
       h3.event-title {{ event.title }}
 
@@ -193,27 +197,35 @@ h2 {
 }
 
 .status-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 0.125rem solid transparent;
+  white-space: nowrap;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .status-none {
   background: white;
   color: black;
-  border: 0.15rem solid black;
+  border-color: black;
 }
 
 .status-draft {
-  background: black;
-  color: white;
+  background: white;
+  color: #555;
+  border-color: #999;
 }
 
 .status-final {
-  background: black;
+  background: #16a34a;
   color: white;
-  text-decoration: underline;
+  border-color: #16a34a;
 }
 
 .event-title {

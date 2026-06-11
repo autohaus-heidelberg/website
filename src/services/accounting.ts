@@ -133,6 +133,10 @@ export const accountingService = {
     await api.delete(`/api/abrechnungen/${id}/`)
   },
 
+  async setStatus(id: number, status: 'draft' | 'final'): Promise<{ id: number; status: string }> {
+    return api.post(`/api/abrechnungen/${id}/set-status/`, { status })
+  },
+
   async getSummary(_id: number): Promise<AccountingSummary> {
     // Summary is computed on the frontend from loaded data
     return {

@@ -35,7 +35,8 @@ const router = useRouter()
 const route = useRoute()
 const isEditing = ref(!!props.id)
 const isPublished = computed(() => publishedEvents.some((e: any) => e.id === props.id))
-const isAccounted = ref(false)
+const accountingStatus = ref<'none' | 'draft' | 'final'>('none')
+const accountingViewRef = ref<InstanceType<typeof AccountingView> | null>(null)
 const activeSection = ref<'event' | 'accounting'>('event')
 const activeTab = ref('details')
 
@@ -397,7 +398,8 @@ onMounted(async () => {
   // Check accounting status
   if (props.id) {
     const acc = await accountingService.getByEvent(props.id)
-    isAccounted.value = !!acc && !!acc.revenues && acc.revenues.length > 0
+    if (!acc) accountingStatus.value = 'none'
+    else accountingStatus.value = acc.status === 'final' ? 'final' : 'draft'
   }
 
   // Check for tab query parameter and set active section/tab
@@ -500,21 +502,32 @@ function closeDeployModal() {
         template(v-if="form.fee")  · VVK {{ form.fee }}€
         template(v-if="form.feeAk")  / AK {{ form.feeAk }}€
     .form-header-right
-      button.status-badge.published.clickable(
+      button.status-badge.badge-live.clickable(
         v-if="isEditing && isPublished"
         @click="handlePublish"
         :disabled="isDeploying"
       )
         span.badge-default ✓ Live
         span.badge-hover ✗ Entfernen
-      button.status-badge.draft.clickable(
+      button.status-badge.badge-draft.clickable(
         v-else-if="isEditing"
         @click="handlePublish"
         :disabled="isDeploying"
       )
         span.badge-default Veröffentlichen
         span.badge-hover ▶ Veröffentlichen
-      span.status-badge.result(v-if="isEditing && isAccounted") ✓ Abgerechnet
+      span.status-badge.badge-acc-final.clickable(
+        v-if="isEditing && accountingStatus === 'final'"
+        @click="accountingViewRef?.toggleFinalStatus()"
+      )
+        span.badge-default ✓ Abgerechnet
+        span.badge-hover Zurück auf Entwurf
+      span.status-badge.badge-acc-draft.clickable(
+        v-else-if="isEditing && accountingStatus === 'draft'"
+        @click="accountingViewRef?.toggleFinalStatus()"
+      )
+        span.badge-default Abr. offen
+        span.badge-hover ▶ Abschließen
       router-link.btn-cancel(to="/admin/events") Abbrechen
 
   .event-tabs(v-if="isEditing")
@@ -730,7 +743,7 @@ function closeDeployModal() {
         p Klicke auf den Tab, um die aktuellen VVK-Daten zu laden.
 
   .tab-content(v-if="isEditing" v-show="activeSection === 'accounting'")
-    AccountingView(:eventId="props.id")
+    AccountingView(ref="accountingViewRef" :eventId="props.id" @status-changed="s => accountingStatus = s")
 
   //- ── Undo Delete Snackbar ──
   transition(name="snackbar")
@@ -787,29 +800,41 @@ function closeDeployModal() {
 }
 
 .status-badge {
-  font-size: 0.82rem;
-  padding: 0.35rem 0.9rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  background: black;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 0.125rem solid transparent;
+  white-space: nowrap;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
-.status-badge.published {
+.badge-live {
   background: #16a34a;
-  border: 0.125rem solid #16a34a;
+  color: white;
+  border-color: #16a34a;
 }
 
-.status-badge.draft {
+.badge-draft {
   background: #f59e0b;
   color: black;
-  border: 0.125rem solid #f59e0b;
+  border-color: #f59e0b;
 }
 
-.status-badge.result {
-  background: #2563eb;
+.badge-acc-draft {
+  background: white;
+  color: #555;
+  border-color: #999;
+}
+
+.badge-acc-final {
+  background: #16a34a;
   color: white;
-  border: 0.125rem solid #2563eb;
+  border-color: #16a34a;
 }
 
 .event-subtitle {
@@ -1113,7 +1138,6 @@ input:disabled {
   appearance: none;
   -webkit-appearance: none;
   font-family: inherit;
-  line-height: 1;
   cursor: pointer;
   transition: all 0.15s;
   position: relative;
@@ -1131,13 +1155,25 @@ input:disabled {
   display: inline;
 }
 
-.status-badge.published.clickable:hover:not(:disabled) {
+.badge-acc-draft.clickable:hover:not(:disabled) {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+}
+
+.badge-acc-final.clickable:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: white;
+}
+
+.badge-live.clickable:hover:not(:disabled) {
   background: #dc2626;
   border-color: #dc2626;
   color: white;
 }
 
-.status-badge.draft.clickable:hover:not(:disabled) {
+.badge-draft.clickable:hover:not(:disabled) {
   background: #16a34a;
   border-color: #16a34a;
   color: white;
