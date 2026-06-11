@@ -462,10 +462,25 @@ export const grantService = {
 
 // ── Tax Export (EÜR / Sphären) ──────────────────────────────────
 
+export interface TaxEventSummary {
+  event: string
+  date: string | null
+  income: number
+  expense: number
+  result: number
+}
+
+export interface TaxParticipantSummary {
+  participant: string
+  amount: number
+}
+
 export interface TaxSummaryResponse {
   year: number
   spheres: Record<string, { label: string; income: number; expense: number; result: number }>
   vat: { ust_7: number; ust_19: number; ust_total: number; vorsteuer: number; zahllast: number }
+  events: TaxEventSummary[]
+  participants: TaxParticipantSummary[]
 }
 
 export const taxExportService = {
