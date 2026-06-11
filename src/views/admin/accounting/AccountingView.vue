@@ -35,6 +35,9 @@ const props = defineProps<{
   eventId: string
 }>()
 
+const emit = defineEmits<{
+  'status-changed': [status: 'draft' | 'final']
+}>()
 const router = useRouter()
 const authStore = useAuthStore()
 const activeTab = ref('cashcount')
@@ -53,6 +56,7 @@ const splits = ref<AccountingSplit[]>([])
 
 const isLoading = ref(false)
 const isSaving = ref(false)
+const isFinalizingStatus = ref(false)
 const error = ref('')
 const saveSuccess = ref('')
 const stockChangedWarning = ref('')
@@ -890,6 +894,21 @@ async function deleteAccounting() {
   }
 }
 
+async function toggleFinalStatus() {
+  if (!accounting.value?.id) return
+  const newStatus = accounting.value.status === 'final' ? 'draft' : 'final'
+  isFinalizingStatus.value = true
+  try {
+    const result = await accountingService.setStatus(accounting.value.id, newStatus)
+    accounting.value.status = result.status as 'draft' | 'final'
+    emit('status-changed', accounting.value.status)
+  } catch (e: any) {
+    error.value = e.message || 'Status konnte nicht geändert werden'
+  } finally {
+    isFinalizingStatus.value = false
+  }
+}
+
 async function saveAll(silent = false) {
   if (!accounting.value?.id) return
   if (isSaving.value) return // prevent concurrent saves
@@ -1033,7 +1052,7 @@ async function saveAll(silent = false) {
       }
       // Pause auto-save until user edits an entry again (the watcher resets
       // this flag — see below).
-      autoSavePausedByConflict = true
+      autoSavePausedByConflict.value = true
       // Clear the dirty timer so we don't keep retrying with the same values
       if (autoSaveTimer) {
         clearTimeout(autoSaveTimer)
@@ -1156,11 +1175,11 @@ let suppressAutoSave = true // suppress during initial load
 // Set to true after a 400 stock conflict. Auto-save pauses until the user
 // edits an inventory entry again — preventing infinite save loops and giving
 // the user a stable read of their typed values.
-let autoSavePausedByConflict = false
+const autoSavePausedByConflict = ref(false)
 
 function scheduleAutoSave() {
   if (suppressAutoSave) return
-  if (autoSavePausedByConflict) return
+  if (autoSavePausedByConflict.value) return
   if (!accounting.value?.id) return
   autoSaveDirty.value = true
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
@@ -1202,7 +1221,7 @@ watch(
     // Any data change is a fresh user intent — un-pause auto-save if it was
     // halted by a previous 400 conflict. The next save attempt uses the
     // user's latest values.
-    autoSavePausedByConflict = false
+    autoSavePausedByConflict.value = false
     scheduleAutoSave()
   },
   { deep: true }
@@ -1253,6 +1272,7 @@ async function refreshStockAndCorrect() {
 
       if (qtyEquals(serverBefore, local.quantity_before)) continue
 
+      const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
       if (ownConsumed === 0) {
         // No user intent — safe to fully refresh both Vorher and Nachher.
         local.quantity_before = serverBefore
@@ -1264,9 +1284,8 @@ async function refreshStockAndCorrect() {
         local.quantity_before = serverBefore
         local.quantity_after = normalizeQty(Math.max(0, parseFloat(serverBefore) - ownConsumed))
         delete inventoryCrates.value[String(serverEntry.beverage_item)]
-        const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
-        if (bev) changedItems.push(bev.name)
       }
+      if (bev) changedItems.push(bev.name)
     }
     if (changedItems.length > 0) {
       stockChangedWarning.value = `Bestand extern geändert: ${changedItems.join(', ')}`
@@ -1286,12 +1305,17 @@ async function handleWindowFocus() {
   await refreshStockAndCorrect()
 }
 
+let stockPollInterval: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   loadData()
   loadDocuments()
   document.addEventListener('click', closeOverflow)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('focus', handleWindowFocus)
+  stockPollInterval = setInterval(() => {
+    if (document.visibilityState === 'visible') refreshStockAndCorrect()
+  }, 30000)
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
@@ -1301,8 +1325,11 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleVisibilityChange)
   window.removeEventListener('focus', handleWindowFocus)
   window.removeEventListener('beforeunload', handleBeforeUnload)
+  if (stockPollInterval) clearInterval(stockPollInterval)
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
 })
+
+defineExpose({ toggleFinalStatus })
 </script>
 
 <template lang="pug">
@@ -1340,8 +1367,6 @@ onUnmounted(() => {
         span.save-success(v-if="saveSuccess") {{ saveSuccess }}
         span.auto-save-indicator(v-else-if="isSaving") Speichert...
         span.auto-save-indicator(v-else-if="autoSaveDirty") Ungespeichert
-        button.btn-save(@click="saveAll(false)" :disabled="isSaving")
-          | {{ isSaving ? 'Speichern...' : 'Alles speichern' }}
         button.btn-overflow(@click="showOverflow = !showOverflow") ⋯
         .overflow-dropdown(v-if="showOverflow")
           button.overflow-item.overflow-danger(@click="deleteAccounting") Abrechnung löschen
@@ -1513,6 +1538,9 @@ onUnmounted(() => {
         .conflict-banner-text
           strong {{ inventoryConflicts.size === 1 ? '1 Bestandskonflikt' : `${inventoryConflicts.size} Bestandskonflikte` }}
           span  – Während du editiert hast, hat jemand anders parallel verbraucht. Bitte die rot markierten Werte unten anpassen.
+          template(v-if="autoSavePausedByConflict")
+            span  ·&nbsp;
+            button.conflict-retry(@click="saveAll(false)") Erneut versuchen
 
       .section(v-for="(items, group) in inventoryBySupplier" :key="group")
         h3.section-title {{ group }}
@@ -2312,6 +2340,68 @@ h2 {
   min-width: 12rem;
 }
 
+.status-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 0.125rem solid transparent;
+  white-space: nowrap;
+}
+
+.status-draft {
+  background: white;
+  color: #555;
+  border-color: #999;
+}
+
+.status-final {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+.status-badge.clickable {
+  display: inline-flex;
+  align-items: center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.status-badge.clickable .badge-hover {
+  display: none;
+}
+
+.status-badge.clickable:hover:not(:disabled) .badge-default {
+  display: none;
+}
+
+.status-badge.clickable:hover:not(:disabled) .badge-hover {
+  display: inline;
+}
+
+.status-final.clickable:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: white;
+}
+
+.status-draft.clickable:hover:not(:disabled) {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: white;
+}
+
+.status-badge.clickable:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .overflow-item {
   display: block;
   width: 100%;
@@ -2916,6 +3006,17 @@ h2 {
 
 .conflict-banner-text strong {
   color: #d32f2f;
+}
+
+.conflict-retry {
+  background: none;
+  border: none;
+  color: #d32f2f;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
 }
 
 /* Mobile card variant */

@@ -46,7 +46,12 @@ const accountingByEvent = computed(() => {
 
 function hasResult(eventId: string): boolean {
   const acc = accountingByEvent.value.get(eventId)
-  return !!acc && !!acc.revenues && acc.revenues.length > 0
+  return !!acc && acc.status === 'final'
+}
+
+function hasDraftAccounting(eventId: string): boolean {
+  const acc = accountingByEvent.value.get(eventId)
+  return !!acc && acc.status !== 'final'
 }
 
 function isUrgent(event: Event): boolean {
@@ -302,12 +307,13 @@ onMounted(() => {
         .event-header
           .event-id {{ event.id }}
           .event-header-right
-            span.status-badge.published(v-if="publishedIds.has(event.id)") ✓ Live
-            span.status-badge.draft(
+            span.status-badge.badge-live(v-if="publishedIds.has(event.id)") Live
+            span.status-badge.badge-draft(
               v-else
               :class="{ urgent: isUrgent(event) }"
             ) {{ isUrgent(event) ? `✗ in ${daysUntil(event)}d nicht live` : 'Entwurf' }}
-            span.status-badge.result(v-if="hasResult(event.id)") ✓ Abgerechnet
+            span.status-badge.badge-acc-draft(v-if="hasDraftAccounting(event.id)") Abr. offen
+            span.status-badge.badge-acc-final(v-if="hasResult(event.id)") ✓ Abgerechnet
             .event-date {{ formatDate(event.date) }}
 
         h3.event-title {{ event.title }}
@@ -564,30 +570,36 @@ h2 {
 }
 
 .status-badge {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  background: black;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 0.125rem solid transparent;
+  white-space: nowrap;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
-.status-badge.published {
+.badge-live {
   background: #16a34a;
-  border: 0.125rem solid #16a34a;
+  color: white;
+  border-color: #16a34a;
 }
 
-.status-badge.draft {
+.badge-draft {
   background: #f59e0b;
   color: black;
-  border: 0.125rem solid #f59e0b;
+  border-color: #f59e0b;
 }
 
-.status-badge.draft.urgent {
+.badge-draft.urgent {
   background: #dc2626;
   color: white;
+  border-color: #dc2626;
   letter-spacing: 0;
-  border: 0.125rem solid #dc2626;
   animation: pulse-urgent 2s ease-in-out infinite;
 }
 
@@ -596,10 +608,16 @@ h2 {
   50% { opacity: 0.6; }
 }
 
-.status-badge.result {
-  background: #2563eb;
+.badge-acc-draft {
+  background: white;
+  color: #555;
+  border-color: #999;
+}
+
+.badge-acc-final {
+  background: #16a34a;
   color: white;
-  border: 0.125rem solid #2563eb;
+  border-color: #16a34a;
 }
 
 .event-id {
