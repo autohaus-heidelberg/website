@@ -421,19 +421,16 @@ test.describe('Parallel-tab FIFO inventory', () => {
       const tabAVorher = parseFloat(vorherText?.trim() ?? '0')
       test.skip(tabAVorher < 4, `Tab A's chronological Vorher must be ≥4, got ${tabAVorher}`)
 
-      // Tab A: type Nachher = Vorher - 1 → consumed=1.  Trigger an explicit
-      // save by clicking the "Speichern" button instead of waiting for the
-      // auto-save debounce (auto-save races with the page-hydration save).
+      // Tab A: type Nachher = Vorher - 1 → consumed=1.  Trigger save via
+      // auto-save (blur + wait for debounce) instead of a save button.
       const afterInput = sektRow.locator('.col-inv-pair.bottle-mode:not(.readonly-before) input.qty-input').first()
       const firstNachher = String(tabAVorher - 1)
       await afterInput.fill(firstNachher)
-      await afterInput.blur()
-      const saveBtn = tabA.locator('button.btn-save').first()
       const wait200 = tabA.waitForResponse(
         r => r.url().includes('/api/abrechnungen/') && r.request().method() === 'PUT' && r.status() === 200,
         { timeout: 15_000 }
       )
-      await saveBtn.click()
+      await afterInput.blur()
       await wait200
 
       // Tab B (via API) consumes the rest of global stock so it's near zero.
@@ -453,12 +450,11 @@ test.describe('Parallel-tab FIFO inventory', () => {
       // available. Trigger an explicit save → expect 400 conflict.
       const conflictNachher = '0'
       await afterInput.fill(conflictNachher)
-      await afterInput.blur()
       const wait400 = tabA.waitForResponse(
         r => r.url().includes('/api/abrechnungen/') && r.request().method() === 'PUT' && r.status() === 400,
         { timeout: 15_000 }
       )
-      await saveBtn.click()
+      await afterInput.blur()
       await wait400
       // Allow post-conflict UI handling to settle.
       await tabA.waitForTimeout(500)
