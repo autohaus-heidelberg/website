@@ -307,7 +307,7 @@ onMounted(() => {
         .event-header
           .event-id {{ event.id }}
           .event-header-right
-            span.status-badge.badge-live(v-if="publishedIds.has(event.id)") Live
+            span.status-badge.badge-live(v-if="publishedIds.has(event.id)") ✓ Live
             span.status-badge.badge-draft(
               v-else
               :class="{ urgent: isUrgent(event) }"
