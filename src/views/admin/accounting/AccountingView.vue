@@ -54,6 +54,10 @@ const inventory = ref<InventoryEntry[]>([])
 const expenses = ref<ExpenseEntry[]>([])
 const splits = ref<AccountingSplit[]>([])
 
+// ── Doordeal ─────────────────────────────────────────────────────
+const doorDealEnabled = ref(false)
+const doorDealSplits = ref<{ name: string; share: number }[]>([])
+
 const isLoading = ref(false)
 const isSaving = ref(false)
 const isFinalizingStatus = ref(false)
@@ -650,18 +654,61 @@ function removeSplit(index: number) {
 // Verteilungsbasis ist das Ergebnis nach USt — die USt-Zahllast gehört dem
 // Finanzamt und ist kein Gewinn der Beteiligten. Sie wird in der UI als
 // separate, nicht-editierbare „Finanzamt"-Position oben in der Splits-Tabelle
-// angezeigt; die %-Splits rechnen auf `resultAfterVat`.
+// angezeigt; die %-Splits rechnen auf `resultAfterDoorDeal`.
 function splitAmount(split: AccountingSplit): number {
   const pct = parseFloat(split.share_percentage || '0')
-  return resultAfterVat.value * (pct / 100)
+  return resultAfterDoorDeal.value * (pct / 100)
 }
 
 const totalSplitPercentage = computed(() => {
   return splits.value.reduce((sum, s) => sum + parseFloat(s.share_percentage || '0'), 0)
 })
 
+// Ergebnis nach USt und nach Doordeal-Auszahlung — das ist die Basis für
+// die Gewinnverteilung (Bernd/Carousel). Der Künstleranteil ist kein Vereinsgewinn.
+const resultAfterDoorDeal = computed(() => {
+  if (!doorDealEnabled.value) return resultAfterVat.value
+  return resultAfterVat.value - doorDealArtistAmount.value
+})
+
 const remainingAfterSplits = computed(() => {
-  return resultAfterVat.value - splits.value.reduce((sum, s) => sum + splitAmount(s), 0)
+  return resultAfterDoorDeal.value - splits.value.reduce((sum, s) => sum + splitAmount(s), 0)
+})
+
+// ── Doordeal computeds ───────────────────────────────────────────
+
+// Einnahmen aus Eintritt (Einlass + VVK), netto
+const doorDealEntranceRevenue = computed(() => {
+  const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
+  return revenues.value
+    .filter(r => entranceSources.includes(r.source))
+    .reduce((sum, r) => sum + revenueNet(r), 0)
+})
+
+// Abzugsfähige Kosten (z.B. GEMA, KSK) die vor der Doordeal-Aufteilung abgezogen werden
+const doorDealDeductions = computed(() => {
+  return expenses.value
+    .filter(e => e.door_deal_deductible)
+    .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
+})
+
+// Verteilungsbasis = Türeinnahmen − Abzüge
+const doorDealBase = computed(() => {
+  return Math.max(0, doorDealEntranceRevenue.value - doorDealDeductions.value)
+})
+
+// Gesamtbetrag aller Doordeal-Parteien
+const doorDealArtistAmount = computed(() => {
+  return doorDealSplits.value.reduce((sum, p) => sum + doorDealBase.value * (p.share / 100), 0)
+})
+
+// Carousel-Anteil = was nach allen Parteien übrig bleibt
+const doorDealVenueShare = computed(() => {
+  return 100 - doorDealSplits.value.reduce((sum, p) => sum + p.share, 0)
+})
+
+const doorDealVenueAmount = computed(() => {
+  return doorDealBase.value * (doorDealVenueShare.value / 100)
 })
 
 // ── Grant computeds ──────────────────────────────────────────────
@@ -807,29 +854,26 @@ async function loadData() {
           }
         }
       }
-      splits.value = acc.splits ?? []
+      splits.value = (acc.splits ?? [])
+        .filter(s => s.participant_name?.toLowerCase() !== 'carousel e.v.')
+        .map(s => ({ ...s, share_percentage: String(Math.round(parseFloat(s.share_percentage || '0'))) }))
+
+      // Doordeal fields
+      doorDealEnabled.value = acc.door_deal_enabled ?? false
+      doorDealSplits.value = Array.isArray(acc.door_deal_splits) && acc.door_deal_splits.length
+        ? acc.door_deal_splits
+        : [{ name: '', share: 70 }]
     } catch (e: any) {
       error.value = e.message || 'Abrechnung konnte nicht geladen werden'
     }
 
-    // Default splits: Bernd 33%, Carousel e.V. 67%
-    // Only initialize for treasurers — non-treasurers receive splits=[] from
-    // the backend and we must not seed default splits that would later be
-    // sent on save (which the backend would silently drop, but it's cleaner
-    // not to populate them at all).
+    // Default: Bernd 33%, Rest geht automatisch an Carousel (Verbleibend)
     if (accounting.value && splits.value.length === 0 && authStore.isTreasurer) {
-      splits.value.push(
-        {
-          accounting: accounting.value?.id || 0,
-          participant_name: 'Bernd',
-          share_percentage: '33',
-        },
-        {
-          accounting: accounting.value?.id || 0,
-          participant_name: 'Carousel e.V.',
-          share_percentage: '67',
-        },
-      )
+      splits.value.push({
+        accounting: accounting.value?.id || 0,
+        participant_name: 'Bernd',
+        share_percentage: '33',
+      })
     }
 
     // Load grant record (optional)
@@ -928,6 +972,8 @@ async function saveAll(silent = false) {
     // already ignores for non-treasurers, but omitting is cleaner).
     const payload: any = {
       notes: accounting.value.notes,
+      door_deal_enabled: doorDealEnabled.value,
+      door_deal_splits: doorDealSplits.value,
       revenues: revenues.value
         .filter(rev => rev.id || parseFloat(rev.total || '0') !== 0 || parseFloat(rev.change_money || '0') !== 0 || parseFloat(rev.fees || '0') !== 0),
       inventory_entries: inventory.value
@@ -1229,6 +1275,11 @@ watch(
 watch(
   () => [accounting.value?.notes],
   () => { scheduleAutoSave() }
+)
+watch(
+  [doorDealEnabled, doorDealSplits],
+  () => { scheduleAutoSave() },
+  { deep: true }
 )
 watch(
   [sachbericht, grantNotes, budgetKuenstler, budgetSachkosten, budgetSonstiges,
@@ -1704,12 +1755,13 @@ defineExpose({ toggleFinalStatus })
     //- ── Expenses Tab ──
     .tab-content(v-if="activeTab === 'expenses'")
       h3.section-title Ausgaben
-      .expenses-table
+      .expenses-table(:class="{ 'door-deal-active': doorDealEnabled }")
         .expense-header
           span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
           span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
           span Bezahlt aus
           span Sphäre
+          span.col-doordeal(v-if="doorDealEnabled" title="Vom Doordeal abziehen") 🚪
           span
 
         .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
@@ -1733,6 +1785,12 @@ defineExpose({ toggleFinalStatus })
             option(:value="null" disabled hidden) Sphäre wählen
             option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
               | {{ label }}
+          .col-doordeal(v-if="doorDealEnabled")
+            input(
+              type="checkbox"
+              v-model="exp.door_deal_deductible"
+              :title="'Von Doordeal-Basis abziehen'"
+            )
           button.btn-remove(@click="removeExpense(index)") ×
 
       button.btn-add(@click="addExpense") + Ausgabe hinzufügen
@@ -1741,7 +1799,7 @@ defineExpose({ toggleFinalStatus })
         span Gesamtausgaben:
         strong {{ formatCurrency(totalExpenses) }}
 
-      .footnote
+      .footnote.hint
         p
           strong Sphären-Zuordnung (Pflichtfeld)
         ul
@@ -1761,134 +1819,173 @@ defineExpose({ toggleFinalStatus })
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
 
-      //- Block 1: Wirtschaftliches Ergebnis ────────────────────
+      //- ═══ A) Ergebnis-Tabelle (Read-Only) ══════════════════════
       .section
         .section-title-row
-          h3.section-title 📊 Wirtschaftliches Ergebnis
-        .result-summary
-          .result-row.expandable(@click="resultExpandRevenue = !resultExpandRevenue")
-            span {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen (gezählt)
-            strong {{ formatCurrency(totalRevenue) }}
+          h3.section-title 🧮 Ergebnis
+        .summary-table
+
+          //- Einnahmen (zeigen tatsächliche Einnahmen = gezählt + aus Kasse bezahlt)
+          .summary-row.summary-expandable(@click="resultExpandRevenue = !resultExpandRevenue")
+            span.summary-label {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen
+            span.summary-value {{ formatCurrency(adjustedRevenue) }}
           template(v-if="resultExpandRevenue")
-            .result-row.detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
-              span {{ REVENUE_SOURCE_LABELS[rev.source] }}
-              span {{ formatCurrency(revenueNet(rev)) }}
-          .result-row.sub(v-if="expensesPaidFromRegister > 0")
-            span + Aus Kassen bezahlte Ausgaben
-            strong {{ formatCurrency(expensesPaidFromRegister) }}
-          .result-row.intermediate(v-if="expensesPaidFromRegister > 0")
-            span = Tatsächliche Einnahmen
-            strong.positive {{ formatCurrency(adjustedRevenue) }}
-          .result-row.expandable(@click="resultExpandInventory = !resultExpandInventory")
-            span {{ resultExpandInventory ? '▼' : '▶' }} 📦 − Wareneinsatz
-            strong.negative {{ formatCurrency(totalInventoryValue) }}
+            .summary-row.summary-detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
+              span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
+              span.summary-value {{ formatCurrency(revenueNet(rev)) }}
+            .summary-row.summary-detail.summary-subtotal-minor(v-if="expensesPaidFromRegister === 0")
+              span.summary-label = Gezählte Einnahmen
+              span.summary-value {{ formatCurrency(totalRevenue) }}
+            template(v-if="expensesPaidFromRegister > 0")
+              .summary-row.summary-detail.summary-subtotal-minor
+                span.summary-label = Gezählte Einnahmen
+                span.summary-value {{ formatCurrency(totalRevenue) }}
+              .summary-row.summary-detail
+                span.summary-label + Aus Kassen bezahlte Ausgaben
+                span.summary-value {{ formatCurrency(expensesPaidFromRegister) }}
+              .summary-row.summary-detail.summary-subtotal-minor
+                span.summary-label = Tatsächliche Einnahmen
+                span.summary-value {{ formatCurrency(adjustedRevenue) }}
+
+          //- Wareneinsatz
+          .summary-row.summary-expandable(@click="resultExpandInventory = !resultExpandInventory")
+            span.summary-label {{ resultExpandInventory ? '▼' : '▶' }} 📦 − Wareneinsatz
+            span.summary-value −{{ formatCurrency(totalInventoryValue) }}
           template(v-if="resultExpandInventory")
-            .result-row.detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
-              span {{ group }}
-              span -{{ formatCurrency(groupInventoryValue(items)) }}
-          .result-row.expandable(@click="resultExpandExpenses = !resultExpandExpenses")
-            span {{ resultExpandExpenses ? '▼' : '▶' }} 🧾 − Ausgaben
-            strong.negative {{ formatCurrency(totalExpenses) }}
+            .summary-row.summary-detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
+              span.summary-label {{ group }}
+              span.summary-value −{{ formatCurrency(groupInventoryValue(items)) }}
+
+          //- Ausgaben
+          .summary-row.summary-expandable(@click="resultExpandExpenses = !resultExpandExpenses")
+            span.summary-label {{ resultExpandExpenses ? '▼' : '▶' }} 🧾 − Ausgaben
+            span.summary-value −{{ formatCurrency(totalExpenses) }}
           template(v-if="resultExpandExpenses")
-            .result-row.detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
-              span {{ exp.description || '(ohne Beschreibung)' }}
-              span {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-          .result-row.result-total
-            span 🏆 Ergebnis (vor USt)
-            strong(:class="result >= 0 ? 'positive' : 'negative'")
-              | {{ formatCurrency(result) }}
+            .summary-row.summary-detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
+              span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
+              span.summary-value −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
 
-      //- Block 2: Umsatzsteuer ─────────────────────────────────
-      .section(v-if="vatOutput !== 0 || vatInput !== 0")
+          //- ═══ Ergebnis vor USt ═══
+          .summary-row.summary-total
+            span.summary-label Ergebnis (vor USt)
+            span.summary-value(:class="result >= 0 ? 'positive' : 'negative'") {{ formatCurrency(result) }}
+
+          //- USt (nur wenn relevant)
+          template(v-if="vatOutput !== 0 || vatInput !== 0")
+            .summary-row.summary-expandable(@click="resultExpandVat = !resultExpandVat")
+              span.summary-label {{ resultExpandVat ? '▼' : '▶' }} 🧮 − USt-Zahllast
+              span.summary-value −{{ formatCurrency(vatLiability) }}
+            template(v-if="resultExpandVat")
+              .summary-row.summary-detail(v-if="vat7Entrance !== 0")
+                span.summary-label Output-USt (7% Eintritt)
+                span.summary-value {{ formatCurrency(vat7Entrance) }}
+              .summary-row.summary-detail(v-if="vat19Bar !== 0")
+                span.summary-label Output-USt (19% Getränke)
+                span.summary-value {{ formatCurrency(vat19Bar) }}
+              .summary-row.summary-detail(v-if="vatInput !== 0")
+                span.summary-label − Vorsteuer
+                span.summary-value −{{ formatCurrency(vatInput) }}
+            //- ═══ Ergebnis nach USt ═══
+            .summary-row.summary-total
+              span.summary-label Ergebnis (nach USt)
+              span.summary-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
+
+          //- Doordeal-Sub-Rechnung (nur wenn aktiv)
+          template(v-if="doorDealEnabled")
+            .summary-row.summary-subblock-header
+              span.summary-label 🚪 Doordeal-Verteilung
+            .summary-row.summary-sub-detail
+              span.summary-label Türeinnahmen (Einlass + VVK, netto)
+              span.summary-value {{ formatCurrency(doorDealEntranceRevenue) }}
+            .summary-row.summary-sub-detail(v-if="doorDealDeductions > 0")
+              span.summary-label − Abzugsfähige Ausgaben
+              span.summary-value −{{ formatCurrency(doorDealDeductions) }}
+            .summary-row.summary-sub-base
+              span.summary-label = Verteilungsbasis
+              span.summary-value {{ formatCurrency(doorDealBase) }}
+            .summary-row.summary-sub-detail(v-for="party in doorDealSplits" :key="'p' + party.name")
+              span.summary-label {{ party.name || '(kein Name)' }}
+              .summary-value-group
+                span.summary-pct {{ party.share }}%
+                span.summary-value −{{ formatCurrency(doorDealBase * party.share / 100) }}
+            .summary-row.summary-sub-remaining
+              span.summary-label 🏠 Carousel-Anteil (verbleibt im Topf)
+              .summary-value-group
+                span.summary-pct {{ doorDealVenueShare.toFixed(0) }}%
+                span.summary-value {{ formatCurrency(doorDealVenueAmount) }}
+            //- ═══ Ergebnis nach Doordeal ═══
+            .summary-row.summary-total
+              span.summary-label Ergebnis (nach Doordeal)
+              span.summary-value(:class="resultAfterDoorDeal >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterDoorDeal) }}
+
+          //- Gewinnverteilung-Auszahlung (treasurer + Splits konfiguriert)
+          template(v-if="authStore.isTreasurer && splits.length")
+            .summary-row.summary-subblock-header
+              span.summary-label 🤝 Gewinnverteilung
+            .summary-row.summary-sub-detail(v-for="split in splits" :key="'r' + split.participant_name")
+              span.summary-label {{ split.participant_name || '(kein Name)' }}
+              .summary-value-group
+                span.summary-pct {{ Math.round(parseFloat(split.share_percentage)) }}%
+                span.summary-value {{ formatCurrency(splitAmount(split)) }}
+            .summary-row.summary-sub-remaining
+              span.summary-label 🏠 Carousel e.V. (verbleibt)
+              .summary-value-group
+                span.summary-pct {{ (100 - totalSplitPercentage).toFixed(0) }}%
+                span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
+                  | {{ formatCurrency(remainingAfterSplits) }}
+
+      //- ═══ B) Doordeal-Konfiguration ════════════════════════════
+      .section
         .section-title-row
-          h3.section-title 🧮 Umsatzsteuer
-        .vat-card
-          .vat-grid
-            .vat-col
-              .vat-col-header Output-USt (an Finanzamt)
-              .vat-col-row(v-show="vat7Entrance !== 0")
-                span 7% auf Eintritt
-                span {{ formatCurrency(vat7Entrance) }}
-              .vat-col-row(v-show="vat19Bar !== 0")
-                span 19% auf Getränkeverkauf
-                span {{ formatCurrency(vat19Bar) }}
-              .vat-col-total
-                span Σ Output-USt
-                strong {{ formatCurrency(vatOutput) }}
-            .vat-col
-              .vat-col-header − Vorsteuer (vom Finanzamt)
-              .vat-col-row(v-show="inputVatInventory !== 0")
-                span 19% Wareneinsatz
-                span -{{ formatCurrency(inputVatInventory) }}
-              .vat-col-row(v-show="inputVatExpenses !== 0")
-                span Ausgaben (lt. Beleg)
-                span -{{ formatCurrency(inputVatExpenses) }}
-              .vat-col-row(v-show="vatInput === 0")
-                span.vat-empty Keine Vorsteuer (USt-Sätze auf Ausgaben pflegen)
-                span
-              .vat-col-total
-                span Σ Vorsteuer
-                strong -{{ formatCurrency(vatInput) }}
-          .vat-result(:class="{ 'liability': vatLiability >= 0, 'refund': vatLiability < 0 }")
-            span.vat-result-label {{ vatLiability >= 0 ? 'USt-Zahllast (an Finanzamt)' : 'USt-Erstattung (vom Finanzamt)' }}
-            strong.vat-result-value {{ formatCurrency(Math.abs(vatLiability)) }}
-          p.vat-note Hinweis: Vorsteuer-Abzug nur möglich, wenn Belege ordnungsgemäß sind und Verein vorsteuerabzugsberechtigt ist (wirtschaftlicher Geschäftsbetrieb).
+          h3.section-title
+            label.toggle-label-inline
+              input(type="checkbox" v-model="doorDealEnabled")
+              span 🚪 Doordeal
+        template(v-if="doorDealEnabled")
+          .config-table
+            .config-header
+              span Partei
+              span Anteil
+              span
+            .config-row(v-for="(party, index) in doorDealSplits" :key="index")
+              input.text-input(v-model="party.name" type="text" placeholder="Name")
+              .input-group
+                input.amount-input(v-model.number="party.share" type="number" min="0" max="100" step="1")
+                span.unit %
+              button.btn-remove(@click="doorDealSplits.splice(index, 1)") ×
+            .config-row-add
+              button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + hinzufügen
+            .config-deductions(v-if="expenses.filter(e => e.description).length")
+              .config-deductions-header Vom Doordeal abzugsfähige Ausgaben
+              label.config-deduction-item(
+                v-for="exp in expenses.filter(e => e.description)"
+                :key="exp.id || exp.description"
+              )
+                input(type="checkbox" v-model="exp.door_deal_deductible")
+                span.config-deduction-name {{ exp.description }}
+                span.config-deduction-amount −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
 
-      //- Block 3: Endergebnis nach USt ─────────────────────────
-      .final-result(v-if="vatLiability !== 0")
-        .final-result-label 💼 Verfügbares Ergebnis (nach USt)
-        .final-result-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
-
-      //- Block 4: Gewinnverteilung ─────────────────────────────
+      //- ═══ C) Gewinnverteilung-Konfiguration ════════════════════
       //- Nur für Treasurer sichtbar — Backend liefert splits=[] für andere
-      //- und ignoriert eingehende splits stillschweigend.
       .section(v-if="authStore.isTreasurer")
         .section-title-row
           h3.section-title 🤝 Gewinnverteilung
-        p.splits-note(v-if="vatLiability !== 0")
-          | Verteilungsbasis ist das Ergebnis nach USt ({{ formatCurrency(resultAfterVat) }}). Die USt-Zahllast ist als feste Position für das Finanzamt reserviert.
-        .splits-table
-          //- Fixed pseudo-split for tax authority — non-editable, automatic from vatLiability.
-          .split-row.split-fixed(v-if="vatLiability > 0")
-            .col-name
-              span.fixed-name 🏛️ Finanzamt (USt-Zahllast)
-            .col-pct
-              span.fixed-pct —
-            .col-amount {{ formatCurrency(vatLiability) }}
-            .col-action
-          .split-row(v-for="(split, index) in splits" :key="index")
-            .col-name
-              input.text-input(
-                v-model="split.participant_name"
-                type="text"
-                placeholder="Name"
-              )
-            .col-pct
-              input.amount-input(
-                v-model="split.share_percentage"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="0"
-              )
+        .config-table
+          .config-header
+            span Empfänger
+            span Anteil
+            span
+          .config-row(v-for="(split, index) in splits" :key="index")
+            input.text-input(v-model="split.participant_name" type="text" placeholder="Name")
+            .input-group
+              input.amount-input(v-model.number="split.share_percentage" type="number" min="0" max="100" step="1")
               span.unit %
-            .col-amount {{ formatCurrency(splitAmount(split)) }}
-            .col-action
-              button.btn-remove(@click="removeSplit(index)") ×
+            button.btn-remove(@click="removeSplit(index)") ×
+          .config-row-add
+            button.btn-add-sm(@click="addSplit") + hinzufügen
+          .config-hint Rest ({{ (100 - totalSplitPercentage).toFixed(0) }}%) verbleibt automatisch bei 🏠 Carousel e.V.
 
-        button.btn-add(@click="addSplit") + Anteil hinzufügen
-
-        .splits-summary(v-if="splits.length")
-          .result-row
-            span Verteilt ({{ totalSplitPercentage.toFixed(1) }}%)
-            strong {{ formatCurrency(resultAfterVat - remainingAfterSplits) }}
-          .result-row.result-total
-            span Verbleibend
-            strong(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
-              | {{ formatCurrency(remainingAfterSplits) }}
-
-      //- Block 5: Notizen ──────────────────────────────────────
+      //- ═══ D) Notizen ═══════════════════════════════════════════
       .section
         .section-title-row
           h3.section-title 📝 Notizen
@@ -2010,14 +2107,14 @@ defineExpose({ toggleFinalStatus })
               strong {{ formatCurrency(budgetTotalExpenses) }}
             .result-row
               span − Eigenanteil
-              strong.negative {{ formatCurrency(budgetTotalRevenues) }}
+              strong −{{ formatCurrency(budgetTotalRevenues) }}
             .result-row
               span Förderfähiger Betrag
               strong {{ formatCurrency(budgetEligibleAmount) }}
             .result-row.result-total
               span Beantragter Zuschuss
               strong {{ formatCurrency(budgetGrantAmount) }}
-            .max-note Max. 1.000 € pro Veranstaltung / 3.000 € pro Jahr (6.000 € bei >24 Veranstaltungen/Jahr)
+            .hint Max. 1.000 € pro Veranstaltung / 3.000 € pro Jahr (6.000 € bei >24 Veranstaltungen/Jahr)
 
           //- ── Download Antrag ──
           .grant-actions
@@ -2118,7 +2215,7 @@ defineExpose({ toggleFinalStatus })
               strong {{ formatCurrency(grantTotalEligible) }}
             .result-row
               span − Eigenanteil
-              strong.negative {{ formatCurrency(grantTotalOwnRevenue) }}
+              strong −{{ formatCurrency(grantTotalOwnRevenue) }}
             .result-row
               span Förderfähiger Betrag
               strong {{ formatCurrency(grantEligibleAmount) }}
@@ -2467,6 +2564,7 @@ h2 {
 
 .section {
   margin-bottom: 2rem;
+  font-size: 1rem;
 }
 
 .section-title {
@@ -2745,6 +2843,14 @@ h2 {
   font-size: 0.65rem;
   color: #888;
   margin-left: 0.3rem;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #666;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #ddd;
+  line-height: 1.4;
 }
 
 .paypal-cat-summary {
@@ -3215,6 +3321,11 @@ h2 {
   align-items: center;
 }
 
+.door-deal-active .expense-header,
+.door-deal-active .expense-row {
+  grid-template-columns: 1fr 100px 140px 140px 36px 36px;
+}
+
 .expense-row > div {
   min-width: 0;
   overflow: hidden;
@@ -3262,63 +3373,102 @@ h2 {
   border-bottom: none;
 }
 
-/* ── Splits Table ── */
-
-.splits-table {
-  border: 0.25rem solid black;
-  border-top: none;
-  margin-bottom: 1rem;
+/* ── Toggle Label (für Doordeal-Section-Title) ── */
+.toggle-label-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 1rem;
 }
 
-.split-row {
+/* ── Konfig-Tabellen (Doordeal + Gewinnverteilung) ── */
+.config-table {
+  border: 0.25rem solid black;
+  border-top: none;
+  margin-bottom: 2rem;
+}
+
+.config-header {
   display: grid;
-  grid-template-columns: 1fr 120px 120px 40px;
+  grid-template-columns: 1fr 110px 36px;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  align-items: center;
+  font-weight: 900;
+  font-size: 0.8rem;
+  border-bottom: 0.25rem solid black;
+}
+
+.config-row {
+  display: grid;
+  grid-template-columns: 1fr 110px 36px;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   align-items: center;
   border-bottom: 1px solid #ddd;
 }
 
-.split-row:nth-child(even) {
-  background: #f5f5f5;
+.config-row .text-input {
+  width: 100%;
 }
 
-.split-row:last-child {
-  border-bottom: none;
+.config-row .input-group {
+  width: auto;
 }
 
-/* Fixed (non-editable) split row for tax authority. */
-.split-row.split-fixed {
-  background: #f0f4f8;
-  border-bottom: 0.2rem solid black;
-  font-weight: 700;
+.config-row-add {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #ddd;
 }
-.split-row.split-fixed:nth-child(even) {
-  background: #f0f4f8;
+
+.config-hint {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  background: #fafafa;
 }
-.split-row.split-fixed .fixed-name {
-  font-weight: 700;
+
+/* Doordeal-Abzugs-Checkboxen */
+.config-deductions {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.config-deductions-header {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.config-deduction-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
   color: #333;
 }
-.split-row.split-fixed .fixed-pct {
-  color: #888;
-  font-size: 0.85rem;
-  text-align: center;
-  display: block;
+
+.config-deduction-item input[type="checkbox"] {
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
 }
 
-/* Hinweis unter dem Section-Title — visuell als verbundener Streifen. */
-.splits-note {
-  font-size: 0.8rem;
-  color: #555;
-  margin: 0;
-  padding: 0.5rem 1rem;
-  font-style: italic;
-  background: #f9f9f9;
-  border: 0.25rem solid black;
-  border-top: none;
-  border-bottom: none;
-  line-height: 1.4;
+.config-deduction-name {
+  flex: 1;
+  text-align: left;
+}
+
+.config-deduction-amount {
+  color: #999;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 /* ── Inputs ── */
@@ -3639,6 +3789,121 @@ h2 {
   margin: 0.5rem 0;
 }
 
+/* ── Summary Table (Read-Only Ergebnis-Tabelle) ── */
+
+.summary-table {
+  border: 0.25rem solid black;
+  border-top: none;
+  margin-bottom: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 1rem;
+  gap: 1rem;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  flex: 1;
+}
+
+.summary-value {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.summary-value-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.summary-pct {
+  color: #888;
+  font-size: 0.85rem;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* Expandierbare Hauptzeilen */
+.summary-row.summary-expandable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.summary-row.summary-expandable:hover {
+  background: #f5f5f5;
+}
+
+/* Drilldown-Detailzeilen einer Hauptzeile */
+.summary-row.summary-detail {
+  padding-left: 2rem;
+  color: #555;
+  font-size: 0.9rem;
+  background: #fafafa;
+}
+
+.summary-row.summary-subtotal-minor {
+  font-weight: 700;
+  border-top: 1px solid #ccc;
+}
+
+/* Schwarzer Balken: Ergebnis-Subtotals (vor USt / nach USt / nach Doordeal) */
+.summary-row.summary-total {
+  background: black;
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  border-bottom: none;
+}
+
+.summary-row.summary-total + .summary-row {
+  border-top: none;
+}
+
+.summary-row.summary-total .positive { color: #4ade80; }
+.summary-row.summary-total .negative { color: #f87171; }
+
+/* Sub-Block-Header: Doordeal-Verteilung / Gewinnverteilung */
+.summary-row.summary-subblock-header {
+  background: #f0f0f0;
+  font-weight: 700;
+  border-top: 0.25rem solid black;
+}
+
+/* Sub-Rechnung-Zeilen (innerhalb Doordeal/Splits-Block) */
+.summary-row.summary-sub-detail {
+  background: #f5f5f5;
+  padding-left: 2rem;
+  font-size: 0.95rem;
+}
+
+/* "= Verteilungsbasis"-Zeile innerhalb Doordeal */
+.summary-row.summary-sub-base {
+  background: #f5f5f5;
+  padding-left: 2rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-top: 1px solid black;
+}
+
+/* Carousel-Anteil als Aufteilungs-Info (nicht Final-Total) */
+.summary-row.summary-sub-remaining {
+  background: #f5f5f5;
+  padding-left: 2rem;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
 .grand-total {
   display: flex;
   flex-direction: column;
@@ -3657,23 +3922,12 @@ h2 {
   justify-content: space-between;
 }
 
-.footnote {
-  margin-top: 0.75rem;
-  font-size: 0.8rem;
-  color: #666;
-  line-height: 1.4;
-}
-
-.footnote p {
-  margin: 0.25rem 0;
-}
-
-.footnote ul {
+.hint ul {
   margin: 0.25rem 0;
   padding-left: 1.2rem;
 }
 
-.footnote li {
+.hint li {
   margin: 0.1rem 0;
 }
 
@@ -3873,17 +4127,6 @@ h2 {
 .vat-result-value {
   font-variant-numeric: tabular-nums;
   font-weight: 900;
-}
-
-.vat-note {
-  margin: 0;
-  padding: 0.6rem 1rem;
-  font-size: 0.75rem;
-  color: #666;
-  font-style: italic;
-  border-top: 1px dashed #ccc;
-  background: #fafafa;
-  line-height: 1.4;
 }
 
 /* ── Endergebnis nach USt (prominenter Block) ─────────── */
@@ -4141,13 +4384,6 @@ h2 {
 
 .result-row.result-total .negative {
   color: #faa;
-}
-
-.max-note {
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-  color: #666;
-  font-style: italic;
 }
 
 .grant-actions {
@@ -4456,12 +4692,9 @@ h2 {
 }
 
 /* Hilfstexte, Footnotes, kleine Hinweise. */
-.accounting-view .footnote,
-.accounting-view .footnote p,
-.accounting-view .footnote li,
-.accounting-view .vat-note,
-.accounting-view .max-note,
-.accounting-view .splits-note,
+.accounting-view .hint,
+.accounting-view .hint p,
+.accounting-view .hint li,
 .accounting-view .auto-save-indicator,
 .accounting-view .entry-price-hint,
 .accounting-view .vat-empty,

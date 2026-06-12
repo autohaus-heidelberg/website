@@ -126,6 +126,7 @@ export interface ExpenseEntry {
   grant_category?: GrantCategory | null
   tax_sphere?: TaxSphere | null
   vat_rate?: VatRate | null
+  door_deal_deductible?: boolean
 }
 
 export interface AccountingSplit {
@@ -147,6 +148,8 @@ export interface EventAccounting {
   created_by?: number
   created_at?: string
   updated_at?: string
+  door_deal_enabled?: boolean
+  door_deal_splits?: { name: string; share: number }[]
   revenues?: RevenueEntry[]
   inventory_entries?: InventoryEntry[]
   expenses?: ExpenseEntry[]
