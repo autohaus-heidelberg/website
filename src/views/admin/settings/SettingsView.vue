@@ -37,6 +37,46 @@ const taxLoading = ref(false)
 const taxError = ref('')
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
+// Tracks which event-summary rows have their detail breakdown expanded.
+// Keyed by event title (or '_purchases' for the standalone-purchases bucket).
+const expandedEventKeys = ref<Set<string>>(new Set())
+
+function eventRowKey(item: { event: string }): string {
+  return item.event || '_purchases'
+}
+
+function toggleEventRow(item: { event: string; items?: unknown[] }) {
+  if (!item.items || item.items.length === 0) return
+  const key = eventRowKey(item)
+  const next = new Set(expandedEventKeys.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  expandedEventKeys.value = next
+}
+
+function formatEventDate(item: {
+  event: string
+  date: string | null
+  date_from?: string | null
+  date_to?: string | null
+}): string {
+  // For the aggregated "Sonstige Einkäufe" bucket, render a date range when
+  // start and end differ — otherwise the single date is fine.
+  const from = item.date_from || item.date
+  const to = item.date_to || item.date
+  if (!from && !to) return '–'
+  const fmt = (iso: string | null | undefined) =>
+    iso ? new Date(iso).toLocaleDateString('de-DE') : ''
+  if (from && to && from !== to) {
+    return `${fmt(from)} – ${fmt(to)}`
+  }
+  return fmt(from || to)
+}
+
+function eventLabel(item: { event: string }): string {
+  return item.event || 'Sonstige Einkäufe (gesamtes Jahr)'
+}
+
 async function loadTaxSummary() {
   taxLoading.value = true
   taxError.value = ''
@@ -343,22 +383,42 @@ function handleSyncFromGit() {
         h3 Ergebnis nach Event
         .events-table
           .event-row.event-header
+            span.col-toggle
             span.col-date Datum
             span.col-event Event
             span.col-income Einnahmen
             span.col-expense Ausgaben
             span.col-result Ergebnis
-          .event-row(
-            v-for="item in taxSummary.events"
-            :key="item.event || '_purchases'"
-          )
-            span.col-date {{ item.date ? new Date(item.date).toLocaleDateString('de-DE') : '–' }}
-            span.col-event {{ item.event || 'Sonstige Einkäufe' }}
-            span.col-income {{ formatCurrency(item.income) }}
-            span.col-expense {{ formatCurrency(item.expense) }}
-            span.col-result(:class="item.result >= 0 ? 'positive' : 'negative'")
-              | {{ formatCurrency(item.result) }}
+          template(v-for="item in taxSummary.events" :key="eventRowKey(item)")
+            .event-row(
+              :class="{ 'is-expandable': item.items && item.items.length > 0, 'is-expanded': expandedEventKeys.has(eventRowKey(item)) }"
+              @click="toggleEventRow(item)"
+            )
+              span.col-toggle
+                span.toggle-caret(v-if="item.items && item.items.length > 0")
+                  | {{ expandedEventKeys.has(eventRowKey(item)) ? '▾' : '▸' }}
+              span.col-date {{ formatEventDate(item) }}
+              span.col-event {{ eventLabel(item) }}
+              span.col-income {{ formatCurrency(item.income) }}
+              span.col-expense {{ formatCurrency(item.expense) }}
+              span.col-result(:class="item.result >= 0 ? 'positive' : 'negative'")
+                | {{ formatCurrency(item.result) }}
+            .event-detail-row(v-if="expandedEventKeys.has(eventRowKey(item)) && item.items && item.items.length")
+              .event-detail-table
+                .detail-row.detail-header
+                  span.col-detail-date Datum
+                  span.col-detail-desc Beschreibung
+                  span.col-detail-cat Kategorie
+                  span.col-detail-income Einnahme
+                  span.col-detail-expense Ausgabe
+                .detail-row(v-for="(it, idx) in item.items" :key="idx")
+                  span.col-detail-date {{ it.date ? new Date(it.date).toLocaleDateString('de-DE') : '–' }}
+                  span.col-detail-desc {{ it.description }}
+                  span.col-detail-cat {{ it.category || '–' }}
+                  span.col-detail-income {{ it.income_net ? formatCurrency(it.income_net) : '' }}
+                  span.col-detail-expense {{ it.expense_net ? formatCurrency(it.expense_net) : '' }}
           .event-row.event-sum(v-if="taxSummary.events.length")
+            span.col-toggle
             span.col-date
             span.col-event Gesamt
             span.col-income {{ formatCurrency(taxSummary.events.reduce((s, e) => s + e.income, 0)) }}
@@ -845,11 +905,55 @@ textarea:disabled {
 
 .event-row {
   display: grid;
-  grid-template-columns: 100px 1fr 130px 130px 130px;
+  grid-template-columns: 24px 100px 1fr 130px 130px 130px;
   padding: 0.4rem 1rem;
   align-items: center;
   gap: 0.5rem;
   border-bottom: 1px solid #e5e7eb;
+}
+
+.event-row.is-expandable { cursor: pointer; }
+.event-row.is-expandable:hover { background: #fafafa; }
+.event-row.is-expanded { background: #f5f5f5; }
+
+.col-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 0.9rem;
+}
+.toggle-caret { user-select: none; }
+
+.event-detail-row {
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+  padding: 0.5rem 1rem 0.75rem 2.5rem;
+}
+
+.event-detail-table .detail-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 140px 100px 100px;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #444;
+  align-items: center;
+}
+
+.event-detail-table .detail-header {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: #666;
+  border-bottom: 1px solid #d4d4d4;
+  margin-bottom: 0.25rem;
+}
+
+.col-detail-income, .col-detail-expense {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .event-row:last-child { border-bottom: none; }
@@ -870,8 +974,11 @@ textarea:disabled {
 @media (max-width: 640px) {
   .profit-row { grid-template-columns: 1fr 110px 0 60px; }
   .col-bar { display: none; }
-  .event-row { grid-template-columns: 80px 1fr 100px; }
+  .event-row { grid-template-columns: 24px 80px 1fr 100px; }
   .col-income, .col-expense { display: none; }
+  .event-detail-row { padding-left: 1rem; }
+  .event-detail-table .detail-row { grid-template-columns: 70px 1fr 90px; }
+  .col-detail-cat, .col-detail-income { display: none; }
 }
 
 /* ── Summenzeilen ── */
