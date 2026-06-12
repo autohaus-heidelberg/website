@@ -466,12 +466,24 @@ export const grantService = {
 
 // ── Tax Export (EÜR / Sphären) ──────────────────────────────────
 
+export interface TaxEventItem {
+  date: string | null
+  description: string
+  income_net: number
+  expense_net: number
+  category: string | null
+  tax_sphere: string | null
+}
+
 export interface TaxEventSummary {
   event: string
   date: string | null
+  date_from: string | null
+  date_to: string | null
   income: number
   expense: number
   result: number
+  items: TaxEventItem[]
 }
 
 export interface TaxParticipantSummary {
