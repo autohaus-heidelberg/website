@@ -39,6 +39,13 @@ const upcoming = computed(() =>
   margin-top: 2rem;
 }
 
+@media (max-width: 600px) {
+  .events-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .event {
   display: flex;
   justify-content: center;

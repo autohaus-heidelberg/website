@@ -76,6 +76,7 @@ const pretixError = ref('')
 // TinyMCE configuration
 const editorConfig = {
   license_key: 'gpl',
+  width: '100%',
   height: 300,
   menubar: false,
   plugins: 'lists link code quickbars',
@@ -595,7 +596,7 @@ function closeDeployModal() {
             )
 
           .form-group
-            label(for="descriptionShort") Kurzbeschreibung *
+            label Kurzbeschreibung *
             Editor(
               v-model="form.descriptionShort"
               :init="editorConfig"
@@ -853,6 +854,7 @@ function closeDeployModal() {
 
 .event-sub-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   margin-bottom: 1.5rem;
   padding: 0.5rem 0 0;
@@ -909,16 +911,19 @@ function closeDeployModal() {
 
 .form-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 2rem;
   align-items: start;
+  overflow: hidden;
 }
 
 .form-section {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border-right: 0.25rem solid black;
   padding-right: 2rem;
+  overflow: hidden;
 }
 
 .preview-section {
@@ -1004,12 +1009,18 @@ input, textarea {
   font-family: inherit;
   font-weight: 600;
   transition: background 0.2s, color 0.2s;
+  width: 100%;
 }
 
 input:focus, textarea:focus {
   outline: none;
   background: black;
   color: white;
+}
+
+:deep(.tox-tinymce) {
+  max-width: 100%;
+  width: 100% !important;
 }
 
 input:disabled {
@@ -1021,6 +1032,7 @@ input:disabled {
 .field-hint {
   font-size: 0.85rem;
   color: black;
+  overflow-wrap: break-word;
 }
 
 .image-preview {
@@ -1191,7 +1203,8 @@ input:disabled {
   }
 
   .form-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    overflow: hidden;
   }
 
   .form-section {
@@ -1213,6 +1226,26 @@ input:disabled {
 
   .artist-select {
     grid-template-columns: 1fr;
+  }
+
+  .form-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .form-header-right {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .event-tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
   }
 }
 

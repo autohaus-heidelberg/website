@@ -52,7 +52,7 @@ const logoHeight = ref(100);
 
 function setLogoHeight() {
   if (!logoContainer.value) return;
-  const diameter = Math.min(window.screen.width - 100, 600);
+  const diameter = Math.min(window.innerWidth - 40, 600);
   logoHeight.value = diameter;
   logoContainer.value.style.height = `${diameter}px`;
 
@@ -281,7 +281,7 @@ p Wir sind das Carousel im alten Autohaus.
 }
 
 .video > video {
-    max-width: 100vw;
+    max-width: 100%;
 
 }
 
@@ -295,7 +295,7 @@ p Wir sind das Carousel im alten Autohaus.
   .page-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    max-width: 2048;
+    max-width: 2048px;
     grid-gap: 1rem;
     column-gap: 3rem;
     grid-template-areas:

@@ -949,4 +949,44 @@ a.fee:hover {
   opacity: 0;
   transform: translateX(-50%) translateY(1rem);
 }
+
+@media (max-width: 768px) {
+  .event-list-view {
+    padding: 1rem;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .search-input {
+    min-width: unset;
+    max-width: 100%;
+  }
+
+  .sort-btn {
+    margin-left: 0;
+  }
+
+  .status-badge {
+    white-space: normal;
+  }
+
+  .event-header-right {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .event-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .event-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
 </style>
