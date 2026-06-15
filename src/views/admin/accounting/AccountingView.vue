@@ -22,6 +22,7 @@ import type {
 import {
   REVENUE_SOURCE_LABELS,
   REVENUE_GROUPS,
+  REVENUE_VAT_RATE_DEFAULTS,
   EXPENSE_PAID_FROM_LABELS,
   TAX_SPHERE_LABELS,
   VAT_RATE_LABELS,
@@ -677,19 +678,28 @@ const remainingAfterSplits = computed(() => {
 
 // ── Doordeal computeds ───────────────────────────────────────────
 
-// Einnahmen aus Eintritt (Einlass + VVK), netto
+// Einnahmen aus Eintritt (Einlass + VVK), netto (USt rausgerechnet)
 const doorDealEntranceRevenue = computed(() => {
   const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
   return revenues.value
     .filter(r => entranceSources.includes(r.source))
-    .reduce((sum, r) => sum + revenueNet(r), 0)
+    .reduce((sum, r) => {
+      const gross = revenueNet(r)
+      const vatKey = r.vat_rate ?? REVENUE_VAT_RATE_DEFAULTS[r.source] ?? 'none'
+      const rate = vatKey === '7' ? 0.07 : vatKey === '19' ? 0.19 : 0
+      return sum + (rate ? gross / (1 + rate) : gross)
+    }, 0)
 })
 
 // Abzugsfähige Kosten (z.B. GEMA, KSK) die vor der Doordeal-Aufteilung abgezogen werden
 const doorDealDeductions = computed(() => {
   return expenses.value
     .filter(e => e.door_deal_deductible)
-    .reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
+    .reduce((sum, e) => {
+      const gross = parseFloat(e.amount || '0')
+      const rate = e.vat_rate === '7' ? 0.07 : e.vat_rate === '19' ? 0.19 : 0
+      return sum + (rate ? gross / (1 + rate) : gross)
+    }, 0)
 })
 
 // Verteilungsbasis = Türeinnahmen − Abzüge

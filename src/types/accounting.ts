@@ -71,6 +71,16 @@ export const REVENUE_SOURCE_LABELS: Record<RevenueSource, string> = {
   vvk_stripe: 'VVK (Stripe)',
 }
 
+export const REVENUE_VAT_RATE_DEFAULTS: Partial<Record<RevenueSource, VatRate>> = {
+  bar_cash: '19',
+  bar_paypal: '19',
+  entrance_cash: '7',
+  entrance_paypal: '7',
+  vvk_pretix: '7',
+  vvk_paypal: '7',
+  vvk_stripe: '7',
+}
+
 export const REVENUE_GROUPS: { label: string; sources: RevenueSource[] }[] = [
   { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal'] },
   { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
