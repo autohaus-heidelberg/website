@@ -1460,7 +1460,7 @@ defineExpose({ toggleFinalStatus })
             .col-amount Gesamt
             .col-amount Wechselgeld
             .col-amount Gebühren
-            .col-amount Netto
+            .col-amount Brutto
 
           template(v-for="source in group.sources" :key="source")
             .revenue-row
@@ -1493,7 +1493,7 @@ defineExpose({ toggleFinalStatus })
                     min="0"
                     placeholder="0.00"
                   )
-              .col-amount.col-computed(data-label="Netto") {{ formatCurrency(revenueNet(getRevenue(source))) }}
+              .col-amount.col-computed(data-label="Brutto") {{ formatCurrency(revenueNet(getRevenue(source))) }}
             template(v-if="source === 'vvk_pretix' && pretixData")
               .revenue-row.sub-row.expandable(@click="toggleSourceExpanded('pretix')")
                 .col-source.sub-source {{ expandedSources.has('pretix') ? '▾' : '▸' }} {{ Object.keys(pretixData.by_source).length }} Zahlungsquellen
@@ -1550,7 +1550,7 @@ defineExpose({ toggleFinalStatus })
             span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
           template(v-if="expandedSources.has('beverage_detail')")
             .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
-              span.summary-label Gezählt (netto)
+              span.summary-label Gezählt (brutto)
               span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
             .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
               span.summary-label + Aus Kasse bezahlt
@@ -1569,7 +1569,7 @@ defineExpose({ toggleFinalStatus })
             span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
           template(v-if="expandedSources.has('entrance_detail')")
             .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
-              span.summary-label Gezählt (netto)
+              span.summary-label Gezählt (brutto)
               span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
             .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
               span.summary-label + Aus Kasse bezahlt (z.B. Honorare)
