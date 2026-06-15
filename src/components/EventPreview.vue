@@ -101,6 +101,7 @@ margin-bottom: 1rem;
 @media screen and (max-width: 768px) {
   .event-preview {
     max-width: 100%;
+    min-width: unset;
   }
 }
 

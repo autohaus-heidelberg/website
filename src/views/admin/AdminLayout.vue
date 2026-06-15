@@ -244,6 +244,7 @@ watch(isMobileMenuOpen, (isOpen) => {
   margin-left: 280px;
   padding: 2rem;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Burger Menu Button */
@@ -343,7 +344,7 @@ watch(isMobileMenuOpen, (isOpen) => {
   /* Adjust content area */
   .admin-content {
     margin-left: 0;
-    padding: 5rem 1rem 2rem;
+    padding: 4rem 1rem 2rem;
   }
 }
 

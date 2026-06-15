@@ -324,6 +324,12 @@ h3 {
   flex: 1;
 }
 
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+}
+
 .form-hint {
   font-size: 0.8rem;
   color: #666;
