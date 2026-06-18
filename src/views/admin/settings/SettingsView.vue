@@ -485,7 +485,7 @@ function handleSyncFromGit() {
   background: white;
   padding: 2rem;
   border: 0.5rem solid black;
-  max-width: 900px;
+  max-width: 1400px;
 }
 
 .settings-header {
@@ -748,7 +748,7 @@ textarea:disabled {
 .value.negative { color: #dc2626; }
 
 .vat-table {
-  max-width: 400px;
+  max-width: 480px;
   border: 0.2rem solid black;
   padding: 1rem 1.25rem;
 }
@@ -844,20 +844,20 @@ textarea:disabled {
 
 .profit-table {
   border: 0.2rem solid black;
-  max-width: 640px;
 }
 
 .profit-row {
   display: grid;
-  grid-template-columns: 1fr 130px 120px 70px;
+  grid-template-columns: minmax(160px, 1fr) 130px minmax(120px, 2fr) 70px;
   padding: 0.4rem 1rem;
   align-items: center;
   gap: 0.5rem;
+  font-size: 1rem;
 }
 
 .profit-header {
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 0.2rem solid black;
@@ -905,10 +905,11 @@ textarea:disabled {
 
 .event-row {
   display: grid;
-  grid-template-columns: 24px 100px 1fr 130px 130px 130px;
+  grid-template-columns: 24px 100px 1fr minmax(110px, auto) minmax(110px, auto) minmax(140px, auto);
   padding: 0.4rem 1rem;
   align-items: center;
   gap: 0.5rem;
+  font-size: 1rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -936,7 +937,7 @@ textarea:disabled {
   grid-template-columns: 90px 1fr 140px 100px 100px;
   gap: 0.5rem;
   padding: 0.25rem 0;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #444;
   align-items: center;
 }
@@ -944,7 +945,7 @@ textarea:disabled {
 .event-detail-table .detail-header {
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   color: #666;
   border-bottom: 1px solid #d4d4d4;
@@ -956,20 +957,28 @@ textarea:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.detail-header .col-detail-income,
+.detail-header .col-detail-expense { text-align: right; }
+
 .event-row:last-child { border-bottom: none; }
 
 .event-header {
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 0.2rem solid black;
   background: #f5f5f5;
 }
 
-.col-date { font-size: 0.85rem; color: #555; }
-.col-income, .col-expense { text-align: right; font-variant-numeric: tabular-nums; color: #555; font-size: 0.9rem; }
+.col-date { color: #555; }
+.col-event { text-align: left; }
+.col-income, .col-expense { text-align: right; font-variant-numeric: tabular-nums; color: #555; }
 .col-result { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+.event-header .col-income,
+.event-header .col-expense,
+.event-header .col-result { font-weight: 700; color: inherit; }
 
 @media (max-width: 640px) {
   .profit-row { grid-template-columns: 1fr 110px 0 60px; }
@@ -1002,15 +1011,15 @@ textarea:disabled {
 
 .participants-table {
   border: 0.2rem solid black;
-  max-width: 560px;
 }
 
 .participant-row {
   display: grid;
-  grid-template-columns: 1fr 130px 120px 70px;
+  grid-template-columns: minmax(160px, 1fr) 130px minmax(120px, 2fr) 70px;
   padding: 0.4rem 1rem;
   align-items: center;
   gap: 0.5rem;
+  font-size: 1rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -1018,7 +1027,7 @@ textarea:disabled {
 
 .participant-header {
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 0.2rem solid black;
