@@ -256,6 +256,13 @@ export interface GrantApplication {
   created?: string
   updated?: string
   has_abrechnung?: boolean
+  /**
+   * True if the record represents an actually submitted grant application
+   * (heuristic: kostenplan filled, own_revenue > 0, approved_amount,
+   * Zuwendungsbescheid or Auszahlung set). Records that only contain the
+   * default rent flat amount are *not* submitted.
+   */
+  is_submitted?: boolean
 }
 
 export interface GrantSummary {
