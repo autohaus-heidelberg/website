@@ -105,46 +105,6 @@
         ]
     },
     {
-        "id": "cherazade",
-        "date": "2026-06-20T18:00:00+00:00",
-        "title": "Cherazade, Schl\u00e4gertrupp, N-REEF, h3xe",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p>End hd, start yoga - 3 live acts, 2 dj sets!</p>\n<p>Cherazade (DA) l&auml;dt dich ein, Synth-Waveforms, die 1001 Yacht in angeregte Zust&auml;nde versetzen und zum Bersten bringen, im Carousel zu resonieren.</p>\n<p>Das Darmst&auml;dter Postpunk-Sextett &ldquo;Schl&auml;gertrupp&rdquo; verbindet melancholische, melodische Kl&auml;nge mit bitters&uuml;&szlig;en Texten. Egal ob ihr dazu weinen oder tanzen wollt, oder beides auf einmal. Postpunk und Coldwave nehmen euch in den Arm. D&uuml;stere Synthies gepaart mit klirrenden Gitarren werden euer schwarzes Herz erbl&uuml;hen lassen.</p>\n<p>N-Reef (HD) und h3xe (MA) bringen euch danach mit DJ-Sets zum Tanzen - bis 3 Uhr!</p>\n<p>Staying in close touch with the roots of Techno music and the underground, N-REEF strives to convey a sound shaped by active listening, track-selection, experimentation with various substyles and inspiration from a palette of motifs found in technology, sci-fi, the sea and the mysteries behind the tribal nature of humans.&nbsp;While mixing, N-REEF tries to integrate the listener into a story narrated through repetition, desire to dance, and improvisation expressed in the bond between the crowd, the space and the booth. A story, and particularly a musical one, is not straight line, nor a perfect and clean entity, but can rather be understood as a panoramic journey enlivened by nuances and details. The focus sometimes shifts, channeled into euphoric and tension-packed segments, or drained from the main flow, releasing pressure and offering the mind time to rethink and the body - freedom to readapt. Techno told with care and selection.</p>\n<p>Gleicher Preis an der T&uuml;r f&uuml;r Live-musik und Party, ab 0 Uhr 5&euro;.</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/cherazade/",
-        "img": "/img/a2d30992-2377-4aa0-866e-2ca2be59b2bc.webp",
-        "artists": [
-            {
-                "name": "Cherazade",
-                "link": "https://linktr.ee/cherazade",
-                "description": "Cherazade\nDarmstadt, Germany",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/1e-Yc1_ak8g",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=111167092/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/b901ff80-06e1-4847-8ddc-a93358783d02.jpeg"
-            },
-            {
-                "name": "Schl\u00e4gertrupp",
-                "link": "",
-                "description": "Schl\u00e4gertrupp\nDarmstadt, Germany",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "",
-                "image": "/img/77e1c237-44b4-4014-8b5b-2b8344c262c5.webp"
-            },
-            {
-                "name": "BIG GAINER",
-                "link": "",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3420736942/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/b0df5511-f672-4cab-aa4b-ca7f4347433e.webp"
-            }
-        ]
-    },
-    {
         "id": "screensaver",
         "date": "2026-06-11T17:00:00+00:00",
         "title": "Screensaver (Post-Punk, Melbourne), Jellybones (Wave Pop, Karlsruhe)",
