@@ -191,7 +191,15 @@ p Wir sind das Carousel im alten Autohaus.
 
 
   transform: rotate(1deg);
+  touch-action: manipulation;
 
+}
+
+@media screen and (max-width: 767px) {
+  .events-small {
+    grid-template-columns: auto 1fr;
+    font-size: clamp(1rem, 5vw, 2rem);
+  }
 }
 
 .events-small > * {
@@ -265,7 +273,8 @@ p Wir sind das Carousel im alten Autohaus.
 
 .logo-container {
   height: 500px;
-  width: 0;
+  width: 100%;
+  max-width: min(calc(100vw - 40px), 600px);
   color: var(--link-color)
 }
 
@@ -291,7 +300,7 @@ p Wir sind das Carousel im alten Autohaus.
 }
 
 
-@media screen and (min-width: 800px) {
+@media screen and (min-width: 768px) {
   .page-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
