@@ -5,7 +5,7 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
         .title
             span(v-resize-text) {{ event.title }}
-            .cancelled-label(v-if="event.cancelled") CANCELLED
+            .cancelled-label(v-if="event.cancelled") ABGESAGT
         .date()
             .date(v-resize-text="{ratio: 2}" :class="{ 'date-cancelled': event.cancelled }")
                 span {{ date.format("dd")  }}.
@@ -18,7 +18,7 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
                 div(v-resize-text={ratio: 2}) {{ dateDiff }}
         .event-img
             img.img(v-if="event.img" :src="event.img" crossorigin="anonymous")
-            .cancelled-stamp(v-if="event.cancelled") CANCELLED
+            .cancelled-stamp(v-if="event.cancelled") ABGESAGT
         //- button Mehr
 </template>
 

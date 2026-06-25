@@ -2,11 +2,11 @@
 .event
     h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }} Uhr
     h1.accent(v-if="showDatediff") {{ dateDiff }}
-    .cancelled-display(v-if="event.cancelled") CANCELLED
+    .cancelled-display(v-if="event.cancelled") ABGESAGT
     h1.accent {{ event.title }}
     .event-img-wrapper(v-if="imageUrl")
         img.event-img(:src="imageUrl" crossorigin="anonymous")
-        .cancelled-stamp(v-if="event.cancelled") CANCELLED
+        .cancelled-stamp(v-if="event.cancelled") ABGESAGT
     p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
     h3(v-else-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
