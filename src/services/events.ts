@@ -32,6 +32,7 @@ export interface Event {
   artists: Artist[]
   artist_ids?: number[]
   artist_count?: number
+  cancelled?: boolean
 }
 
 export interface HelferpadEventData {

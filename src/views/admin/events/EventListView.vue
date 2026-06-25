@@ -22,6 +22,28 @@ const selectedYear = ref(new Date().getFullYear())
 // Undo delete
 const pendingDelete = ref<{ event: Event; timer: ReturnType<typeof setTimeout> } | null>(null)
 
+// Cancel dialog
+const cancelDialog = ref<{ event: Event } | null>(null)
+
+async function openCancelDialog(event: Event) {
+  cancelDialog.value = { event }
+}
+
+async function confirmCancel() {
+  if (!cancelDialog.value) return
+  const event = cancelDialog.value.event
+  cancelDialog.value = null
+  try {
+    await eventService.update(event.id, { cancelled: true })
+    if (eventsData.value) {
+      const idx = eventsData.value.results.findIndex(e => e.id === event.id)
+      if (idx !== -1) eventsData.value.results[idx].cancelled = true
+    }
+  } catch (e: any) {
+    alert('Fehler beim Absagen: ' + e.message)
+  }
+}
+
 // VVK ticket counts
 const vvkTickets = ref<Record<string, number>>({})
 
@@ -307,11 +329,13 @@ onMounted(() => {
         .event-header
           .event-id {{ event.id }}
           .event-header-right
-            span.status-badge.badge-live(v-if="publishedIds.has(event.id)") ✓ Live
-            span.status-badge.badge-draft(
-              v-else
-              :class="{ urgent: isUrgent(event) }"
-            ) {{ isUrgent(event) ? `✗ in ${daysUntil(event)}d nicht live` : 'Entwurf' }}
+            span.status-badge.badge-cancelled(v-if="event.cancelled") ✗ Abgesagt
+            template(v-else)
+              span.status-badge.badge-live(v-if="publishedIds.has(event.id)") ✓ Live
+              span.status-badge.badge-draft(
+                v-else
+                :class="{ urgent: isUrgent(event) }"
+              ) {{ isUrgent(event) ? `✗ in ${daysUntil(event)}d nicht live` : 'Entwurf' }}
             span.status-badge.badge-acc-draft(v-if="hasDraftAccounting(event.id)") Abr. offen
             span.status-badge.badge-acc-final(v-if="hasResult(event.id)") ✓ Abgerechnet
             .event-date {{ formatDate(event.date) }}
@@ -335,6 +359,7 @@ onMounted(() => {
               span.fee-ak(v-if="event.feeAk")  / AK: {{ event.feeAk }} €
           .event-actions
             router-link.btn-edit(:to="`/admin/events/${event.id}`" @click.stop) Bearbeiten
+            button.btn-cancel(v-if="!event.cancelled" @click.stop="openCancelDialog(event)") Absagen
             button.btn-delete(@click.stop="deleteEvent(event)") Löschen
 
     .empty(v-else) Keine Veranstaltungen gefunden
@@ -391,6 +416,15 @@ onMounted(() => {
                 button.btn-download(@click="downloadAntrag(g)") PDF
 
       .empty(v-else) Keine Förderanträge für {{ selectedYear }}.
+
+  //- ── Cancel Dialog ──
+  .dialog-overlay(v-if="cancelDialog" @click.self="cancelDialog = null")
+    .dialog
+      h3 Veranstaltung absagen?
+      p „{{ cancelDialog.event.title }}" wird als abgesagt markiert.
+      .dialog-actions
+        button.btn-dialog-cancel(@click="cancelDialog = null") Abbrechen
+        button.btn-dialog-confirm(@click="confirmCancel") Absagen
 
   //- ── Undo Snackbar ──
   transition(name="snackbar")
@@ -708,7 +742,13 @@ a.fee:hover {
   gap: 0.75rem;
 }
 
-.btn-edit, .btn-delete, .btn-accounting, .btn-docs {
+.badge-cancelled {
+  background: #6b7280;
+  color: white;
+  border-color: #6b7280;
+}
+
+.btn-edit, .btn-delete, .btn-cancel, .btn-accounting, .btn-docs {
   padding: 0.5rem 1rem;
   border: 0.25rem solid black;
   cursor: pointer;
@@ -723,6 +763,17 @@ a.fee:hover {
   color: black;
 }
 
+.btn-cancel {
+  background: white;
+  color: #b45309;
+  border-color: #b45309;
+}
+
+.btn-cancel:hover {
+  background: #b45309;
+  color: white;
+}
+
 .btn-delete {
   background: white;
   color: #c00;
@@ -732,6 +783,69 @@ a.fee:hover {
 .btn-delete:hover {
   background: #c00;
   color: white;
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.dialog {
+  background: white;
+  border: 0.5rem solid black;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+}
+
+.dialog h3 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  margin: 0 0 0.75rem;
+}
+
+.dialog p {
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem;
+  color: #333;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.btn-dialog-cancel {
+  padding: 0.5rem 1.25rem;
+  border: 0.25rem solid black;
+  background: white;
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-dialog-cancel:hover {
+  background: #f0f0f0;
+}
+
+.btn-dialog-confirm {
+  padding: 0.5rem 1.25rem;
+  border: 0.25rem solid #b45309;
+  background: #b45309;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-dialog-confirm:hover {
+  background: #92400e;
+  border-color: #92400e;
 }
 
 .btn-accounting {

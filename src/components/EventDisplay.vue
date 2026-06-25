@@ -1,9 +1,12 @@
 <template lang="pug">
 .event
-    h2.date.accent {{ date }} Uhr
+    h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }} Uhr
     h1.accent(v-if="showDatediff") {{ dateDiff }}
+    .cancelled-display(v-if="event.cancelled") CANCELLED
     h1.accent {{ event.title }}
-    img.event-img(v-if="imageUrl" :src="imageUrl" crossorigin="anonymous")
+    .event-img-wrapper(v-if="imageUrl")
+        img.event-img(:src="imageUrl" crossorigin="anonymous")
+        .cancelled-stamp(v-if="event.cancelled") CANCELLED
     p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
     h3(v-else-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
@@ -82,10 +85,46 @@ const dateDiff = computed(() => {
     width: 100%;
 }
 
-.event-img {
+.event-img-wrapper {
+    position: relative;
     max-width: min(500px, 90vw);
     max-height: min(500px, 90vw);
-   }
+    overflow: hidden;
+}
+
+.event-img {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.date-cancelled {
+    text-decoration: line-through;
+}
+
+.cancelled-display {
+    color: red;
+    font-size: clamp(2rem, 8vw, 4rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    font-family: "Geologica";
+    text-align: center;
+}
+
+.cancelled-stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    color: red;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    border: 5px solid red;
+    padding: 0.5rem 1.5rem;
+    white-space: nowrap;
+    pointer-events: none;
+    background: rgba(255,255,255,0.15);
+}
 
 .artist-img {
     margin: auto;

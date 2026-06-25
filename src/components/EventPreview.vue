@@ -3,19 +3,22 @@
 <template lang="pug">
 router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
-        .title(v-resize-text) {{ event.title }}
+        .title
+            span(v-resize-text) {{ event.title }}
+            .cancelled-label(v-if="event.cancelled") CANCELLED
         .date()
-            .date(v-resize-text="{ratio: 2}")  
-                span {{ date.format("dd")  }}. 
+            .date(v-resize-text="{ratio: 2}" :class="{ 'date-cancelled': event.cancelled }")
+                span {{ date.format("dd")  }}.
                 span {{ date.format('DD') }}
-                span {{ date.format('MMM') }} 
-                span {{ date.format('YYYY') }} 
+                span {{ date.format('MMM') }}
+                span {{ date.format('YYYY') }}
                 span {{ time }}
         .date-diff(ref="dateContainer")
-            .side-date-content(ref="dateContent") 
-                div(v-resize-text={ratio: 2}) {{ dateDiff }} 
+            .side-date-content(ref="dateContent")
+                div(v-resize-text={ratio: 2}) {{ dateDiff }}
         .event-img
             img.img(v-if="event.img" :src="event.img" crossorigin="anonymous")
+            .cancelled-stamp(v-if="event.cancelled") CANCELLED
         //- button Mehr
 </template>
 
@@ -78,6 +81,26 @@ margin-bottom: 1rem;
     font-size: 2rem;
     font-stretch: 125%;
     font-weight: 900;
+    position: relative;
+}
+
+.cancelled-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1;
+    text-shadow: 0 0 8px rgba(255,255,255,0.8);
+}
+
+.date-cancelled {
+    text-decoration: line-through;
 }
 
 .event-preview {
@@ -122,7 +145,24 @@ margin-bottom: 1rem;
     height: 100%;
     width: 100%;
     overflow: hidden;
-      aspect-ratio: 1 / 1.6180 ;
+    aspect-ratio: 1 / 1.6180;
+    position: relative;
+}
+
+.cancelled-stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    color: red;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    border: 4px solid red;
+    padding: 0.3rem 0.8rem;
+    white-space: nowrap;
+    pointer-events: none;
+    background: rgba(255,255,255,0.15);
 }
 
 .img {
