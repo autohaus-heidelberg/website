@@ -8,6 +8,9 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import CircularLogo from "../components/CircularLogo.vue"
+import { useAuthStore } from "@/stores/auth";
+
+const authStore = useAuthStore();
 
 
 const upcoming = computed(() =>
@@ -62,6 +65,7 @@ function setLogoHeight() {
 
 <template lang="pug">
 //- h1 Autohaus Heidelberg
+router-link.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin' }") Admin
 .l-center
   .logo-container(ref="logoContainer")
     //- .video
@@ -150,6 +154,15 @@ p Wir sind das Carousel im alten Autohaus.
 </template>
 
 <style scoped>
+.admin-btn {
+  display: block;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+  background-color: var(--text-color);
+  color: var(--background-color);
+}
+
 #mce-EMAIL {
   width: 100%;
   height: 3em;
@@ -273,8 +286,7 @@ p Wir sind das Carousel im alten Autohaus.
 
 .logo-container {
   height: 500px;
-  width: 100%;
-  max-width: min(calc(100vw - 40px), 600px);
+  width: 0;
   color: var(--link-color)
 }
 
