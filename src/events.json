@@ -62,6 +62,18 @@
         ]
     },
     {
+        "id": "mm-260625",
+        "date": "2026-06-25T18:00:00+00:00",
+        "title": "ABGESAGT Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<h1><strong><span style=\"color: #e03e2d;\">Die Veranstaltung ist aufgrund der extremen Hitze abgesagt, bereits gekaufte Tickets werden erstattet</span></strong></h1>\n<p>&nbsp;</p>\n<p><span style=\"color: #7e8c8d;\"><s>&Uuml;berraschungsfilm</s></span></p>\n<p><span style=\"color: #7e8c8d;\"><s>Original mit englischen Untertiteln.</s></span><br><br><span style=\"color: #7e8c8d;\"><s>Midnight Madness bringt Euch unser erstes Double Feature. Aber keine Angst, wir halten Euch nicht die ganze Nacht auf: Es gibt zweimal eine knackige Stunde vom Feinsten.</s></span><br><span style=\"color: #7e8c8d;\"><s>Der erste Film ist das japanische Pendant zum 80er Jahre Actionfilm. Ein bisschen \"Hard Boiled\", ein bisschen \"Die Hard\", mit einem Sprenkler Nunsploitation. Der zweite Film ist ein Horrorfilm eines unserer Lieblingsregisseure, der seinem bahnbrechenden Fr&uuml;hwerk in nichts nachsteht.</s></span><br><span style=\"color: #7e8c8d;\"><s>Ein wilder Stilmix, der auf den ersten Blick nichts miteinander zu tun hat. Bei beiden Filmen handelt es sich jedoch um Direct-to-Video Filme. Wo es sich normalerweise um schnelle Geldmacher alternder Actionstars handelt, haben wir zwei Low-Budget Perlen, bei denen jeder Pfennig zweimal ausgequetscht wurde, um Unterhaltung ohne L&auml;ngen zu liefern.</s></span><br><br></p>",
+        "descriptionLong": "",
+        "shopLink": "",
+        "img": "/img/e5cc89cb-9232-4097-91bd-2aba7455a36a.webp",
+        "artists": []
+    },
+    {
         "id": "goodflyingbirds",
         "date": "2026-06-23T17:00:00+00:00",
         "title": "Good Flying Birds (Garage Pop, Indianapolis) und K!tsch (Punk/NDW, Aschaffenburg)",
