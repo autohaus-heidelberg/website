@@ -1780,6 +1780,8 @@ defineExpose({ toggleFinalStatus })
                       min="0"
                       step="1"
                       placeholder="0"
+                      @keydown.up.prevent="stepBottle(beverage, entry, 'after', 1)"
+                      @keydown.down.prevent="stepBottle(beverage, entry, 'after', -1)"
                       @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     span.input-label Fl
@@ -1862,6 +1864,8 @@ defineExpose({ toggleFinalStatus })
                       type="number"
                       min="0"
                       step="1"
+                      @keydown.up.prevent="stepBottle(beverage, entry, 'after', 1)"
+                      @keydown.down.prevent="stepBottle(beverage, entry, 'after', -1)"
                       @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
