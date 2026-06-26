@@ -72,6 +72,12 @@ const stockChangedWarning = ref('')
 type InventoryConflict = { drink: string; available: number; requested: number }
 const inventoryConflicts = reactive(new Map<number, InventoryConflict>())
 
+// Optimistic-concurrency conflict: another user updated the same Abrechnung
+// in parallel. Set on HTTP 409; the only resolution is to reload (otherwise
+// the user's pending edits would silently overwrite the other user's work).
+// See backend `AbrechnungSerializer.update` and `tests_abrechnung_occ.py`.
+const staleAbrechnungConflict = ref(false)
+
 // ── Pretix VVK ───────────────────────────────────────────────────
 const pretixData = ref<PretixOrderSummary | null>(null)
 const pretixLoading = ref(false)
@@ -1010,7 +1016,22 @@ async function saveAll(silent = false) {
     if (authStore.isTreasurer) {
       payload.splits = splits.value.filter(split => split.participant_name || split.id)
     }
+    // Optimistic concurrency control: include the `updated_at` we last saw
+    // from the server. If another user changed the Abrechnung in the meantime,
+    // the backend responds with HTTP 409 and we surface a "reload" banner —
+    // see the catch block below. Without this, two users editing the same
+    // Abrechnung in parallel can silently overwrite each other's changes (the
+    // FIFO row lock alone cannot solve this since both PUT bodies are valid
+    // replacements).
+    if (accounting.value.updated_at) {
+      payload.if_unmodified_since = accounting.value.updated_at
+    }
     const saved = await accountingService.update(accId, payload)
+
+    // Capture the new `updated_at` so the *next* save sees a fresh stamp.
+    if (saved.updated_at && accounting.value) {
+      accounting.value.updated_at = saved.updated_at
+    }
 
     // Sync from backend response.
     //
@@ -1087,6 +1108,19 @@ async function saveAll(silent = false) {
       setTimeout(() => { saveSuccess.value = '' }, 3000)
     }
   } catch (e: any) {
+    // OCC conflict (409): another user updated this Abrechnung in parallel.
+    // We CANNOT silently retry — the user's edits assume a different base
+    // state. Show a banner and pause auto-save until the user reloads.
+    if (e.response?.status === 409 && e.response?.data?.stale_abrechnung) {
+      staleAbrechnungConflict.value = true
+      autoSavePausedByConflict.value = true
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+        autoSaveTimer = null
+      }
+      autoSaveDirty.value = false
+      return
+    }
     // FIFO stock conflict (400 with conflicts array).
     //
     // Design decision: NEVER mutate the user's typed values from inside the
@@ -1121,6 +1155,20 @@ async function saveAll(silent = false) {
   } finally {
     isSaving.value = false
   }
+}
+
+/**
+ * Resolve a stale-Abrechnung 409 by reloading the page.
+ *
+ * Why a full reload and not just `loadData()`? The user's in-memory edits to
+ * `revenues`, `inventory`, `expenses`, `splits` etc. are stale by definition
+ * — the other writer changed something we don't yet know about. The safest
+ * UX is to drop everything and re-fetch from scratch, which matches what
+ * `window.location.reload()` does. The user is warned in the banner that
+ * unsaved edits will be lost.
+ */
+function reloadAfterStaleConflict() {
+  window.location.reload()
 }
 
 async function downloadAntrag() {
@@ -1433,6 +1481,19 @@ defineExpose({ toggleFinalStatus })
           button.overflow-item.overflow-danger(@click="deleteAccounting") Abrechnung löschen
 
     .error(v-if="error") {{ error }}
+
+    //- ── Stale Abrechnung Banner (OCC 409) ──
+    //- Shown when another user updated this Abrechnung in parallel. The only
+    //- safe resolution is a reload — proceeding would silently overwrite the
+    //- other user's edits (see backend tests_abrechnung_occ.py).
+    .stale-banner(v-if="staleAbrechnungConflict")
+      .stale-banner-icon ⚠️
+      .stale-banner-text
+        strong Diese Abrechnung wurde parallel bearbeitet.
+        span  Jemand anders hat in einem anderen Tab oder Gerät gespeichert.
+          | Damit deine Änderungen nicht die andere Person überschreiben,
+          | lade bitte neu. Deine ungespeicherten Eingaben gehen dabei verloren.
+      button.btn-primary(@click="reloadAfterStaleConflict") Neu laden
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
@@ -3133,6 +3194,54 @@ h2 {
   padding: 0;
   font-size: inherit;
   text-decoration: underline;
+}
+
+/* Stale-Abrechnung banner — shown when the OCC check rejects the save with
+   HTTP 409 because another user updated the same Abrechnung in parallel.
+   Visually distinct from inventory conflicts (red, not orange) because
+   it is a stronger signal: the only resolution is a full reload. */
+.stale-banner {
+  background: #ffebee;
+  border: 1px solid #d32f2f;
+  border-radius: 6px;
+  padding: 0.85em 1em;
+  margin: 0.75em 0 1em;
+  display: flex;
+  gap: 0.75em;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stale-banner-icon {
+  font-size: 1.4em;
+  flex-shrink: 0;
+}
+
+.stale-banner-text {
+  flex: 1;
+  min-width: 18em;
+  line-height: 1.4;
+  color: #5d1f1f;
+}
+
+.stale-banner-text strong {
+  color: #b71c1c;
+  display: block;
+  margin-bottom: 0.2em;
+}
+
+.stale-banner .btn-primary {
+  background: #d32f2f;
+  border: none;
+  color: #fff;
+  padding: 0.5em 1.2em;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.stale-banner .btn-primary:hover {
+  background: #b71c1c;
 }
 
 /* Mobile card variant */

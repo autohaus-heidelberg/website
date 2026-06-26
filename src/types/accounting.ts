@@ -164,6 +164,22 @@ export interface EventAccounting {
   inventory_entries?: InventoryEntry[]
   expenses?: ExpenseEntry[]
   splits?: AccountingSplit[]
+  // Optimistic concurrency control: when present on a PUT, the server
+  // rejects with HTTP 409 if `updated_at` has moved past this value. The
+  // frontend captures this from the last successful GET/PUT response and
+  // sends it back on every save.
+  if_unmodified_since?: string
+}
+
+/**
+ * Payload returned by the API on HTTP 409 Conflict from
+ * `PUT /api/abrechnungen/<id>/` when `if_unmodified_since` is stale.
+ */
+export interface StaleAbrechnungError {
+  error: string
+  stale_abrechnung: true
+  server_updated_at: string
+  client_updated_at: string
 }
 
 export interface AccountingSummary {
