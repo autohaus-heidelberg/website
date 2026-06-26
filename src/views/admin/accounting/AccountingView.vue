@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRouter, onBeforeRouteLeave } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
 import type { PretixOrderSummary, PayPalBarSummary, PayPalCategory, EventDocument } from '@/services/accounting'
@@ -41,8 +41,50 @@ const emit = defineEmits<{
   'status-changed': [status: 'draft' | 'final']
 }>()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
-const activeTab = ref('cashcount')
+
+// Tab-Persistenz via Query-Param `abrTab`. Damit überlebt der Inventur-
+// Klick auf einen Drink → BeverageFormView → "Zurück" den Tab-State:
+// die URL trägt z.B. `/admin/events/42?tab=accounting&abrTab=inventory`,
+// und beim Restore (Browser-Back oder Cancel-Button) sind wir wieder
+// genau in der Inventur statt im Default `cashcount`.
+type AbrTab = 'cashcount' | 'inventory' | 'expenses' | 'documents' | 'result' | 'grant'
+const VALID_ABR_TABS: AbrTab[] = ['cashcount', 'inventory', 'expenses', 'documents', 'result', 'grant']
+function readAbrTabFromRoute(): AbrTab {
+  const q = route.query.abrTab
+  if (typeof q === 'string' && (VALID_ABR_TABS as string[]).includes(q)) return q as AbrTab
+  return 'cashcount'
+}
+const activeTab = ref<AbrTab>(readAbrTabFromRoute())
+watch(activeTab, (val) => {
+  // Nur URL aktualisieren, wenn sich etwas geändert hat — sonst tritt
+  // Vue Router in eine Loop (Push triggert Watcher triggert Push).
+  if (route.query.abrTab === val) return
+  router.replace({
+    query: { ...route.query, abrTab: val === 'cashcount' ? undefined : val },
+  }).catch(() => {})
+})
+// Falls von außen (z.B. Browser-Back) die URL den abrTab ändert, ziehen
+// wir den State nach. Filter auf abrTab-only, damit andere Query-Änderungen
+// (z.B. Speicher-Acknowledge) nichts in Gang setzen.
+watch(() => route.query.abrTab, () => {
+  const next = readAbrTabFromRoute()
+  if (next !== activeTab.value) activeTab.value = next
+})
+
+/** Baut die Ziel-Route für den Drink-Link in der Inventur-Tabelle.
+ *  Hängt einen `returnTo`-Param an, der BeverageFormView nutzt, um nach
+ *  "Speichern" oder "Abbrechen" zurück in den genau gleichen Tab dieser
+ *  Abrechnung zu springen — statt stur auf `/admin/lager` zu landen. */
+function beverageLinkTo(beverage: BeverageItem) {
+  const returnTo = `/admin/events/${props.eventId}?tab=accounting&abrTab=inventory`
+  return {
+    path: `/admin/beverages/${beverage.id}`,
+    query: { returnTo },
+  }
+}
+
 const showOverflow = ref(false)
 const expandedSources = ref<Set<string>>(new Set())
 
@@ -1702,7 +1744,7 @@ defineExpose({ toggleFinalStatus })
               .col-inv-name
                 router-link.bev-name.bev-name-link(
                   v-if="authStore.isInventoryManager && beverage.id"
-                  :to="`/admin/beverages/${beverage.id}`"
+                  :to="beverageLinkTo(beverage)"
                   :title="`„${beverage.name}\" im Stamm bearbeiten`"
                 ) {{ beverage.name }}
                 .bev-name(v-else) {{ beverage.name }}
@@ -1775,7 +1817,7 @@ defineExpose({ toggleFinalStatus })
               .inv-card-name
                 router-link.inv-card-name-link(
                   v-if="authStore.isInventoryManager && beverage.id"
-                  :to="`/admin/beverages/${beverage.id}`"
+                  :to="beverageLinkTo(beverage)"
                   :title="`„${beverage.name}\" im Stamm bearbeiten`"
                 ) {{ beverage.name }}
                 template(v-else) {{ beverage.name }}
