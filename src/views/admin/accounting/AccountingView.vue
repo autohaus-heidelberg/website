@@ -567,6 +567,28 @@ function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after
   if (field === 'after') confirmedInventory.add(beverage.id!)
 }
 
+/** Pfeiltasten ↑/↓ im Flaschen-Input (Kistenmodus) sollen denselben
+ *  Carry-over auslösen wie die +/- Buttons (siehe stepBottle). Wir
+ *  binden auf das generische `@keydown` statt auf `.up`/`.down` mit
+ *  Modifier, weil Pug-Templates die Modifier-Schreibweise zwar
+ *  prinzipiell unterstützen, aber im Zusammenspiel mit
+ *  parens-attribute-syntax fragil ist — ein expliziter JS-Handler ist
+ *  robuster und einfacher zu debuggen. */
+function onBottleKeydown(
+  event: KeyboardEvent,
+  beverage: BeverageItem,
+  entry: InventoryEntry,
+  field: 'after' | 'before',
+) {
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    stepBottle(beverage, entry, field, 1)
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    stepBottle(beverage, entry, field, -1)
+  }
+}
+
 function inventoryItemVisible(entry: InventoryEntry): boolean {
   if (!hideZeroStock.value) return true
   return parseFloat(entry.quantity_before || '0') > 0 || parseFloat(entry.quantity_after || '0') > 0
@@ -1780,8 +1802,7 @@ defineExpose({ toggleFinalStatus })
                       min="0"
                       step="1"
                       placeholder="0"
-                      @keydown.up.prevent="stepBottle(beverage, entry, 'after', 1)"
-                      @keydown.down.prevent="stepBottle(beverage, entry, 'after', -1)"
+                      @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
                       @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     span.input-label Fl
@@ -1864,8 +1885,7 @@ defineExpose({ toggleFinalStatus })
                       type="number"
                       min="0"
                       step="1"
-                      @keydown.up.prevent="stepBottle(beverage, entry, 'after', 1)"
-                      @keydown.down.prevent="stepBottle(beverage, entry, 'after', -1)"
+                      @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
                       @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
