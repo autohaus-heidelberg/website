@@ -403,9 +403,13 @@ onMounted(async () => {
     else accountingStatus.value = acc.status === 'final' ? 'final' : 'draft'
   }
 
-  // Check for tab query parameter and set active section/tab
+  // Check for tab query parameter and set active section/tab.
+  // `abrTab` (Sub-Tab innerhalb der Abrechnung) impliziert die
+  // Abrechnungs-Sektion — auch wenn `tab=accounting` weggelassen wurde,
+  // damit Deep-Links wie `?abrTab=expenses` direkt landen.
   const tabParam = route.query.tab as string
-  if (tabParam === 'accounting') {
+  const abrTabParam = route.query.abrTab as string | undefined
+  if (tabParam === 'accounting' || abrTabParam) {
     activeSection.value = 'accounting'
   } else if (tabParam && ['details', 'checklist', 'vvk'].includes(tabParam)) {
     activeTab.value = tabParam
