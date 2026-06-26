@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { bottleStep, stepBottleInCrate } from '../utils/inventoryStep'
+import { bottleStep, stepBottleInCrate, applyBottleStep } from '../utils/inventoryStep'
 
 describe('bottleStep', () => {
   it('returns 1 for whole-bottle drinks (no portions defined)', () => {
@@ -81,5 +81,49 @@ describe('stepBottleInCrate', () => {
       crates: 0,
       bottles: 0,
     })
+  })
+})
+
+describe('applyBottleStep', () => {
+  // ── Whole-bottle drinks (portions=null/1) — Piccolo, Wein, Bier ─────
+  it('decrements by 1 for whole-bottle drinks', () => {
+    expect(applyBottleStep(12, -1, {})).toBe(11)
+    expect(applyBottleStep(12, -1, { portions_per_bottle: null })).toBe(11)
+    expect(applyBottleStep(12, -1, { portions_per_bottle: 1 })).toBe(11)
+  })
+
+  it('clamps at zero for whole-bottle drinks', () => {
+    expect(applyBottleStep(0, -1, {})).toBe(0)
+    expect(applyBottleStep(0.4, -1, {})).toBe(0)
+  })
+
+  // ── Portion-based drinks: NO snap-to-grid (regression for prod bug) ─
+  // Hintergrund: ein früheres Snap-to-Grid hat den vom Server gelieferten
+  // Bestand (z.B. 5.29 für Three Sixty Vodka, portions=35) beim ersten
+  // Klick "−" paradoxerweise auf 5.2857 (= 185/35) HOCH-gesnappt, weil
+  // 5.29 ≈ 185.15/35 ≈ 185/35. Erwartet ist stattdessen "−1 Portion":
+  // 5.29 − 1/35 ≈ 5.2614.
+  it('does not snap-to-grid: 5.29 with portions=35 decrements by 1/35', () => {
+    const drink = { portions_per_bottle: 35 } // Three Sixty Vodka
+    expect(applyBottleStep(5.29, -1, drink)).toBeCloseTo(5.2614, 4)
+  })
+
+  it('does not snap-to-grid: 4.67 with portions=3 decrements by 1/3', () => {
+    const drink = { portions_per_bottle: 3 } // Rotwein
+    expect(applyBottleStep(4.67, -1, drink)).toBeCloseTo(4.3367, 4)
+  })
+
+  // ── Klicks akkumulieren ohne Float-Drift (durch Rundung auf 1e-4) ──
+  it('accumulates portions without unbounded float drift', () => {
+    const drink = { portions_per_bottle: 20 } // step = 0.05
+    let v = 1
+    for (let i = 0; i < 7; i++) v = applyBottleStep(v, -1, drink)
+    // 1 - 7*0.05 = 0.65; ohne Rundung wäre v = 0.6500000000000001.
+    expect(v).toBe(0.65)
+  })
+
+  it('handles positive delta (clicking "+")', () => {
+    const drink = { portions_per_bottle: 35 }
+    expect(applyBottleStep(5.29, 1, drink)).toBeCloseTo(5.3186, 4)
   })
 })

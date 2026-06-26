@@ -29,7 +29,7 @@ import {
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
-import { bottleStep, stepBottleInCrate } from '@/utils/inventoryStep'
+import { bottleStep, stepBottleInCrate, applyBottleStep } from '@/utils/inventoryStep'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -509,21 +509,17 @@ function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after
     state[bottleKey] = next.bottles
     updateEntryFromCrates(entry, beverage)
   } else {
-    // Flaschenmodus (upc=1): Schrittweite ergibt sich aus portions_per_bottle.
-    // Piccolo & Co. (portions=null/1) → Ganze-Flaschen-Schritte. Spirituosen
-    // mit z.B. 20 Portionen pro Flasche → 0.05er-Schritte. Wir geben dem
-    // User damit pro Getränketyp sinnvolle Granularität, statt überall die
-    // alte 0.25-Heuristik zu erzwingen.
-    const current = parseFloat(entry[field === 'after' ? 'quantity_after' : 'quantity_before'] || '0')
-    const step = bottleStep(beverage)
-    const raw = current + delta * step
-    // Auf step-Vielfache snappen, damit Rundungsfehler nicht akkumulieren
-    // (z.B. 0.05 * 7 ≠ 0.35 in Float-Arithmetik).
-    const snapped = Math.max(0, Math.round(raw / step) * step)
-    // Auf 4 Nachkommastellen kürzen — reicht für Portionen bis 1/10000.
-    const rounded = Math.round(snapped * 10000) / 10000
-    if (field === 'after') entry.quantity_after = String(rounded)
-    else entry.quantity_before = String(rounded)
+    // Flaschenmodus (upc=1): siehe applyBottleStep / bottleStep in
+    // utils/inventoryStep.ts. Schrittweite ergibt sich aus
+    // portions_per_bottle: Piccolo & Co. → ganze Flaschen; Spirituosen mit
+    // z.B. 35 Portionen → 1/35-Schritte. WICHTIG: wir snappen den
+    // aktuellen Wert nicht aufs Step-Grid, weil der Server-Bestand selten
+    // exakt darauf liegt — sonst würde der erste Klick paradoxerweise
+    // HOCH-snappen (z.B. 5,29 → 5,2857 bei Vodka).
+    const field2 = field === 'after' ? 'quantity_after' : 'quantity_before'
+    const current = parseFloat(entry[field2] || '0')
+    const next = applyBottleStep(current, delta, beverage)
+    entry[field2] = String(next)
     recomputeConsumed(entry)
   }
   if (field === 'after') confirmedInventory.add(beverage.id!)

@@ -29,6 +29,35 @@ export function bottleStep(beverage: BottleStepBeverage): number {
   return 1 / portions
 }
 
+/**
+ * Wendet einen ±delta-Klick auf einen Flaschen-Zähler (Einzelflaschen-
+ * Modus, units_per_crate ≤ 1) an.
+ *
+ * Wichtige Designentscheidung: wir runden NUR das Ergebnis auf 4
+ * Nachkommastellen (gegen Float-Drift wie 0.05*7 ≠ 0.35). Wir snappen
+ * den aktuellen Wert NICHT aufs Step-Grid, weil der vom Server gelieferte
+ * Bestand selten exakt darauf liegt:
+ *
+ *   • Three Sixty Vodka, portions=35, Server-Bestand 5.29 →
+ *     1×"−"  → 5.2614 (eine Portion abgezogen)
+ *     2×"−"  → 5.2328
+ *   • Rotwein, portions=3, Server-Bestand 4.67 →
+ *     1×"−"  → 4.3367 (ein Glas abgezogen)
+ *     2×"−"  → 4.0034
+ *
+ * Würden wir snappen, würde der erste Klick "−" den Wert paradoxerweise
+ * z.B. auf 5.2857 (= 185/35) HOCH-snappen, weil 5.29 ≈ 185.15/35 ≈ 185/35.
+ */
+export function applyBottleStep(
+  current: number,
+  delta: number,
+  beverage: BottleStepBeverage,
+): number {
+  const step = bottleStep(beverage)
+  const raw = Math.max(0, current + delta * step)
+  return Math.round(raw * 10000) / 10000
+}
+
 export interface CrateBottleState {
   crates: number
   bottles: number
