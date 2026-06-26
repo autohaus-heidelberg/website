@@ -1802,7 +1802,7 @@ defineExpose({ toggleFinalStatus })
                       min="0"
                       step="1"
                       placeholder="0"
-                      @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
+                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     span.input-label Fl
@@ -1818,7 +1818,7 @@ defineExpose({ toggleFinalStatus })
                     type="number"
                     min="0"
                     :step="bottleStep(beverage)"
-                    @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
+                    @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                     @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     placeholder="0"
                   )
@@ -1886,7 +1886,7 @@ defineExpose({ toggleFinalStatus })
                       type="number"
                       min="0"
                       step="1"
-                      @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
+                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
@@ -1901,7 +1901,7 @@ defineExpose({ toggleFinalStatus })
                       type="number"
                       min="0"
                       :step="bottleStep(beverage)"
-                      @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
+                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
