@@ -1818,6 +1818,7 @@ defineExpose({ toggleFinalStatus })
                     type="number"
                     min="0"
                     :step="bottleStep(beverage)"
+                    @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
                     @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     placeholder="0"
                   )
@@ -1900,6 +1901,7 @@ defineExpose({ toggleFinalStatus })
                       type="number"
                       min="0"
                       :step="bottleStep(beverage)"
+                      @keydown="e => onBottleKeydown(e, beverage, entry, 'after')"
                       @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
