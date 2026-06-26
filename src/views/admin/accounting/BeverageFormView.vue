@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { beverageService } from '@/services'
 import type { BeverageItem, StockHistory, StockHistoryEntry } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
@@ -10,7 +10,27 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const route = useRoute()
 const isEditing = !!props.id
+
+/**
+ * Wo soll der User nach Speichern / Abbrechen / Merge landen?
+ * - Wenn `?returnTo=…` als interne URL übergeben wurde (z.B. von der
+ *   Inventur-Maske einer Abrechnung), dann genau dorthin zurück.
+ * - Sonst Default: Lagerübersicht.
+ * Sicherheitscheck: nur interne Pfade akzeptieren (kein Open-Redirect).
+ */
+function resolveReturnTo(): string {
+  const raw = route.query.returnTo
+  if (typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//')) {
+    return raw
+  }
+  return '/admin/lager'
+}
+const returnTo = computed(() => resolveReturnTo())
+function navigateBack() {
+  router.push(returnTo.value)
+}
 
 const form = ref<Partial<BeverageItem>>({
   name: '',
@@ -142,7 +162,7 @@ async function executeMerge() {
   mergeLoading.value = true
   try {
     await beverageService.merge(Number(props.id), mergeTargetId.value)
-    router.push('/admin/lager')
+    navigateBack()
   } catch (e: any) {
     alert(e.message || 'Fehler beim Zusammenführen')
   } finally {
@@ -178,7 +198,7 @@ async function handleSubmit() {
     } else {
       await beverageService.create(payload)
     }
-    router.push('/admin/lager')
+    navigateBack()
   } catch (e: any) {
     error.value = e.message || 'Fehler beim Speichern'
   } finally {
@@ -195,7 +215,7 @@ onMounted(() => {
 .beverage-form-view
   .form-header
     h2 {{ isEditing ? 'Getränk bearbeiten' : 'Neues Getränk' }}
-    router-link.btn-cancel(to="/admin/lager") Abbrechen
+    router-link.btn-cancel(:to="returnTo") Abbrechen
 
   form.beverage-form(@submit.prevent="handleSubmit")
     .form-group.full
@@ -332,7 +352,7 @@ onMounted(() => {
     .form-actions
       button.btn-primary(type="submit" :disabled="isLoading")
         | {{ isLoading ? 'Speichern...' : (isEditing ? 'Aktualisieren' : 'Erstellen') }}
-      router-link.btn-secondary(to="/admin/lager") Abbrechen
+      router-link.btn-secondary(:to="returnTo") Abbrechen
 
   .price-history(v-if="isEditing && priceHistory.length")
     h3.section-title Preisverlauf (Einkäufe)

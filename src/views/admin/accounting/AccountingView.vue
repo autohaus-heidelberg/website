@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
-import { useRouter, onBeforeRouteLeave } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
 import type { PretixOrderSummary, PayPalBarSummary, PayPalCategory, EventDocument } from '@/services/accounting'
@@ -29,6 +29,7 @@ import {
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
+import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -40,8 +41,50 @@ const emit = defineEmits<{
   'status-changed': [status: 'draft' | 'final']
 }>()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
-const activeTab = ref('cashcount')
+
+// Tab-Persistenz via Query-Param `abrTab`. Damit überlebt der Inventur-
+// Klick auf einen Drink → BeverageFormView → "Zurück" den Tab-State:
+// die URL trägt z.B. `/admin/events/42?tab=accounting&abrTab=inventory`,
+// und beim Restore (Browser-Back oder Cancel-Button) sind wir wieder
+// genau in der Inventur statt im Default `cashcount`.
+type AbrTab = 'cashcount' | 'inventory' | 'expenses' | 'documents' | 'result' | 'grant'
+const VALID_ABR_TABS: AbrTab[] = ['cashcount', 'inventory', 'expenses', 'documents', 'result', 'grant']
+function readAbrTabFromRoute(): AbrTab {
+  const q = route.query.abrTab
+  if (typeof q === 'string' && (VALID_ABR_TABS as string[]).includes(q)) return q as AbrTab
+  return 'cashcount'
+}
+const activeTab = ref<AbrTab>(readAbrTabFromRoute())
+watch(activeTab, (val) => {
+  // Nur URL aktualisieren, wenn sich etwas geändert hat — sonst tritt
+  // Vue Router in eine Loop (Push triggert Watcher triggert Push).
+  if (route.query.abrTab === val) return
+  router.replace({
+    query: { ...route.query, abrTab: val === 'cashcount' ? undefined : val },
+  }).catch(() => {})
+})
+// Falls von außen (z.B. Browser-Back) die URL den abrTab ändert, ziehen
+// wir den State nach. Filter auf abrTab-only, damit andere Query-Änderungen
+// (z.B. Speicher-Acknowledge) nichts in Gang setzen.
+watch(() => route.query.abrTab, () => {
+  const next = readAbrTabFromRoute()
+  if (next !== activeTab.value) activeTab.value = next
+})
+
+/** Baut die Ziel-Route für den Drink-Link in der Inventur-Tabelle.
+ *  Hängt einen `returnTo`-Param an, der BeverageFormView nutzt, um nach
+ *  "Speichern" oder "Abbrechen" zurück in den genau gleichen Tab dieser
+ *  Abrechnung zu springen — statt stur auf `/admin/lager` zu landen. */
+function beverageLinkTo(beverage: BeverageItem) {
+  const returnTo = `/admin/events/${props.eventId}?tab=accounting&abrTab=inventory`
+  return {
+    path: `/admin/beverages/${beverage.id}`,
+    query: { returnTo },
+  }
+}
+
 const showOverflow = ref(false)
 const expandedSources = ref<Set<string>>(new Set())
 
@@ -431,6 +474,56 @@ function updateEntryFromCrates(entry: InventoryEntry, beverage: BeverageItem) {
   recomputeConsumed(entry)
 }
 
+/** Wenn der User direkt im Flaschen-Input arbeitet (native Spin-Buttons
+ *  am rechten Rand, oder Tippen einer großen Zahl), normalisiert sich
+ *  das Modell sonst nicht: `afterBottles=20` bei einer 20er-Kiste
+ *  bleibt einfach stehen.
+ *
+ *  Eigentliche Logik (Carry-over + Modi 'increment'/'absolute') lebt in
+ *  `utils/inventoryStep.ts` und ist dort isoliert getestet. Diese
+ *  Wrapper-Funktion adressiert nur den reaktiven State unter
+ *  `inventoryCrates[beverage.id]`. */
+function normalizeBottleOverflow(
+  beverage: BeverageItem,
+  field: 'after' | 'before',
+  mode: 'increment' | 'absolute' = 'increment',
+) {
+  const upc = beverage.units_per_crate || 1
+  if (upc < 1) return
+  const state = inventoryCrates.value[String(beverage.id)]
+  if (!state) return
+  const crateKey = field === 'after' ? 'afterCrates' : 'beforeCrates'
+  const bottleKey = field === 'after' ? 'afterBottles' : 'beforeBottles'
+  const next = normalizeCrateBottleState(
+    { crates: state[crateKey], bottles: state[bottleKey] as number },
+    upc,
+    mode,
+  )
+  state[crateKey] = next.crates
+  state[bottleKey] = next.bottles
+}
+
+/** Wrapper für @input/@change auf dem Flaschen-Input. Entscheidet anhand
+ *  des Events, ob der User getippt hat (→ absolute Gesamtmenge) oder ob
+ *  ein Spin-Button geklickt wurde (→ inkrementeller Carry-over).
+ *
+ *  Detection: native Spin-Buttons feuern entweder gar keinen `inputType`
+ *  (Chrome/Safari liefern `null`/leeren String) oder `'insertReplacementText'`.
+ *  Tippen liefert `'insertText'`, Backspace `'deleteContentBackward'` etc. */
+function onBottleInputOrChange(
+  event: Event,
+  beverage: BeverageItem,
+  entry: InventoryEntry,
+  field: 'after' | 'before',
+) {
+  const inputType = (event as unknown as InputEvent).inputType
+  const isSpinButton = !inputType || inputType === 'insertReplacementText'
+  const mode: 'increment' | 'absolute' = isSpinButton ? 'increment' : 'absolute'
+  normalizeBottleOverflow(beverage, field, mode)
+  updateEntryFromCrates(entry, beverage)
+  if (field === 'after') confirmedInventory.add(beverage.id!)
+}
+
 const inventoryBySupplier = computed(() => {
   const groups: Record<string, { beverage: BeverageItem; entry: InventoryEntry }[]> = {}
   for (const bev of beverages.value) {
@@ -492,19 +585,58 @@ function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after'
 function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
   const upc = beverage.units_per_crate || 1
   if (upc > 1) {
+    // Kistenmodus: "Flaschenzähler durchläuft" — siehe stepBottleInCrate.
+    // Beispiel (upc=20): "−" auf 0 Fl. → 1 Kiste weniger und 19 Fl.,
+    // "+" auf 19 Fl. → eine Kiste mehr und 0 Fl. So pflegt man den
+    // Verbrauch flüssig, ohne ständig zwischen den Steppern zu wechseln.
     const state = getOrInitCrateState(beverage.id!, upc, entry)
-    const key = field === 'after' ? 'afterBottles' : 'beforeBottles'
-    state[key] = Math.max(0, state[key] + delta)
+    const crateKey = field === 'after' ? 'afterCrates' : 'beforeCrates'
+    const bottleKey = field === 'after' ? 'afterBottles' : 'beforeBottles'
+    const next = stepBottleInCrate(
+      { crates: state[crateKey], bottles: state[bottleKey] },
+      delta,
+      upc,
+    )
+    state[crateKey] = next.crates
+    state[bottleKey] = next.bottles
     updateEntryFromCrates(entry, beverage)
   } else {
-    const current = parseFloat(entry[field === 'after' ? 'quantity_after' : 'quantity_before'] || '0')
-    const step = 0.25
-    const newVal = Math.max(0, current + delta * step)
-    if (field === 'after') entry.quantity_after = String(newVal)
-    else entry.quantity_before = String(newVal)
+    // Flaschenmodus (upc=1): siehe applyBottleStep / bottleStep in
+    // utils/inventoryStep.ts. Schrittweite ergibt sich aus
+    // portions_per_bottle: Piccolo & Co. → ganze Flaschen; Spirituosen mit
+    // z.B. 35 Portionen → 1/35-Schritte. WICHTIG: wir snappen den
+    // aktuellen Wert nicht aufs Step-Grid, weil der Server-Bestand selten
+    // exakt darauf liegt — sonst würde der erste Klick paradoxerweise
+    // HOCH-snappen (z.B. 5,29 → 5,2857 bei Vodka).
+    const field2 = field === 'after' ? 'quantity_after' : 'quantity_before'
+    const current = parseFloat(entry[field2] || '0')
+    const next = applyBottleStep(current, delta, beverage)
+    entry[field2] = String(next)
     recomputeConsumed(entry)
   }
   if (field === 'after') confirmedInventory.add(beverage.id!)
+}
+
+/** Pfeiltasten ↑/↓ im Flaschen-Input (Kistenmodus) sollen denselben
+ *  Carry-over auslösen wie die +/- Buttons (siehe stepBottle). Wir
+ *  binden auf das generische `@keydown` statt auf `.up`/`.down` mit
+ *  Modifier, weil Pug-Templates die Modifier-Schreibweise zwar
+ *  prinzipiell unterstützen, aber im Zusammenspiel mit
+ *  parens-attribute-syntax fragil ist — ein expliziter JS-Handler ist
+ *  robuster und einfacher zu debuggen. */
+function onBottleKeydown(
+  event: KeyboardEvent,
+  beverage: BeverageItem,
+  entry: InventoryEntry,
+  field: 'after' | 'before',
+) {
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    stepBottle(beverage, entry, field, 1)
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    stepBottle(beverage, entry, field, -1)
+  }
 }
 
 function inventoryItemVisible(entry: InventoryEntry): boolean {
@@ -1682,7 +1814,12 @@ defineExpose({ toggleFinalStatus })
           template(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
             .inventory-row(v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id) }")
               .col-inv-name
-                .bev-name {{ beverage.name }}
+                router-link.bev-name.bev-name-link(
+                  v-if="authStore.isInventoryManager && beverage.id"
+                  :to="beverageLinkTo(beverage)"
+                  :title="`„${beverage.name}\" im Stamm bearbeiten`"
+                ) {{ beverage.name }}
+                .bev-name(v-else) {{ beverage.name }}
                 .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
                 .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
               .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
@@ -1712,10 +1849,11 @@ defineExpose({ toggleFinalStatus })
                     input.qty-input(
                       v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
                       type="number"
-                      min="0"
                       step="1"
                       placeholder="0"
-                      @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
+                      @input="onBottleInputOrChange($event, beverage, entry, 'after')"
+                      @change="onBottleInputOrChange($event, beverage, entry, 'after')"
                     )
                     span.input-label Fl
 
@@ -1729,7 +1867,8 @@ defineExpose({ toggleFinalStatus })
                     v-model="entry.quantity_after"
                     type="number"
                     min="0"
-                    step="0.1"
+                    :step="bottleStep(beverage)"
+                    @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                     @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     placeholder="0"
                   )
@@ -1749,7 +1888,13 @@ defineExpose({ toggleFinalStatus })
         .inventory-cards.mobile-only
           .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id) }")
             .inv-card-header
-              .inv-card-name {{ beverage.name }}
+              .inv-card-name
+                router-link.inv-card-name-link(
+                  v-if="authStore.isInventoryManager && beverage.id"
+                  :to="beverageLinkTo(beverage)"
+                  :title="`„${beverage.name}\" im Stamm bearbeiten`"
+                ) {{ beverage.name }}
+                template(v-else) {{ beverage.name }}
             .inv-card-conflict(v-if="inventoryConflicts.has(beverage.id)")
               span ⚠️
               | {{ beverage.name }}: angefordert #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}], verfügbar #[strong {{ inventoryConflicts.get(beverage.id)?.available }}]. Nachher erhöhen.
@@ -1789,9 +1934,10 @@ defineExpose({ toggleFinalStatus })
                     input.stepper-value(
                       v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
                       type="number"
-                      min="0"
                       step="1"
-                      @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
+                      @input="onBottleInputOrChange($event, beverage, entry, 'after')"
+                      @change="onBottleInputOrChange($event, beverage, entry, 'after')"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl
@@ -1804,7 +1950,8 @@ defineExpose({ toggleFinalStatus })
                       v-model.number="entry.quantity_after"
                       type="number"
                       min="0"
-                      step="0.25"
+                      :step="bottleStep(beverage)"
+                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
@@ -3304,6 +3451,23 @@ h2 {
 .inv-card-name {
   font-weight: 800;
   font-size: 1rem;
+}
+
+/* Wenn der Name f\u00fcr inventory_manager als Link gerendert wird, soll er sich
+ * weiterhin in die Karte einf\u00fcgen \u2014 also Default-Link-Look \u00fcberschreiben
+ * (kein Underline by default, Farbe vom Elternelement \u00fcbernehmen, beim Hover
+ * dezent unterstreichen, um die Klickbarkeit zu signalisieren). */
+.inv-card-name-link,
+.bev-name-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.inv-card-name-link:hover,
+.bev-name-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
 }
 
 .inv-card-info {
