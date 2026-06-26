@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { bottleStep, stepBottleInCrate, applyBottleStep } from '../utils/inventoryStep'
+import {
+  bottleStep,
+  stepBottleInCrate,
+  applyBottleStep,
+  normalizeCrateBottleState,
+} from '../utils/inventoryStep'
 
 describe('bottleStep', () => {
   it('returns 1 for whole-bottle drinks (no portions defined)', () => {
@@ -132,5 +137,123 @@ describe('applyBottleStep', () => {
   it('handles positive delta (clicking "+")', () => {
     expect(applyBottleStep(5.29, 1, { portions_per_bottle: 35 })).toBe(5.54)
     expect(applyBottleStep(12, 1, {})).toBe(13)
+  })
+})
+
+describe('normalizeCrateBottleState (increment mode)', () => {
+  // Default-Modus: Wert kommt vom Spin-Button oder Pfeiltasten, ist also
+  // ein inkrementeller Stand. Vorhandene Kisten bleiben erhalten.
+
+  it('rolls bottle overflow into one more crate (▲ at 19 with upc=20)', () => {
+    // Browser-Spin-Button von 19 → 20 (kein max) → wir wollen (1 K + 0 Fl)
+    // statt 20 Flaschen stehen lassen.
+    expect(normalizeCrateBottleState({ crates: 0, bottles: 20 }, 20)).toEqual({
+      crates: 1,
+      bottles: 0,
+    })
+  })
+
+  it('rolls multi-crate overflow when the user pastes a huge number', () => {
+    // 45 Flaschen in einem 6er-Kisten-Drink → 7 Kisten + 3 Flaschen.
+    expect(normalizeCrateBottleState({ crates: 0, bottles: 45 }, 6)).toEqual({
+      crates: 7,
+      bottles: 3,
+    })
+  })
+
+  it('preserves existing crates when normalising (additive)', () => {
+    // Vorher 1 Kiste, Spin-Button schubst bottles auf 6 (=upc) → 2 K, 0 Fl.
+    expect(normalizeCrateBottleState({ crates: 1, bottles: 6 }, 6)).toEqual({
+      crates: 2,
+      bottles: 0,
+    })
+  })
+
+  it('borrows one crate when ▼ pushes bottles below 0', () => {
+    // 1 Kiste, 0 Flaschen, Browser-Spin auf "-1" → 0 K, 5 Fl (bei upc=6).
+    expect(normalizeCrateBottleState({ crates: 1, bottles: -1 }, 6)).toEqual({
+      crates: 0,
+      bottles: 5,
+    })
+  })
+
+  it('borrows multiple crates for large negative input', () => {
+    // 3 Kisten, User tippt "−7" → borgt 2 Kisten: 1 K, -1+6+6 = wait,
+    // -7 → +6 = -1 (borrow 1), → +6 = 5 (borrow 2). Ergebnis: 1 K, 5 Fl.
+    expect(normalizeCrateBottleState({ crates: 3, bottles: -7 }, 6)).toEqual({
+      crates: 1,
+      bottles: 5,
+    })
+  })
+
+  it('clamps at zero when there are no crates to borrow from', () => {
+    expect(normalizeCrateBottleState({ crates: 0, bottles: -1 }, 6)).toEqual({
+      crates: 0,
+      bottles: 0,
+    })
+  })
+
+  it('leaves a valid in-range state untouched', () => {
+    const s = { crates: 2, bottles: 3 }
+    expect(normalizeCrateBottleState(s, 6)).toEqual(s)
+  })
+
+  it('leaves a non-numeric bottles value untouched (mid-typing empty field)', () => {
+    // v-model.number reicht '' bei geleertem Feld durch — wir dürfen
+    // nicht auf 0 zurückspringen, sonst klemmt der Cursor beim Tippen.
+    const s = { crates: 2, bottles: NaN }
+    expect(normalizeCrateBottleState(s, 6)).toBe(s)
+  })
+})
+
+describe('normalizeCrateBottleState (absolute mode)', () => {
+  // Absolute-Modus: User tippt direkt eine Zahl ins Flaschen-Feld.
+  // Die Zahl steht für die GESAMTMENGE; Kisten werden neu berechnet,
+  // damit nacheinander "45" und "36" nicht additiv wirken.
+
+  it('treats the number as total bottles, resetting crates', () => {
+    // Aus 7 Kisten 3 Fl. wird durch erneutes Tippen "36" → 6 K + 0 Fl
+    // (statt 6 K + 36 Fl im increment-Modus, was additiv wäre).
+    expect(
+      normalizeCrateBottleState({ crates: 7, bottles: 36 }, 6, 'absolute'),
+    ).toEqual({ crates: 6, bottles: 0 })
+  })
+
+  it('handles the regression scenario "45 then 36"', () => {
+    // Erst tippt der User 45 → 7 K, 3 Fl.
+    const afterFirst = normalizeCrateBottleState(
+      { crates: 0, bottles: 45 },
+      6,
+      'absolute',
+    )
+    expect(afterFirst).toEqual({ crates: 7, bottles: 3 })
+
+    // Dann korrigiert er sich, leert das Feld und tippt 36. Das
+    // Flaschen-Feld zeigt jetzt aus Sicht des v-models "36",
+    // crates steht noch auf 7 vom letzten Mal.
+    const afterCorrection = normalizeCrateBottleState(
+      { crates: afterFirst.crates, bottles: 36 },
+      6,
+      'absolute',
+    )
+    expect(afterCorrection).toEqual({ crates: 6, bottles: 0 })
+  })
+
+  it('keeps a small in-range typed value as bottles, crates=0', () => {
+    // User tippt 3 → 0 K + 3 Fl.
+    expect(
+      normalizeCrateBottleState({ crates: 5, bottles: 3 }, 6, 'absolute'),
+    ).toEqual({ crates: 0, bottles: 3 })
+  })
+
+  it('clamps negative typed values at (0, 0)', () => {
+    expect(
+      normalizeCrateBottleState({ crates: 2, bottles: -5 }, 6, 'absolute'),
+    ).toEqual({ crates: 0, bottles: 0 })
+  })
+
+  it('leaves NaN untouched (mid-typing)', () => {
+    const s = { crates: 2, bottles: NaN }
+    expect(normalizeCrateBottleState(s, 6, 'absolute')).toBe(s)
   })
 })

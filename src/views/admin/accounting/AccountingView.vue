@@ -29,7 +29,7 @@ import {
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
-import { bottleStep, stepBottleInCrate, applyBottleStep } from '@/utils/inventoryStep'
+import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -472,6 +472,56 @@ function updateEntryFromCrates(entry: InventoryEntry, beverage: BeverageItem) {
   entry.quantity_before = String(state.beforeCrates * upc + state.beforeBottles)
   entry.quantity_after = String(state.afterCrates * upc + state.afterBottles)
   recomputeConsumed(entry)
+}
+
+/** Wenn der User direkt im Flaschen-Input arbeitet (native Spin-Buttons
+ *  am rechten Rand, oder Tippen einer großen Zahl), normalisiert sich
+ *  das Modell sonst nicht: `afterBottles=20` bei einer 20er-Kiste
+ *  bleibt einfach stehen.
+ *
+ *  Eigentliche Logik (Carry-over + Modi 'increment'/'absolute') lebt in
+ *  `utils/inventoryStep.ts` und ist dort isoliert getestet. Diese
+ *  Wrapper-Funktion adressiert nur den reaktiven State unter
+ *  `inventoryCrates[beverage.id]`. */
+function normalizeBottleOverflow(
+  beverage: BeverageItem,
+  field: 'after' | 'before',
+  mode: 'increment' | 'absolute' = 'increment',
+) {
+  const upc = beverage.units_per_crate || 1
+  if (upc < 1) return
+  const state = inventoryCrates.value[String(beverage.id)]
+  if (!state) return
+  const crateKey = field === 'after' ? 'afterCrates' : 'beforeCrates'
+  const bottleKey = field === 'after' ? 'afterBottles' : 'beforeBottles'
+  const next = normalizeCrateBottleState(
+    { crates: state[crateKey], bottles: state[bottleKey] as number },
+    upc,
+    mode,
+  )
+  state[crateKey] = next.crates
+  state[bottleKey] = next.bottles
+}
+
+/** Wrapper für @input/@change auf dem Flaschen-Input. Entscheidet anhand
+ *  des Events, ob der User getippt hat (→ absolute Gesamtmenge) oder ob
+ *  ein Spin-Button geklickt wurde (→ inkrementeller Carry-over).
+ *
+ *  Detection: native Spin-Buttons feuern entweder gar keinen `inputType`
+ *  (Chrome/Safari liefern `null`/leeren String) oder `'insertReplacementText'`.
+ *  Tippen liefert `'insertText'`, Backspace `'deleteContentBackward'` etc. */
+function onBottleInputOrChange(
+  event: Event,
+  beverage: BeverageItem,
+  entry: InventoryEntry,
+  field: 'after' | 'before',
+) {
+  const inputType = (event as unknown as InputEvent).inputType
+  const isSpinButton = !inputType || inputType === 'insertReplacementText'
+  const mode: 'increment' | 'absolute' = isSpinButton ? 'increment' : 'absolute'
+  normalizeBottleOverflow(beverage, field, mode)
+  updateEntryFromCrates(entry, beverage)
+  if (field === 'after') confirmedInventory.add(beverage.id!)
 }
 
 const inventoryBySupplier = computed(() => {
@@ -1799,11 +1849,11 @@ defineExpose({ toggleFinalStatus })
                     input.qty-input(
                       v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
                       type="number"
-                      min="0"
                       step="1"
                       placeholder="0"
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                      @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                      @input="onBottleInputOrChange($event, beverage, entry, 'after')"
+                      @change="onBottleInputOrChange($event, beverage, entry, 'after')"
                     )
                     span.input-label Fl
 
@@ -1884,10 +1934,10 @@ defineExpose({ toggleFinalStatus })
                     input.stepper-value(
                       v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
                       type="number"
-                      min="0"
                       step="1"
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                      @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                      @input="onBottleInputOrChange($event, beverage, entry, 'after')"
+                      @change="onBottleInputOrChange($event, beverage, entry, 'after')"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl

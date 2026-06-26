@@ -106,3 +106,63 @@ export function stepBottleInCrate(
   }
   return { crates: state.crates, bottles: next }
 }
+
+/**
+ * Normalisiert einen Kisten/Flaschen-State, nachdem der Flaschenzähler
+ * *direkt* gesetzt wurde (Tippen, Paste, native ▲▼-Spin-Buttons).
+ * Anders als `stepBottleInCrate` arbeiten wir hier nicht mit einem
+ * Delta, sondern mit dem bereits gesetzten Wert.
+ *
+ * Zwei Modi:
+ *
+ * `'increment'` (Default — Spin-Button, Tastatur-Pfeile, alle Wege bei
+ * denen die Zahl ein Delta gegen den bestehenden State ist):
+ *  • bottles ≥ upc           → so viele volle Kisten wie möglich hochrollen
+ *  • bottles < 0             → so viele Kisten wie nötig "borrowen"
+ *  • 0 ≤ bottles < upc       → State bleibt unverändert
+ *  • bottles ist kein Number → State bleibt unverändert (User tippt
+ *    gerade, leeres Feld ist OK — nicht auf 0 zurückspringen, sonst
+ *    klemmt der Cursor)
+ *
+ * `'absolute'` (Direkteingabe im Flaschen-Feld): die Zahl meint die
+ * *Gesamtmenge an Flaschen* für diesen Eintrag, der bisherige
+ * Kisten-Counter wird verworfen und neu berechnet. Damit wirken
+ * Korrekturen wie "ich tippe erst 45, dann 36" nicht additiv.
+ *
+ * Liefert immer einen *neuen* State. Wird in AccountingView.vue im
+ * @input-/@change-Handler der Flaschen-Inputs aufgerufen.
+ */
+export function normalizeCrateBottleState(
+  state: CrateBottleState,
+  unitsPerCrate: number,
+  mode: 'increment' | 'absolute' = 'increment',
+): CrateBottleState {
+  if (unitsPerCrate < 1) return state
+  if (!Number.isFinite(state.bottles)) return state
+  const b = state.bottles
+  if (mode === 'absolute') {
+    if (b < 0) return { crates: 0, bottles: 0 }
+    const extra = Math.floor(b / unitsPerCrate)
+    return { crates: extra, bottles: b - extra * unitsPerCrate }
+  }
+  if (b >= unitsPerCrate) {
+    const extra = Math.floor(b / unitsPerCrate)
+    return {
+      crates: state.crates + extra,
+      bottles: b - extra * unitsPerCrate,
+    }
+  }
+  if (b < 0) {
+    // Robust gegen große Negativ-Eingaben (z.B. User tippt −7): so viele
+    // Kisten borgen, wie nötig — und bei 0 hart clampen.
+    let nb = b
+    let nc = state.crates
+    while (nb < 0 && nc > 0) {
+      nc -= 1
+      nb += unitsPerCrate
+    }
+    if (nb < 0) nb = 0
+    return { crates: nc, bottles: nb }
+  }
+  return state
+}
