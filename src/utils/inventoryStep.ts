@@ -10,11 +10,12 @@
 
 export interface BottleStepBeverage {
   /**
-   * Anzahl Portionen pro Flasche (z.B. 20 für Spirituosen à 0.04 L). Wenn
-   * null / 0 / 1 ist, wird der Bottle-Stepper als Ganz-Flaschen-Stepper
-   * geführt (Piccolo, Wein, Bier-Einzelflasche). Andernfalls beträgt die
-   * Schrittweite 1 / portions_per_bottle, sodass eine Portion einem
-   * Klick entspricht.
+   * Anzahl Portionen pro Flasche (z.B. 35 für Vodka-Shots à 0,02L). Wenn
+   * gesetzt (≥ 2), markiert das den Drink als "wird auch portionsweise
+   * ausgeschenkt" → wir bieten 0,25er-Schritte im Stepper an, damit
+   * angebrochene Flaschen sauber gepflegt werden können. Andernfalls
+   * (null / 0 / 1) wird der Drink flaschenweise verkauft → ganze
+   * Flaschen pro Klick.
    */
   portions_per_bottle?: number | null
 }
@@ -22,11 +23,22 @@ export interface BottleStepBeverage {
 /**
  * Schrittweite des Flaschen-Steppers für ein Getränk, das in Einzelflaschen
  * geführt wird (units_per_crate ≤ 1).
+ *
+ * Heuristik:
+ *  • Drink hat KEINE portions_per_bottle hinterlegt → Schritt = 1
+ *    (Piccolo, Sekt, Wein, Bier-Einzelflasche etc. werden immer
+ *    flaschenweise verkauft, also auch flaschenweise gezählt).
+ *  • Drink HAT eine portions_per_bottle (Spirituose) → Schritt = 0,25
+ *    Flasche. Das ist die grobe Granularität, in der angebrochene
+ *    Flaschen üblicherweise nachgepflegt werden ("noch ¾ voll").
+ *    Wir nutzen ABSICHTLICH nicht 1/portions, weil das für portions=35
+ *    (Vodka-Shots) absurd kleine Schritte (0,0286) und floatige Werte
+ *    wie 5,28571 produziert.
  */
 export function bottleStep(beverage: BottleStepBeverage): number {
-  const portions = beverage.portions_per_bottle ?? 1
-  if (!portions || portions <= 1) return 1
-  return 1 / portions
+  const portions = beverage.portions_per_bottle ?? 0
+  if (portions >= 2) return 0.25
+  return 1
 }
 
 /**
@@ -34,19 +46,10 @@ export function bottleStep(beverage: BottleStepBeverage): number {
  * Modus, units_per_crate ≤ 1) an.
  *
  * Wichtige Designentscheidung: wir runden NUR das Ergebnis auf 4
- * Nachkommastellen (gegen Float-Drift wie 0.05*7 ≠ 0.35). Wir snappen
- * den aktuellen Wert NICHT aufs Step-Grid, weil der vom Server gelieferte
- * Bestand selten exakt darauf liegt:
- *
- *   • Three Sixty Vodka, portions=35, Server-Bestand 5.29 →
- *     1×"−"  → 5.2614 (eine Portion abgezogen)
- *     2×"−"  → 5.2328
- *   • Rotwein, portions=3, Server-Bestand 4.67 →
- *     1×"−"  → 4.3367 (ein Glas abgezogen)
- *     2×"−"  → 4.0034
- *
- * Würden wir snappen, würde der erste Klick "−" den Wert paradoxerweise
- * z.B. auf 5.2857 (= 185/35) HOCH-snappen, weil 5.29 ≈ 185.15/35 ≈ 185/35.
+ * Nachkommastellen (gegen Float-Drift) und klemmen es bei 0. Wir snappen
+ * den aktuellen Wert NICHT aufs Step-Grid — der Server-Bestand liegt
+ * selten exakt auf einem 0,25er-Vielfachen, und ein Snap würde den
+ * "−"-Klick paradox aussehen lassen (z.B. 5,29 → 5,25 statt 5,04).
  */
 export function applyBottleStep(
   current: number,
