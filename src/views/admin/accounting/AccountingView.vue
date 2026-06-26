@@ -29,6 +29,7 @@ import {
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
+import { bottleStep, stepBottleInCrate } from '@/utils/inventoryStep'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -492,16 +493,37 @@ function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after'
 function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
   const upc = beverage.units_per_crate || 1
   if (upc > 1) {
+    // Kistenmodus: "Flaschenzähler durchläuft" — siehe stepBottleInCrate.
+    // Beispiel (upc=20): "−" auf 0 Fl. → 1 Kiste weniger und 19 Fl.,
+    // "+" auf 19 Fl. → eine Kiste mehr und 0 Fl. So pflegt man den
+    // Verbrauch flüssig, ohne ständig zwischen den Steppern zu wechseln.
     const state = getOrInitCrateState(beverage.id!, upc, entry)
-    const key = field === 'after' ? 'afterBottles' : 'beforeBottles'
-    state[key] = Math.max(0, state[key] + delta)
+    const crateKey = field === 'after' ? 'afterCrates' : 'beforeCrates'
+    const bottleKey = field === 'after' ? 'afterBottles' : 'beforeBottles'
+    const next = stepBottleInCrate(
+      { crates: state[crateKey], bottles: state[bottleKey] },
+      delta,
+      upc,
+    )
+    state[crateKey] = next.crates
+    state[bottleKey] = next.bottles
     updateEntryFromCrates(entry, beverage)
   } else {
+    // Flaschenmodus (upc=1): Schrittweite ergibt sich aus portions_per_bottle.
+    // Piccolo & Co. (portions=null/1) → Ganze-Flaschen-Schritte. Spirituosen
+    // mit z.B. 20 Portionen pro Flasche → 0.05er-Schritte. Wir geben dem
+    // User damit pro Getränketyp sinnvolle Granularität, statt überall die
+    // alte 0.25-Heuristik zu erzwingen.
     const current = parseFloat(entry[field === 'after' ? 'quantity_after' : 'quantity_before'] || '0')
-    const step = 0.25
-    const newVal = Math.max(0, current + delta * step)
-    if (field === 'after') entry.quantity_after = String(newVal)
-    else entry.quantity_before = String(newVal)
+    const step = bottleStep(beverage)
+    const raw = current + delta * step
+    // Auf step-Vielfache snappen, damit Rundungsfehler nicht akkumulieren
+    // (z.B. 0.05 * 7 ≠ 0.35 in Float-Arithmetik).
+    const snapped = Math.max(0, Math.round(raw / step) * step)
+    // Auf 4 Nachkommastellen kürzen — reicht für Portionen bis 1/10000.
+    const rounded = Math.round(snapped * 10000) / 10000
+    if (field === 'after') entry.quantity_after = String(rounded)
+    else entry.quantity_before = String(rounded)
     recomputeConsumed(entry)
   }
   if (field === 'after') confirmedInventory.add(beverage.id!)
@@ -1682,7 +1704,12 @@ defineExpose({ toggleFinalStatus })
           template(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
             .inventory-row(v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id) }")
               .col-inv-name
-                .bev-name {{ beverage.name }}
+                router-link.bev-name.bev-name-link(
+                  v-if="authStore.isInventoryManager && beverage.id"
+                  :to="`/admin/beverages/${beverage.id}`"
+                  :title="`„${beverage.name}\" im Stamm bearbeiten`"
+                ) {{ beverage.name }}
+                .bev-name(v-else) {{ beverage.name }}
                 .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
                 .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
               .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
@@ -1729,7 +1756,7 @@ defineExpose({ toggleFinalStatus })
                     v-model="entry.quantity_after"
                     type="number"
                     min="0"
-                    step="0.1"
+                    :step="bottleStep(beverage)"
                     @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     placeholder="0"
                   )
@@ -1749,7 +1776,13 @@ defineExpose({ toggleFinalStatus })
         .inventory-cards.mobile-only
           .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id) }")
             .inv-card-header
-              .inv-card-name {{ beverage.name }}
+              .inv-card-name
+                router-link.inv-card-name-link(
+                  v-if="authStore.isInventoryManager && beverage.id"
+                  :to="`/admin/beverages/${beverage.id}`"
+                  :title="`„${beverage.name}\" im Stamm bearbeiten`"
+                ) {{ beverage.name }}
+                template(v-else) {{ beverage.name }}
             .inv-card-conflict(v-if="inventoryConflicts.has(beverage.id)")
               span ⚠️
               | {{ beverage.name }}: angefordert #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}], verfügbar #[strong {{ inventoryConflicts.get(beverage.id)?.available }}]. Nachher erhöhen.
@@ -1804,7 +1837,7 @@ defineExpose({ toggleFinalStatus })
                       v-model.number="entry.quantity_after"
                       type="number"
                       min="0"
-                      step="0.25"
+                      :step="bottleStep(beverage)"
                       @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
@@ -3304,6 +3337,23 @@ h2 {
 .inv-card-name {
   font-weight: 800;
   font-size: 1rem;
+}
+
+/* Wenn der Name f\u00fcr inventory_manager als Link gerendert wird, soll er sich
+ * weiterhin in die Karte einf\u00fcgen \u2014 also Default-Link-Look \u00fcberschreiben
+ * (kein Underline by default, Farbe vom Elternelement \u00fcbernehmen, beim Hover
+ * dezent unterstreichen, um die Klickbarkeit zu signalisieren). */
+.inv-card-name-link,
+.bev-name-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.inv-card-name-link:hover,
+.bev-name-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
 }
 
 .inv-card-info {

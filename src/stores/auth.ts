@@ -16,6 +16,10 @@ export const useAuthStore = defineStore('auth', () => {
   const canManage = computed(() => isAuthenticated.value && hasWebsiteGroup.value)
   // Treasurer = darf Gewinnverteilung sehen/bearbeiten (Untermenge der Veranstalter)
   const isTreasurer = computed(() => user.value?.groups.includes('treasurer') ?? false)
+  // Inventory-Manager = darf den Getränke-Stamm (Drinks/Beverages) pflegen
+  // (CRUD in /admin/beverages/*). Backend hardening lebt in
+  // events.permissions.IsInventoryManagerOrReadOnly.
+  const isInventoryManager = computed(() => user.value?.groups.includes('inventory_manager') ?? false)
 
   // Actions
   async function login(credentials: LoginCredentials): Promise<boolean> {
@@ -99,6 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
     hasWebsiteGroup,
     canManage,
     isTreasurer,
+    isInventoryManager,
 
     // Actions
     login,
