@@ -1,27 +1,5 @@
 [
     {
-        "id": "the-bats",
-        "date": "2026-08-03T17:00:00+00:00",
-        "title": "The Bats (Psych Pop, NZ)",
-        "fee": "18",
-        "feeAk": "20",
-        "descriptionShort": "<p dir=\"ltr\">Angefangen hatte alles mit einem Tipp von Karl:</p>\n<p dir=\"ltr\">&bdquo;H&ouml;r dir mal The Bats an.&ldquo;</p>\n<p dir=\"ltr\">Also h&ouml;rte ich mir The Bats an.</p>\n<p dir=\"ltr\">Und wie das manchmal so ist, wenn man aus Versehen die richtige T&uuml;r aufmacht, wurde daraus nicht einfach eine weitere Band, sondern eher so etwas wie eine Lebensbegleitung in allen Lagen.</p>\n<p dir=\"ltr\">Bahn verpasst. Kaugummi am Schuh. Existenzkrise im Baumarkt. Seekrank.</p>\n<p dir=\"ltr\">Wer kennt es nicht?</p>\n<p dir=\"ltr\">Und alles ein bisschen weniger tragisch, solange man The Bats dabei hat.</p>\n<p dir=\"ltr\">Die Band gibt es seit &uuml;ber 40 Jahren und was soll ich sagen: Sie hat mich ziemlich gut durchgebracht.</p>\n<p dir=\"ltr\">Zugegeben, aktuell gibt es einiges da drau&szlig;en, was einem den Schuh dr&uuml;ckt. Weshalb ich jetzt diesen einen Satz sage, von dem ich nie gedacht h&auml;tte, dass ich ihn einmal sagen darf:</p>\n<p dir=\"ltr\">The Bats spielen am 3. August im Autohaus!</p>\n<p dir=\"ltr\">Support: tba.</p>\n<p>&nbsp;</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/the-bats/",
-        "img": "/img/f99bf3dc-b00d-4815-8583-dfbd5ac65a77.webp",
-        "artists": [
-            {
-                "name": "The Bats",
-                "link": "http://thebats.co.nz/",
-                "description": "Spanning the last 38 years, The Bats have clocked ten incredible albums; each one seeing the band evolve with new material from the prolific songwriting hand of Robert Scott. Add to that tally the extra singles, b-sides, EPs, compilations and tribute songs they\u2019ve recorded, creating a succinct setlist is a nearly impossible task.\n\nThe Bats must hold a record in New Zealand (perhaps the whole world, once The Rolling Stones throw in the towel) as a band that has survived with the same line-up for 38 years. No split ups, no reforming for nostalgia\u2019s sake.\n\nSo far, half the band have spots in The New Zealand Music Hall Of Fame, vocalist/ guitarist Robert Scott (The Clean) and bassist/producer Paul Kean (Toy Love), and it\u2019s only a matter of time before lead guitarist Kaye Woodward and drummer Malcolm Grant find themselves in there too. The four-piece has created twisted wistful folk, psychedelic rock, bouncy twee pop, and everything in between, but whatever the genre, their sound is always distinctively, unmistakably The Bats.\n(Credits: Flying Nun Records)",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/y-8qpGLXfxo",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3748736734/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/320bacb1-4a0f-43e4-81e1-da4cf78b452f.jpeg"
-            }
-        ]
-    },
-    {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
         "title": "IWAN2 -ohne scheiss-",
@@ -31,6 +9,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/iwan-nostyle/",
         "img": "/img/1a67023d-4505-4158-b9d4-46d5e7d6859d.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "IWAN NOSTYLE",
@@ -71,6 +50,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/e5cc89cb-9232-4097-91bd-2aba7455a36a.webp",
+        "cancelled": true,
         "artists": []
     },
     {
@@ -83,6 +63,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/goodflyingbirds/",
         "img": "/img/cd1490f2-962f-451d-934d-c94b0ba13b71.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Good Flying Birds",
@@ -114,6 +95,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/cherazade/",
         "img": "/img/c5a1cf4e-a690-42df-816b-4f6d063e4c2e.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Cherazade",
@@ -145,6 +127,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/screensaver/",
         "img": "/img/6664c138-6495-43c0-8787-60d87d5634bf.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Screensaver",
@@ -176,6 +159,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/blackboxmassacre20260522/",
         "img": "/img/6c769695-4160-42f8-a215-d75e6e317b95.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Fuzz Sagrado",
@@ -207,6 +191,7 @@
         "descriptionLong": "",
         "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3516010506",
         "img": "/img/4709b69e-471d-4900-9b14-8e5489b981bd.webp",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -219,6 +204,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/zoomies-howileft/",
         "img": "/img/4d56c0a7-bdf3-4acd-847c-2f2a663138ec.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Zoomies",
@@ -250,6 +236,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/lemongrab-socke-invertida-rocket2/",
         "img": "/img/b3abc0d1-f8f8-4060-82be-523831f01b0f.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Lemongrab",
@@ -299,6 +286,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/fivebucks-poopootalks/",
         "img": "/img/c7e79d15-4b45-4294-967e-5171893a2371.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Five Bucks",
@@ -330,6 +318,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/beachtowel-release/",
         "img": "/img/4c8eca75-ba8a-4b44-99ff-db71a1fe9503.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Beach Towel",
@@ -370,6 +359,7 @@
         "descriptionLong": "",
         "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3485811827",
         "img": "/img/96852fc1-990c-453a-b98b-064c27baa81b.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -382,6 +372,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/dirkandtheseconds-shocktroopers-fatale/",
         "img": "/img/4642904e-df50-4177-a2e4-60a6d1592a51.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Dirk and the Seconds",
@@ -422,6 +413,7 @@
         "descriptionLong": "",
         "shopLink": "https://enjoyjazz.reservix.de/tickets-the-saxophones-in-heidelberg-carousel-am-11-4-2026/e2499803",
         "img": "/img/6cd547cd-1040-4551-8a87-4944eaa95f2d.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "The Saxophones",
@@ -444,6 +436,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/fruittones-electricjugs/",
         "img": "/img/402ebff1-fd91-4301-823a-629b4e568ee1.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Fruit Tones",
@@ -475,6 +468,7 @@
         "descriptionLong": "",
         "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3460984318",
         "img": "/img/36f31a92-b907-4f26-8e76-cc096e031d04.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -487,6 +481,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/sexverbot-dustsucker/",
         "img": "/img/afb2bb63-40df-4930-8b4e-bf08f9f14479.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Sexverbot",
@@ -527,6 +522,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/peitschen-laxisme-fatale/",
         "img": "/img/d765fcd9-ac12-41e0-a88d-26f905780497.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Peitschen",
@@ -567,6 +563,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/goldcup-knabenschule/",
         "img": "/img/ffd42d77-2dec-4d99-836a-28170eeaf22f.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Gold Cup",
@@ -598,6 +595,7 @@
         "descriptionLong": "",
         "shopLink": "https://www.ztix.de/search?q=bandsupporter",
         "img": "/img/48ab3e79-9ede-4d84-bd3b-ee4c75b879f2.png",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -610,6 +608,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/meltingpalms-glizzer/",
         "img": "/img/980ef1f9-d334-4051-a9d4-af3c4819f06c.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Melting Palms",
@@ -641,6 +640,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/fuller-soulscraper/",
         "img": "/img/24db95dd-b3da-41e9-b469-029992dc1ccf.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Fuller",
@@ -672,6 +672,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/2026-01-24-AP/",
         "img": "/img/4b131d5b-137f-45b7-b981-3e552295b4fb.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -684,6 +685,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/nightcourt-onetrickpony/",
         "img": "/img/4d26648f-3c26-4fb1-a713-53dc4917fd58.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Night Court",
@@ -715,6 +717,7 @@
         "descriptionLong": "",
         "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3383073475",
         "img": "/img/9ee17346-8376-44fd-a0c4-67f91af48fed.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -727,6 +730,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/wunderbar/",
         "img": "/img/2c5fad25-5fa2-4971-a0f2-95ebc3117d60.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "komparse",
@@ -785,6 +789,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/83b5051b-25bf-4f07-8c7d-c32be31fcbb6.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -797,6 +802,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/pathwalker-lifespark-oneverypage/",
         "img": "/img/75daef85-8343-4b2f-a413-5288c7301b59.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Pathwalker",
@@ -837,6 +843,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/turn-down-for-what-291125/",
         "img": "/img/fc84fa3f-4b61-4871-86dc-a2e47d8e309f.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -849,6 +856,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/bluezero-watchingbuildingsgrow/",
         "img": "/img/fc222404-3be7-4181-a82d-c5d9c0f3998a.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Blue Zero",
@@ -880,6 +888,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/41214b83-3b7d-4bb6-bd5b-f3e0bee73c89.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -892,6 +901,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/nevver-atticstories-apartfromus/",
         "img": "/img/5d2d1835-3602-4e1e-990d-3b643ada4ee8.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Nevver",
@@ -932,6 +942,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/dana-mondaze/",
         "img": "/img/d9a5e406-8380-4cca-8b04-bc140c3d1cfb.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Dana",
@@ -963,6 +974,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/hakan-deaflingo-halloween/",
         "img": "/img/5afcc0a9-c93c-4d78-9f3f-49dce7dff380.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Hakan",
@@ -994,6 +1006,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/JayGlizzer/",
         "img": "/img/f99266e6-0545-429a-90da-be879e041246.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Jeremy Jay",
@@ -1025,6 +1038,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/87b653a9-978d-40d5-90a7-22085b0130fb.png",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -1037,6 +1051,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/fungas-zyph/",
         "img": "/img/f00ce613-e461-43d9-aec7-e3943cc83b17.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Fungas",
@@ -1068,6 +1083,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/narkose-ambulanz-luckyloose/",
         "img": "/img/74a0b69a-0f91-4d2e-985b-5b7d90fb204e.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Narkose",
@@ -1108,6 +1124,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/f2d934f9-5da8-4696-a0ff-855393d047c4.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -1120,6 +1137,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/1cdc1855-4337-48ed-82aa-e74a91fbdf03.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Blitzer",
@@ -1151,6 +1169,7 @@
         "descriptionLong": "Dreamy melodies, gentle guitars, heartache, and the search for belonging.\r\nThe music of Lone Aires is made for quiet hours \u2014 for still moments after long days and even longer nights. Voice and guitar float through the room, interrupted again and again by catchy drums that invite not only to dream, but also to dance. The young artist from Mannheim played their way through clubs and festivals across the region last year \u2014 and now celebrates the release of their debut EP \"It Hurt So Much That It Didn\u2019t Hurt At All\" at Autohaus.\r\n\r\nBorninmay's sound lies somewhere between post-punk and indie pop: always danceable, with catchy basslines and playful 80s-style synth melodies. A perfect complement to the night and an irresistible opener to the \"It Hurt So Much That It Didn\u2019t Hurt At All\" EP release party \u2014 and the very first shoegaze-indie evening at Carousel.\r\n\r\nDoors 19.30\r\n\r\nArtwork by David Dienstag.",
         "shopLink": "https://pretix.eu/carousel/loneaires-borninmay/",
         "img": "/img/bf304de4-316e-4ba1-8a5d-9feaf39fa8a3.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Lone Aires",
@@ -1182,6 +1201,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/savak-forestray-fatale/",
         "img": "/img/48a807df-a292-47b6-afcd-7b3b2012de3f.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "SAVAK",
@@ -1222,6 +1242,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/rowdy-gba/",
         "img": "/img/c59f2f50-e774-45c2-b536-b613e930ccdb.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Rowdy",
@@ -1253,6 +1274,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/d66fff04-49f6-4831-80ef-0fa6050cb948.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -1265,6 +1287,7 @@
         "descriptionLong": "Bevor es in die einmonatige Sommerpause geht, gibt\u2018s noch einen Triplebanger zum Abschluss!\r\nK\u00fcken strotzen nur so vor hanseatischer Selbstsicherheit und ballern mit w\u00fcstem Punk der sich irgendwo zwischen KBD und New York Dolls bewegt, euch ordentlich was um die Ohren.\r\nDavor l\u00f6ten euch Solder aus Down Under einen mit k\u00f6stlichstem Lofi Noisegaze rein und abgerundet wird der Abend von den Eppelheimer Streetpunkern The Junktones!\r\nNa das sollte man sich wohl eherbnicht entgehen lassen!\r\n\r\nFlyer Art by @matthischusetts",
         "shopLink": "https://pretix.eu/carousel/kueken-solder/",
         "img": "/img/f6938d49-e086-4afb-bab1-ec9c3ec7a490.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "K\u00fcken",
@@ -1305,6 +1328,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/53b5030e-3d16-41c0-a7a4-2a9688529c81.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -1317,6 +1341,7 @@
         "descriptionLong": "Bullenhitze h\u00e4ngt \u00fcber der Stadt, weil im Autohaus mal wieder falsch \u00fcberbr\u00fcckt wird. Wie man\u2019s richtig macht? Keine Ahnung! Drei gelben Engel standen kurz ratlos rum, dann haben sie selbst den Notruf gew\u00e4hlt. Diagnose: Totalschaden mit Ansage! \r\n\r\nGut, dass wir die Nummer vom Melbourner Abschleppdienst Metdog haben. Also Karre hinten drauf, Warnblinker an und schon dudelt euch ihr neues Tape \u201cone for the kids\u201d entgegen und irgendwer dr\u00fcckt dir ne kalte Flasche Bier in die zittrige Hand. Garagen-Rock wie ein Faustschlag mit 3 Fingern: kurz, schmutzig und leider auch ziemlich unverhandelbar. Lasst eure Taser zuhause, ihr werdet auch so zzzzzucken.\r\n\r\nNach ordentlich Kabelbrand am Stra\u00dfenrand liegengeblieben: unsere liebsten Distant Relatives aus Leipzig. Die hatten wohl bisschen arg schwer Postpunk und Deathrock in den Kofferraum geladen. Jetzt haben sie den Salat. Tut der Sache aber keinen Abriss. Max\u2019 Gitarre sprengt das Panzerglas im Servicebereich des Carousel, Marleen ringt mit jeder M\u00e4nge D\u00e4monen und Bass und Schlagzeug dr\u00fccken einen langsam aber bestimmt gegen die Werkstattwand. Am Ende spucken alle einmal aus und singen:\r\n\u201eWe are all distant relatives / divided through selfmade classification / connected through a life that\u2019s worth to be lived.\u201c\r\n\r\nDas kann ja wieder was werden\u2026und ihr wisst ja eh schon wo: Carousel im Autohaus. 9. Juli. Doors 19h, Messe 20h.",
         "shopLink": "https://pretix.eu/carousel/metdog-distant-relatives/",
         "img": "/img/fd16a365-e9ac-435b-8452-7f34166b8c14.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Metdog",
@@ -1348,6 +1373,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/coeur-a-lindex-exceeded-capacity/",
         "img": "/img/ebff8893e1132cdba5b17eae78d45c87.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "C\u0153ur \u00e0 l'Index",
@@ -1379,6 +1405,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/alien-nosejob/",
         "img": "/img/c3061cc8285afa09fbaa5207d062b1a9.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "City Boys",
@@ -1410,6 +1437,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/escape-schule/",
         "img": "/img/2cae90cb80b6668c361c45501b8fee09.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Escape-Ism",
@@ -1441,6 +1469,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/digger-wannabe/",
         "img": "/img/2aebfda4a7b4403c33a211beb9a1b267.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Digger & The Pussycats",
@@ -1472,6 +1501,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/skullcult-socke/",
         "img": "/img/dbb58f5e198b7808ec1ee0d1fbb8fa09.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Socke",
@@ -1503,6 +1533,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/7e82dd96fa8658bd0a0cf514ce2c04c5.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "D.C Cross",
@@ -1534,6 +1565,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/mitraille-neat-mentals-muddux/",
         "img": "/img/50c5776d2823ff60a38670d8363259dc.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Mitraille",
@@ -1574,6 +1606,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/condor-chemical-threat/",
         "img": "/img/29fd96a9138d131d041ef227d7248874.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Condor",
@@ -1605,6 +1638,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/wax-head-zuendung/",
         "img": "/img/bf010160c648bc7114f1332c2879389c.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Wax Head",
@@ -1627,6 +1661,7 @@
         "descriptionLong": "",
         "shopLink": "https://rausgegangen.de/en/events/snapped-ankles-hard-times-furious-dancing-tour-0/",
         "img": "/img/snapped_ankles_flyer.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Snapped Ankles",
@@ -1658,6 +1693,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/milk-tv-lemongrab-warm-swords/",
         "img": "/img/06dc84a56bce0873820c1b1eb03871e3.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Milk TV",
@@ -1698,6 +1734,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/flamo/",
         "img": "/img/flathead-almostlovers.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Flathead",
@@ -1729,6 +1766,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/alvilda/",
         "img": "/img/7a9f57a04054097fa457ffa401e7f97a.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Alvilda",
@@ -1769,6 +1807,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/sgatv-zz/",
         "img": "/img/2718d6f3c4977dafd3b23c2dfd066c42.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "S.G.A.T.V.",
@@ -1809,6 +1848,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/sleeveens/",
         "img": "/img/6b0c07c2ec3c60e42d72581791a2fbd7.webp",
+        "cancelled": false,
         "artists": [
             {
                 "name": "The Sleeveens",
@@ -1840,6 +1880,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/negative_gears.jpeg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Negative Gears",
@@ -1880,6 +1921,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/24-12-06-yggdrasil/",
         "img": "/img/yggdrasil.jpg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -1892,6 +1934,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/data-unknown_poo-poo-talks.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Data Unknown",
@@ -1923,6 +1966,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/15112024tyvek/",
         "img": "/img/tyvek_exceeded-capacity.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Tyvek",
@@ -1945,6 +1989,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/131124Crocodiles/",
         "img": "/img/crocodiles_bird-control.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Crocodiles",
@@ -1976,6 +2021,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/sluts_wkz_socke.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Socke",
@@ -2016,6 +2062,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/woanderskino-1309.jpeg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -2028,6 +2075,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/cool sorcery, zyph.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Cool Sorcery",
@@ -2059,6 +2107,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/dgf_wild_mustang.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Die Groben Fetten",
@@ -2090,6 +2139,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/wurst_durst.jpg",
+        "cancelled": false,
         "artists": []
     },
     {
@@ -2102,6 +2152,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/loons.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "The Loons",
@@ -2133,6 +2184,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/sommerfest_flyer.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Beach Towel",
@@ -2200,6 +2252,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/hodi_flow.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Hodi Flow",
@@ -2222,6 +2275,7 @@
         "descriptionLong": "",
         "shopLink": "",
         "img": "/img/forest_ray.jpg",
+        "cancelled": false,
         "artists": [
             {
                 "name": "Forest Ray",

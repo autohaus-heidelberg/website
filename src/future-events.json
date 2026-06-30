@@ -1,27 +1,5 @@
 [
     {
-        "id": "the-bats",
-        "date": "2026-08-03T17:00:00+00:00",
-        "title": "The Bats (Psych Pop, NZ)",
-        "fee": "18",
-        "feeAk": "20",
-        "descriptionShort": "<p dir=\"ltr\">Angefangen hatte alles mit einem Tipp von Karl:</p>\n<p dir=\"ltr\">&bdquo;H&ouml;r dir mal The Bats an.&ldquo;</p>\n<p dir=\"ltr\">Also h&ouml;rte ich mir The Bats an.</p>\n<p dir=\"ltr\">Und wie das manchmal so ist, wenn man aus Versehen die richtige T&uuml;r aufmacht, wurde daraus nicht einfach eine weitere Band, sondern eher so etwas wie eine Lebensbegleitung in allen Lagen.</p>\n<p dir=\"ltr\">Bahn verpasst. Kaugummi am Schuh. Existenzkrise im Baumarkt. Seekrank.</p>\n<p dir=\"ltr\">Wer kennt es nicht?</p>\n<p dir=\"ltr\">Und alles ein bisschen weniger tragisch, solange man The Bats dabei hat.</p>\n<p dir=\"ltr\">Die Band gibt es seit &uuml;ber 40 Jahren und was soll ich sagen: Sie hat mich ziemlich gut durchgebracht.</p>\n<p dir=\"ltr\">Zugegeben, aktuell gibt es einiges da drau&szlig;en, was einem den Schuh dr&uuml;ckt. Weshalb ich jetzt diesen einen Satz sage, von dem ich nie gedacht h&auml;tte, dass ich ihn einmal sagen darf:</p>\n<p dir=\"ltr\">The Bats spielen am 3. August im Autohaus!</p>\n<p dir=\"ltr\">Support: tba.</p>\n<p>&nbsp;</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/the-bats/",
-        "img": "/img/f99bf3dc-b00d-4815-8583-dfbd5ac65a77.webp",
-        "artists": [
-            {
-                "name": "The Bats",
-                "link": "http://thebats.co.nz/",
-                "description": "Spanning the last 38 years, The Bats have clocked ten incredible albums; each one seeing the band evolve with new material from the prolific songwriting hand of Robert Scott. Add to that tally the extra singles, b-sides, EPs, compilations and tribute songs they\u2019ve recorded, creating a succinct setlist is a nearly impossible task.\n\nThe Bats must hold a record in New Zealand (perhaps the whole world, once The Rolling Stones throw in the towel) as a band that has survived with the same line-up for 38 years. No split ups, no reforming for nostalgia\u2019s sake.\n\nSo far, half the band have spots in The New Zealand Music Hall Of Fame, vocalist/ guitarist Robert Scott (The Clean) and bassist/producer Paul Kean (Toy Love), and it\u2019s only a matter of time before lead guitarist Kaye Woodward and drummer Malcolm Grant find themselves in there too. The four-piece has created twisted wistful folk, psychedelic rock, bouncy twee pop, and everything in between, but whatever the genre, their sound is always distinctively, unmistakably The Bats.\n(Credits: Flying Nun Records)",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/y-8qpGLXfxo",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3748736734/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/320bacb1-4a0f-43e4-81e1-da4cf78b452f.jpeg"
-            }
-        ]
-    },
-    {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
         "title": "IWAN2 -ohne scheiss-",
@@ -31,6 +9,7 @@
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/iwan-nostyle/",
         "img": "/img/1a67023d-4505-4158-b9d4-46d5e7d6859d.png",
+        "cancelled": false,
         "artists": [
             {
                 "name": "IWAN NOSTYLE",
@@ -60,17 +39,5 @@
                 "image": "/img/6a4d2a18-dd13-40fd-9abc-60f47fd2ff96.jpeg"
             }
         ]
-    },
-    {
-        "id": "mm-260625",
-        "date": "2026-06-25T18:00:00+00:00",
-        "title": "ABGESAGT Kino: Midnight Madness",
-        "fee": "5",
-        "feeAk": "5",
-        "descriptionShort": "<h1><strong><span style=\"color: #e03e2d;\">Die Veranstaltung ist aufgrund der extremen Hitze abgesagt, bereits gekaufte Tickets werden erstattet</span></strong></h1>\n<p>&nbsp;</p>\n<p><span style=\"color: #7e8c8d;\"><s>&Uuml;berraschungsfilm</s></span></p>\n<p><span style=\"color: #7e8c8d;\"><s>Original mit englischen Untertiteln.</s></span><br><br><span style=\"color: #7e8c8d;\"><s>Midnight Madness bringt Euch unser erstes Double Feature. Aber keine Angst, wir halten Euch nicht die ganze Nacht auf: Es gibt zweimal eine knackige Stunde vom Feinsten.</s></span><br><span style=\"color: #7e8c8d;\"><s>Der erste Film ist das japanische Pendant zum 80er Jahre Actionfilm. Ein bisschen \"Hard Boiled\", ein bisschen \"Die Hard\", mit einem Sprenkler Nunsploitation. Der zweite Film ist ein Horrorfilm eines unserer Lieblingsregisseure, der seinem bahnbrechenden Fr&uuml;hwerk in nichts nachsteht.</s></span><br><span style=\"color: #7e8c8d;\"><s>Ein wilder Stilmix, der auf den ersten Blick nichts miteinander zu tun hat. Bei beiden Filmen handelt es sich jedoch um Direct-to-Video Filme. Wo es sich normalerweise um schnelle Geldmacher alternder Actionstars handelt, haben wir zwei Low-Budget Perlen, bei denen jeder Pfennig zweimal ausgequetscht wurde, um Unterhaltung ohne L&auml;ngen zu liefern.</s></span><br><br></p>",
-        "descriptionLong": "",
-        "shopLink": "",
-        "img": "/img/e5cc89cb-9232-4097-91bd-2aba7455a36a.webp",
-        "artists": []
     }
 ]
