@@ -73,6 +73,19 @@
         ]
     },
     {
+        "id": "caro",
+        "date": "2026-07-03T18:00:00+00:00",
+        "title": "Ein Abend f\u00fcr Caro",
+        "fee": "",
+        "feeAk": "",
+        "descriptionShort": "<p>Ein Abend f&uuml;r Caro <br><br>Wir gedenken unserer langj&auml;hrigen Freundin Caro mit einem Abend im Carousel zu ihren Ehren. Sie war in den letzten Jahren eine Konstante im Autohaus (und davor im Schmitthelm) und wir vermissen sie sehr. <br><br>Kanntet ihr sie, verbindet etwas mit ihr oder dem Autohaus?</p>\n<p>Dann kommt gerne am Freitag, den 3. Juli ab 20 Uhr vorbei und verbringt den Abend mit uns. Packt ein paar Platten ein und legt nach den Konzerten gerne was auf, die Decks stehen bereit.</p>\n<p>Der Eintritt ist frei / Spenden sind erw&uuml;nscht.</p>",
+        "descriptionLong": "",
+        "shopLink": "",
+        "img": "/img/a330724b-e204-4a48-92a4-61fc4c201500.webp",
+        "cancelled": false,
+        "artists": []
+    },
+    {
         "id": "mm-260625",
         "date": "2026-06-25T18:00:00+00:00",
         "title": "ABGESAGT Kino: Midnight Madness",
