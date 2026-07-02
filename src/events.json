@@ -32,38 +32,6 @@
         ]
     },
     {
-        "id": "balaclava-mrstrong",
-        "date": "2026-07-22T17:00:00+00:00",
-        "title": "Balaclava (Trash Rock, NYC) und Mr. Strong (Art Punk, Galway/Leipzig)",
-        "fee": "12",
-        "feeAk": "15",
-        "descriptionShort": "<p>Am 22. Juli f&auml;llt eine wildgewordene Horde Vermummter &uuml;bers Carousel her und wird uns nichts Geringeres als den Verstand rauben! Balaclava aus NYC werden den SW Deutschlands in Nullkommanix einnehmen, nachdem sie bereits vor wenigen Monaten bei SXSW bei s&auml;mtlichen Shows totalen Abriss lieferten.</p>\n<p>Weniger maskiert, weniger weird aber sehr stark (sorry) mit ordentlich pr&auml;senter Note Hardcore Punk kommen vorab Mr. Strong aus Leipzig/Galway daher!</p>\n<p>Can you believe it? Absolutes Kn&uuml;ller-Lineup f&uuml;r eine Mittwochs Show die es nicht zu verschwitzen gilt!</p>\n<p><br>Wir sehen uns dann im Carousel.</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/balaclava-mrstrong/",
-        "img": "/img/92f7057f-c424-4b83-99ff-05f8be2524c4.webp",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "Balaclava",
-                "link": "https://www.instagram.com/balaclava_is_a_band/",
-                "description": "BALACLAVA originally started as a solo of Dylan Joyce aka BALA, but has now become a five-piece live band based in Ridgewood, Queens. The looming question that they seek to answer is, \u201cWhat does animated trash sound like?\u201d  - Sarah Samson",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/4V7C9cop8ss",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=428144706/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/c20df042-c8df-4c47-a53f-3606071ad9c8.webp"
-            },
-            {
-                "name": "Mr. Strong",
-                "link": "https://www.instagram.com/_mr._strong_/",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "",
-                "image": "/img/3d95ef0b-db17-48f7-b36b-9e86aced6bca.webp"
-            }
-        ]
-    },
-    {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
         "title": "IWAN2 -ohne scheiss-",
