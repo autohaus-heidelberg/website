@@ -87,14 +87,15 @@ const dateDiff = computed(() => {
 
 .event-img-wrapper {
     position: relative;
-    max-width: min(500px, 90vw);
-    max-height: min(500px, 90vw);
-    overflow: hidden;
+    display: inline-block;
 }
 
 .event-img {
-    max-width: 100%;
-    max-height: 100%;
+    display: block;
+    max-width: min(500px, 90vw);
+    max-height: min(500px, 90vw);
+    width: auto;
+    height: auto;
 }
 
 .date-cancelled {
