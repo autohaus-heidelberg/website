@@ -4,7 +4,10 @@
 router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
         .title
-            span(v-resize-text) {{ event.title }}
+            span(v-resize-text)
+                template(v-for="part in titleParts" :key="part.text")
+                    span.title-paren(v-if="part.isParen") {{ part.text }}
+                    template(v-else) {{ part.text }}
             .cancelled-label(v-if="event.cancelled") ABGESAGT
         .date()
             .date(v-resize-text="{ratio: 2}" :class="{ 'date-cancelled': event.cancelled }")
@@ -75,13 +78,20 @@ margin-bottom: 1rem;
     grid-area: title;
     word-break: break-word;
     /* text-align: justify; */
- 	hyphens: auto;
+  	hyphens: auto;
     height: 100%;
     width: 100%;
     font-size: 2rem;
     font-stretch: 125%;
     font-weight: 900;
     position: relative;
+    padding: 0.3rem;
+}
+
+.title-paren {
+    font-size: 0.65em;
+    color: #888;
+    font-weight: 600;
 }
 
 .cancelled-label {
@@ -139,14 +149,15 @@ margin-bottom: 1rem;
 
 .event-img {
     grid-area: img;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
     overflow: hidden;
-    aspect-ratio: 1 / 1.6180;
     position: relative;
+    align-self: stretch;
+}
+
+.event-img::before {
+    content: '';
+    display: block;
+    padding-top: 141.42%;
 }
 
 .cancelled-stamp {
@@ -166,8 +177,11 @@ margin-bottom: 1rem;
 }
 
 .img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    margin: 0;
     object-fit: cover;
 }
 
@@ -217,6 +231,22 @@ import dayjs from "dayjs";
 import { computed, onMounted, ref } from "vue";
 import { eventHash } from "../utils";
 const props = defineProps<{event: Event}>();
+
+const titleParts = computed(() => {
+    const parts: { text: string; isParen: boolean }[] = []
+    const regex = /([^(]*)\(([^)]*)\)/g
+    let lastIndex = 0
+    let match
+    while ((match = regex.exec(props.event.title)) !== null) {
+        if (match[1]) parts.push({ text: match[1], isParen: false })
+        parts.push({ text: `(${match[2]})`, isParen: true })
+        lastIndex = regex.lastIndex
+    }
+    if (lastIndex < props.event.title.length) {
+        parts.push({ text: props.event.title.slice(lastIndex), isParen: false })
+    }
+    return parts
+})
 
 dayjs.extend(calendar)
 dayjs.extend(duration)
