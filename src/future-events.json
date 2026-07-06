@@ -64,38 +64,6 @@
         ]
     },
     {
-        "id": "Diapers-DBR",
-        "date": "2026-07-20T17:00:00+00:00",
-        "title": "DIAPERS (HAL), D:B:R (B)",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p>Das Autohaus gibt am 20 Juli die B&uuml;hne frei f&uuml;r DBR und Diapers die den Saal f&uuml;r kurze Zeit in einen Raum voller Energie und Emotionen verwandeln.<br><br>Mit schlotzigen Beats erobert D.B.R. aus Berlin die B&uuml;hne. Hier, wo groovy Rhythmus, verzerrte Gitarre und starke Lyrics auf einandern treffen, bleibt definitiv niemand still auf seinem Platz stehen! Musik die einfach zum Tanzen einl&auml;d! <br><br>Diapers kombiniert schnelle elektrische Beats mit harten Riffs und ausdrucksstarken Riot-Grrrl vocals. Die Band die sich selbst mit den Worten: &bdquo;Hotwheels, Schweinemetall und pamperspoop&ldquo; beschrieben macht jedoch alles andere als shitty Musik. Alles in allem klingt das nach einer guten Zeit, oder?<br><br>Deshalb kommt alle rum! Wir freuen uns auf euch!<br>Love Music - Support your local scene - Hate Fascism</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/Diapers-DBR/",
-        "img": "/img/862039a6-9b58-4581-8680-60f6b0de112c.webp",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "Diapers",
-                "link": "https://diapersdiapers.bandcamp.com/album/demo",
-                "description": "Hotwheels, Schweinemetall und pamperspoop",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3699830994/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/96dba839-0a8c-4a15-a6ca-9edeab22b76c.webp"
-            },
-            {
-                "name": "D:B:R",
-                "link": "https://flennen.bandcamp.com/album/boogie-nights",
-                "description": "groovy Rhythmus, verzerrte Gitarre und starke Lyrics",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1809468832/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/9b4da4df-3f35-44a3-87ea-915f10a395f6.webp"
-            }
-        ]
-    },
-    {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
         "title": "IWAN2 -ohne scheiss-",
