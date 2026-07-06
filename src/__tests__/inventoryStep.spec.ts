@@ -204,56 +204,23 @@ describe('normalizeCrateBottleState (increment mode)', () => {
     const s = { crates: 2, bottles: NaN }
     expect(normalizeCrateBottleState(s, 6)).toBe(s)
   })
-})
 
-describe('normalizeCrateBottleState (absolute mode)', () => {
-  // Absolute-Modus: User tippt direkt eine Zahl ins Flaschen-Feld.
-  // Die Zahl steht für die GESAMTMENGE; Kisten werden neu berechnet,
-  // damit nacheinander "45" und "36" nicht additiv wirken.
-
-  it('treats the number as total bottles, resetting crates', () => {
-    // Aus 7 Kisten 3 Fl. wird durch erneutes Tippen "36" → 6 K + 0 Fl
-    // (statt 6 K + 36 Fl im increment-Modus, was additiv wäre).
-    expect(
-      normalizeCrateBottleState({ crates: 7, bottles: 36 }, 6, 'absolute'),
-    ).toEqual({ crates: 6, bottles: 0 })
-  })
-
-  it('handles the regression scenario "45 then 36"', () => {
-    // Erst tippt der User 45 → 7 K, 3 Fl.
-    const afterFirst = normalizeCrateBottleState(
-      { crates: 0, bottles: 45 },
-      6,
-      'absolute',
-    )
-    expect(afterFirst).toEqual({ crates: 7, bottles: 3 })
-
-    // Dann korrigiert er sich, leert das Feld und tippt 36. Das
-    // Flaschen-Feld zeigt jetzt aus Sicht des v-models "36",
-    // crates steht noch auf 7 vom letzten Mal.
-    const afterCorrection = normalizeCrateBottleState(
-      { crates: afterFirst.crates, bottles: 36 },
-      6,
-      'absolute',
-    )
-    expect(afterCorrection).toEqual({ crates: 6, bottles: 0 })
-  })
-
-  it('keeps a small in-range typed value as bottles, crates=0', () => {
-    // User tippt 3 → 0 K + 3 Fl.
-    expect(
-      normalizeCrateBottleState({ crates: 5, bottles: 3 }, 6, 'absolute'),
-    ).toEqual({ crates: 0, bottles: 3 })
-  })
-
-  it('clamps negative typed values at (0, 0)', () => {
-    expect(
-      normalizeCrateBottleState({ crates: 2, bottles: -5 }, 6, 'absolute'),
-    ).toEqual({ crates: 0, bottles: 0 })
-  })
-
-  it('leaves NaN untouched (mid-typing)', () => {
-    const s = { crates: 2, bottles: NaN }
-    expect(normalizeCrateBottleState(s, 6, 'absolute')).toBe(s)
+  // ── Regression: Tippen einer Zahl im Flaschen-Feld darf die Kisten
+  //    NICHT auf 0 zurücksetzen. Früher lief das Tippen im 'absolute'-
+  //    Modus, der die getippte Zahl als Gesamtmenge interpretierte:
+  //    Tippt man bei "3 Kisten" eine "1", sprangen die Kisten auf 0.
+  it('preserves existing crates when typing a small in-range bottle value', () => {
+    // Faust Pils (upc=20): 3 Kisten stehen, User tippt "1" (auf dem Weg
+    // zu "14") → Kisten bleiben 3, Flaschen = 1.
+    expect(normalizeCrateBottleState({ crates: 3, bottles: 1 }, 20)).toEqual({
+      crates: 3,
+      bottles: 1,
+    })
+    // ... und nach dem zweiten Tastendruck "14" → weiterhin 3 Kisten.
+    expect(normalizeCrateBottleState({ crates: 3, bottles: 14 }, 20)).toEqual({
+      crates: 3,
+      bottles: 14,
+    })
   })
 })
+

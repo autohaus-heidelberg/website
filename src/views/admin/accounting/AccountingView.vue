@@ -479,14 +479,12 @@ function updateEntryFromCrates(entry: InventoryEntry, beverage: BeverageItem) {
  *  das Modell sonst nicht: `afterBottles=20` bei einer 20er-Kiste
  *  bleibt einfach stehen.
  *
- *  Eigentliche Logik (Carry-over + Modi 'increment'/'absolute') lebt in
- *  `utils/inventoryStep.ts` und ist dort isoliert getestet. Diese
- *  Wrapper-Funktion adressiert nur den reaktiven State unter
- *  `inventoryCrates[beverage.id]`. */
+ *  Eigentliche Logik (Carry-over) lebt in `utils/inventoryStep.ts` und
+ *  ist dort isoliert getestet. Diese Wrapper-Funktion adressiert nur den
+ *  reaktiven State unter `inventoryCrates[beverage.id]`. */
 function normalizeBottleOverflow(
   beverage: BeverageItem,
   field: 'after' | 'before',
-  mode: 'increment' | 'absolute' = 'increment',
 ) {
   const upc = beverage.units_per_crate || 1
   if (upc < 1) return
@@ -497,29 +495,32 @@ function normalizeBottleOverflow(
   const next = normalizeCrateBottleState(
     { crates: state[crateKey], bottles: state[bottleKey] as number },
     upc,
-    mode,
   )
   state[crateKey] = next.crates
   state[bottleKey] = next.bottles
 }
 
-/** Wrapper für @input/@change auf dem Flaschen-Input. Entscheidet anhand
- *  des Events, ob der User getippt hat (→ absolute Gesamtmenge) oder ob
- *  ein Spin-Button geklickt wurde (→ inkrementeller Carry-over).
- *
- *  Detection: native Spin-Buttons feuern entweder gar keinen `inputType`
- *  (Chrome/Safari liefern `null`/leeren String) oder `'insertReplacementText'`.
- *  Tippen liefert `'insertText'`, Backspace `'deleteContentBackward'` etc. */
-function onBottleInputOrChange(
-  event: Event,
+/** Wrapper für @input auf dem Flaschen-Input. Aktualisiert die
+ *  abgeleiteten Werte (Verbrauch/Betrag) live mit, normalisiert aber
+ *  NICHT: Während des Tippens soll die eingegebene Rohzahl stehen
+ *  bleiben (z.B. "45"), ohne dass das Feld mitten im Tippen in
+ *  Kisten+Rest umgebucht wird. Das Umbuchen passiert erst beim Verlassen
+ *  des Feldes (@change → onBottleChange). */
+function onBottleInput(beverage: BeverageItem, entry: InventoryEntry) {
+  updateEntryFromCrates(entry, beverage)
+  confirmedInventory.add(beverage.id!)
+}
+
+/** Wrapper für @change (Blur) auf dem Flaschen-Input. Jetzt wird der
+ *  Kisten/Flaschen-State normalisiert (Carry-over): Überlauf rollt in die
+ *  Kisten, Unterlauf borgt. So "setzt" sich der Wert erst beim Verlassen
+ *  des Feldes. */
+function onBottleChange(
   beverage: BeverageItem,
   entry: InventoryEntry,
   field: 'after' | 'before',
 ) {
-  const inputType = (event as unknown as InputEvent).inputType
-  const isSpinButton = !inputType || inputType === 'insertReplacementText'
-  const mode: 'increment' | 'absolute' = isSpinButton ? 'increment' : 'absolute'
-  normalizeBottleOverflow(beverage, field, mode)
+  normalizeBottleOverflow(beverage, field)
   updateEntryFromCrates(entry, beverage)
   if (field === 'after') confirmedInventory.add(beverage.id!)
 }
@@ -1852,8 +1853,8 @@ defineExpose({ toggleFinalStatus })
                       step="1"
                       placeholder="0"
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                      @input="onBottleInputOrChange($event, beverage, entry, 'after')"
-                      @change="onBottleInputOrChange($event, beverage, entry, 'after')"
+                      @input="onBottleInput(beverage, entry)"
+                      @change="onBottleChange(beverage, entry, 'after')"
                     )
                     span.input-label Fl
 
@@ -1936,8 +1937,8 @@ defineExpose({ toggleFinalStatus })
                       type="number"
                       step="1"
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                      @input="onBottleInputOrChange($event, beverage, entry, 'after')"
-                      @change="onBottleInputOrChange($event, beverage, entry, 'after')"
+                      @input="onBottleInput(beverage, entry)"
+                      @change="onBottleChange(beverage, entry, 'after')"
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl
