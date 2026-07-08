@@ -448,6 +448,22 @@ function handlePublish() {
     if (!confirm('Event auf der Website veröffentlichen und deployen? Das kann einige Minuten dauern.')) return
   }
 
+  runDeploy(eventIds)
+}
+
+function handleUpdate() {
+  if (!props.id || !isPublished.value) return
+
+  // Re-deploy with the current set of published IDs unchanged. The backend
+  // re-reads all events from the database, so this pushes the latest data
+  // for this event to the website in a single step.
+  const eventIds = publishedEvents.map((e: any) => e.id)
+  if (!confirm('Aktualisierte Event-Daten auf der Website veröffentlichen und deployen? Das kann einige Minuten dauern.')) return
+
+  runDeploy(eventIds)
+}
+
+function runDeploy(eventIds: string[]) {
   isDeploying.value = true
   deploySuccess.value = false
   deployError.value = null
@@ -514,6 +530,13 @@ function closeDeployModal() {
       )
         span.badge-default ✓ Live
         span.badge-hover ✗ Entfernen
+      button.status-badge.badge-update.clickable(
+        v-if="isEditing && isPublished"
+        @click="handleUpdate"
+        :disabled="isDeploying"
+      )
+        span.badge-default ↻ Website aktualisieren
+        span.badge-hover ▶ Website aktualisieren
       button.status-badge.badge-draft.clickable(
         v-else-if="isEditing"
         @click="handlePublish"
@@ -822,6 +845,12 @@ function closeDeployModal() {
   background: #16a34a;
   color: white;
   border-color: #16a34a;
+}
+
+.badge-update {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
 }
 
 .badge-draft {
@@ -1186,6 +1215,12 @@ input:disabled {
 .badge-live.clickable:hover:not(:disabled) {
   background: #dc2626;
   border-color: #dc2626;
+  color: white;
+}
+
+.badge-update.clickable:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
   color: white;
 }
 
