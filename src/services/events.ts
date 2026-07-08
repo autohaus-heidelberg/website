@@ -21,6 +21,7 @@ export interface Event {
   title: string
   image?: string
   image_url?: string
+  image_original?: string
   descriptionShort: string
   descriptionLong?: string
   fee?: string
@@ -101,10 +102,21 @@ export const eventService = {
   },
 
   /**
-   * Upload event image
+   * Upload event image (high-res original; the website version is derived
+   * server-side to max 1000x1000 WEBP).
    */
   async uploadImage(id: string, file: File): Promise<Event> {
-    return api.uploadFile<Event>(`/api/events/${id}/`, file, 'image')
+    return api.uploadFile<Event>(`/api/events/${id}/`, file, 'image_original')
+  },
+
+  /**
+   * Generate social-media flyer formats from the event image and upload
+   * them to the event's Google Drive folder.
+   */
+  async generateFlyers(id: string): Promise<{ flyers: { name: string; url: string }[]; drive_folder_id: string }> {
+    return api.post<{ flyers: { name: string; url: string }[]; drive_folder_id: string }>(
+      `/api/events/${id}/generate-flyers/`,
+    )
   },
 
   /**
