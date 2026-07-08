@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { eventService, artistService, accountingService, stockService, anfrageService, grantService } from '@/services'
+import { taxExportService } from '@/services/accounting'
 import type { StockEntry, GrantSummary } from '@/types/accounting'
 
 const authStore = useAuthStore()
@@ -11,7 +12,7 @@ const unreadAnfragen = ref(0)
 const upcomingCount = ref(0)
 const lowStockCount = ref(0)
 const outOfStockOnMenu = ref(0)
-const totalRevenue = ref(0)
+const carouselProfit = ref<number | null>(null)
 const nextEvent = ref<{ id: string; title: string; date: string } | null>(null)
 const stockSummary = ref<{ count: number; value: number } | null>(null)
 const grantStats = ref<GrantSummary | null>(null)
@@ -86,11 +87,6 @@ onMounted(async () => {
     // Out of stock but on menu
     outOfStockOnMenu.value = allStock.filter(e => e.quantity === 0 && isOnMenu(e)).length
 
-    // Total revenue this year
-    const thisYear = now.getFullYear()
-    totalRevenue.value = accountingsData.results
-      .filter(a => a.revenues && a.revenues.length > 0)
-      .reduce((sum, a) => sum + (a.revenues || []).reduce((s, r) => s + parseFloat(r.total || '0'), 0), 0)
     if (upcoming.length > 0) {
       nextEvent.value = { id: upcoming[0].id, title: upcoming[0].title, date: upcoming[0].date }
     }
@@ -105,6 +101,19 @@ onMounted(async () => {
     // Grant summary
     if (grantSummary) {
       grantStats.value = grantSummary as GrantSummary
+    }
+
+    // Carousel-Gewinn dieses Jahr (nur Treasurer): verbleibender Anteil nach
+    // USt und Beteiligungsteilung — nicht der Brutto-Umsatz.
+    if (authStore.isTreasurer) {
+      try {
+        const tax = await taxExportService.getSummary(now.getFullYear())
+        carouselProfit.value = (tax.participants || [])
+          .filter(p => p.participant.toLowerCase().includes('carousel'))
+          .reduce((s, p) => s + p.amount, 0)
+      } catch (e) {
+        console.error('Failed to load Carousel profit:', e)
+      }
     }
   } catch (e) {
     console.error('Failed to load stats:', e)
@@ -147,14 +156,15 @@ onMounted(async () => {
             .stat-label Künstler
           .stat-link Künstler verwalten
 
-    .section
+    .section(v-if="authStore.isTreasurer")
       .section-title Finanzen
       .stats-grid
-        router-link.stat-card(to="/admin/events?filter=accounted")
+        router-link.stat-card(:to="{ name: 'admin-tax-export' }")
           .stat-info
-            .stat-value {{ formatCurrency(totalRevenue) }}
-            .stat-label Umsatz gesamt
-          .stat-link Abrechnungen ansehen
+            .stat-value {{ carouselProfit === null ? '–' : formatCurrency(carouselProfit) }}
+            .stat-label Gewinn Carousel {{ new Date().getFullYear() }}
+          .stat-subtitle nach USt &amp; Beteiligungen
+          .stat-link EÜR ansehen
 
         router-link.stat-card(v-if="grantStats" to="/admin/events?view=grants")
           .stat-info
