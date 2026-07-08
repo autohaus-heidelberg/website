@@ -108,6 +108,16 @@ export const eventService = {
   },
 
   /**
+   * Generate social-media flyer formats from the event image and upload
+   * them to the event's Google Drive folder.
+   */
+  async generateFlyers(id: string): Promise<{ flyers: { name: string; url: string }[]; drive_folder_id: string }> {
+    return api.post<{ flyers: { name: string; url: string }[]; drive_folder_id: string }>(
+      `/api/events/${id}/generate-flyers/`,
+    )
+  },
+
+  /**
    * Send newsletter via Rapidmail
    */
   async sendNewsletter(subject: string, html_content: string, text_content: string, test = false): Promise<{ success: boolean }> {

@@ -64,6 +64,8 @@ const isCreatingShopLink = ref(false)
 const shopLinkSuccess = ref('')
 const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
+const isGeneratingFlyers = ref(false)
+const flyerSuccess = ref('')
 const originalDate = ref<string | null>(null)
 const previewArtists = ref<Artist[]>([])
 const loadingArtists = ref(false)
@@ -268,6 +270,31 @@ async function createHelferpad() {
     error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
   } finally {
     isCreatingHelferpad.value = false
+  }
+}
+
+async function generateFlyers() {
+  if (!form.value.id || !isEditing.value) {
+    error.value = 'Bitte den Event zuerst speichern, bevor Flyer erzeugt werden.'
+    return
+  }
+
+  isGeneratingFlyers.value = true
+  error.value = ''
+  flyerSuccess.value = ''
+
+  try {
+    const result = await eventService.generateFlyers(form.value.id!)
+    const count = result.flyers?.length ?? 0
+    flyerSuccess.value = `${count} Flyer im Google-Drive-Ordner des Events abgelegt.`
+
+    setTimeout(() => {
+      flyerSuccess.value = ''
+    }, 5000)
+  } catch (e: any) {
+    error.value = e.message || 'Flyer konnten nicht erzeugt werden'
+  } finally {
+    isGeneratingFlyers.value = false
   }
 }
 
@@ -701,6 +728,15 @@ function closeDeployModal() {
               @change="handleImageChange"
             )
             .field-hint Bild: wird auf 1000x1000px skaliert
+            .shop-link-actions(v-if="isEditing")
+              button.btn-shop-link(
+                type="button"
+                @click="generateFlyers"
+                :disabled="isGeneratingFlyers"
+              )
+                | {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Social-Media-Flyer erzeugen' }}
+              .field-hint Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
+            .success-message(v-if="flyerSuccess") {{ flyerSuccess }}
 
           .error(v-if="error") {{ error }}
 
