@@ -235,7 +235,7 @@ async function createHelferpad() {
       }
 
       // Prepare data for submission
-      const { image, image_url, artists, ...formData } = form.value
+      const { image, image_url, image_original, artists, ...formData } = form.value
       formData.date = new Date(form.value.date!).toISOString()
 
       await eventService.create(formData)
@@ -309,7 +309,7 @@ async function handleSubmit() {
 
   try {
     // Prepare data for submission
-    const { image, image_url, artists, ...formData } = form.value
+    const { image, image_url, image_original, artists, ...formData } = form.value
 
     // Format date to ISO
     formData.date = new Date(form.value.date!).toISOString()
