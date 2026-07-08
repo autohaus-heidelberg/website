@@ -727,7 +727,7 @@ function closeDeployModal() {
               accept="image/*"
               @change="handleImageChange"
             )
-            .field-hint Bild: wird auf 1000x1000px skaliert
+            .field-hint Website-Version: WEBP, max. 1000×1000px. Fürs Flyer-Ergebnis am besten JPG/PNG mit ≥1920px hochladen.
             .shop-link-actions(v-if="isEditing")
               button.btn-shop-link(
                 type="button"
