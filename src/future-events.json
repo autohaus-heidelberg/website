@@ -66,7 +66,7 @@
     {
         "id": "Diapers-DBR",
         "date": "2026-07-20T17:00:00+00:00",
-        "title": "DIAPERS (HAL), D:B:R (B)",
+        "title": "DIAPERS (L,HAL,MRS), D:B:R (B)",
         "fee": "10",
         "feeAk": "12",
         "descriptionShort": "<p>Das Autohaus gibt am 20 Juli die B&uuml;hne frei f&uuml;r DBR und Diapers die den Saal f&uuml;r kurze Zeit in einen Raum voller Energie und Emotionen verwandeln.<br><br>Mit schlotzigen Beats erobert D.B.R. aus Berlin die B&uuml;hne. Hier, wo groovy Rhythmus, verzerrte Gitarre und starke Lyrics auf einandern treffen, bleibt definitiv niemand still auf seinem Platz stehen! Musik die einfach zum Tanzen einl&auml;d! <br><br>Diapers kombiniert schnelle elektrische Beats mit harten Riffs und ausdrucksstarken Riot-Grrrl vocals. Die Band die sich selbst mit den Worten: &bdquo;Hotwheels, Schweinemetall und pamperspoop&ldquo; beschrieben macht jedoch alles andere als shitty Musik. Alles in allem klingt das nach einer guten Zeit, oder?<br><br>Deshalb kommt alle rum!<br>Wir freuen uns auf euch!<br>*Love Music*<br>*Support your local scene*<br>*Hate Fascism*</p>",
@@ -92,47 +92,6 @@
                 "youtube": "",
                 "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1809468832/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
                 "image": "/img/9b4da4df-3f35-44a3-87ea-915f10a395f6.webp"
-            }
-        ]
-    },
-    {
-        "id": "iwan-nostyle",
-        "date": "2026-07-10T18:00:00+00:00",
-        "title": "IWAN2 -ohne scheiss-",
-        "fee": "10",
-        "feeAk": "10",
-        "descriptionShort": "<p>Das zweite Musical von Iwan NoStyle</p>\n<p><br>Mach dich bereit f&uuml;r einen Abend, der irgendwo zwischen Genie und Wahnsinn wohnt &ndash; und sich dort ziemlich wohlf&uuml;hlt.</p>\n<p><br>Nach dem ersten konzeptuellen Schlag in die Magengrube (Schallplatte 2018) und einer EP in 2019 &ndash; in einem Monat aus dem Nichts gezimmert &ndash; kehrt Iwan zur&uuml;ck. Nicht leiser, nicht vern&uuml;nftiger, sondern&hellip; freier. Und genau da f&auml;ngt das Problem an.</p>\n<p><br>iWAN2 &ndash; ohne scheiss erz&auml;hlt die Geschichte eines Mannes, der alles hat, was man nicht braucht: zu viel Bier, zu viele Gedanken, zu wenig Plan. Frauen? Schwierig. Struktur? Fehlanzeige. Sinn? Wird gesucht &ndash; vermutlich zwischen dem dritten und sechsten Getr&auml;nk. Zum Gl&uuml;ck gibt es Harry. Kumpel, Unterst&uuml;tzer, vielleicht die letzte Stimme der Vernunft&hellip; oder einfach nur jemand, der laut genug &bdquo;wird schon&ldquo; ruft. Doch was als freundschaftliche Lebenshilfe beginnt, nimmt Wendungen, die man eher nicht im Selbsthilfe-Ratgeber findet. &Uuml;berraschend? Ja. Gesund? Eher nicht. Musikalisch wird das Ganze von Iwans Band &bdquo;Die Kartoffeln&ldquo; getragen &ndash; unterst&uuml;tzt von der Feuerwehrmann-Kapelle (Bl&auml;ser-Trio) und diversen<br>Gastmusikern, die dem Chaos eine Richtung geben&hellip; oder es zumindest versuchen.</p>\n<p><br>Und jetzt wird&rsquo;s pers&ouml;nlich &ndash; und leicht klebrig am Tresen:<br>Exklusive Premiere eines brandneuen Songs, gewidmet Iwans absoluter Lieblingskneipe &bdquo;Fandango&ldquo; in Heidelberg-Rohrbach. Ein musikalischer Liebesbrief an lange N&auml;chte, schiefe Gespr&auml;che, klebrige B&ouml;den und diese eine letzte Runde, die immer eskaliert. Man munkelt: Wer den Song h&ouml;rt, steht pl&ouml;tzlich mit einem Bier in der Hand da, egal ob er wollte oder nicht.<br>Und als w&auml;re das nicht genug: Premiere der Punkband &bdquo;Bockwurst&ldquo; &ndash; roh, laut, wahrscheinlich fettig.</p>\n<p>Live-Support von &bdquo;Sturmfrei Kollektiv&ldquo; &amp; &bdquo;Saufdruck&ldquo; &ndash; die Namen sagen alles, was du wissen musst, oder du liest weiter. Aftershow mit DJ NoSet &ndash; Tanzfl&auml;che garantiert, Erinnerung optional.</p>\n<p>Was dich erwartet?<br>Ein Abend voller Widerspr&uuml;che: Gechillt und exzessiv. Tiefgr&uuml;ndig und komplett dr&uuml;ber. Zum Mitsingen, Mitf&uuml;hlen, Mitabst&uuml;rzen. Oder kurz gesagt: Ein bunter Abend. Verr&uuml;ckt. Anders. NoStyle eben. Komm vorbei. Oder bereue es sp&auml;ter. Ohne Scheiss.</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/iwan-nostyle/",
-        "img": "/img/1a67023d-4505-4158-b9d4-46d5e7d6859d.png",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "IWAN NOSTYLE",
-                "link": "",
-                "description": "Genre-freies und multi-emotionales Musiktheater. Verr\u00fcckt! Anders! NoStyle!",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/8lgWTMgiwbY",
-                "bandcamp": "",
-                "image": "/img/78a93f9d-f22e-4808-9d24-233f94559487.png"
-            },
-            {
-                "name": "Saufdruck",
-                "link": "",
-                "description": "Nussgew\u00fcrzes Haus- und Hofkapelle Saufdruck bereichert dein nussgew\u00fcrztes\nNussgericht mit Blockpunk und Fassbier.\nAllergiker Hinweis: Kann Spuren enthalten.\nDas Feuilleton meint: \"Saufdruck. Schon der Name spaltet. Saufdruck ist damit\neine Band mit Spaltpotential, die vielleicht gerade deswegen gro\u00dfes Interesse\nweckt.\nMusikalisch ist es weitgehend echter Punk mit genrespezifisch hohem\nmusikalischem Niveau und wortwitzigen deutschsprachigen Texten zu\nAlltagsthemen. Ein Konzertbesuch lohnt sich in jedem Fall und bleibt, wenn man\nnicht zu viel des angebotenen Kaltgetr\u00e4nks konsumiert, als unvergessliches\nErgebnis in \u00fcberwiegend guter Erinnerung.\n4 von 5 Sternie.\"",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "",
-                "image": ""
-            },
-            {
-                "name": "Sturmfrei Kollektiv",
-                "link": "",
-                "description": "Sturmfrei!!! Endlich wieder mal die gro\u00dfe Freiheit gesp\u00fcrt und alle Liebsten\neingeladen! In der K\u00fcche wird hei\u00df diskutiert \u00fcber Dies und Das, Wer mit Wem,\n\u00fcber Kritisches und Politisches... Dr\u00fcben im Wohnzimmer dann werden Sofas zur\nSeite geschoben und Instrumente gestimmt. Erwartungsvolle Stille, Ruhe vor dem\nSturm. Gleich kann es losgehen, die Band ist schon bereit - und Du so?",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "",
-                "image": "/img/6a4d2a18-dd13-40fd-9abc-60f47fd2ff96.jpeg"
             }
         ]
     }
