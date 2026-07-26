@@ -1,5 +1,18 @@
 [
     {
+        "id": "mm-260805",
+        "date": "2026-08-05T19:30:00+00:00",
+        "title": "Open Air Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<p>Wir gehen in die zweite Runde Midnight Madness Open Air, &nbsp;mit der wohl unkonventionellsten Maske unserer &bdquo;3 Masken &ndash; 90's Filme&ldquo;.</p>\n<p>Peak HollyWOO! Und keine Sorge: Hier regiert absolute 90's Madness. Maximalismus statt Zur&uuml;ckhaltung.</p>\n<p>Die Pr&auml;misse ist so haarstr&auml;ubend, dass wir sie euch gar nicht erst verraten. Schauspielerei am absoluten Limit. Wer spielt hier eigentlich wen? Und vor allem: Wer spielt den anderen besser? Drei Meister des Exzesses treffen aufeinander und machen daraus eine delirierende Action-Oper aus fliegenden Tauben, Zeitlupe und jeder Menge explodierendem Zeug. Ein Film, der so tut, als w&auml;re Wahnsinn die vern&uuml;nftigste Idee der Welt. It's cuckoo bananas!</p>\n<p><span style=\"color: #843fa1;\"><strong>Filmbeginn bei Einbruch der Dunkelheit gegen 21.30 Uhr.</strong></span></p>",
+        "descriptionLong": "",
+        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3599927289",
+        "img": "/img/3c1a09b3-78f0-4540-885c-fabfba44b17e.webp",
+        "cancelled": false,
+        "artists": []
+    },
+    {
         "id": "the-bats",
         "date": "2026-08-03T17:00:00+00:00",
         "title": "The Bats (Psych Pop, NZ) & Woog Riots (Electro-Pop)",
@@ -30,82 +43,5 @@
                 "image": "/img/310ad6e0-b77c-406f-88de-69cdd5708429.webp"
             }
         ]
-    },
-    {
-        "id": "balaclava-mrstrong",
-        "date": "2026-07-22T17:00:00+00:00",
-        "title": "Balaclava (Trash Rock, NYC) und Mr. Strong (Art Punk, Galway/Leipzig)",
-        "fee": "12",
-        "feeAk": "15",
-        "descriptionShort": "<p>Am 22. Juli f&auml;llt eine wildgewordene Horde Vermummter &uuml;bers Carousel her und wird uns nichts Geringeres als den Verstand rauben! Balaclava aus NYC werden den SW Deutschlands in Nullkommanix einnehmen, nachdem sie bereits vor wenigen Monaten bei SXSW bei s&auml;mtlichen Shows totalen Abriss lieferten.</p>\n<p>Weniger maskiert, weniger weird aber sehr stark (sorry) mit ordentlich pr&auml;senter Note Hardcore Punk kommen vorab Mr. Strong aus Leipzig/Galway daher!</p>\n<p>Can you believe it? Absolutes Kn&uuml;ller-Lineup f&uuml;r eine Mittwochs Show die es nicht zu verschwitzen gilt!</p>\n<p><br>Wir sehen uns dann im Carousel.</p>\n<p>&nbsp;</p>\n<p>Flyer art by <a href=\"https://www.instagram.com/joey.controlletti/\">Joey Controlletti</a></p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/balaclava-mrstrong/",
-        "img": "/img/92f7057f-c424-4b83-99ff-05f8be2524c4.webp",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "Balaclava",
-                "link": "https://www.instagram.com/balaclava_is_a_band/",
-                "description": "BALACLAVA originally started as a solo of Dylan Joyce aka BALA, but has now become a five-piece live band based in Ridgewood, Queens. The looming question that they seek to answer is, \u201cWhat does animated trash sound like?\u201d  - Sarah Samson",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/4V7C9cop8ss",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=428144706/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/c20df042-c8df-4c47-a53f-3606071ad9c8.webp"
-            },
-            {
-                "name": "Mr. Strong",
-                "link": "https://www.instagram.com/_mr._strong_/",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "",
-                "image": "/img/3d95ef0b-db17-48f7-b36b-9e86aced6bca.webp"
-            }
-        ]
-    },
-    {
-        "id": "Diapers-DBR",
-        "date": "2026-07-20T17:00:00+00:00",
-        "title": "DIAPERS (L,HAL,MRS), D:B:R (B)",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p>Das Autohaus gibt am 20 Juli die B&uuml;hne frei f&uuml;r DBR und Diapers die den Saal f&uuml;r kurze Zeit in einen Raum voller Energie und Emotionen verwandeln.<br><br>Mit schlotzigen Beats erobert D.B.R. aus Berlin die B&uuml;hne. Hier, wo groovy Rhythmus, verzerrte Gitarre und starke Lyrics auf einandern treffen, bleibt definitiv niemand still auf seinem Platz stehen! Musik die einfach zum Tanzen einl&auml;d! <br><br>Diapers kombiniert schnelle elektrische Beats mit harten Riffs und ausdrucksstarken Riot-Grrrl vocals. Die Band die sich selbst mit den Worten: &bdquo;Hotwheels, Schweinemetall und pamperspoop&ldquo; beschrieben macht jedoch alles andere als shitty Musik. Alles in allem klingt das nach einer guten Zeit, oder?<br><br>Deshalb kommt alle rum!<br>Wir freuen uns auf euch!<br>*Love Music*<br>*Support your local scene*<br>*Hate Fascism*</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/Diapers-DBR/",
-        "img": "/img/862039a6-9b58-4581-8680-60f6b0de112c.webp",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "Diapers",
-                "link": "https://diapersdiapers.bandcamp.com/album/demo",
-                "description": "Hotwheels, Schweinemetall und pamperspoop",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3699830994/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/96dba839-0a8c-4a15-a6ca-9edeab22b76c.webp"
-            },
-            {
-                "name": "D:B:R",
-                "link": "https://flennen.bandcamp.com/album/boogie-nights",
-                "description": "groovy Rhythmus, verzerrte Gitarre und starke Lyrics",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1809468832/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/9b4da4df-3f35-44a3-87ea-915f10a395f6.webp"
-            }
-        ]
-    },
-    {
-        "id": "mm-260715",
-        "date": "2026-07-15T19:30:00+00:00",
-        "title": "Outdoor Kino: Midnight Madness",
-        "fee": "",
-        "feeAk": "",
-        "descriptionShort": "<p>Sommer, Sonne, Kaktus - das bedeutet auch endlich wieder Midnight Madness Open Airs! Drei ikonische Blockbuster gibt es diesen Sommer auf die Augen, alle aus den 90ern und alle mit Maske. Zum Auftakt gibt es 100% Adrenalin mit kriminellen Surfern, Undercover-Cops und Zen-Weisheiten an den Str&auml;nden Kaliforniens - extrem sportlich, extrem spannend und gespickt mit extrem unterhaltsamen Dialogen. Und sind wir nicht alle auf der Suche nach dem endlosen Sommer?</p>\n<p>&nbsp;</p>\n<p>Der Eintritt ist frei</p>\n<p><span style=\"color: #e67e23;\">Original mit deutschen Untertiteln | <a class=\"Credits\" style=\"color: #e67e23;\" href=\"https://karlstorkino.de/index.php?RUBRIK=4&amp;Document=40&amp;FSK=16\">FSK: 16</a>.</span></p>",
-        "descriptionLong": "",
-        "shopLink": "",
-        "img": "/img/11fc1dd8-6315-44ee-ac87-550549ab87c1.webp",
-        "cancelled": false,
-        "artists": []
     }
 ]
