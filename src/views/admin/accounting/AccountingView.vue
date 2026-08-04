@@ -49,10 +49,12 @@ const authStore = useAuthStore()
 // die URL trägt z.B. `/admin/events/42?tab=accounting&abrTab=inventory`,
 // und beim Restore (Browser-Back oder Cancel-Button) sind wir wieder
 // genau in der Inventur statt im Default `cashcount`.
-type AbrTab = 'cashcount' | 'inventory' | 'expenses' | 'documents' | 'result' | 'grant'
-const VALID_ABR_TABS: AbrTab[] = ['cashcount', 'inventory', 'expenses', 'documents', 'result', 'grant']
+type AbrTab = 'cashcount' | 'inventory' | 'expenses' | 'result' | 'grant'
+const VALID_ABR_TABS: AbrTab[] = ['cashcount', 'inventory', 'expenses', 'result', 'grant']
 function readAbrTabFromRoute(): AbrTab {
   const q = route.query.abrTab
+  // 'documents' was merged into 'expenses' — keep old links working.
+  if (q === 'documents') return 'expenses'
   if (typeof q === 'string' && (VALID_ABR_TABS as string[]).includes(q)) return q as AbrTab
   return 'cashcount'
 }
@@ -1657,11 +1659,7 @@ defineExpose({ toggleFinalStatus })
         button.tab(
           :class="{ active: activeTab === 'expenses' }"
           @click="activeTab = 'expenses'"
-        ) 🧾 Ausgaben
-        button.tab(
-          :class="{ active: activeTab === 'documents' }"
-          @click="activeTab = 'documents'"
-        ) 📎 Belege
+        ) 🧾 Ausgaben & Belege
         button.tab(
           :class="{ active: activeTab === 'result' }"
           @click="activeTab = 'result'"
@@ -2115,6 +2113,71 @@ defineExpose({ toggleFinalStatus })
             strong Ideell
             |  — allgemeine Vereinsarbeit ohne wirtschaftlichen Bezug
 
+      .documents-tab.expenses-documents
+        .section-header
+          h3.section-title Belege
+          .header-actions
+            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
+            router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
+
+        input.file-input(
+          ref="fileInputRef"
+          type="file"
+          multiple
+          @change="handleFileUpload"
+          style="display: none"
+        )
+
+        .drop-zone(
+          @dragover.prevent="dragOver = true"
+          @dragleave="dragOver = false"
+          @drop.prevent="handleDrop"
+          :class="{ 'drag-over': dragOver }"
+        )
+          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
+          p(v-else) Loslassen zum Hochladen…
+
+        .upload-progress(v-if="uploadingFiles.length")
+          .upload-item(v-for="f in uploadingFiles" :key="f.name")
+            span {{ f.name }}
+            span.status ⏳ wird hochgeladen…
+
+        .upload-error(v-if="uploadError")
+          p ⚠️ {{ uploadError }}
+
+        .documents-list(v-if="documents.length")
+          table.documents-table
+            thead
+              tr
+                th Datei
+                th Hochgeladen
+                th Von
+                th
+            tbody
+              tr(v-for="doc in documents" :key="doc.id")
+                td
+                  a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
+                  span(v-else) {{ doc.file_name }}
+                td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
+                td {{ doc.uploaded_by_name }}
+                td.doc-actions
+                  button.btn-scan-doc(
+                    @click="scanDocument(doc)"
+                    :disabled="scanningDocId === doc.id"
+                    title="Als Ausgabe übernehmen (KI)"
+                  )
+                    span(v-if="scanningDocId === doc.id") 🤖…
+                    span(v-else) 🧾 Als Ausgabe
+                  button.btn-delete(@click="deleteDocument(doc)") ✕
+
+        .scan-error(v-if="scanDocError") ⚠️ {{ scanDocError }}
+        .scan-success(v-if="scanDocSuccess") ✓ {{ scanDocSuccess }}
+
+        .empty-state(v-else-if="!isLoadingDocs")
+          p Noch keine Belege hochgeladen.
+
+        .loading(v-if="isLoadingDocs") Belege werden geladen…
+
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
 
@@ -2554,72 +2617,6 @@ defineExpose({ toggleFinalStatus })
               span Anzahl Förderanträge
               span.amount {{ grantSummary.grant_count }}
 
-    //- ── Documents Tab ──
-    .tab-content(v-if="activeTab === 'documents'")
-      .documents-tab
-        .section-header
-          h3.section-title Belege
-          .header-actions
-            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
-            router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
-
-        input.file-input(
-          ref="fileInputRef"
-          type="file"
-          multiple
-          @change="handleFileUpload"
-          style="display: none"
-        )
-
-        .drop-zone(
-          @dragover.prevent="dragOver = true"
-          @dragleave="dragOver = false"
-          @drop.prevent="handleDrop"
-          :class="{ 'drag-over': dragOver }"
-        )
-          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
-          p(v-else) Loslassen zum Hochladen…
-
-        .upload-progress(v-if="uploadingFiles.length")
-          .upload-item(v-for="f in uploadingFiles" :key="f.name")
-            span {{ f.name }}
-            span.status ⏳ wird hochgeladen…
-
-        .upload-error(v-if="uploadError")
-          p ⚠️ {{ uploadError }}
-
-        .documents-list(v-if="documents.length")
-          table.documents-table
-            thead
-              tr
-                th Datei
-                th Hochgeladen
-                th Von
-                th
-            tbody
-              tr(v-for="doc in documents" :key="doc.id")
-                td
-                  a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
-                  span(v-else) {{ doc.file_name }}
-                td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
-                td {{ doc.uploaded_by_name }}
-                td.doc-actions
-                  button.btn-scan-doc(
-                    @click="scanDocument(doc)"
-                    :disabled="scanningDocId === doc.id"
-                    title="Als Ausgabe übernehmen (KI)"
-                  )
-                    span(v-if="scanningDocId === doc.id") 🤖…
-                    span(v-else) 🧾 Als Ausgabe
-                  button.btn-delete(@click="deleteDocument(doc)") ✕
-
-        .scan-error(v-if="scanDocError") ⚠️ {{ scanDocError }}
-        .scan-success(v-if="scanDocSuccess") ✓ {{ scanDocSuccess }}
-
-        .empty-state(v-else-if="!isLoadingDocs")
-          p Noch keine Belege hochgeladen.
-
-        .loading(v-if="isLoadingDocs") Belege werden geladen…
   .error(v-else-if="error") ⚠️ {{ error }}
 </template>
 
@@ -4963,6 +4960,11 @@ h2 {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+.expenses-documents {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.15rem solid #ddd;
 }
 .documents-tab .header-actions {
   display: flex;
