@@ -49,10 +49,12 @@ const authStore = useAuthStore()
 // die URL trägt z.B. `/admin/events/42?tab=accounting&abrTab=inventory`,
 // und beim Restore (Browser-Back oder Cancel-Button) sind wir wieder
 // genau in der Inventur statt im Default `cashcount`.
-type AbrTab = 'cashcount' | 'inventory' | 'expenses' | 'documents' | 'result' | 'grant'
-const VALID_ABR_TABS: AbrTab[] = ['cashcount', 'inventory', 'expenses', 'documents', 'result', 'grant']
+type AbrTab = 'cashcount' | 'inventory' | 'expenses' | 'result' | 'grant'
+const VALID_ABR_TABS: AbrTab[] = ['cashcount', 'inventory', 'expenses', 'result', 'grant']
 function readAbrTabFromRoute(): AbrTab {
   const q = route.query.abrTab
+  // 'documents' was merged into 'expenses' — keep old links working.
+  if (q === 'documents') return 'expenses'
   if (typeof q === 'string' && (VALID_ABR_TABS as string[]).includes(q)) return q as AbrTab
   return 'cashcount'
 }
@@ -200,6 +202,14 @@ const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
+
+// ── Expense receipt scan (AI) ────────
+const expenseScanInput = ref<HTMLInputElement | null>(null)
+const scanningExpense = ref(false)
+const scanExpenseError = ref('')
+const scanningDocId = ref<number | null>(null)
+const scanDocError = ref('')
+const scanDocSuccess = ref('')
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -709,6 +719,64 @@ function addExpense() {
 
 function removeExpense(index: number) {
   expenses.value.splice(index, 1)
+}
+
+function triggerExpenseScan() {
+  scanExpenseError.value = ''
+  expenseScanInput.value?.click()
+}
+
+async function handleExpenseScan(e: globalThis.Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  scanningExpense.value = true
+  scanExpenseError.value = ''
+  try {
+    const result = await accountingService.scanExpenseReceipt(file, props.eventId)
+    expenses.value.push({
+      accounting: accounting.value?.id || 0,
+      description: result.description || result.supplier || '',
+      amount: result.amount != null ? result.amount.toFixed(2) : '0.00',
+      notes: '',
+      paid_from: 'other',
+      tax_sphere: result.tax_sphere ?? null,
+      vat_rate: result.vat_rate ?? null,
+    })
+    // If the receipt was also uploaded to Drive, show it in the documents list.
+    if (result.document) {
+      documents.value.unshift(result.document)
+    }
+  } catch (err: any) {
+    scanExpenseError.value = err.response?.data?.error || 'Scan fehlgeschlagen'
+  } finally {
+    scanningExpense.value = false
+    input.value = ''
+  }
+}
+
+async function scanDocument(doc: EventDocument) {
+  scanningDocId.value = doc.id
+  scanDocError.value = ''
+  scanDocSuccess.value = ''
+  try {
+    const result = await accountingService.scanExistingDocument(doc.id)
+    expenses.value.push({
+      accounting: accounting.value?.id || 0,
+      description: result.description || result.supplier || doc.file_name,
+      amount: result.amount != null ? result.amount.toFixed(2) : '0.00',
+      notes: '',
+      paid_from: 'other',
+      tax_sphere: result.tax_sphere ?? null,
+      vat_rate: result.vat_rate ?? null,
+    })
+    scanDocSuccess.value = `„${result.description || doc.file_name}" als Ausgabe übernommen. Prüfe den Ausgaben-Tab.`
+  } catch (err: any) {
+    scanDocError.value = err.response?.data?.error || 'Scan fehlgeschlagen'
+  } finally {
+    scanningDocId.value = null
+  }
 }
 
 // ── Computed: Result ─────────────────────────────────────────────
@@ -1591,11 +1659,7 @@ defineExpose({ toggleFinalStatus })
         button.tab(
           :class="{ active: activeTab === 'expenses' }"
           @click="activeTab = 'expenses'"
-        ) 🧾 Ausgaben
-        button.tab(
-          :class="{ active: activeTab === 'documents' }"
-          @click="activeTab = 'documents'"
-        ) 📎 Belege
+        ) 🧾 Ausgaben & Belege
         button.tab(
           :class="{ active: activeTab === 'result' }"
           @click="activeTab = 'result'"
@@ -2014,6 +2078,20 @@ defineExpose({ toggleFinalStatus })
 
       button.btn-add(@click="addExpense") + Ausgabe hinzufügen
 
+      .expense-scan
+        input(
+          ref="expenseScanInput"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          @change="handleExpenseScan"
+          hidden
+        )
+        button.btn-scan(@click="triggerExpenseScan" :disabled="scanningExpense")
+          span(v-if="scanningExpense") 🤖 Beleg wird analysiert…
+          span(v-else) 🧾 Beleg scannen (KI)
+        p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
+
       .grand-total
         span Gesamtausgaben:
         strong {{ formatCurrency(totalExpenses) }}
@@ -2034,6 +2112,71 @@ defineExpose({ toggleFinalStatus })
           li
             strong Ideell
             |  — allgemeine Vereinsarbeit ohne wirtschaftlichen Bezug
+
+      .documents-tab.expenses-documents
+        .section-header
+          h3.section-title Belege
+          .header-actions
+            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
+            router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
+
+        input.file-input(
+          ref="fileInputRef"
+          type="file"
+          multiple
+          @change="handleFileUpload"
+          style="display: none"
+        )
+
+        .drop-zone(
+          @dragover.prevent="dragOver = true"
+          @dragleave="dragOver = false"
+          @drop.prevent="handleDrop"
+          :class="{ 'drag-over': dragOver }"
+        )
+          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
+          p(v-else) Loslassen zum Hochladen…
+
+        .upload-progress(v-if="uploadingFiles.length")
+          .upload-item(v-for="f in uploadingFiles" :key="f.name")
+            span {{ f.name }}
+            span.status ⏳ wird hochgeladen…
+
+        .upload-error(v-if="uploadError")
+          p ⚠️ {{ uploadError }}
+
+        .documents-list(v-if="documents.length")
+          table.documents-table
+            thead
+              tr
+                th Datei
+                th Hochgeladen
+                th Von
+                th
+            tbody
+              tr(v-for="doc in documents" :key="doc.id")
+                td
+                  a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
+                  span(v-else) {{ doc.file_name }}
+                td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
+                td {{ doc.uploaded_by_name }}
+                td.doc-actions
+                  button.btn-scan-doc(
+                    @click="scanDocument(doc)"
+                    :disabled="scanningDocId === doc.id"
+                    title="Als Ausgabe übernehmen (KI)"
+                  )
+                    span(v-if="scanningDocId === doc.id") 🤖…
+                    span(v-else) 🧾 Als Ausgabe
+                  button.btn-delete(@click="deleteDocument(doc)") ✕
+
+        .scan-error(v-if="scanDocError") ⚠️ {{ scanDocError }}
+        .scan-success(v-if="scanDocSuccess") ✓ {{ scanDocSuccess }}
+
+        .empty-state(v-else-if="!isLoadingDocs")
+          p Noch keine Belege hochgeladen.
+
+        .loading(v-if="isLoadingDocs") Belege werden geladen…
 
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
@@ -2474,62 +2617,6 @@ defineExpose({ toggleFinalStatus })
               span Anzahl Förderanträge
               span.amount {{ grantSummary.grant_count }}
 
-    //- ── Documents Tab ──
-    .tab-content(v-if="activeTab === 'documents'")
-      .documents-tab
-        .section-header
-          h3.section-title Belege
-          .header-actions
-            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
-            router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
-
-        input.file-input(
-          ref="fileInputRef"
-          type="file"
-          multiple
-          @change="handleFileUpload"
-          style="display: none"
-        )
-
-        .drop-zone(
-          @dragover.prevent="dragOver = true"
-          @dragleave="dragOver = false"
-          @drop.prevent="handleDrop"
-          :class="{ 'drag-over': dragOver }"
-        )
-          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
-          p(v-else) Loslassen zum Hochladen…
-
-        .upload-progress(v-if="uploadingFiles.length")
-          .upload-item(v-for="f in uploadingFiles" :key="f.name")
-            span {{ f.name }}
-            span.status ⏳ wird hochgeladen…
-
-        .upload-error(v-if="uploadError")
-          p ⚠️ {{ uploadError }}
-
-        .documents-list(v-if="documents.length")
-          table.documents-table
-            thead
-              tr
-                th Datei
-                th Hochgeladen
-                th Von
-                th
-            tbody
-              tr(v-for="doc in documents" :key="doc.id")
-                td
-                  a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
-                  span(v-else) {{ doc.file_name }}
-                td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
-                td {{ doc.uploaded_by_name }}
-                td
-                  button.btn-delete(@click="deleteDocument(doc)") ✕
-
-        .empty-state(v-else-if="!isLoadingDocs")
-          p Noch keine Belege hochgeladen.
-
-        .loading(v-if="isLoadingDocs") Belege werden geladen…
   .error(v-else-if="error") ⚠️ {{ error }}
 </template>
 
@@ -3916,6 +4003,73 @@ h2 {
   color: white;
 }
 
+.expense-scan {
+  margin-top: 0.75rem;
+}
+
+.btn-scan {
+  padding: 0.625rem 1rem;
+  background: white;
+  color: black;
+  border: 0.25rem dashed black;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-scan:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-scan:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.scan-error {
+  margin-top: 0.5rem;
+  color: #b00020;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.scan-success {
+  margin-top: 0.5rem;
+  color: #0a7d28;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.doc-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn-scan-doc {
+  padding: 0.25rem 0.5rem;
+  background: white;
+  color: black;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.btn-scan-doc:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-scan-doc:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .btn-remove {
   padding: 0.25rem 0.5rem;
   background: black;
@@ -4806,6 +4960,11 @@ h2 {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+}
+.expenses-documents {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.15rem solid #ddd;
 }
 .documents-tab .header-actions {
   display: flex;
