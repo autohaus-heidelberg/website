@@ -201,6 +201,11 @@ const dragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
 
+// ── Expense receipt scan (AI) ────────
+const expenseScanInput = ref<HTMLInputElement | null>(null)
+const scanningExpense = ref(false)
+const scanExpenseError = ref('')
+
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
   const txns = paypalBarData.value.transactions
@@ -709,6 +714,41 @@ function addExpense() {
 
 function removeExpense(index: number) {
   expenses.value.splice(index, 1)
+}
+
+function triggerExpenseScan() {
+  scanExpenseError.value = ''
+  expenseScanInput.value?.click()
+}
+
+async function handleExpenseScan(e: globalThis.Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  scanningExpense.value = true
+  scanExpenseError.value = ''
+  try {
+    const result = await accountingService.scanExpenseReceipt(file, props.eventId)
+    expenses.value.push({
+      accounting: accounting.value?.id || 0,
+      description: result.description || result.supplier || '',
+      amount: result.amount != null ? result.amount.toFixed(2) : '0.00',
+      notes: '',
+      paid_from: 'other',
+      tax_sphere: result.tax_sphere ?? null,
+      vat_rate: result.vat_rate ?? null,
+    })
+    // If the receipt was also uploaded to Drive, show it in the documents list.
+    if (result.document) {
+      documents.value.unshift(result.document)
+    }
+  } catch (err: any) {
+    scanExpenseError.value = err.response?.data?.error || 'Scan fehlgeschlagen'
+  } finally {
+    scanningExpense.value = false
+    input.value = ''
+  }
 }
 
 // ── Computed: Result ─────────────────────────────────────────────
@@ -2013,6 +2053,20 @@ defineExpose({ toggleFinalStatus })
           button.btn-remove(@click="removeExpense(index)") ×
 
       button.btn-add(@click="addExpense") + Ausgabe hinzufügen
+
+      .expense-scan
+        input(
+          ref="expenseScanInput"
+          type="file"
+          accept="image/*"
+          capture="environment"
+          @change="handleExpenseScan"
+          hidden
+        )
+        button.btn-scan(@click="triggerExpenseScan" :disabled="scanningExpense")
+          span(v-if="scanningExpense") 🤖 Beleg wird analysiert…
+          span(v-else) 🧾 Beleg scannen (KI)
+        p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
 
       .grand-total
         span Gesamtausgaben:
@@ -3914,6 +3968,38 @@ h2 {
 .btn-add:hover {
   background: black;
   color: white;
+}
+
+.expense-scan {
+  margin-top: 0.75rem;
+}
+
+.btn-scan {
+  padding: 0.625rem 1rem;
+  background: white;
+  color: black;
+  border: 0.25rem dashed black;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-scan:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-scan:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.scan-error {
+  margin-top: 0.5rem;
+  color: #b00020;
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
 .btn-remove {

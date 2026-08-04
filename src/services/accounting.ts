@@ -13,8 +13,9 @@ import type {
   GrantApplication,
   GrantSummary,
   StockHistory,
+  TaxSphere,
+  VatRate,
 } from '@/types/accounting'
-
 // ── Seed-Daten: Standard-Getränke ──────────────────────────────
 // Werden über /api/drinks/ verwaltet.
 // Die Daten hier dienen als Referenz für das initiale Befüllen
@@ -135,6 +136,22 @@ export const accountingService = {
 
   async setStatus(id: number, status: 'draft' | 'final'): Promise<{ id: number; status: string }> {
     return api.post(`/api/abrechnungen/${id}/set-status/`, { status })
+  },
+
+  async scanExpenseReceipt(imageFile: File, eventId?: string): Promise<{
+    description: string
+    supplier?: string
+    date?: string | null
+    amount?: number | null
+    tax_sphere?: TaxSphere | null
+    vat_rate?: VatRate | null
+    raw: string
+    document?: EventDocument
+  }> {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    if (eventId) formData.append('event_id', eventId)
+    return api.post('/api/abrechnungen/scan-expense/', formData)
   },
 
   async getSummary(_id: number): Promise<AccountingSummary> {
