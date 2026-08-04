@@ -205,6 +205,9 @@ const uploadError = ref('')
 const expenseScanInput = ref<HTMLInputElement | null>(null)
 const scanningExpense = ref(false)
 const scanExpenseError = ref('')
+const scanningDocId = ref<number | null>(null)
+const scanDocError = ref('')
+const scanDocSuccess = ref('')
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -748,6 +751,29 @@ async function handleExpenseScan(e: globalThis.Event) {
   } finally {
     scanningExpense.value = false
     input.value = ''
+  }
+}
+
+async function scanDocument(doc: EventDocument) {
+  scanningDocId.value = doc.id
+  scanDocError.value = ''
+  scanDocSuccess.value = ''
+  try {
+    const result = await accountingService.scanExistingDocument(doc.id)
+    expenses.value.push({
+      accounting: accounting.value?.id || 0,
+      description: result.description || result.supplier || doc.file_name,
+      amount: result.amount != null ? result.amount.toFixed(2) : '0.00',
+      notes: '',
+      paid_from: 'other',
+      tax_sphere: result.tax_sphere ?? null,
+      vat_rate: result.vat_rate ?? null,
+    })
+    scanDocSuccess.value = `„${result.description || doc.file_name}" als Ausgabe übernommen. Prüfe den Ausgaben-Tab.`
+  } catch (err: any) {
+    scanDocError.value = err.response?.data?.error || 'Scan fehlgeschlagen'
+  } finally {
+    scanningDocId.value = null
   }
 }
 
@@ -2577,8 +2603,18 @@ defineExpose({ toggleFinalStatus })
                   span(v-else) {{ doc.file_name }}
                 td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
                 td {{ doc.uploaded_by_name }}
-                td
+                td.doc-actions
+                  button.btn-scan-doc(
+                    @click="scanDocument(doc)"
+                    :disabled="scanningDocId === doc.id"
+                    title="Als Ausgabe übernehmen (KI)"
+                  )
+                    span(v-if="scanningDocId === doc.id") 🤖…
+                    span(v-else) 🧾 Als Ausgabe
                   button.btn-delete(@click="deleteDocument(doc)") ✕
+
+        .scan-error(v-if="scanDocError") ⚠️ {{ scanDocError }}
+        .scan-success(v-if="scanDocSuccess") ✓ {{ scanDocSuccess }}
 
         .empty-state(v-else-if="!isLoadingDocs")
           p Noch keine Belege hochgeladen.
@@ -4000,6 +4036,41 @@ h2 {
   color: #b00020;
   font-weight: 600;
   font-size: 0.85rem;
+}
+
+.scan-success {
+  margin-top: 0.5rem;
+  color: #0a7d28;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.doc-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.btn-scan-doc {
+  padding: 0.25rem 0.5rem;
+  background: white;
+  color: black;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.btn-scan-doc:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-scan-doc:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .btn-remove {

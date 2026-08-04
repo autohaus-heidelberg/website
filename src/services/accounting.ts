@@ -154,6 +154,19 @@ export const accountingService = {
     return api.post('/api/abrechnungen/scan-expense/', formData)
   },
 
+  async scanExistingDocument(documentId: number): Promise<{
+    description: string
+    supplier?: string
+    date?: string | null
+    amount?: number | null
+    tax_sphere?: TaxSphere | null
+    vat_rate?: VatRate | null
+    raw: string
+    document_id: number
+  }> {
+    return api.post('/api/abrechnungen/scan-document/', { document_id: documentId })
+  },
+
   async getSummary(_id: number): Promise<AccountingSummary> {
     // Summary is computed on the frontend from loaded data
     return {
