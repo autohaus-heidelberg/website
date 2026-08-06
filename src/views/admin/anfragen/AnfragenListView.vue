@@ -39,14 +39,22 @@ const filteredAnfragen = computed(() => {
     )
   }
 
-  // Newest first, unread before read
+  // Unread before read, then most recent activity (newest message or submission) first
   list.sort((a, b) => {
     if (a.isRead !== b.isRead) return a.isRead ? 1 : -1
-    return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    return lastActivity(b) - lastActivity(a)
   })
 
   return list
 })
+
+function lastActivity(anfrage: Anfrage): number {
+  let latest = new Date(anfrage.submittedAt).getTime()
+  for (const msg of anfrage.messages ?? []) {
+    latest = Math.max(latest, new Date(msg.createdAt).getTime())
+  }
+  return latest
+}
 
 const unreadCount = computed(() => anfragen.value.filter(a => !a.isRead).length)
 
