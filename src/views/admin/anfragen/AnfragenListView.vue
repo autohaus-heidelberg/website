@@ -118,6 +118,15 @@ async function sendReply(anfrage: Anfrage) {
     anfrage.lastReplySubject = replySubject.value
     anfrage.lastReplyMessage = replyMessage.value
     anfrage.lastReplyAt = new Date().toISOString()
+    if (!anfrage.messages) anfrage.messages = []
+    anfrage.messages.push({
+      id: Date.now(),
+      direction: 'outgoing',
+      subject: replySubject.value,
+      body: replyMessage.value,
+      fromEmail: '',
+      createdAt: new Date().toISOString(),
+    })
     replySuccess.value = anfrage.id
     replyingTo.value = null
     replyMessage.value = ''
@@ -249,12 +258,18 @@ onMounted(() => {
             .detail-label Nachricht
             .message-text {{ anfrage.message }}
 
-          .last-reply-section(v-if="anfrage.lastReplyAt")
-            .last-reply-header
-              span ✉️ Letzte Antwort
-              span.last-reply-date {{ timeAgo(anfrage.lastReplyAt) }}
-            .last-reply-subject(v-if="anfrage.lastReplySubject") {{ anfrage.lastReplySubject }}
-            .last-reply-body {{ anfrage.lastReplyMessage }}
+          .thread-section(v-if="anfrage.messages && anfrage.messages.length")
+            .thread-header ✉️ Konversation
+            .thread-message(
+              v-for="msg in anfrage.messages"
+              :key="msg.id"
+              :class="'thread-' + msg.direction"
+            )
+              .thread-message-head
+                span.thread-badge {{ msg.direction === 'outgoing' ? '➡️ Gesendet' : '⬅️ Antwort' }}
+                span.thread-date {{ timeAgo(msg.createdAt) }}
+              .thread-subject(v-if="msg.subject") {{ msg.subject }}
+              .thread-body {{ msg.body }}
 
           .anfrage-actions
             button.btn-action.btn-read(@click.stop="toggleRead(anfrage)")
@@ -679,36 +694,60 @@ h2 {
   border-left: 0.25rem solid #ddd;
 }
 
-/* Last Reply */
-.last-reply-section {
-  background: #f0f7f0;
-  border: 0.15rem solid #c0d8c0;
-  padding: 1rem;
+/* Conversation thread */
+.thread-section {
   margin-bottom: 1rem;
 }
 
-.last-reply-header {
+.thread-header {
+  font-weight: 800;
+  font-size: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.thread-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.6rem;
+  border: 0.15rem solid #ddd;
+}
+
+.thread-outgoing {
+  background: #f0f7f0;
+  border-color: #c0d8c0;
+  margin-left: 1.5rem;
+}
+
+.thread-incoming {
+  background: #eef3fb;
+  border-color: #c3d4ec;
+  margin-right: 1.5rem;
+}
+
+.thread-message-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
-  font-weight: 800;
-  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
 }
 
-.last-reply-date {
-  font-weight: 600;
+.thread-badge {
+  font-weight: 800;
   font-size: 0.75rem;
+}
+
+.thread-date {
+  font-weight: 600;
+  font-size: 0.72rem;
   color: #666;
 }
 
-.last-reply-subject {
+.thread-subject {
   font-weight: 700;
   font-size: 0.85rem;
   margin-bottom: 0.35rem;
 }
 
-.last-reply-body {
+.thread-body {
   font-size: 0.85rem;
   line-height: 1.6;
   white-space: pre-wrap;

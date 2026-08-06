@@ -1,6 +1,15 @@
 import { api } from './api'
 import type { PaginatedResponse } from '@/types/api'
 
+export interface AnfrageMessage {
+  id: number
+  direction: 'outgoing' | 'incoming'
+  subject: string
+  body: string
+  fromEmail: string
+  createdAt: string
+}
+
 export interface Anfrage {
   id: number
   type: 'band' | 'event' | 'rent' | 'other'
@@ -17,6 +26,7 @@ export interface Anfrage {
   lastReplySubject?: string | null
   lastReplyMessage?: string | null
   lastReplyAt?: string | null
+  messages?: AnfrageMessage[]
 }
 
 export const ANFRAGE_TYPE_LABELS: Record<string, string> = {
