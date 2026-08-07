@@ -418,6 +418,7 @@ textarea {
   padding: 0.5rem 1.5rem;
   border: 0.2rem solid black;
   background: white;
+  color: black;
   font-weight: 700;
   cursor: pointer;
 }
