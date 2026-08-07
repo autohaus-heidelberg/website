@@ -25,7 +25,7 @@
       span.info-label 🚗 Load-In
       span.info-value Ebenerdig, Parkplatz direkt vor der Tür
       span.info-label 💰 Gagenmodell
-      span.info-value Garantie und/oder Tür-Anteil — Verhandlungssache
+      span.info-value Garantie und/oder Tür-Anteil — nach Absprache
 
     h2 Anfrage
 
