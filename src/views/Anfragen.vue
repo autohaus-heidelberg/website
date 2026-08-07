@@ -21,11 +21,11 @@
       span.info-label 💡 Licht
       span.info-value Grundausstattung vorhanden
       span.info-label 🥁 Backline
-      span.info-value Drumkit + Bass-Amp nach Absprache
+      span.info-value Nur nach Absprache
       span.info-label 🚗 Load-In
       span.info-value Ebenerdig, Parkplatz direkt vor der Tür
       span.info-label 💰 Gagenmodell
-      span.info-value Tür-Split, VVK-Split oder Festgage — nach Absprache
+      span.info-value Garantie und/oder Tür-Anteil — Verhandlungssache
 
     h2 Anfrage
 
@@ -38,6 +38,10 @@
           option(value="event") Veranstaltung
           option(value="rent") Vermietung
           option(value="other") Sonstiges
+        .form-hint.hint-warning(v-if="form.type === 'rent'") ⚠️ Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
+        .form-hint.hint-info(v-if="form.type === 'event'")
+          | 💡 Du hast eine eigene Idee für eine Veranstaltung? Am besten stellst du sie persönlich bei einem unserer Treffen vor. Die Termine geben wir hier bekannt:&nbsp;
+          a(href="https://t.me/+PCvpsCalJzkyNzFi" target="_blank" rel="noopener") Telegram-Gruppe
 
       .form-group
         label {{ form.type === 'band' ? 'Bandname *' : 'Name / Organisation *' }}
@@ -85,7 +89,8 @@
 
         .form-group
           label Gagenvorstellung
-          input(v-model="form.budget" placeholder="z.B. Hutkonzert, Tür-Split, 300€ Festgage...")
+          input(v-model="form.budget" placeholder="z.B. gewünschte Garantie und/oder Tür-Anteil")
+          .form-hint Garantie und Tür-Anteil sind Verhandlungssache.
 
       //- ── Event/Vermietung-spezifische Felder ──
       template(v-if="form.type === 'event' || form.type === 'rent'")
@@ -334,6 +339,22 @@ h3 {
   font-size: 0.8rem;
   color: #666;
   margin-top: 0.2rem;
+}
+
+.hint-warning {
+  color: #b00;
+  font-weight: 700;
+}
+
+.hint-info {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.hint-info a {
+  color: #0055cc;
+  text-decoration: underline;
+  font-weight: 700;
 }
 
 input, select, textarea {
