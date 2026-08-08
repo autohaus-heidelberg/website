@@ -1,5 +1,37 @@
 [
     {
+        "id": "event20260827",
+        "date": "2026-08-27T17:00:00+00:00",
+        "title": "Alvilda, The Runnings",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Wir finden es immer wieder ziemlich cute, wenn nach all der Zeit noch jemand das Carousel besucht, um f&uuml;r sein Auto etwas zu kl&auml;ren. &nbsp;Am 27. August h&auml;tte diese Person eine ausserordentlich gro&szlig;e Portion Gl&uuml;ck im Gep&auml;ck, denn es besuchen uns aus Paris Alvilda und aus Dresden The Runnings am selben Tag!<br><br>Alvilda haben das Carousel bereits abgerissen, und The Runnings er&ouml;ffenen den Abend in der architektonischen Stilikone des ersten Heidelberger Baubooms ausserhalb der Kernstadt.&nbsp;</p>\n<p>Wir freuen uns.</p>\n<p>#surfgarage#bouncypowerpop</p>\n<p>flyer art by electric.lizard</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/event20260827/",
+        "img": "/img/2e15ef66-616a-426c-9131-040b81752118.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Alvilda",
+                "link": "https://linktr.ee/alvildalp",
+                "description": "With their scruffy power pop and contagious freshness, these four Parisians came to attention with their debut EP \"N\u00e9gatif\", joyfully making us dancing through the summer of 2021. But behind the effortlessly cool fa\u00e7ade hide four incredibly hardworking women who have since toured relentlessly, turning their band into a ruthless dancing machine now opening for prestigious acts (The BellRays, The Nomads), before their long-awaited LP comes out in 2024.\n \nAlvilda plays garage rock wonderfully. '60s girl group vocal harmonies backed by a tough punk-y guitar sound with pop flourishes. The songs are so catchy, you start to sing along on the first listen. The French accents lend an extra air of coolness. Their bouncy songs are full of energy and a lot of fun, but also really well executed and sound strikingly authentic like this is some long lost late seventies gem. Alvilda mix \u201960s girl group with \u201970s Good Vibrations pop punk influences and je t\u2019aime it a lot. It\u2019s insane that these are the first recordings of the band.\nOne smile at a time.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/0WLX5LRif_4",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3747921211/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/abf965b00d38efea9883010871ee3d6a.webp"
+            },
+            {
+                "name": "The Runnings",
+                "link": "https://gunnerrecords.com/product-category/bands/the-runnings/",
+                "description": "\u201cDa ist sie wieder, diese eine Band, die aus dem riesen Pool von Bands, die in Leipzig ihr Unwesen treiben, hervorsticht.\u201d\nSeit dem ersten Konzert Anfang 2024 haben sich THE RUNNINGS recht schnell in viele Ohren und Herzen gespielt. Im ersten Jahr standen direkt 26 Konzerte von Berlin bis K\u00f6ln, von Hamburg bis M\u00fcnchen auf dem straffen Tourplan und es wurde mit Bands wie PRESS CLUB, THE MOVEMENT, SOAP GIRLS und vielen anderen gespielt, ebenso wie einige kleine Festivals. Nicht nur live l\u00e4sst sich erkennen, dass hier geballte Erfahrung auf der B\u00fchne steht, denn Laura, Vince, Jonas und Seb von THE RUNNINGS waren und sind noch in einigen anderen Bands unterwegs (THE FLAMING ROCKS, CHARTREUX, SPARTANICS, THE ANTIPRENEURS, PIEFKE, und und und\u2026). Seit Ende 2023 wurden drei Singles mit Video ver\u00f6ffentlicht und die vierte Single inkl. Video BEAR ONE ANOTHER \u0301S BURDENS kommt am 21. M\u00e4rz 2025. Das erste Album folgt dann im Mai 2025. Das Debut LESSONS TO LEARN wurde ab Anfang 2024 aufgenommen und erscheint via GUNNER RECORDS als Vinyl (in\nzwei Farben) und Digital. 10 Songs irgendwo zwischen garagigem Rock \u0301n`Roll der 1950er, Surf der 1960er, Punk der 1970er Jahre und dann doch wieder ganz anders, aber auf jeden Fall mit einer gro\u00dfen Stimme und Texten aus den Tiefen unserer Herzen.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/Ypq9VwUQs8I",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3765600631/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/c3f2e65a-aad5-4d07-9bc4-af20b2cfe824.webp"
+            }
+        ]
+    },
+    {
         "id": "mm-260805",
         "date": "2026-08-05T19:30:00+00:00",
         "title": "Open Air Kino: Midnight Madness",

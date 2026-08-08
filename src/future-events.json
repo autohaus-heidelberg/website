@@ -1,46 +1,33 @@
 [
     {
-        "id": "mm-260805",
-        "date": "2026-08-05T19:30:00+00:00",
-        "title": "Open Air Kino: Midnight Madness",
-        "fee": "5",
-        "feeAk": "5",
-        "descriptionShort": "<p>Wir gehen in die zweite Runde Midnight Madness Open Air, &nbsp;mit der wohl unkonventionellsten Maske unserer &bdquo;3 Masken &ndash; 90's Filme&ldquo;.</p>\n<p>Peak HollyWOO! Und keine Sorge: Hier regiert absolute 90's Madness. Maximalismus statt Zur&uuml;ckhaltung.</p>\n<p>Die Pr&auml;misse ist so haarstr&auml;ubend, dass wir sie euch gar nicht erst verraten. Schauspielerei am absoluten Limit. Wer spielt hier eigentlich wen? Und vor allem: Wer spielt den anderen besser? Drei Meister des Exzesses treffen aufeinander und machen daraus eine delirierende Action-Oper aus fliegenden Tauben, Zeitlupe und jeder Menge explodierendem Zeug. Ein Film, der so tut, als w&auml;re Wahnsinn die vern&uuml;nftigste Idee der Welt. It's cuckoo bananas!</p>\n<p><span style=\"color: #169179;\"><strong>Filmbeginn bei Einbruch der Dunkelheit gegen 21.30 Uhr.</strong></span></p>",
+        "id": "event20260827",
+        "date": "2026-08-27T17:00:00+00:00",
+        "title": "Alvilda, The Runnings",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Wir finden es immer wieder ziemlich cute, wenn nach all der Zeit noch jemand das Carousel besucht, um f&uuml;r sein Auto etwas zu kl&auml;ren. &nbsp;Am 27. August h&auml;tte diese Person eine ausserordentlich gro&szlig;e Portion Gl&uuml;ck im Gep&auml;ck, denn es besuchen uns aus Paris Alvilda und aus Dresden The Runnings am selben Tag!<br><br>Alvilda haben das Carousel bereits abgerissen, und The Runnings er&ouml;ffenen den Abend in der architektonischen Stilikone des ersten Heidelberger Baubooms ausserhalb der Kernstadt.&nbsp;</p>\n<p>Wir freuen uns.</p>\n<p>#surfgarage#bouncypowerpop</p>\n<p>flyer art by electric.lizard</p>",
         "descriptionLong": "",
-        "shopLink": "https://booking.cinetixx.de/frontend/index.html?bgswitch=false&resize=false&cinemaId=1793203565&showId=3599927289",
-        "img": "/img/3c1a09b3-78f0-4540-885c-fabfba44b17e.webp",
-        "cancelled": false,
-        "artists": []
-    },
-    {
-        "id": "the-bats",
-        "date": "2026-08-03T17:00:00+00:00",
-        "title": "The Bats (Psych Pop, NZ) & Woog Riots (Electro-Pop)",
-        "fee": "18",
-        "feeAk": "20",
-        "descriptionShort": "<p dir=\"ltr\">Angefangen hatte alles mit einem Tipp von Karl:</p>\n<p dir=\"ltr\">&bdquo;H&ouml;r dir mal The Bats an.&ldquo;</p>\n<p dir=\"ltr\">Also h&ouml;rte ich mir The Bats an.</p>\n<p dir=\"ltr\">Und wie das manchmal so ist, wenn man aus Versehen die richtige T&uuml;r aufmacht, wurde daraus nicht einfach eine weitere Band, sondern eher so etwas wie eine Lebensbegleitung in allen Lagen.</p>\n<p dir=\"ltr\">Bahn verpasst. Kaugummi am Schuh. Existenzkrise im Baumarkt. Seekrank.</p>\n<p dir=\"ltr\">Wer kennt es nicht?</p>\n<p dir=\"ltr\">Und alles ein bisschen weniger tragisch, solange man The Bats dabei hat.</p>\n<p dir=\"ltr\">Die Band gibt es seit &uuml;ber 40 Jahren und was soll ich sagen: Sie hat mich ziemlich gut durchgebracht.</p>\n<p dir=\"ltr\">Zugegeben, aktuell gibt es einiges da drau&szlig;en, was einem den Schuh dr&uuml;ckt. Weshalb ich jetzt diesen einen Satz sage, von dem ich nie gedacht h&auml;tte, dass ich ihn einmal sagen darf:</p>\n<p dir=\"ltr\"><strong>The Bats spielen am 3. August im Autohaus!</strong></p>\n<p class=\"PDq2pG_selectionAnchorContainer\" data-start=\"189\" data-end=\"330\">Und weil ein Abend mit The Bats allein zwar wundersch&ouml;n w&auml;re, aber noch sch&ouml;ner werden kann, er&ouml;ffnen&nbsp;Woog Riots aus Darmstadt den Abend.</p>\n<p data-start=\"335\" data-end=\"642\">Seit &uuml;ber zwanzig Jahren machen Silvana Battisti und Marc Herbert klugen Indie-Electro-Pop zwischen DIY, Kunstprojekt und Tanzfl&auml;che. Ihre Songs sind verspielt, charmant und voller guter Ideen, ihre Konzerte audiovisuelle Gesamterlebnisse. 2025 wurden sie daf&uuml;r mit dem Darmst&auml;dter Musikpreis ausgezeichnet.</p>\n<p data-start=\"647\" data-end=\"800\">Wer sich irgendwo zwischen Indiepop, Elektropop und einer Prise <span class=\"whitespace-normal\">Kraftwerk</span> wiederfindet, wird an Woog Riots viel Freude haben.<br><br>Flyer art by: <a href=\"https://www.instagram.com/ola_surf/\">Ol&lsquo;a</a></p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/the-bats/",
-        "img": "/img/94320bb1-b78e-4dbd-93e3-95d2dfa7f9b3.webp",
+        "shopLink": "https://pretix.eu/carousel/event20260827/",
+        "img": "/img/2e15ef66-616a-426c-9131-040b81752118.webp",
         "cancelled": false,
         "artists": [
             {
-                "name": "The Bats",
-                "link": "http://thebats.co.nz/",
-                "description": "Spanning the last 38 years, The Bats have clocked ten incredible albums; each one seeing the band evolve with new material from the prolific songwriting hand of Robert Scott. Add to that tally the extra singles, b-sides, EPs, compilations and tribute songs they\u2019ve recorded, creating a succinct setlist is a nearly impossible task.\n\nThe Bats must hold a record in New Zealand (perhaps the whole world, once The Rolling Stones throw in the towel) as a band that has survived with the same line-up for 38 years. No split ups, no reforming for nostalgia\u2019s sake.\n\nSo far, half the band have spots in The New Zealand Music Hall Of Fame, vocalist/ guitarist Robert Scott (The Clean) and bassist/producer Paul Kean (Toy Love), and it\u2019s only a matter of time before lead guitarist Kaye Woodward and drummer Malcolm Grant find themselves in there too. The four-piece has created twisted wistful folk, psychedelic rock, bouncy twee pop, and everything in between, but whatever the genre, their sound is always distinctively, unmistakably The Bats.\n(Credits: Flying Nun Records)",
+                "name": "Alvilda",
+                "link": "https://linktr.ee/alvildalp",
+                "description": "With their scruffy power pop and contagious freshness, these four Parisians came to attention with their debut EP \"N\u00e9gatif\", joyfully making us dancing through the summer of 2021. But behind the effortlessly cool fa\u00e7ade hide four incredibly hardworking women who have since toured relentlessly, turning their band into a ruthless dancing machine now opening for prestigious acts (The BellRays, The Nomads), before their long-awaited LP comes out in 2024.\n \nAlvilda plays garage rock wonderfully. '60s girl group vocal harmonies backed by a tough punk-y guitar sound with pop flourishes. The songs are so catchy, you start to sing along on the first listen. The French accents lend an extra air of coolness. Their bouncy songs are full of energy and a lot of fun, but also really well executed and sound strikingly authentic like this is some long lost late seventies gem. Alvilda mix \u201960s girl group with \u201970s Good Vibrations pop punk influences and je t\u2019aime it a lot. It\u2019s insane that these are the first recordings of the band.\nOne smile at a time.",
                 "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/y-8qpGLXfxo",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3748736734/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/320bacb1-4a0f-43e4-81e1-da4cf78b452f.jpeg"
+                "youtube": "https://www.youtube.com/embed/0WLX5LRif_4",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3747921211/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/abf965b00d38efea9883010871ee3d6a.webp"
             },
             {
-                "name": "Woog Riots",
-                "link": "https://www.woogriots.de",
-                "description": "Woog Riots... smart indie electro-pop with attitude, charm, and danceable beats! The Darmstadtbased duo has been captivating audiences since 2002 with their distinctive sound and sharp lyrics,\nreleasing seven albums to date.\nSilvana Battisti and Marc Herbert share a passion for pop and art. Every Woog Riots performance\nunfolds as a complete audiovisual experience, with videos being an integral part of their live shows.\nThe band frequently collaborates with fellow artists and also runs its own label, From Lo-Fi to Disco!.\nIn recognition of their unwavering creativity and commitment to building networks, Woog Riots were\nawarded their hometown\u2019s 2025 music prize, worth 5,000 euros.",
+                "name": "The Runnings",
+                "link": "https://gunnerrecords.com/product-category/bands/the-runnings/",
+                "description": "\u201cDa ist sie wieder, diese eine Band, die aus dem riesen Pool von Bands, die in Leipzig ihr Unwesen treiben, hervorsticht.\u201d\nSeit dem ersten Konzert Anfang 2024 haben sich THE RUNNINGS recht schnell in viele Ohren und Herzen gespielt. Im ersten Jahr standen direkt 26 Konzerte von Berlin bis K\u00f6ln, von Hamburg bis M\u00fcnchen auf dem straffen Tourplan und es wurde mit Bands wie PRESS CLUB, THE MOVEMENT, SOAP GIRLS und vielen anderen gespielt, ebenso wie einige kleine Festivals. Nicht nur live l\u00e4sst sich erkennen, dass hier geballte Erfahrung auf der B\u00fchne steht, denn Laura, Vince, Jonas und Seb von THE RUNNINGS waren und sind noch in einigen anderen Bands unterwegs (THE FLAMING ROCKS, CHARTREUX, SPARTANICS, THE ANTIPRENEURS, PIEFKE, und und und\u2026). Seit Ende 2023 wurden drei Singles mit Video ver\u00f6ffentlicht und die vierte Single inkl. Video BEAR ONE ANOTHER \u0301S BURDENS kommt am 21. M\u00e4rz 2025. Das erste Album folgt dann im Mai 2025. Das Debut LESSONS TO LEARN wurde ab Anfang 2024 aufgenommen und erscheint via GUNNER RECORDS als Vinyl (in\nzwei Farben) und Digital. 10 Songs irgendwo zwischen garagigem Rock \u0301n`Roll der 1950er, Surf der 1960er, Punk der 1970er Jahre und dann doch wieder ganz anders, aber auf jeden Fall mit einer gro\u00dfen Stimme und Texten aus den Tiefen unserer Herzen.",
                 "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/WLUhR92ztV0",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=71874808/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/310ad6e0-b77c-406f-88de-69cdd5708429.webp"
+                "youtube": "https://www.youtube.com/embed/Ypq9VwUQs8I",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3765600631/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/c3f2e65a-aad5-4d07-9bc4-af20b2cfe824.webp"
             }
         ]
     }
