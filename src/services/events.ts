@@ -43,6 +43,15 @@ export interface HelferpadEventData {
   shopLink?: string
 }
 
+export interface PresaleInfo {
+  event_title: string
+  event_date: string
+  event_image_url?: string
+  total_tickets: number
+  shop_link?: string
+  fee?: string
+}
+
 export const eventService = {
   /**
    * Get all events (paginated)
@@ -144,5 +153,13 @@ export const eventService = {
     const token = localStorage.getItem('access_token')
     const ids = eventIds.join(',')
     return `${API_BASE_URL}/events/write-to-website?event_ids=${ids}&token=${token}`
+  },
+
+  async generatePresaleToken(id: string): Promise<{ presale_token: string }> {
+    return api.post<{ presale_token: string }>(`/api/events/${id}/presale-token/`)
+  },
+
+  async getPresaleInfo(token: string): Promise<PresaleInfo> {
+    return api.publicGet<PresaleInfo>(`/api/presale/${token}/`)
   },
 }

@@ -36,6 +36,12 @@ const router = createRouter({
       name: 'about',
       component: () => import('../views/AboutView.vue')
     },
+    {
+      path: '/presale/:token',
+      name: 'presale',
+      props: true,
+      component: () => import('../views/PresaleView.vue')
+    },
 
     // Authentication routes
     {
