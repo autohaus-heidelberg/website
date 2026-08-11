@@ -66,6 +66,10 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
+const presaleToken = ref('')
+const isGeneratingPresale = ref(false)
+const presaleSuccess = ref('')
+const presaleCopied = ref(false)
 const originalDate = ref<string | null>(null)
 const previewArtists = ref<Artist[]>([])
 const loadingArtists = ref(false)
@@ -118,6 +122,32 @@ function handleIdInput(e: Event) {
   target.value = sanitized
 }
 
+const presaleUrl = computed(() => {
+  return `${window.location.origin}/presale/${presaleToken.value}`
+})
+
+async function generatePresaleToken() {
+  if (!props.id) return
+  isGeneratingPresale.value = true
+  presaleSuccess.value = ''
+  try {
+    const result = await eventService.generatePresaleToken(props.id)
+    presaleToken.value = result.presale_token
+    presaleSuccess.value = 'Presale-Link erstellt'
+  } catch (e: any) {
+    presaleSuccess.value = ''
+    error.value = e.message || 'Presale-Link konnte nicht erstellt werden'
+  } finally {
+    isGeneratingPresale.value = false
+  }
+}
+
+async function copyPresaleLink() {
+  await navigator.clipboard.writeText(presaleUrl.value)
+  presaleCopied.value = true
+  setTimeout(() => { presaleCopied.value = false }, 2000)
+}
+
 async function loadEvent() {
   if (!props.id) return
 
@@ -133,6 +163,9 @@ async function loadEvent() {
     // Set image preview if there's an existing image
     if (event.image_url) {
       imagePreview.value = event.image_url
+    }
+    if ((event as any).presale_token) {
+      presaleToken.value = (event as any).presale_token
     }
   } catch (e: any) {
     error.value = 'Veranstaltung konnte nicht geladen werden'
@@ -691,6 +724,21 @@ function closeDeployModal() {
                 | {{ isCreatingShopLink ? 'Wird erstellt...' : 'Pretix-Shop-Link erstellen' }}
               .field-hint Benötigt: Event-ID, Titel, Datum und Preis (muss eine Zahl sein). Erstellt keinen Event in der Datenbank.
             .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
+
+          .form-group(v-if="isEditing && form.shopLink")
+            label Presale-Link (für Booking-Agenturen)
+            .presale-link-row(v-if="presaleToken")
+              input.presale-link-input(:value="presaleUrl" readonly @click="copyPresaleLink")
+              button.btn-shop-link(type="button" @click="copyPresaleLink") {{ presaleCopied ? '✓ Kopiert' : 'Kopieren' }}
+            .shop-link-actions
+              button.btn-shop-link(
+                type="button"
+                @click="generatePresaleToken"
+                :disabled="isGeneratingPresale"
+              )
+                | {{ isGeneratingPresale ? 'Wird erstellt...' : (presaleToken ? 'Neuen Link generieren' : 'Presale-Link erstellen') }}
+              .field-hint Erzeugt einen geheimen Link mit VVK-Übersicht zum Teilen.
+            .success-message(v-if="presaleSuccess") {{ presaleSuccess }}
 
           .form-group
             label(for="helferpadLink") Helferpad-Link
@@ -1529,5 +1577,17 @@ input:disabled {
   border: 1px solid #ffc107;
   padding: 0.5rem 0.75rem;
   margin-bottom: 0.5rem;
+}
+
+.presale-link-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.presale-link-input {
+  flex: 1;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 </style>

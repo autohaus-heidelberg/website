@@ -120,6 +120,12 @@ class ApiClient {
     return response.data
   }
 
+  // Public GET request (no auth token)
+  async publicGet<T>(url: string): Promise<T> {
+    const response = await axios.get<T>(`${API_BASE_URL}${url}`)
+    return response.data
+  }
+
   // Public request (no auth token)
   async publicPost<T>(url: string, data?: any): Promise<T> {
     const response = await axios.post<T>(`${API_BASE_URL}${url}`, data, {
