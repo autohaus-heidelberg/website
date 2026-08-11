@@ -50,6 +50,7 @@ export interface PresaleInfo {
   total_tickets: number
   shop_link?: string
   fee?: string
+  artists: string[]
 }
 
 export const eventService = {

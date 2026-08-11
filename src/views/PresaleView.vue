@@ -9,6 +9,7 @@
       img.presale-image(v-if="data.event_image_url" :src="data.event_image_url" crossorigin="anonymous")
       h1.accent {{ data.event_title }}
       h2.date.accent {{ formattedDate }}
+      p.artists(v-if="data.artists?.length") {{ data.artists.join(' · ') }}
     .presale-stats
       h2 VVK-Übersicht
       .stats-cards
@@ -94,6 +95,12 @@ onMounted(async () => {
 .date {
   font-size: 1.1rem;
   margin-top: 0.5rem;
+}
+
+.artists {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  opacity: 0.85;
 }
 
 .presale-stats {
