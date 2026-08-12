@@ -16,6 +16,7 @@ import type {
   TaxSphere,
   VatRate,
   ReorderSuggestion,
+  ReorderResponse,
   SendOrderPayload,
 } from '@/types/accounting'
 // ── Seed-Daten: Standard-Getränke ──────────────────────────────
@@ -366,8 +367,8 @@ export const stockService = {
     )
   },
 
-  async getReorderSuggestions(): Promise<ReorderSuggestion[]> {
-    return api.get<ReorderSuggestion[]>('/api/drinks/reorder-suggestions/')
+  async getReorderSuggestions(): Promise<ReorderResponse> {
+    return api.get<ReorderResponse>('/api/drinks/reorder-suggestions/')
   },
 
   async sendOrder(payload: SendOrderPayload): Promise<{ success: boolean; message: string; body: string }> {
