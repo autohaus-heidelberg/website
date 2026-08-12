@@ -3174,15 +3174,18 @@ h2 {
 .capture-bar {
   display: flex;
   flex-wrap: wrap;
+  width: 100%;
   gap: 0.5rem;
   margin: 0.75rem 0 1.25rem;
 }
 .capture-card {
+  flex: 1;
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  text-align: left;
+  text-align: center;
   padding: 0.5rem 0.85rem;
   background: white !important;
   background-color: white !important;
