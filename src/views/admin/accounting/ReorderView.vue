@@ -239,6 +239,11 @@ onMounted(() => { loadData() })
           template(v-if="notes")
             br
             p {{ notes }}
+          br
+          p
+            | Viele Grüße,
+            br
+            | Carousel e.V.
 
       .send-row
         button.btn-send(@click="sendOrder" :disabled="isSending || selectedItems.length === 0")
@@ -324,7 +329,7 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
 .stock-val.level-full { color: #4a4; }
 
 .col-check { display: flex; align-items: center; justify-content: center; }
-.col-avg, .col-need, .col-shortfall, .col-order, .col-stock { text-align: right; }
+.col-avg, .col-need, .col-shortfall, .col-order, .col-stock { text-align: left; }
 .negative { color: #c00; font-weight: 700; }
 .muted { color: #aaa; }
 .cat-emoji { margin-right: 0.3rem; }
