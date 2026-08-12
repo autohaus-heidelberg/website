@@ -16,13 +16,26 @@ const orderQty = ref<Record<number, number>>({})
 const notes = ref('')
 const checkedItems = ref<Set<number>>(new Set())
 
-// -- Computed: aufgeteilt nach Lieferant --
+// -- Computed: aufgeteilt nach Lieferant, sortiert nach Kategorie --
+function sortByCategory(items: ReorderSuggestion[]) {
+  return [...items].sort((a, b) => {
+    const cat = (a.category || '').localeCompare(b.category || '', 'de')
+    if (cat !== 0) return cat
+    return a.name.localeCompare(b.name, 'de')
+  })
+}
 const getraenkestationItems = computed(() =>
-  (data.value?.items ?? []).filter(s => s.from_getraenkestation && s.avg_consumption > 0)
+  sortByCategory((data.value?.items ?? []).filter(s => s.from_getraenkestation && s.avg_consumption > 0))
 )
 const otherItems = computed(() =>
-  (data.value?.items ?? []).filter(s => !s.from_getraenkestation && s.avg_consumption > 0)
+  sortByCategory((data.value?.items ?? []).filter(s => !s.from_getraenkestation && s.avg_consumption > 0))
 )
+
+// Returns true when a new category group starts at index i
+function isNewCategory(items: ReorderSuggestion[], i: number): boolean {
+  if (i === 0) return true
+  return items[i].category !== items[i - 1].category
+}
 
 function initOrder() {
   const checked = new Set<number>()
@@ -152,7 +165,10 @@ onMounted(() => { loadData() })
             span.col-need Bedarf ({{ data.upcoming_count }} VA)
             span.col-shortfall Fehlbestand
             span.col-order Kisten bestellen
-          .table-row(v-for="s in getraenkestationItems" :key="s.id" :class="['level-' + stockLevel(s), { selected: checkedItems.has(s.id) }]" @click="toggleItem(s)")
+          template(v-for="(s, i) in getraenkestationItems" :key="s.id")
+            .table-cat-header(v-if="isNewCategory(getraenkestationItems, i)")
+              | {{ s.category_emoji }} {{ s.category || 'Sonstige' }}
+            .table-row(:class="['level-' + stockLevel(s), { selected: checkedItems.has(s.id) }]" @click="toggleItem(s)")
             span.col-check
               input(type="checkbox" :checked="checkedItems.has(s.id)" @change.stop="toggleItem(s)")
             span.col-name
@@ -189,7 +205,10 @@ onMounted(() => { loadData() })
             span.col-need Bedarf ({{ data.upcoming_count }} VA)
             span.col-shortfall Fehlbestand
             span.col-order Info
-          .table-row.row-readonly(v-for="s in otherItems" :key="s.id" :class="'level-' + stockLevel(s)")
+          template(v-for="(s, i) in otherItems" :key="s.id")
+            .table-cat-header(v-if="isNewCategory(otherItems, i)")
+              | {{ s.category_emoji }} {{ s.category || 'Sonstige' }}
+            .table-row.row-readonly(:class="'level-' + stockLevel(s)")
             span.col-check
               span.lock-icon 🔒
             span.col-name
@@ -328,8 +347,22 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
 .stock-val.level-low, .stock-val.level-empty { color: #c00; font-weight: 700; }
 .stock-val.level-full { color: #4a4; }
 
+.table-cat-header {
+  display: grid;
+  grid-template-columns: 1fr;
+  padding: 0.3rem 0.75rem;
+  background: #f0f0f0;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #444;
+  border-bottom: 1px solid #ddd;
+}
+.section-other .table-cat-header { background: #ececec; }
+
 .col-check { display: flex; align-items: center; justify-content: center; }
-.col-avg, .col-need, .col-shortfall, .col-order, .col-stock { text-align: left; }
+.col-name, .col-avg, .col-need, .col-shortfall, .col-order, .col-stock { text-align: left; }
 .negative { color: #c00; font-weight: 700; }
 .muted { color: #aaa; }
 .cat-emoji { margin-right: 0.3rem; }
