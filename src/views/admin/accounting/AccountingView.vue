@@ -2035,10 +2035,38 @@ defineExpose({ toggleFinalStatus })
           span Wareneinsatz (inkl. Pfand):
           strong {{ formatCurrency(totalInventoryValue) }}
 
-    //- ── Expenses Tab ──
+    //- ── Expenses & Receipts Tab ──
     .tab-content(v-if="activeTab === 'expenses'")
-      h3.section-title Ausgaben
-      .expenses-table(:class="{ 'door-deal-active': doorDealEnabled }")
+      h3.section-title 🧾 Ausgaben & Belege
+
+      //- Beleg erfassen: manuell, per KI-Foto oder als Datei
+      .capture-bar
+        button.capture-card(@click="addExpense") ✏️ Manuell
+        button.capture-card.capture-ai(@click="triggerExpenseScan" :disabled="scanningExpense")
+          | {{ scanningExpense ? '🤖 Wird gelesen…' : '📸 Foto scannen (KI)' }}
+        button.capture-card(@click="triggerFileUpload") 📎 Datei hochladen
+      p.reminder-text 💡 Denk an: Honorare/Gagen · Hotel · GEMA · Werbung (Flyer/Poster) · Catering
+      p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
+
+      //- Versteckte Datei-Inputs für Scan & Upload
+      input(
+        ref="expenseScanInput"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        @change="handleExpenseScan"
+        hidden
+      )
+      input.file-input(
+        ref="fileInputRef"
+        type="file"
+        multiple
+        @change="handleFileUpload"
+        style="display: none"
+      )
+
+      //- Erfasste Ausgaben
+      .expenses-table(v-if="expenses.length" :class="{ 'door-deal-active': doorDealEnabled }")
         .expense-header
           span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
           span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
@@ -2076,57 +2104,18 @@ defineExpose({ toggleFinalStatus })
             )
           button.btn-remove(@click="removeExpense(index)") ×
 
-      button.btn-add(@click="addExpense") + Ausgabe hinzufügen
-
-      .expense-scan
-        input(
-          ref="expenseScanInput"
-          type="file"
-          accept="image/*"
-          capture="environment"
-          @change="handleExpenseScan"
-          hidden
-        )
-        button.btn-scan(@click="triggerExpenseScan" :disabled="scanningExpense")
-          span(v-if="scanningExpense") 🤖 Beleg wird analysiert…
-          span(v-else) 🧾 Beleg scannen (KI)
-        p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
+      p.empty-hint(v-else) Noch keine Ausgabe erfasst – oben manuell eintragen oder einen Beleg abfotografieren.
 
       .grand-total
         span Gesamtausgaben:
         strong {{ formatCurrency(totalExpenses) }}
 
-      .footnote.hint
-        p
-          strong Sphären-Zuordnung (Pflichtfeld)
-        ul
-          li
-            strong Zweckbetrieb
-            |  — Ausgaben für den Vereinszweck (z.B. Künstlergagen, GEMA, Technik)
-          li
-            strong Wirtschaftlich
-            |  — Ausgaben für wirtschaftlichen Geschäftsbetrieb (z.B. Getränkeeinkauf, Bar-Zubehör)
-          li
-            strong Vermögensverwaltung
-            |  — langfristige Vermietung/Verpachtung (z.B. Proberaum)
-          li
-            strong Ideell
-            |  — allgemeine Vereinsarbeit ohne wirtschaftlichen Bezug
-
+      //- Hochgeladene Belege
       .documents-tab.expenses-documents
         .section-header
           h3.section-title Belege
           .header-actions
-            button.btn-upload(@click="triggerFileUpload") + Beleg hochladen
             router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
-
-        input.file-input(
-          ref="fileInputRef"
-          type="file"
-          multiple
-          @change="handleFileUpload"
-          style="display: none"
-        )
 
         .drop-zone(
           @dragover.prevent="dragOver = true"
@@ -2134,7 +2123,7 @@ defineExpose({ toggleFinalStatus })
           @drop.prevent="handleDrop"
           :class="{ 'drag-over': dragOver }"
         )
-          p(v-if="!dragOver") Belege (Bons, Quittungen) hierher ziehen
+          p(v-if="!dragOver") Belege (Bons, Quittungen) per „Datei hochladen“ oder hierher ziehen
           p(v-else) Loslassen zum Hochladen…
 
         .upload-progress(v-if="uploadingFiles.length")
@@ -2177,6 +2166,24 @@ defineExpose({ toggleFinalStatus })
           p Noch keine Belege hochgeladen.
 
         .loading(v-if="isLoadingDocs") Belege werden geladen…
+
+      //- Hinweise
+      .expense-notes
+        .sphere-info
+          strong.sphere-title Sphären-Zuordnung (Pflichtfeld)
+          ul
+            li
+              strong Zweckbetrieb
+              |  — Ausgaben für den Vereinszweck (z.B. Künstlergagen, GEMA, Technik)
+            li
+              strong Wirtschaftlich
+              |  — Ausgaben für wirtschaftlichen Geschäftsbetrieb (z.B. Getränkeeinkauf, Bar-Zubehör)
+            li
+              strong Vermögensverwaltung
+              |  — langfristige Vermietung/Verpachtung (z.B. Proberaum)
+            li
+              strong Ideell
+              |  — allgemeine Vereinsarbeit ohne wirtschaftlichen Bezug
 
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
@@ -3159,6 +3166,84 @@ h2 {
   line-height: 1.4;
 }
 
+.expense-notes {
+  margin-top: 1.25rem;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+}
+.capture-bar {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1.25rem;
+}
+.capture-card {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-align: center;
+  padding: 0.5rem 0.85rem;
+  background: white !important;
+  background-color: white !important;
+  color: black !important;
+  border: 0.25rem solid black;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.capture-card:hover:not(:disabled) {
+  background: black !important;
+  background-color: black !important;
+  color: white !important;
+}
+.capture-card.capture-ai {
+  background: white !important;
+  background-color: white !important;
+  color: black !important;
+}
+.capture-card.capture-ai:hover:not(:disabled) {
+  background: black !important;
+  background-color: black !important;
+  color: white !important;
+}
+
+.empty-hint {
+  padding: 1.4rem 1rem;
+  border: 0.125rem dashed #bbb;
+  color: #777;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.reminder-text {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0 0 0.75rem;
+}
+.sphere-info {
+  margin-top: 1.25rem;
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.5;
+}
+.sphere-info .sphere-title {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #444;
+}
+.sphere-info ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.sphere-info li {
+  margin: 0.1rem 0;
+}
+
 .paypal-cat-summary {
   font-size: 0.75rem;
   color: #555;
@@ -3672,7 +3757,6 @@ h2 {
 
 .expenses-table {
   border: 0.25rem solid black;
-  border-top: none;
   margin-bottom: 1rem;
 }
 
