@@ -249,6 +249,44 @@ export interface StockEntry {
   deposit_value: string
 }
 
+// ── Reorder Suggestions ─────────────────────────────────────────
+
+export interface ReorderSuggestion {
+  id: number
+  name: string
+  supplier_group: string
+  from_getraenkestation: boolean
+  category: string
+  category_emoji: string
+  units_per_crate: number
+  bottle_size: string | null
+  current_stock: number
+  avg_consumption: number
+  needed_this_month: number
+  shortfall: number
+  suggested_order_bottles: number
+  suggested_order_crates: number
+  past_event_count: number
+}
+
+export interface ReorderResponse {
+  upcoming_events: { id: string; title: string; date: string }[]
+  upcoming_count: number
+  month_label: string
+  items: ReorderSuggestion[]
+}
+
+export interface OrderItem {
+  name: string
+  quantity: number
+}
+
+export interface SendOrderPayload {
+  delivery_date?: string
+  items: OrderItem[]
+  notes?: string
+}
+
 export type GrantCategory = 'kuenstlerhonorar' | 'sachkosten' | 'sonstiges'
 
 export interface GrantApplication {
