@@ -17,6 +17,10 @@ const notes = ref('')
 const checkedItems = ref<Set<number>>(new Set())
 
 // -- Computed: aufgeteilt nach Lieferant, sortiert nach Kategorie --
+type CatHeader = { type: 'header'; key: string; emoji: string; label: string }
+type ItemRow = { type: 'item'; key: string; item: ReorderSuggestion }
+type FlatRow = CatHeader | ItemRow
+
 function sortByCategory(items: ReorderSuggestion[]) {
   return [...items].sort((a, b) => {
     const cat = (a.category || '').localeCompare(b.category || '', 'de')
@@ -24,18 +28,35 @@ function sortByCategory(items: ReorderSuggestion[]) {
     return a.name.localeCompare(b.name, 'de')
   })
 }
+
+function toFlatRows(items: ReorderSuggestion[]): FlatRow[] {
+  const sorted = sortByCategory(items)
+  const rows: FlatRow[] = []
+  let lastCat = ''
+  for (const s of sorted) {
+    const cat = s.category || 'Sonstige'
+    if (cat !== lastCat) {
+      rows.push({ type: 'header', key: `cat-${cat}`, emoji: s.category_emoji, label: cat })
+      lastCat = cat
+    }
+    rows.push({ type: 'item', key: `item-${s.id}`, item: s })
+  }
+  return rows
+}
+
+const getraenkestationRows = computed(() =>
+  toFlatRows((data.value?.items ?? []).filter(s => s.from_getraenkestation && s.avg_consumption > 0))
+)
+const otherRows = computed(() =>
+  toFlatRows((data.value?.items ?? []).filter(s => !s.from_getraenkestation && s.avg_consumption > 0))
+)
+// Plain item lists (for order logic)
 const getraenkestationItems = computed(() =>
-  sortByCategory((data.value?.items ?? []).filter(s => s.from_getraenkestation && s.avg_consumption > 0))
+  (data.value?.items ?? []).filter(s => s.from_getraenkestation && s.avg_consumption > 0)
 )
 const otherItems = computed(() =>
-  sortByCategory((data.value?.items ?? []).filter(s => !s.from_getraenkestation && s.avg_consumption > 0))
+  (data.value?.items ?? []).filter(s => !s.from_getraenkestation && s.avg_consumption > 0)
 )
-
-// Returns true when a new category group starts at index i
-function isNewCategory(items: ReorderSuggestion[], i: number): boolean {
-  if (i === 0) return true
-  return items[i].category !== items[i - 1].category
-}
 
 function initOrder() {
   const checked = new Set<number>()
@@ -165,29 +186,29 @@ onMounted(() => { loadData() })
             span.col-need Bedarf ({{ data.upcoming_count }} VA)
             span.col-shortfall Fehlbestand
             span.col-order Kisten bestellen
-          template(v-for="(s, i) in getraenkestationItems" :key="s.id")
-            .table-cat-header(v-if="isNewCategory(getraenkestationItems, i)")
-              | {{ s.category_emoji }} {{ s.category || 'Sonstige' }}
-            .table-row(:class="['level-' + stockLevel(s), { selected: checkedItems.has(s.id) }]" @click="toggleItem(s)")
-            span.col-check
-              input(type="checkbox" :checked="checkedItems.has(s.id)" @change.stop="toggleItem(s)")
-            span.col-name
-              span.cat-emoji {{ s.category_emoji }}
-              | {{ s.name }}
-              span.bottle-size(v-if="s.bottle_size")  {{ parseFloat(s.bottle_size).toLocaleString('de-DE') }}l
-            .col-stock
-              span.stock-val(:class="'level-' + stockLevel(s)") {{ fmtNum(s.current_stock, 0) }} Fl.
-              span.crate-hint(v-if="s.units_per_crate > 1")  ({{ Math.floor(s.current_stock / s.units_per_crate) }}K)
-            span.col-avg {{ fmtNum(s.avg_consumption) }} Fl.
-            span.col-need(v-if="data.upcoming_count > 0") {{ fmtNum(s.needed_this_month, 0) }} Fl.
-            span.col-need.muted(v-else) -
-            span.col-shortfall(:class="{ negative: s.shortfall > 0 }")
-              template(v-if="data.upcoming_count === 0") -
-              template(v-else-if="s.shortfall > 0") -{{ fmtNum(s.shortfall, 0) }} Fl.
-              template(v-else) ✓
-            .col-order(@click.stop)
-              input.qty-input(v-if="checkedItems.has(s.id)" type="number" min="0" v-model.number="orderQty[s.id]")
-              span(v-else) -
+          template(v-for="row in getraenkestationRows" :key="row.key")
+            .table-cat-header(v-if="row.type === 'header'")
+              | {{ row.emoji }} {{ row.label }}
+            .table-row(v-else :class="['level-' + stockLevel(row.item), { selected: checkedItems.has(row.item.id) }]" @click="toggleItem(row.item)")
+              span.col-check
+                input(type="checkbox" :checked="checkedItems.has(row.item.id)" @change.stop="toggleItem(row.item)")
+              span.col-name
+                span.cat-emoji {{ row.item.category_emoji }}
+                | {{ row.item.name }}
+                span.bottle-size(v-if="row.item.bottle_size")  {{ parseFloat(row.item.bottle_size).toLocaleString('de-DE') }}l
+              .col-stock
+                span.stock-val(:class="'level-' + stockLevel(row.item)") {{ fmtNum(row.item.current_stock, 0) }} Fl.
+                span.crate-hint(v-if="row.item.units_per_crate > 1")  ({{ Math.floor(row.item.current_stock / row.item.units_per_crate) }}K)
+              span.col-avg {{ fmtNum(row.item.avg_consumption) }} Fl.
+              span.col-need(v-if="data.upcoming_count > 0") {{ fmtNum(row.item.needed_this_month, 0) }} Fl.
+              span.col-need.muted(v-else) -
+              span.col-shortfall(:class="{ negative: row.item.shortfall > 0 }")
+                template(v-if="data.upcoming_count === 0") -
+                template(v-else-if="row.item.shortfall > 0") -{{ fmtNum(row.item.shortfall, 0) }} Fl.
+                template(v-else) ✓
+              .col-order(@click.stop)
+                input.qty-input(v-if="checkedItems.has(row.item.id)" type="number" min="0" v-model.number="orderQty[row.item.id]")
+                span(v-else) -
 
     .section.section-other
       .section-header
@@ -205,27 +226,27 @@ onMounted(() => { loadData() })
             span.col-need Bedarf ({{ data.upcoming_count }} VA)
             span.col-shortfall Fehlbestand
             span.col-order Info
-          template(v-for="(s, i) in otherItems" :key="s.id")
-            .table-cat-header(v-if="isNewCategory(otherItems, i)")
-              | {{ s.category_emoji }} {{ s.category || 'Sonstige' }}
-            .table-row.row-readonly(:class="'level-' + stockLevel(s)")
-            span.col-check
-              span.lock-icon 🔒
-            span.col-name
-              span.cat-emoji {{ s.category_emoji }}
-              | {{ s.name }}
-              span.bottle-size(v-if="s.bottle_size")  {{ parseFloat(s.bottle_size).toLocaleString('de-DE') }}l
-            .col-stock
-              span.stock-val(:class="'level-' + stockLevel(s)") {{ fmtNum(s.current_stock, 0) }} Fl.
-              span.crate-hint(v-if="s.units_per_crate > 1")  ({{ Math.floor(s.current_stock / s.units_per_crate) }}K)
-            span.col-avg {{ fmtNum(s.avg_consumption) }} Fl.
-            span.col-need(v-if="data.upcoming_count > 0") {{ fmtNum(s.needed_this_month, 0) }} Fl.
-            span.col-need.muted(v-else) -
-            span.col-shortfall(:class="{ negative: s.shortfall > 0 }")
-              template(v-if="data.upcoming_count === 0") -
-              template(v-else-if="s.shortfall > 0") -{{ fmtNum(s.shortfall, 0) }} Fl.
-              template(v-else) ✓
-            span.col-order.supplier-note {{ s.supplier_group || 'Selbst kaufen' }}
+          template(v-for="row in otherRows" :key="row.key")
+            .table-cat-header(v-if="row.type === 'header'")
+              | {{ row.emoji }} {{ row.label }}
+            .table-row.row-readonly(v-else :class="'level-' + stockLevel(row.item)")
+              span.col-check
+                span.lock-icon 🔒
+              span.col-name
+                span.cat-emoji {{ row.item.category_emoji }}
+                | {{ row.item.name }}
+                span.bottle-size(v-if="row.item.bottle_size")  {{ parseFloat(row.item.bottle_size).toLocaleString('de-DE') }}l
+              .col-stock
+                span.stock-val(:class="'level-' + stockLevel(row.item)") {{ fmtNum(row.item.current_stock, 0) }} Fl.
+                span.crate-hint(v-if="row.item.units_per_crate > 1")  ({{ Math.floor(row.item.current_stock / row.item.units_per_crate) }}K)
+              span.col-avg {{ fmtNum(row.item.avg_consumption) }} Fl.
+              span.col-need(v-if="data.upcoming_count > 0") {{ fmtNum(row.item.needed_this_month, 0) }} Fl.
+              span.col-need.muted(v-else) -
+              span.col-shortfall(:class="{ negative: row.item.shortfall > 0 }")
+                template(v-if="data.upcoming_count === 0") -
+                template(v-else-if="row.item.shortfall > 0") -{{ fmtNum(row.item.shortfall, 0) }} Fl.
+                template(v-else) ✓
+              span.col-order.supplier-note {{ row.item.supplier_group || 'Selbst kaufen' }}
 
     .order-form(v-if="selectedItems.length > 0")
       h4 📧 Bestellung an Getraenkestation
@@ -319,7 +340,7 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
 .badge-gs { background: black; color: white; }
 .badge-kl { background: #e0e0e0; color: #555; }
 
-.suggestions-table { border: 0.25rem solid black; }
+.suggestions-table { border: 0.25rem solid black; display: block; }
 .section-other .suggestions-table { border-color: #aaa; }
 
 .table-header,
@@ -348,8 +369,8 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
 .stock-val.level-full { color: #4a4; }
 
 .table-cat-header {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: block;
+  width: 100%;
   padding: 0.3rem 0.75rem;
   background: #f0f0f0;
   font-weight: 700;
@@ -358,6 +379,7 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
   letter-spacing: 0.05em;
   color: #444;
   border-bottom: 1px solid #ddd;
+  box-sizing: border-box;
 }
 .section-other .table-cat-header { background: #ececec; }
 
