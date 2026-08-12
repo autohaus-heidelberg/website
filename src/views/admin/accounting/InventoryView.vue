@@ -3,20 +3,23 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import StockView from './StockView.vue'
 import PurchaseListView from './PurchaseListView.vue'
+import ReorderView from './ReorderView.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-type Tab = 'bestand' | 'einkaufe'
+type Tab = 'bestand' | 'einkaufe' | 'bestellung'
 
 const tabs: { id: Tab; label: string }[] = [
   { id: 'bestand', label: 'Bestand' },
   { id: 'einkaufe', label: 'Einkäufe' },
+  { id: 'bestellung', label: '📦 Bestellung' },
 ]
 
 const activeTab = computed<Tab>(() => {
   const t = route.query.tab as string
   if (t === 'einkaufe') return t
+  if (t === 'bestellung') return t
   return 'bestand'
 })
 
@@ -43,6 +46,7 @@ function switchTab(tab: Tab) {
 
   StockView(v-if="activeTab === 'bestand'")
   PurchaseListView(v-else-if="activeTab === 'einkaufe'")
+  ReorderView(v-else-if="activeTab === 'bestellung'")
 </template>
 
 <style scoped>

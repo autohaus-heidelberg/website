@@ -15,6 +15,8 @@ import type {
   StockHistory,
   TaxSphere,
   VatRate,
+  ReorderSuggestion,
+  SendOrderPayload,
 } from '@/types/accounting'
 // ── Seed-Daten: Standard-Getränke ──────────────────────────────
 // Werden über /api/drinks/ verwaltet.
@@ -362,6 +364,14 @@ export const stockService = {
       acc.results.some(a => a.status === 'draft') ||
       pur.results.some(p => p.status === 'draft')
     )
+  },
+
+  async getReorderSuggestions(): Promise<ReorderSuggestion[]> {
+    return api.get<ReorderSuggestion[]>('/api/drinks/reorder-suggestions/')
+  },
+
+  async sendOrder(payload: SendOrderPayload): Promise<{ success: boolean; message: string; body: string }> {
+    return api.post('/api/drinks/send-order/', payload)
   },
 }
 
