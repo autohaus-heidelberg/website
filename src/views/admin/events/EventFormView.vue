@@ -66,6 +66,9 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
+const isGeneratingQr = ref(false)
+const qrSuccess = ref('')
+const qrWithLogo = ref(true)
 const presaleToken = ref('')
 const isGeneratingPresale = ref(false)
 const presaleSuccess = ref('')
@@ -328,6 +331,31 @@ async function generateFlyers() {
     error.value = e.message || 'Flyer konnten nicht erzeugt werden'
   } finally {
     isGeneratingFlyers.value = false
+  }
+}
+
+async function generateQrCode() {
+  if (!form.value.id || !isEditing.value) {
+    error.value = 'Bitte den Event zuerst speichern, bevor QR-Codes erzeugt werden.'
+    return
+  }
+
+  isGeneratingQr.value = true
+  error.value = ''
+  qrSuccess.value = ''
+
+  try {
+    const result = await eventService.generateQrCode(form.value.id!, qrWithLogo.value)
+    const count = result.qr_codes?.length ?? 0
+    qrSuccess.value = `${count} QR-Code${count !== 1 ? 's' : ''} im Google-Drive-Ordner des Events abgelegt.`
+
+    setTimeout(() => {
+      qrSuccess.value = ''
+    }, 5000)
+  } catch (e: any) {
+    error.value = e.message || 'QR-Code konnte nicht erzeugt werden'
+  } finally {
+    isGeneratingQr.value = false
   }
 }
 
@@ -786,6 +814,20 @@ function closeDeployModal() {
               .field-hint Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
             .success-message(v-if="flyerSuccess") {{ flyerSuccess }}
 
+            .shop-link-actions(v-if="isEditing")
+              .qr-options
+                label.checkbox-label
+                  input(type="checkbox" v-model="qrWithLogo")
+                  | Mit Goldesel-Logo in der Mitte
+              button.btn-shop-link(
+                type="button"
+                @click="generateQrCode"
+                :disabled="isGeneratingQr"
+              )
+                | {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
+              .field-hint Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
+            .success-message(v-if="qrSuccess") {{ qrSuccess }}
+
           .error(v-if="error") {{ error }}
 
           .form-actions
@@ -1179,6 +1221,26 @@ input:disabled {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.qr-options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+  }
 }
 
 .btn-shop-link {

@@ -130,6 +130,21 @@ export const eventService = {
   },
 
   /**
+   * Generate a QR-code PNG (1200×1200, transparent) for the event's website
+   * URL and upload it to the event's Google Drive folder.
+   * @param withLogo  If true (default), also create a version with the Goldesel logo.
+   */
+  async generateQrCode(
+    id: string,
+    withLogo: boolean,
+  ): Promise<{ qr_codes: { name: string; url: string }[]; drive_folder_id: string }> {
+    return api.post<{ qr_codes: { name: string; url: string }[]; drive_folder_id: string }>(
+      `/api/events/${id}/generate-qr/`,
+      { with_logo: withLogo },
+    )
+  },
+
+  /**
    * Send newsletter via Rapidmail
    */
   async sendNewsletter(subject: string, html_content: string, text_content: string, test = false): Promise<{ success: boolean }> {
