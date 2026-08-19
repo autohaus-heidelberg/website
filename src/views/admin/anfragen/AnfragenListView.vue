@@ -69,8 +69,6 @@ function extractOrigin(message: string): string | null {
   return match ? match[1].trim() : null
 }
 
-const unreadCount = computed(() => anfragen.value.filter(a => !a.isRead).length)
-
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('de-DE', {
     day: '2-digit',
@@ -241,7 +239,6 @@ onMounted(() => {
   .header
     .header-title
       h2 Anfragen
-      span.unread-badge(v-if="unreadCount") {{ unreadCount }} ungelesen
     .header-actions
       .search-wrapper
         span.search-icon 🔍
@@ -443,15 +440,6 @@ h2 {
   color: black;
   margin: 0;
   font-weight: 900;
-}
-
-.unread-badge {
-  background: black;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.3rem 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
 }
 
 .header-actions {
