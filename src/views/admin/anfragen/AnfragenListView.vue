@@ -8,6 +8,7 @@ const error = ref('')
 const searchQuery = ref('')
 const filterType = ref<string>('all')
 const filterRead = ref<string>('all')
+const filterAnswered = ref<string>('all')
 const expandedId = ref<number | null>(null)
 const replyingTo = ref<number | null>(null)
 const replySubject = ref('')
@@ -31,6 +32,10 @@ const filteredAnfragen = computed(() => {
     list = list.filter(a => a.isRead)
   }
 
+  if (filterAnswered.value === 'answered') {
+    list = list.filter(a => a.isAnswered)
+  }
+
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     list = list.filter(a =>
@@ -41,8 +46,9 @@ const filteredAnfragen = computed(() => {
     )
   }
 
-  // Unread before read, then most recent activity (newest message or submission) first
+  // Unanswered before answered, unread before read, then most recent activity first
   list.sort((a, b) => {
+    if (a.isAnswered !== b.isAnswered) return a.isAnswered ? 1 : -1
     if (a.isRead !== b.isRead) return a.isRead ? 1 : -1
     return lastActivity(b) - lastActivity(a)
   })
@@ -62,8 +68,6 @@ function extractOrigin(message: string): string | null {
   const match = message.match(/^Herkunft:\s*(.+)$/m)
   return match ? match[1].trim() : null
 }
-
-const unreadCount = computed(() => anfragen.value.filter(a => !a.isRead).length)
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('de-DE', {
@@ -90,8 +94,18 @@ function timeAgo(dateStr: string): string {
   return formatDate(dateStr)
 }
 
-function toggleExpand(id: number) {
-  expandedId.value = expandedId.value === id ? null : id
+async function toggleExpand(id: number) {
+  const isOpening = expandedId.value !== id
+  expandedId.value = isOpening ? id : null
+  if (isOpening) {
+    const anfrage = anfragen.value.find(a => a.id === id)
+    if (anfrage && !anfrage.isRead) {
+      try {
+        await anfrageService.markRead(anfrage.id)
+        anfrage.isRead = true
+      } catch { /* ignore */ }
+    }
+  }
 }
 
 async function toggleRead(anfrage: Anfrage) {
@@ -102,6 +116,20 @@ async function toggleRead(anfrage: Anfrage) {
     } else {
       await anfrageService.markRead(anfrage.id)
       anfrage.isRead = true
+    }
+  } catch (e: any) {
+    alert('Fehler: ' + (e.message || 'Unbekannter Fehler'))
+  }
+}
+
+async function toggleAnswered(anfrage: Anfrage) {
+  try {
+    if (anfrage.isAnswered) {
+      await anfrageService.markUnanswered(anfrage.id)
+      anfrage.isAnswered = false
+    } else {
+      await anfrageService.markAnswered(anfrage.id)
+      anfrage.isAnswered = true
     }
   } catch (e: any) {
     alert('Fehler: ' + (e.message || 'Unbekannter Fehler'))
@@ -144,6 +172,7 @@ async function sendReply(anfrage: Anfrage) {
   try {
     await anfrageService.reply(anfrage.id, replySubject.value, replyMessage.value)
     anfrage.isRead = true
+    anfrage.isAnswered = true
     anfrage.lastReplySubject = replySubject.value
     anfrage.lastReplyMessage = replyMessage.value
     anfrage.lastReplyAt = new Date().toISOString()
@@ -191,6 +220,15 @@ async function loadData() {
   }
 }
 
+function chipCount(readFilter: string, answeredFilter: string): number {
+  return anfragen.value.filter(a => {
+    if (readFilter === 'unread' && a.isRead) return false
+    if (readFilter === 'read' && !a.isRead) return false
+    if (answeredFilter === 'answered' && !a.isAnswered) return false
+    return true
+  }).length
+}
+
 onMounted(() => {
   loadData()
 })
@@ -201,7 +239,6 @@ onMounted(() => {
   .header
     .header-title
       h2 Anfragen
-      span.unread-badge(v-if="unreadCount") {{ unreadCount }} ungelesen
     .header-actions
       .search-wrapper
         span.search-icon 🔍
@@ -214,17 +251,21 @@ onMounted(() => {
   .toolbar
     .filter-chips
       button.chip(
-        :class="{ active: filterRead === 'all' }"
-        @click="filterRead = 'all'"
-      ) Alle
+        :class="{ active: filterRead === 'all' && filterAnswered === 'all' }"
+        @click="filterRead = 'all'; filterAnswered = 'all'"
+      ) Alle ({{ chipCount('all', 'all') }})
       button.chip(
         :class="{ active: filterRead === 'unread' }"
-        @click="filterRead = 'unread'"
-      ) Ungelesen
+        @click="filterRead = 'unread'; filterAnswered = 'all'"
+      ) Ungelesen ({{ chipCount('unread', 'all') }})
       button.chip(
-        :class="{ active: filterRead === 'read' }"
-        @click="filterRead = 'read'"
-      ) Gelesen
+        :class="{ active: filterRead === 'read' && filterAnswered === 'all' }"
+        @click="filterRead = 'read'; filterAnswered = 'all'"
+      ) Gelesen ({{ chipCount('read', 'all') }})
+      button.chip.chip-answered(
+        :class="{ active: filterAnswered === 'answered' }"
+        @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'; filterRead = 'all'"
+      ) ✓ Beantwortet ({{ chipCount('all', 'answered') }})
     .filter-type
       select(v-model="filterType")
         option(value="all") Alle Typen
@@ -253,6 +294,7 @@ onMounted(() => {
     )
       .anfrage-header(@click="toggleExpand(anfrage.id)")
         .unread-dot(v-if="!anfrage.isRead")
+        .answered-badge(v-if="anfrage.isAnswered") ✓
         .anfrage-main
           .anfrage-row1
             span.type-badge(:class="'type-' + anfrage.type")
@@ -303,9 +345,14 @@ onMounted(() => {
               .thread-body {{ msg.body }}
 
           .anfrage-actions
+            .read-meta(v-if="anfrage.isRead && anfrage.readByUsername")
+              span.read-meta-text 👁 Gelesen von {{ anfrage.readByUsername }}{{ anfrage.readAt ? ' · ' + timeAgo(anfrage.readAt) : '' }}
             button.btn-action.btn-read(@click.stop="toggleRead(anfrage)")
               span {{ anfrage.isRead ? '📩' : '📭' }}
-              | {{ anfrage.isRead ? 'Ungelesen' : 'Gelesen' }}
+              | {{ anfrage.isRead ? 'Ungelesen markieren' : 'Gelesen markieren' }}
+            button.btn-action(:class="anfrage.isAnswered ? 'btn-unanswered' : 'btn-answered'" @click.stop="toggleAnswered(anfrage)")
+              span {{ anfrage.isAnswered ? '↩️' : '✅' }}
+              | {{ anfrage.isAnswered ? 'Offen markieren' : 'Beantwortet' }}
             button.btn-action.btn-reply(
               @click.stop="startReply(anfrage)"
               v-if="replyingTo !== anfrage.id"
@@ -395,15 +442,6 @@ h2 {
   font-weight: 900;
 }
 
-.unread-badge {
-  background: black;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.3rem 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
-
 .header-actions {
   display: flex;
   gap: 1rem;
@@ -450,33 +488,28 @@ h2 {
 
 .filter-chips {
   display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .chip {
-  padding: 0.4rem 0.9rem;
+  padding: 0.4rem 1rem;
   border: 0.2rem solid black;
   background: white;
   color: black;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
-  margin-left: -0.2rem;
-}
-
-.chip:first-child {
-  margin-left: 0;
 }
 
 .chip.active {
   background: black;
   color: white;
-  position: relative;
-  z-index: 1;
 }
 
 .chip:hover:not(.active) {
-  background: #e8e8e8;
+  background: #f0f0f0;
 }
 
 .filter-type select {
@@ -603,6 +636,20 @@ h2 {
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.answered-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: #22c55e;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 900;
+  flex-shrink: 0;
 }
 
 .unread-dot {
@@ -840,6 +887,43 @@ h2 {
 .btn-action:active {
   box-shadow: none;
   transform: translate(0, 0);
+}
+
+.chip-answered.active {
+  background: black;
+  color: white;
+  border-color: black;
+}
+
+.read-meta {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.read-meta-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.btn-answered {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.btn-answered:hover {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-unanswered {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #6b7280;
+}
+
+.btn-unanswered:hover {
+  background: #e5e7eb;
 }
 
 .btn-delete {
