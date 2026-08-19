@@ -56,6 +56,11 @@ function lastActivity(anfrage: Anfrage): number {
   return latest
 }
 
+function extractOrigin(message: string): string | null {
+  const match = message.match(/^Herkunft:\s*(.+)$/m)
+  return match ? match[1].trim() : null
+}
+
 const unreadCount = computed(() => anfragen.value.filter(a => !a.isRead).length)
 
 function formatDate(dateStr: string): string {
@@ -231,13 +236,15 @@ onMounted(() => {
       :class="{ unread: !anfrage.isRead, expanded: expandedId === anfrage.id }"
     )
       .anfrage-header(@click="toggleExpand(anfrage.id)")
-        .anfrage-left
-          .unread-dot(v-if="!anfrage.isRead")
-          span.type-badge(:class="'type-' + anfrage.type")
-            | {{ ANFRAGE_TYPE_LABELS[anfrage.type] || anfrage.type }}
-          .anfrage-info
+        .unread-dot(v-if="!anfrage.isRead")
+        .anfrage-main
+          .anfrage-row1
+            span.type-badge(:class="'type-' + anfrage.type")
+              | {{ ANFRAGE_TYPE_LABELS[anfrage.type] || anfrage.type }}
             span.anfrage-name {{ anfrage.name }}
+          .anfrage-row2
             span.anfrage-email {{ anfrage.contactEmail }}
+            span.anfrage-origin(v-if="extractOrigin(anfrage.message)") 📍 {{ extractOrigin(anfrage.message) }}
         .anfrage-right
           span.anfrage-time(:title="formatDate(anfrage.submittedAt)") {{ timeAgo(anfrage.submittedAt) }}
           span.expand-icon {{ expandedId === anfrage.id ? '▲' : '▼' }}
@@ -538,11 +545,10 @@ h2 {
 
 .anfrage-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.9rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   cursor: pointer;
-  gap: 1rem;
+  gap: 0.75rem;
   user-select: none;
 }
 
@@ -550,12 +556,25 @@ h2 {
   background: #f5f5f5;
 }
 
-.anfrage-left {
+.anfrage-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.anfrage-row1 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.anfrage-row2 {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  min-width: 0;
 }
 
 .unread-dot {
@@ -595,14 +614,6 @@ h2 {
   color: white;
 }
 
-.anfrage-info {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
 .anfrage-name {
   font-weight: 900;
   font-size: 0.95rem;
@@ -610,11 +621,17 @@ h2 {
 }
 
 .anfrage-email {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #666;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.anfrage-origin {
+  font-size: 0.78rem;
+  color: #555;
+  white-space: nowrap;
 }
 
 .anfrage-right {
@@ -639,11 +656,12 @@ h2 {
 
 /* Preview */
 .anfrage-preview {
-  padding: 0 1.25rem 0.9rem;
-  padding-left: calc(1.25rem + 8px + 0.75rem);
+  padding: 0.5rem 1.25rem 0.9rem 1.25rem;
   font-size: 0.85rem;
   color: #666;
   line-height: 1.5;
+  border-top: 1px solid #f0f0f0;
+  text-align: left;
 }
 
 .anfrage-card.unread .anfrage-preview {
@@ -654,6 +672,7 @@ h2 {
 .anfrage-details {
   padding: 0 1.25rem 1.25rem;
   border-top: 0.15rem solid #e0e0e0;
+  text-align: left;
 }
 
 .detail-section {
