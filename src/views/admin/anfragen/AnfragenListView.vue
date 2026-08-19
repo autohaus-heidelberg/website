@@ -500,33 +500,28 @@ h2 {
 
 .filter-chips {
   display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .chip {
-  padding: 0.4rem 0.9rem;
+  padding: 0.4rem 1rem;
   border: 0.2rem solid black;
   background: white;
   color: black;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
-  margin-left: -0.2rem;
-}
-
-.chip:first-child {
-  margin-left: 0;
 }
 
 .chip.active {
   background: black;
   color: white;
-  position: relative;
-  z-index: 1;
 }
 
 .chip:hover:not(.active) {
-  background: #e8e8e8;
+  background: #f0f0f0;
 }
 
 .filter-type select {
