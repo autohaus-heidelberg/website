@@ -902,9 +902,9 @@ h2 {
 }
 
 .chip-answered.active {
-  background: #22c55e;
+  background: black;
   color: white;
-  border-color: #22c55e;
+  border-color: black;
 }
 
 .read-meta {
