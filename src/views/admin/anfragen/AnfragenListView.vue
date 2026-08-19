@@ -28,12 +28,12 @@ const filteredAnfragen = computed(() => {
 
   if (filterRead.value === 'unread') {
     list = list.filter(a => !a.isRead)
-  } else if (filterRead.value === 'read') {
-    list = list.filter(a => a.isRead)
   }
 
   if (filterAnswered.value === 'answered') {
     list = list.filter(a => a.isAnswered)
+  } else if (filterAnswered.value === 'open') {
+    list = list.filter(a => !a.isAnswered)
   }
 
   if (searchQuery.value) {
@@ -223,8 +223,8 @@ async function loadData() {
 function chipCount(readFilter: string, answeredFilter: string): number {
   return anfragen.value.filter(a => {
     if (readFilter === 'unread' && a.isRead) return false
-    if (readFilter === 'read' && !a.isRead) return false
     if (answeredFilter === 'answered' && !a.isAnswered) return false
+    if (answeredFilter === 'open' && a.isAnswered) return false
     return true
   }).length
 }
@@ -259,9 +259,9 @@ onMounted(() => {
         @click="filterRead = 'unread'; filterAnswered = 'all'"
       ) Ungelesen ({{ chipCount('unread', 'all') }})
       button.chip(
-        :class="{ active: filterRead === 'read' && filterAnswered === 'all' }"
-        @click="filterRead = 'read'; filterAnswered = 'all'"
-      ) Gelesen ({{ chipCount('read', 'all') }})
+        :class="{ active: filterAnswered === 'open' }"
+        @click="filterAnswered = 'open'; filterRead = 'all'"
+      ) Offen ({{ chipCount('all', 'open') }})
       button.chip.chip-answered(
         :class="{ active: filterAnswered === 'answered' }"
         @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'; filterRead = 'all'"
@@ -408,7 +408,7 @@ onMounted(() => {
   .empty-state(v-else)
     .empty-icon 📭
     p Keine Anfragen gefunden
-    p.empty-hint(v-if="searchQuery || filterType !== 'all' || filterRead !== 'all'") Versuche andere Filter oder Suchbegriffe
+    p.empty-hint(v-if="searchQuery || filterType !== 'all' || filterRead !== 'all' || filterAnswered !== 'all'") Versuche andere Filter oder Suchbegriffe
 </template>
 
 <style scoped>
