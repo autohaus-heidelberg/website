@@ -33,7 +33,7 @@ const filteredAnfragen = computed(() => {
   }
 
   if (filterAnswered.value === 'answered') {
-    list = list.filter(a => a.isAnswered)
+    list = list.filter(a => a.isRead && a.isAnswered)
   }
 
   if (searchQuery.value) {
@@ -224,7 +224,7 @@ function chipCount(readFilter: string, answeredFilter: string): number {
   return anfragen.value.filter(a => {
     if (readFilter === 'unread' && a.isRead) return false
     if (readFilter === 'read' && !a.isRead) return false
-    if (answeredFilter === 'answered' && !a.isAnswered) return false
+    if (answeredFilter === 'answered'!(a.isRead && !a.isAnswered)wered) return false
     return true
   }).length
 }
