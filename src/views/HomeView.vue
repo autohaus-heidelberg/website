@@ -65,7 +65,7 @@ function setLogoHeight() {
 
 <template lang="pug">
 //- h1 Autohaus Heidelberg
-router-link.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin' }") Admin
+router-link.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin-dashboard' }") Admin
 .l-center
   .logo-container(ref="logoContainer")
     //- .video
