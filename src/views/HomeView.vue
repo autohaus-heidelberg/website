@@ -161,6 +161,8 @@ p Wir sind das Carousel im alten Autohaus.
   font-weight: bold;
   background-color: var(--text-color);
   color: var(--background-color);
+  position: relative;
+  z-index: 10;
 }
 
 #mce-EMAIL {
