@@ -23,6 +23,10 @@ export interface Anfrage {
   budget: string
   submittedAt: string
   isRead: boolean
+  readAt?: string | null
+  readBy?: number | null
+  readByUsername?: string | null
+  isAnswered: boolean
   lastReplySubject?: string | null
   lastReplyMessage?: string | null
   lastReplyAt?: string | null
@@ -37,12 +41,12 @@ export const ANFRAGE_TYPE_LABELS: Record<string, string> = {
 }
 
 export const anfrageService = {
-  async getAll(params?: { is_read?: boolean }): Promise<PaginatedResponse<Anfrage>> {
-    let url = '/api/anfragen/'
-    if (params?.is_read !== undefined) {
-      url += `?is_read=${params.is_read}`
-    }
-    return api.get<PaginatedResponse<Anfrage>>(url)
+  async getAll(params?: { is_read?: boolean; is_answered?: boolean }): Promise<PaginatedResponse<Anfrage>> {
+    const query = new URLSearchParams()
+    if (params?.is_read !== undefined) query.set('is_read', String(params.is_read))
+    if (params?.is_answered !== undefined) query.set('is_answered', String(params.is_answered))
+    const qs = query.toString()
+    return api.get<PaginatedResponse<Anfrage>>(`/api/anfragen/${qs ? '?' + qs : ''}`)
   },
 
   async getById(id: number): Promise<Anfrage> {
@@ -55,6 +59,14 @@ export const anfrageService = {
 
   async markUnread(id: number): Promise<void> {
     await api.post(`/api/anfragen/${id}/mark_unread/`)
+  },
+
+  async markAnswered(id: number): Promise<void> {
+    await api.post(`/api/anfragen/${id}/mark_answered/`)
+  },
+
+  async markUnanswered(id: number): Promise<void> {
+    await api.post(`/api/anfragen/${id}/mark_unanswered/`)
   },
 
   async delete(id: number): Promise<void> {
