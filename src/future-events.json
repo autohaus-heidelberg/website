@@ -1,5 +1,37 @@
 [
     {
+        "id": "designer-capacopter",
+        "date": "2026-09-28T17:00:00+00:00",
+        "title": "Designer (Rock'n'Roll) & Capacopter (Heavy Rock)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Designer (Rock'n'Roll, Asheville, NC) &amp; Capacopter (Heavy Rock, Mannheim)</p>\n<p>Montags schiebt der Goldesel ja bekanntlich gerne eine kurze Schicht. Und dr&uuml;ckt sich mal wieder mit eleganter Ausrede vor der B-B-Bizepsfarm: Designer kommen in die Stadt. <br><br>F&uuml;nf Asphaltcowboys aus Asheville. S&auml;ngerin vorneweg, zwei Gitarren im Anschlag, Garage-Punk, 70s Rock&rsquo;n&rsquo;Roll und das neue Deb&uuml;talbum&nbsp;<span class=\"is-markup\" data-markup=\"markup-italic\">HEADCASE</span> unterm Arm. Rock&rsquo;n&rsquo;Roll Mayhem, sagen sie dr&uuml;ben. Die Single <span class=\"is-markup\" data-markup=\"markup-italic\">Blood on Your Hands</span> ist der absolute Zonk! <br><br>Und Capacopter sind auch da! Wir freuen uns sehr, die Mannheimer zum ersten Mal bei uns im Carousel zu haben. Tiefe Gitarren, Fuzz und schwere Grooves. Das Deb&uuml;t hei&szlig;t <span class=\"is-markup\" data-markup=\"markup-italic\">CAPACOPTER</span>, die neue Single <span class=\"is-markup\" data-markup=\"markup-italic\">THE CAPADILLO</span>. Be a Capadillo, sagen sie. Der Goldesel stellt keine weiteren Fragen. <br><br>Das wird ein sch&ouml;nes &Uuml;berfallkommando f&uuml;r die Ohren. <br><br>Doors 19:00. Und dann heisst es wieder:&nbsp;<span class=\"is-markup\" data-markup=\"markup-italic\">Geh aufs Ganze!</span> im Carousel! \ud83d\udc34</p>\n<p>&nbsp;</p>\n<p>Flyer art by <a href=\"https://www.instagram.com/joey.controlletti/\">Joey Controlletti</a></p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/designer-capacopter/",
+        "img": "/img/ed92e76a-b98f-4b1f-8a6c-fd587b605774.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Designer",
+                "link": "https://www.instagram.com/designertheband",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/fdUkiDOvcp4",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2513625277/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Capacopter",
+                "link": "https://www.capacopter.de/",
+                "description": "Capacopter ist eine Stoner-Rock-Band aus Mannheim/Frankfurt. Seit 2021 macht die Band gemeinsam Musik. Irgendwo zwischen Stoner Rock, Heavy Rock, Fuzz und anderen Dingen, die gro\u00dfe Verst\u00e4rker rechtfertigen.\nNach diversen Singles, EPs und mittlerweile rund 50 Konzerten erschien am 9. Januar 2026 das selbst ver\u00f6ffentlichte Deb\u00fctalbum \u201eCapacopter\u201c und landete auf Platz 2 der internationalen Doom Charts.\nIm Mai 2026 folgte die Single \u201eThe Capadillo\u201c. Aktuell arbeitet die Band am zweiten Album, das Anfang 2027 \u00fcber Tonzonen Records erscheint.\nBis dahin ist Capacopter weiter auf B\u00fchnen in Deutschland und dar\u00fcber hinaus unterwegs und arbeitet daran, die Population der Capadillos stetig zu vergr\u00f6\u00dfern. Falls also irgendwo noch eine verd\u00e4chtig gro\u00dfe L\u00fccke im Line-up klafft: Die vier kennen da was.\nBesetzung:",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/mJKc1bg5AM8",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=365936098/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/2c3239b6-938e-4aec-8e14-f701818c8090.webp"
+            }
+        ]
+    },
+    {
         "id": "event20260827",
         "date": "2026-08-27T17:00:00+00:00",
         "title": "Alvilda, The Runnings",
