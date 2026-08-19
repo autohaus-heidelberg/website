@@ -15,6 +15,8 @@ const replyMessage = ref('')
 const replySending = ref(false)
 const replySuccess = ref<number | null>(null)
 const replyError = ref('')
+const replyGenerating = ref(false)
+const replyGenerateError = ref('')
 
 const filteredAnfragen = computed(() => {
   let list = [...anfragen.value]
@@ -119,6 +121,20 @@ function cancelReply() {
   replySubject.value = ''
   replyMessage.value = ''
   replyError.value = ''
+  replyGenerateError.value = ''
+}
+
+async function generateReply(anfrage: Anfrage, reason: 'zu_teuer' | 'keine_kapazitaet') {
+  replyGenerating.value = true
+  replyGenerateError.value = ''
+  try {
+    const text = await anfrageService.generateReply(anfrage.id, reason)
+    replyMessage.value = text
+  } catch (e: any) {
+    replyGenerateError.value = e.message || 'Generierung fehlgeschlagen'
+  } finally {
+    replyGenerating.value = false
+  }
 }
 
 async function sendReply(anfrage: Anfrage) {
@@ -308,6 +324,18 @@ onMounted(() => {
               .reply-form-title ✉️ Antwort an {{ anfrage.name }}
               .reply-form-to {{ anfrage.contactEmail }}
               button.reply-close(@click.stop="cancelReply") ✕
+            .reply-ai-bar
+              span.reply-ai-label ✨ KI-Absage generieren:
+              button.btn-ai(
+                @click.stop="generateReply(anfrage, 'zu_teuer')"
+                :disabled="replyGenerating"
+              ) 💸 Zu teuer
+              button.btn-ai(
+                @click.stop="generateReply(anfrage, 'keine_kapazitaet')"
+                :disabled="replyGenerating"
+              ) 📅 Keine Kapazität
+              span.ai-generating(v-if="replyGenerating") ⏳ Generiere...
+              span.ai-error(v-if="replyGenerateError") ⚠️ {{ replyGenerateError }}
             .reply-form-body
               label.reply-label Betreff
               input.reply-subject(
@@ -859,6 +887,57 @@ h2 {
   grid-template-rows: auto auto;
   gap: 0.15rem;
   align-items: center;
+}
+
+.reply-ai-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #f5f0ff;
+  border-bottom: 0.15rem solid #ddd;
+  flex-wrap: wrap;
+}
+
+.reply-ai-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #555;
+}
+
+.btn-ai {
+  padding: 0.3rem 0.75rem;
+  border: 0.15rem solid #7c3aed;
+  background: white;
+  color: #7c3aed;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-ai:hover:not(:disabled) {
+  background: #7c3aed;
+  color: white;
+}
+
+.btn-ai:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-generating {
+  font-size: 0.78rem;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.ai-error {
+  font-size: 0.78rem;
+  color: #c0392b;
+  font-weight: 600;
 }
 
 .reply-form-title {
