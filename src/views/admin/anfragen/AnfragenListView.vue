@@ -34,8 +34,6 @@ const filteredAnfragen = computed(() => {
 
   if (filterAnswered.value === 'answered') {
     list = list.filter(a => a.isAnswered)
-  } else if (filterAnswered.value === 'unanswered') {
-    list = list.filter(a => !a.isAnswered)
   }
 
   if (searchQuery.value) {
@@ -224,6 +222,15 @@ async function loadData() {
   }
 }
 
+function chipCount(readFilter: string, answeredFilter: string): number {
+  return anfragen.value.filter(a => {
+    if (readFilter === 'unread' && a.isRead) return false
+    if (readFilter === 'read' && !a.isRead) return false
+    if (answeredFilter === 'answered' && !a.isAnswered) return false
+    return true
+  }).length
+}
+
 onMounted(() => {
   loadData()
 })
@@ -247,25 +254,21 @@ onMounted(() => {
   .toolbar
     .filter-chips
       button.chip(
-        :class="{ active: filterRead === 'all' }"
-        @click="filterRead = 'all'"
-      ) Alle
+        :class="{ active: filterRead === 'all' && filterAnswered === 'all' }"
+        @click="filterRead = 'all'; filterAnswered = 'all'"
+      ) Alle ({{ chipCount('all', 'all') }})
       button.chip(
         :class="{ active: filterRead === 'unread' }"
-        @click="filterRead = 'unread'"
-      ) Ungelesen
+        @click="filterRead = 'unread'; filterAnswered = 'all'"
+      ) Ungelesen ({{ chipCount('unread', 'all') }})
       button.chip(
-        :class="{ active: filterRead === 'read' }"
-        @click="filterRead = 'read'"
-      ) Gelesen
-      button.chip(
-        :class="{ active: filterAnswered === 'unanswered' }"
-        @click="filterAnswered = filterAnswered === 'unanswered' ? 'all' : 'unanswered'"
-      ) Offen
+        :class="{ active: filterRead === 'read' && filterAnswered === 'all' }"
+        @click="filterRead = 'read'; filterAnswered = 'all'"
+      ) Gelesen ({{ chipCount('read', 'all') }})
       button.chip.chip-answered(
         :class="{ active: filterAnswered === 'answered' }"
-        @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'"
-      ) ✓ Beantwortet
+        @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'; filterRead = 'all'"
+      ) ✓ Beantwortet ({{ chipCount('all', 'answered') }})
     .filter-type
       select(v-model="filterType")
         option(value="all") Alle Typen
@@ -939,6 +942,8 @@ h2 {
 .btn-unanswered:hover {
   background: #e5e7eb;
 }
+
+.btn-delete {
   border-color: #c00;
   color: #c00;
 }
