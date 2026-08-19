@@ -262,9 +262,9 @@ onMounted(() => {
         @click="filterRead = 'unread'; filterAnswered = 'all'"
       ) Ungelesen ({{ chipCount('unread', 'all') }})
       button.chip(
-        :class="{ active: filterRead === 'read' && filterAnswered === 'all' }"
-        @click="filterRead = 'read'; filterAnswered = 'all'"
-      ) Gelesen ({{ chipCount('read', 'all') }})
+        :class="{ active: filterAnswered === 'open' }"
+        @click="filterAnswered = 'open'; filterRead = 'all'"
+      ) Offen ({{ chipCount('all', 'open') }})
       button.chip.chip-answered(
         :class="{ active: filterAnswered === 'answered' }"
         @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'; filterRead = 'all'"
