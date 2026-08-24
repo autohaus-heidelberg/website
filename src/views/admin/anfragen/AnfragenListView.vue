@@ -32,7 +32,8 @@ const filteredAnfragen = computed(() => {
   }
 
   if (filterRead.value === 'unread') {
-    list = list.filter(a => !effectiveIsRead(a))
+    // Keep the currently expanded item visible even if it's now considered read
+    list = list.filter(a => !effectiveIsRead(a) || a.id === expandedId.value)
   } else if (filterRead.value === 'read') {
     list = list.filter(a => effectiveIsRead(a))
   }
@@ -118,12 +119,14 @@ async function toggleExpand(id: number) {
   if (isOpening) {
     const anfrage = anfragen.value.find(a => a.id === id)
     if (anfrage && !anfrage.isRead) {
+      // Add synchronously BEFORE the await so Vue doesn't re-render
+      // with the item missing from the filter between now and the response
+      pendingReadIds.value.add(id)
       try {
         await anfrageService.markRead(anfrage.id)
-        // Don't set isRead = true yet — wait until the item is closed
-        // so the list doesn't re-sort/re-filter while reading
-        pendingReadIds.value.add(id)
-      } catch { /* ignore */ }
+      } catch {
+        pendingReadIds.value.delete(id)
+      }
     }
   }
 }
