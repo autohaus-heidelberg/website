@@ -114,13 +114,12 @@ async function toggleExpand(id: number) {
     }
   }
 
+  // Set expandedId FIRST so the filter can use it before pendingReadIds changes
   expandedId.value = isOpening ? id : null
 
   if (isOpening) {
     const anfrage = anfragen.value.find(a => a.id === id)
     if (anfrage && !anfrage.isRead) {
-      // Add synchronously BEFORE the await so Vue doesn't re-render
-      // with the item missing from the filter between now and the response
       pendingReadIds.value = [...pendingReadIds.value, id]
       try {
         await anfrageService.markRead(anfrage.id)
