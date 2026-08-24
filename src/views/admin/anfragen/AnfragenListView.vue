@@ -18,21 +18,25 @@ const replySuccess = ref<number | null>(null)
 const replyError = ref('')
 const replyGenerating = ref(false)
 const replyGenerateError = ref('')
-const pendingReadIds = ref<number[]>([])
+// Track which IDs have been marked read in the background (API called, but
+// isRead not yet written to the object so the list doesn't re-sort/re-filter
+// while the card is still open)
+const markedReadWhileOpen = ref<number[]>([])
 
 const filteredAnfragen = computed(() => {
   let list = [...anfragen.value]
 
-  // Treat pending-read items as already read for filter/sort purposes
-  // so the list doesn't jump while an item is being read
-  const effectiveIsRead = (a: Anfrage) => a.isRead || pendingReadIds.value.includes(a.id)
+  // For sorting/filtering: an item counts as "read" only if isRead is true
+  // AND it is not currently open (so opening an unread item doesn't move it)
+  const effectiveIsRead = (a: Anfrage) =>
+    a.isRead && !markedReadWhileOpen.value.includes(a.id)
 
   if (filterType.value !== 'all') {
     list = list.filter(a => a.type === filterType.value)
   }
 
   if (filterRead.value === 'unread') {
-    // Keep the currently expanded item visible even if it's now considered read
+    // Keep currently expanded item always visible regardless of read state
     list = list.filter(a => !effectiveIsRead(a) || a.id === expandedId.value)
   } else if (filterRead.value === 'read') {
     list = list.filter(a => effectiveIsRead(a))
@@ -106,27 +110,25 @@ async function toggleExpand(id: number) {
   const isOpening = expandedId.value !== id
 
   if (!isOpening) {
-    // Closing: flush any pending read state so the list re-sorts now
+    // Closing: now actually apply the read state so the list re-sorts
     const anfrage = anfragen.value.find(a => a.id === id)
-    if (anfrage && pendingReadIds.value.includes(id)) {
+    if (anfrage && markedReadWhileOpen.value.includes(id)) {
       anfrage.isRead = true
-      pendingReadIds.value = pendingReadIds.value.filter(x => x !== id)
+      markedReadWhileOpen.value = markedReadWhileOpen.value.filter(x => x !== id)
     }
+    expandedId.value = null
+    return
   }
 
-  // Set expandedId FIRST so the filter can use it before pendingReadIds changes
-  expandedId.value = isOpening ? id : null
+  expandedId.value = id
 
-  if (isOpening) {
-    const anfrage = anfragen.value.find(a => a.id === id)
-    if (anfrage && !anfrage.isRead) {
-      pendingReadIds.value = [...pendingReadIds.value, id]
-      try {
-        await anfrageService.markRead(anfrage.id)
-      } catch {
-        pendingReadIds.value = pendingReadIds.value.filter(x => x !== id)
-      }
-    }
+  const anfrage = anfragen.value.find(a => a.id === id)
+  if (anfrage && !anfrage.isRead) {
+    try {
+      await anfrageService.markRead(anfrage.id)
+      // Don't set anfrage.isRead yet — track it separately so the list stays put
+      markedReadWhileOpen.value = [...markedReadWhileOpen.value, id]
+    } catch { /* ignore */ }
   }
 }
 
@@ -244,7 +246,7 @@ async function loadData() {
 
 function chipCount(readFilter: string, answeredFilter: string): number {
   return anfragen.value.filter(a => {
-    const effectiveRead = a.isRead || pendingReadIds.value.includes(a.id)
+    const effectiveRead = a.isRead && !markedReadWhileOpen.value.includes(a.id)
     if (readFilter === 'unread' && effectiveRead) return false
     if (readFilter === 'read' && !effectiveRead) return false
     if (answeredFilter === 'answered' && !a.isAnswered) return false
@@ -314,10 +316,10 @@ onMounted(() => {
     .anfrage-card(
       v-for="anfrage in filteredAnfragen"
       :key="anfrage.id"
-      :class="{ unread: !anfrage.isRead && !pendingReadIds.includes(anfrage.id), expanded: expandedId === anfrage.id }"
+      :class="{ unread: !anfrage.isRead || markedReadWhileOpen.includes(anfrage.id), expanded: expandedId === anfrage.id }"
     )
       .anfrage-header(@click="toggleExpand(anfrage.id)")
-        .unread-dot(v-if="!anfrage.isRead && !pendingReadIds.includes(anfrage.id)")
+        .unread-dot(v-if="!anfrage.isRead || markedReadWhileOpen.includes(anfrage.id)")
         .answered-badge(v-if="anfrage.isAnswered") ✓
         .anfrage-main
           .anfrage-row1
