@@ -18,24 +18,29 @@ const replySuccess = ref<number | null>(null)
 const replyError = ref('')
 const replyGenerating = ref(false)
 const replyGenerateError = ref('')
+const pendingReadIds = ref<Set<number>>(new Set())
 
 const filteredAnfragen = computed(() => {
   let list = [...anfragen.value]
+
+  // Treat pending-read items as already read for filter/sort purposes
+  // so the list doesn't jump while an item is being read
+  const effectiveIsRead = (a: Anfrage) => a.isRead || pendingReadIds.value.has(a.id)
 
   if (filterType.value !== 'all') {
     list = list.filter(a => a.type === filterType.value)
   }
 
   if (filterRead.value === 'unread') {
-    list = list.filter(a => !a.isRead)
+    list = list.filter(a => !effectiveIsRead(a))
   } else if (filterRead.value === 'read') {
-    list = list.filter(a => a.isRead)
+    list = list.filter(a => effectiveIsRead(a))
   }
 
   if (filterAnswered.value === 'answered') {
     list = list.filter(a => a.isAnswered)
   } else if (filterAnswered.value === 'open') {
-    list = list.filter(a => a.isRead && !a.isAnswered)
+    list = list.filter(a => effectiveIsRead(a) && !a.isAnswered)
   }
 
   if (searchQuery.value) {
@@ -51,7 +56,7 @@ const filteredAnfragen = computed(() => {
   // Unanswered before answered, unread before read, then most recent activity first
   list.sort((a, b) => {
     if (a.isAnswered !== b.isAnswered) return a.isAnswered ? 1 : -1
-    if (a.isRead !== b.isRead) return a.isRead ? 1 : -1
+    if (effectiveIsRead(a) !== effectiveIsRead(b)) return effectiveIsRead(a) ? 1 : -1
     return lastActivity(b) - lastActivity(a)
   })
 
@@ -98,13 +103,26 @@ function timeAgo(dateStr: string): string {
 
 async function toggleExpand(id: number) {
   const isOpening = expandedId.value !== id
+
+  if (!isOpening) {
+    // Closing: flush any pending read state so the list re-sorts now
+    const anfrage = anfragen.value.find(a => a.id === id)
+    if (anfrage && pendingReadIds.value.has(id)) {
+      anfrage.isRead = true
+      pendingReadIds.value.delete(id)
+    }
+  }
+
   expandedId.value = isOpening ? id : null
+
   if (isOpening) {
     const anfrage = anfragen.value.find(a => a.id === id)
     if (anfrage && !anfrage.isRead) {
       try {
         await anfrageService.markRead(anfrage.id)
-        anfrage.isRead = true
+        // Don't set isRead = true yet — wait until the item is closed
+        // so the list doesn't re-sort/re-filter while reading
+        pendingReadIds.value.add(id)
       } catch { /* ignore */ }
     }
   }
@@ -224,10 +242,11 @@ async function loadData() {
 
 function chipCount(readFilter: string, answeredFilter: string): number {
   return anfragen.value.filter(a => {
-    if (readFilter === 'unread' && a.isRead) return false
-    if (readFilter === 'read' && !a.isRead) return false
+    const effectiveRead = a.isRead || pendingReadIds.value.has(a.id)
+    if (readFilter === 'unread' && effectiveRead) return false
+    if (readFilter === 'read' && !effectiveRead) return false
     if (answeredFilter === 'answered' && !a.isAnswered) return false
-    if (answeredFilter === 'open' && !(a.isRead && !a.isAnswered)) return false
+    if (answeredFilter === 'open' && !(effectiveRead && !a.isAnswered)) return false
     return true
   }).length
 }
@@ -293,10 +312,10 @@ onMounted(() => {
     .anfrage-card(
       v-for="anfrage in filteredAnfragen"
       :key="anfrage.id"
-      :class="{ unread: !anfrage.isRead, expanded: expandedId === anfrage.id }"
+      :class="{ unread: !anfrage.isRead && !pendingReadIds.has(anfrage.id), expanded: expandedId === anfrage.id }"
     )
       .anfrage-header(@click="toggleExpand(anfrage.id)")
-        .unread-dot(v-if="!anfrage.isRead")
+        .unread-dot(v-if="!anfrage.isRead && !pendingReadIds.has(anfrage.id)")
         .answered-badge(v-if="anfrage.isAnswered") ✓
         .anfrage-main
           .anfrage-row1
