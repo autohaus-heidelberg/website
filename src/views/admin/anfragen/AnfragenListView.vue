@@ -18,14 +18,14 @@ const replySuccess = ref<number | null>(null)
 const replyError = ref('')
 const replyGenerating = ref(false)
 const replyGenerateError = ref('')
-const pendingReadIds = ref<Set<number>>(new Set())
+const pendingReadIds = ref<number[]>([])
 
 const filteredAnfragen = computed(() => {
   let list = [...anfragen.value]
 
   // Treat pending-read items as already read for filter/sort purposes
   // so the list doesn't jump while an item is being read
-  const effectiveIsRead = (a: Anfrage) => a.isRead || pendingReadIds.value.has(a.id)
+  const effectiveIsRead = (a: Anfrage) => a.isRead || pendingReadIds.value.includes(a.id)
 
   if (filterType.value !== 'all') {
     list = list.filter(a => a.type === filterType.value)
@@ -108,9 +108,9 @@ async function toggleExpand(id: number) {
   if (!isOpening) {
     // Closing: flush any pending read state so the list re-sorts now
     const anfrage = anfragen.value.find(a => a.id === id)
-    if (anfrage && pendingReadIds.value.has(id)) {
+    if (anfrage && pendingReadIds.value.includes(id)) {
       anfrage.isRead = true
-      pendingReadIds.value.delete(id)
+      pendingReadIds.value = pendingReadIds.value.filter(x => x !== id)
     }
   }
 
@@ -121,11 +121,11 @@ async function toggleExpand(id: number) {
     if (anfrage && !anfrage.isRead) {
       // Add synchronously BEFORE the await so Vue doesn't re-render
       // with the item missing from the filter between now and the response
-      pendingReadIds.value.add(id)
+      pendingReadIds.value = [...pendingReadIds.value, id]
       try {
         await anfrageService.markRead(anfrage.id)
       } catch {
-        pendingReadIds.value.delete(id)
+        pendingReadIds.value = pendingReadIds.value.filter(x => x !== id)
       }
     }
   }
@@ -245,7 +245,7 @@ async function loadData() {
 
 function chipCount(readFilter: string, answeredFilter: string): number {
   return anfragen.value.filter(a => {
-    const effectiveRead = a.isRead || pendingReadIds.value.has(a.id)
+    const effectiveRead = a.isRead || pendingReadIds.value.includes(a.id)
     if (readFilter === 'unread' && effectiveRead) return false
     if (readFilter === 'read' && !effectiveRead) return false
     if (answeredFilter === 'answered' && !a.isAnswered) return false
@@ -315,10 +315,10 @@ onMounted(() => {
     .anfrage-card(
       v-for="anfrage in filteredAnfragen"
       :key="anfrage.id"
-      :class="{ unread: !anfrage.isRead && !pendingReadIds.has(anfrage.id), expanded: expandedId === anfrage.id }"
+      :class="{ unread: !anfrage.isRead && !pendingReadIds.includes(anfrage.id), expanded: expandedId === anfrage.id }"
     )
       .anfrage-header(@click="toggleExpand(anfrage.id)")
-        .unread-dot(v-if="!anfrage.isRead && !pendingReadIds.has(anfrage.id)")
+        .unread-dot(v-if="!anfrage.isRead && !pendingReadIds.includes(anfrage.id)")
         .answered-badge(v-if="anfrage.isAnswered") ✓
         .anfrage-main
           .anfrage-row1
