@@ -177,13 +177,10 @@ async function loadEvent() {
       const docs = await documentService.list(props.id)
       qrLinks.value = docs
         .filter(d => d.file_name.startsWith('qr_code_'))
-        .map(d => {
-          const match = d.drive_url.match(/\/d\/([^/]+)\//)
-          const downloadUrl = match
-            ? `https://drive.google.com/uc?export=download&id=${match[1]}`
-            : d.drive_url
-          return { name: d.file_name, url: downloadUrl }
-        })
+        .map(d => ({
+          name: d.file_name,
+          url: `/api/drive/download/${d.drive_file_id}/`,
+        }))
     } catch {
       // Drive not configured – silently ignore
     }
@@ -366,10 +363,10 @@ async function generateQrCode() {
     const result = await eventService.generateQrCode(form.value.id!, qrWithLogo.value)
     const count = result.qr_codes?.length ?? 0
     qrLinks.value = (result.qr_codes ?? []).map(qr => {
-      // Convert Drive webViewLink to direct download URL
+      // Convert Drive webViewLink to proxy download URL
       const match = qr.url.match(/\/d\/([^/]+)\//)
       const downloadUrl = match
-        ? `https://drive.google.com/uc?export=download&id=${match[1]}`
+        ? `/api/drive/download/${match[1]}/`
         : qr.url
       return { name: qr.name, url: downloadUrl }
     })
