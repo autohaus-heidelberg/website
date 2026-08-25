@@ -70,6 +70,7 @@ const flyerSuccess = ref('')
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
 const qrWithLogo = ref(true)
+const qrLinks = ref<{ name: string; url: string }[]>([])
 const presaleToken = ref('')
 const isGeneratingPresale = ref(false)
 const presaleSuccess = ref('')
@@ -344,11 +345,13 @@ async function generateQrCode() {
   isGeneratingQr.value = true
   error.value = ''
   qrSuccess.value = ''
+  qrLinks.value = []
 
   try {
     const result = await eventService.generateQrCode(form.value.id!, qrWithLogo.value)
     const count = result.qr_codes?.length ?? 0
-    qrSuccess.value = `${count} QR-Code${count !== 1 ? 's' : ''} im Google-Drive-Ordner des Events abgelegt.`
+    qrLinks.value = result.qr_codes ?? []
+    qrSuccess.value = `${count} QR-Code${count !== 1 ? 's' : ''} erzeugt.`
 
     setTimeout(() => {
       qrSuccess.value = ''
@@ -850,6 +853,14 @@ function closeDeployModal() {
                 | {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
               .field-hint Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
             .success-message(v-if="qrSuccess") {{ qrSuccess }}
+            .qr-links(v-if="qrLinks.length")
+              a.qr-download-link(
+                v-for="qr in qrLinks"
+                :key="qr.name"
+                :href="qr.url"
+                target="_blank"
+                rel="noopener"
+              ) ⬇ {{ qr.name }}
 
           .error(v-if="error") {{ error }}
 
@@ -1250,6 +1261,26 @@ input:disabled {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.qr-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.qr-download-link {
+  font-size: 0.85rem;
+  color: var(--color-primary, #b8860b);
+  text-decoration: none;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+  &:hover {
+    opacity: 0.75;
+  }
 }
 
 .checkbox-label {
