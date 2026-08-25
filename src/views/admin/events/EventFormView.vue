@@ -1312,15 +1312,18 @@ input:disabled {
 }
 
 .qr-download-link {
+  padding: 0.4rem 0.75rem;
+  border: 0.15rem solid black;
+  background: white;
+  color: black;
+  cursor: pointer;
   font-size: 0.85rem;
-  color: var(--color-primary, #b8860b);
-  text-decoration: none;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 0.2rem 0.5rem;
+  font-weight: 600;
   white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
   &:hover {
-    opacity: 0.75;
+    background: black;
+    color: white;
   }
 }
 
