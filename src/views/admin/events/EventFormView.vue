@@ -1338,6 +1338,7 @@ input:disabled {
 
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   padding-top: 1rem;
   border-top: 0.25rem solid black;
@@ -1485,6 +1486,17 @@ input:disabled {
   .tab {
     padding: 0.625rem 1rem;
     font-size: 0.85rem;
+  }
+
+  .form-actions {
+    .btn-primary, .btn-secondary {
+      flex: 1 1 100%;
+      text-align: center;
+    }
+
+    .overflow-menu {
+      flex: 0 0 auto;
+    }
   }
 }
 
