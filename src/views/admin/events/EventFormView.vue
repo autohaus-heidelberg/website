@@ -56,7 +56,7 @@ const form = ref<Partial<AppEvent>>({
 const isLoading = ref(false)
 const error = ref('')
 const showOverflow = ref(false)
-const overflowDropdownStyle = ref({ top: '0px', right: '0px' })
+const overflowDropdownStyle = ref<Record<string, string>>({ top: '0px', left: '0px' })
 const pendingDelete = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
 const deleteError = ref('')
 const imageFile = ref<File | null>(null)
@@ -486,6 +486,7 @@ function toggleOverflow(e: MouseEvent) {
   }
   const btn = (e.currentTarget as HTMLElement)
   const rect = btn.getBoundingClientRect()
+  const dropdownWidth = 192 // min-width: 12rem = 192px
   const dropdownHeight = 60 // approx height
   const spaceBelow = window.innerHeight - rect.bottom
   let topPos: number
@@ -494,9 +495,11 @@ function toggleOverflow(e: MouseEvent) {
   } else {
     topPos = rect.top - dropdownHeight - 4
   }
+  // Align right edge of dropdown with right edge of button, but clamp so it doesn't go off-screen left
+  const leftPos = Math.max(8, rect.right - dropdownWidth)
   overflowDropdownStyle.value = {
     top: topPos + 'px',
-    right: (window.innerWidth - rect.right) + 'px'
+    left: leftPos + 'px'
   }
   showOverflow.value = true
 }
@@ -1529,6 +1532,7 @@ input:disabled {
   border: 0.25rem solid black;
   z-index: 1000;
   min-width: 12rem;
+  max-width: calc(100vw - 16px);
 }
 
 .overflow-item {
