@@ -348,6 +348,24 @@ async function generateFlyers() {
   }
 }
 
+async function downloadFile(url: string, filename: string) {
+  const token = localStorage.getItem('access_token')
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!response.ok) {
+    error.value = `Download fehlgeschlagen (${response.status})`
+    return
+  }
+  const blob = await response.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(objectUrl)
+}
+
 async function generateQrCode() {
   if (!form.value.id || !isEditing.value) {
     error.value = 'Bitte den Event zuerst speichern, bevor QR-Codes erzeugt werden.'
@@ -876,13 +894,11 @@ function closeDeployModal() {
               .field-hint Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
             .success-message(v-if="qrSuccess") {{ qrSuccess }}
             .qr-links(v-if="qrLinks.length")
-              a.qr-download-link(
+              button.qr-download-link(
                 v-for="qr in qrLinks"
                 :key="qr.name"
-                :href="qr.url"
-                :download="qr.name"
-                target="_blank"
-                rel="noopener"
+                type="button"
+                @click="downloadFile(qr.url, qr.name)"
               ) ⬇ {{ qr.name }}
 
           .error(v-if="error") {{ error }}
