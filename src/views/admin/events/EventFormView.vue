@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { eventService, artistService, pretixService, accountingService } from '@/services'
+import { eventService, artistService, pretixService, accountingService, documentService } from '@/services'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import type { PretixOrderSummary } from '@/services/accounting'
 import publishedEvents from '@/events.json'
@@ -171,6 +171,21 @@ async function loadEvent() {
     }
     if ((event as any).presale_token) {
       presaleToken.value = (event as any).presale_token
+    }
+    // Load existing QR codes from Drive documents
+    try {
+      const docs = await documentService.list(props.id)
+      qrLinks.value = docs
+        .filter(d => d.file_name.startsWith('qr_code_'))
+        .map(d => {
+          const match = d.drive_url.match(/\/d\/([^/]+)\//)
+          const downloadUrl = match
+            ? `https://drive.google.com/uc?export=download&id=${match[1]}`
+            : d.drive_url
+          return { name: d.file_name, url: downloadUrl }
+        })
+    } catch {
+      // Drive not configured – silently ignore
     }
   } catch (e: any) {
     error.value = 'Veranstaltung konnte nicht geladen werden'
