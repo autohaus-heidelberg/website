@@ -176,7 +176,7 @@ async function loadEvent() {
     try {
       const docs = await documentService.list(props.id)
       qrLinks.value = docs
-        .filter(d => d.file_name.startsWith('qr_code_'))
+        .filter(d => d.file_name.startsWith('qr_code_') && d.drive_file_id)
         .map(d => ({
           name: d.file_name,
           url: `/api/drive/download/${d.drive_file_id}/`,
@@ -381,13 +381,14 @@ async function generateQrCode() {
     const result = await eventService.generateQrCode(form.value.id!, qrWithLogo.value)
     const count = result.qr_codes?.length ?? 0
     qrLinks.value = (result.qr_codes ?? []).map(qr => {
-      // Convert Drive webViewLink to proxy download URL
+      // Extract Drive file ID from webViewLink: /file/d/<FILE_ID>/view
       const match = qr.url.match(/\/d\/([^/]+)\//)
-      const downloadUrl = match
-        ? `/api/drive/download/${match[1]}/`
-        : qr.url
-      return { name: qr.name, url: downloadUrl }
-    })
+      const fileId = match?.[1]
+      return {
+        name: qr.name,
+        url: fileId ? `/api/drive/download/${fileId}/` : qr.url,
+      }
+    }).filter(qr => qr.url)
     qrSuccess.value = `${count} QR-Code${count !== 1 ? 's' : ''} erzeugt.`
 
     setTimeout(() => {
