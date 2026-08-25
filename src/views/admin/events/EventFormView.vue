@@ -56,6 +56,7 @@ const form = ref<Partial<AppEvent>>({
 const isLoading = ref(false)
 const error = ref('')
 const showOverflow = ref(false)
+const overflowDropdownStyle = ref({ top: '0px', right: '0px' })
 const pendingDelete = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
 const deleteError = ref('')
 const imageFile = ref<File | null>(null)
@@ -475,6 +476,28 @@ async function commitDelete() {
   }
 }
 
+function toggleOverflow(e: MouseEvent) {
+  if (showOverflow.value) {
+    showOverflow.value = false
+    return
+  }
+  const btn = (e.currentTarget as HTMLElement)
+  const rect = btn.getBoundingClientRect()
+  const dropdownHeight = 60 // approx height
+  const spaceBelow = window.innerHeight - rect.bottom
+  let topPos: number
+  if (spaceBelow >= dropdownHeight) {
+    topPos = rect.bottom + 4
+  } else {
+    topPos = rect.top - dropdownHeight - 4
+  }
+  overflowDropdownStyle.value = {
+    top: topPos + 'px',
+    right: (window.innerWidth - rect.right) + 'px'
+  }
+  showOverflow.value = true
+}
+
 function closeOverflow(e: MouseEvent) {
   if (!(e.target as HTMLElement).closest('.overflow-menu')) {
     showOverflow.value = false
@@ -838,8 +861,8 @@ function closeDeployModal() {
               | {{ isLoading ? 'Speichern...' : (isEditing ? 'Veranstaltung aktualisieren' : 'Veranstaltung erstellen') }}
             router-link.btn-secondary(to="/admin/events") Abbrechen
             .overflow-menu(v-if="isEditing")
-              button.btn-overflow(type="button" @click="showOverflow = !showOverflow") ⋯
-              .overflow-dropdown(v-if="showOverflow")
+              button.btn-overflow(type="button" @click="toggleOverflow($event)") ⋯
+              .overflow-dropdown(v-if="showOverflow" :style="overflowDropdownStyle")
                 button.overflow-item.overflow-danger(type="button" @click="deleteEvent") Veranstaltung löschen
 
       .preview-section
@@ -1458,13 +1481,10 @@ input:disabled {
 }
 
 .overflow-dropdown {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  margin-top: 0.25rem;
+  position: fixed;
   background: white;
   border: 0.25rem solid black;
-  z-index: 100;
+  z-index: 1000;
   min-width: 12rem;
 }
 
