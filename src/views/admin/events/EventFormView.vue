@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { eventService, artistService, pretixService, accountingService, documentService } from '@/services'
+import { API_BASE_URL } from '@/services/api'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
 import type { PretixOrderSummary } from '@/services/accounting'
 import publishedEvents from '@/events.json'
@@ -179,7 +180,7 @@ async function loadEvent() {
         .filter(d => d.file_name.startsWith('qr_code_') && d.drive_file_id)
         .map(d => ({
           name: d.file_name,
-          url: `/api/drive/download/${d.drive_file_id}/`,
+          url: `${API_BASE_URL}/api/drive/download/${d.drive_file_id}/`,
         }))
     } catch {
       // Drive not configured – silently ignore
@@ -386,7 +387,7 @@ async function generateQrCode() {
       const fileId = match?.[1]
       return {
         name: qr.name,
-        url: fileId ? `/api/drive/download/${fileId}/` : qr.url,
+        url: fileId ? `${API_BASE_URL}/api/drive/download/${fileId}/` : qr.url,
       }
     }).filter(qr => qr.url)
     qrSuccess.value = `${count} QR-Code${count !== 1 ? 's' : ''} erzeugt.`
