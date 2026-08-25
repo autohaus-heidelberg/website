@@ -68,6 +68,7 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
+const flyerLinks = ref<{ name: string; url: string }[]>([])
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
 const qrWithLogo = ref(true)
@@ -173,15 +174,15 @@ async function loadEvent() {
     if ((event as any).presale_token) {
       presaleToken.value = (event as any).presale_token
     }
-    // Load existing QR codes from Drive documents
+    // Load existing QR codes and flyers from Drive documents
     try {
       const docs = await documentService.list(props.id)
-      qrLinks.value = docs
-        .filter(d => d.file_name.startsWith('qr_code_') && d.drive_file_id)
-        .map(d => ({
-          name: d.file_name,
-          url: `${API_BASE_URL}/api/drive/download/${d.drive_file_id}/`,
-        }))
+      const toLink = (d: { file_name: string; drive_file_id: string }) => ({
+        name: d.file_name,
+        url: `${API_BASE_URL}/api/drive/download/${d.drive_file_id}/`,
+      })
+      qrLinks.value = docs.filter(d => d.file_name.startsWith('qr_code_') && d.drive_file_id).map(toLink)
+      flyerLinks.value = docs.filter(d => d.file_name.startsWith('flyer_') && d.drive_file_id).map(toLink)
     } catch {
       // Drive not configured – silently ignore
     }
@@ -333,11 +334,17 @@ async function generateFlyers() {
   isGeneratingFlyers.value = true
   error.value = ''
   flyerSuccess.value = ''
+  flyerLinks.value = []
 
   try {
     const result = await eventService.generateFlyers(form.value.id!)
     const count = result.flyers?.length ?? 0
-    flyerSuccess.value = `${count} Flyer im Google-Drive-Ordner des Events abgelegt.`
+    flyerLinks.value = (result.flyers ?? []).map(f => {
+      const match = f.url.match(/\/d\/([^/]+)\//)
+      const fileId = match?.[1]
+      return { name: f.name, url: fileId ? `${API_BASE_URL}/api/drive/download/${fileId}/` : f.url }
+    }).filter(f => f.url)
+    flyerSuccess.value = `${count} Flyer erzeugt.`
 
     setTimeout(() => {
       flyerSuccess.value = ''
@@ -881,6 +888,13 @@ function closeDeployModal() {
                 | {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Social-Media-Flyer erzeugen' }}
               .field-hint Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
             .success-message(v-if="flyerSuccess") {{ flyerSuccess }}
+            .qr-links(v-if="flyerLinks.length")
+              button.qr-download-link(
+                v-for="flyer in flyerLinks"
+                :key="flyer.name"
+                type="button"
+                @click="downloadFile(flyer.url, flyer.name)"
+              ) ⬇ {{ flyer.name }}
 
             .shop-link-actions(v-if="isEditing")
               .qr-options
