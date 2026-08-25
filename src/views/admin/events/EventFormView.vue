@@ -350,7 +350,14 @@ async function generateQrCode() {
   try {
     const result = await eventService.generateQrCode(form.value.id!, qrWithLogo.value)
     const count = result.qr_codes?.length ?? 0
-    qrLinks.value = result.qr_codes ?? []
+    qrLinks.value = (result.qr_codes ?? []).map(qr => {
+      // Convert Drive webViewLink to direct download URL
+      const match = qr.url.match(/\/d\/([^/]+)\//)
+      const downloadUrl = match
+        ? `https://drive.google.com/uc?export=download&id=${match[1]}`
+        : qr.url
+      return { name: qr.name, url: downloadUrl }
+    })
     qrSuccess.value = `${count} QR-Code${count !== 1 ? 's' : ''} erzeugt.`
 
     setTimeout(() => {
@@ -861,6 +868,7 @@ function closeDeployModal() {
                 v-for="qr in qrLinks"
                 :key="qr.name"
                 :href="qr.url"
+                :download="qr.name"
                 target="_blank"
                 rel="noopener"
               ) ⬇ {{ qr.name }}
