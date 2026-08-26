@@ -465,7 +465,7 @@ onMounted(() => {
         span 📦 Bestandskorrektur (Flaschen erlaubt)
     .scan-area
       label.btn-scan(:class="{ scanning: isScanning }")
-        input(type="file" accept="image/*" capture="environment" @change="scanReceipt" hidden)
+        input(type="file" accept="image/*" @change="scanReceipt" hidden)
         | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
       span.scan-hint Foto vom Bon → KI füllt die Positionen aus
       a.receipt-link(v-if="form.receipt_drive_url" :href="form.receipt_drive_url" target="_blank") 📄 Beleg ansehen
