@@ -76,6 +76,17 @@ function lastActivity(anfrage: Anfrage): number {
   return latest
 }
 
+function linkifyText(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  const urlRegex = /(https?:\/\/[^\s<>"]+)/g
+  return escaped.replace(urlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="message-link">${url}</a>`
+  })
+}
+
 function extractOrigin(message: string): string | null {
   const match = message.match(/^Herkunft:\s*(.+)$/m)
   return match ? match[1].trim() : null
@@ -355,7 +366,7 @@ onMounted(() => {
 
           .message-section
             .detail-label Nachricht
-            .message-text {{ anfrage.message }}
+            .message-text(v-html="linkifyText(anfrage.message)")
 
           .thread-section(v-if="anfrage.messages && anfrage.messages.length")
             .thread-header ✉️ Konversation
@@ -368,7 +379,7 @@ onMounted(() => {
                 span.thread-badge {{ msg.direction === 'outgoing' ? '➡️ Gesendet' : '⬅️ Antwort' }}
                 span.thread-date {{ timeAgo(msg.createdAt) }}
               .thread-subject(v-if="msg.subject") {{ msg.subject }}
-              .thread-body {{ msg.body }}
+              .thread-body(v-html="linkifyText(msg.body)")
 
           .anfrage-actions
             .read-meta(v-if="anfrage.isRead && anfrage.readByUsername")
@@ -820,6 +831,18 @@ h2 {
   background: #f8f8f8;
   padding: 1rem;
   border-left: 0.25rem solid #ddd;
+}
+
+.message-text :deep(.message-link),
+.thread-body :deep(.message-link) {
+  color: #0066cc;
+  text-decoration: underline;
+  word-break: break-all;
+}
+
+.message-text :deep(.message-link):hover,
+.thread-body :deep(.message-link):hover {
+  color: #004499;
 }
 
 /* Conversation thread */
