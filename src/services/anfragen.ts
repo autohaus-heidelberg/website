@@ -93,7 +93,7 @@ export const anfrageService = {
     await api.post(`/api/anfragen/${id}/reply/`, { subject, message })
   },
 
-  async generateReply(id: number, reason: 'zu_teuer' | 'keine_kapazitaet'): Promise<string> {
+  async generateReply(id: number, reason: 'zu_teuer' | 'keine_kapazitaet' | 'aufgenommen'): Promise<string> {
     const res = await api.post<{ message: string }>(`/api/anfragen/${id}/generate_reply/`, { reason })
     return res.message
   },
