@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
-import { accountingService, beverageService, eventService, pretixService, paypalBarService, grantService, stockService, documentService } from '@/services'
+import { accountingService, beverageService, eventService, pretixService, paypalBarService, sumupBarService, grantService, stockService, documentService } from '@/services'
 import type { Event } from '@/services'
-import type { PretixOrderSummary, PayPalBarSummary, PayPalCategory, EventDocument } from '@/services/accounting'
+import type { PretixOrderSummary, PayPalBarSummary, PayPalCategory, SumUpBarSummary, SumUpCategory, EventDocument } from '@/services/accounting'
 import type {
   EventAccounting,
   RevenueEntry,
@@ -133,6 +133,11 @@ const paypalBarData = ref<PayPalBarSummary | null>(null)
 const paypalBarLoading = ref(false)
 const paypalBarError = ref('')
 
+// ── SumUp Bar ────────────────────────────────────────────────────
+const sumupBarData = ref<SumUpBarSummary | null>(null)
+const sumupBarLoading = ref(false)
+const sumupBarError = ref('')
+
 // ── Grant (Förderung) ────────────────────────────────────────────
 const grantTouched = ref(false)
 const grantRecord = ref<GrantApplication | null>(null)
@@ -240,6 +245,35 @@ function paypalTransactionsFor(category: 'bar' | 'entrance') {
     .filter(({ txn }) => txn.category === category)
 }
 
+const sumupBarTotals = computed(() => {
+  if (!sumupBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
+  const txns = sumupBarData.value.transactions
+  return {
+    amount: txns.reduce((s, t) => s + t.amount, 0),
+    fees: txns.reduce((s, t) => s + t.fee, 0),
+    net: txns.reduce((s, t) => s + t.net, 0),
+    count: txns.length,
+  }
+})
+
+const sumupBarCategoryTotals = computed(() => {
+  if (!sumupBarData.value) return { bar: { amount: 0, fees: 0, count: 0 }, entrance: { amount: 0, fees: 0, count: 0 } }
+  const txns = sumupBarData.value.transactions
+  const bar = txns.filter(t => t.category === 'bar')
+  const entrance = txns.filter(t => t.category === 'entrance')
+  return {
+    bar: { amount: bar.reduce((s, t) => s + t.amount, 0), fees: bar.reduce((s, t) => s + t.fee, 0), count: bar.length },
+    entrance: { amount: entrance.reduce((s, t) => s + t.amount, 0), fees: entrance.reduce((s, t) => s + t.fee, 0), count: entrance.length },
+  }
+})
+
+function sumupTransactionsFor(category: 'bar' | 'entrance') {
+  if (!sumupBarData.value) return []
+  return sumupBarData.value.transactions
+    .map((txn, idx) => ({ txn, idx }))
+    .filter(({ txn }) => txn.category === category)
+}
+
 // ── Sorting ──────────────────────────────────────────────────────
 const invSort = useSort<{ beverage: BeverageItem; entry: InventoryEntry }>()
 const expSort = useSort<ExpenseEntry>()
@@ -282,10 +316,12 @@ async function fetchAndApplyAllExternal() {
   externalDataLoading.value = true
   pretixError.value = ''
   paypalBarError.value = ''
+  sumupBarError.value = ''
 
   const results = await Promise.allSettled([
     pretixService.getOrderSummary(props.eventId),
     paypalBarService.getBarTransactions(props.eventId),
+    sumupBarService.getBarTransactions(props.eventId),
   ])
 
   // Pretix
@@ -302,6 +338,14 @@ async function fetchAndApplyAllExternal() {
     applyPaypalBarData()
   } else {
     paypalBarError.value = results[1].reason?.message || 'PayPal-Daten konnten nicht geladen werden'
+  }
+
+  // SumUp
+  if (results[2].status === 'fulfilled') {
+    sumupBarData.value = results[2].value
+    applySumupBarData()
+  } else {
+    sumupBarError.value = results[2].reason?.message || 'SumUp-Daten konnten nicht geladen werden'
   }
 
   externalDataLoaded.value = true
@@ -377,11 +421,57 @@ function setAllPaypalCategory(category: PayPalCategory) {
   applyPaypalBarData()
 }
 
+async function fetchSumupBarData() {
+  if (!props.eventId) return
+  sumupBarLoading.value = true
+  sumupBarError.value = ''
+  try {
+    sumupBarData.value = await sumupBarService.getBarTransactions(props.eventId)
+  } catch (e: any) {
+    sumupBarError.value = e.message || 'SumUp-Daten konnten nicht geladen werden'
+  } finally {
+    sumupBarLoading.value = false
+  }
+}
+
+function applySumupBarData() {
+  if (!sumupBarData.value) return
+  const ct = sumupBarCategoryTotals.value
+  // Apply bar transactions
+  const barRev = getRevenue('bar_sumup')
+  barRev.total = ct.bar.amount.toFixed(2)
+  barRev.fees = ct.bar.fees.toFixed(2)
+  barRev.change_money = '0.00'
+  // Apply entrance transactions
+  const entranceRev = getRevenue('entrance_sumup')
+  entranceRev.total = ct.entrance.amount.toFixed(2)
+  entranceRev.fees = ct.entrance.fees.toFixed(2)
+  entranceRev.change_money = '0.00'
+}
+
+function removeSumupBarTransaction(idx: number) {
+  if (!sumupBarData.value) return
+  sumupBarData.value.transactions.splice(idx, 1)
+}
+
+function toggleSumupCategory(idx: number) {
+  if (!sumupBarData.value) return
+  const txn = sumupBarData.value.transactions[idx]
+  txn.category = txn.category === 'bar' ? 'entrance' : 'bar'
+  applySumupBarData()
+}
+
+function setAllSumupCategory(category: SumUpCategory) {
+  if (!sumupBarData.value) return
+  sumupBarData.value.transactions.forEach(t => { t.category = category })
+  applySumupBarData()
+}
+
 // ── Computed: Revenue ────────────────────────────────────────────
 
 const allRevenueSources: RevenueSource[] = [
-  'bar_cash', 'bar_paypal',
-  'entrance_cash', 'entrance_paypal',
+  'bar_cash', 'bar_paypal', 'bar_sumup',
+  'entrance_cash', 'entrance_paypal', 'entrance_sumup',
   'vvk_pretix',
 ]
 
@@ -887,7 +977,7 @@ const remainingAfterSplits = computed(() => {
 
 // Einnahmen aus Eintritt (Einlass + VVK), netto (USt rausgerechnet)
 const doorDealEntranceRevenue = computed(() => {
-  const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
+  const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
   return revenues.value
     .filter(r => entranceSources.includes(r.source))
     .reduce((sum, r) => {
@@ -944,7 +1034,7 @@ const grantTotalEligible = computed(() => {
 
 const grantAdmissionRevenue = computed(() => {
   const admissionNet = revenues.value
-    .filter(r => r.source === 'entrance_cash' || r.source === 'entrance_paypal' || r.source === 'vvk_pretix')
+    .filter(r => r.source === 'entrance_cash' || r.source === 'entrance_paypal' || r.source === 'entrance_sumup' || r.source === 'vvk_pretix')
     .reduce((sum, r) => sum + revenueNet(r), 0)
   // Add back expenses paid from entrance cash (these were admission revenue used for payouts)
   return admissionNet + expensesFromSource('entrance_cash')
@@ -952,7 +1042,7 @@ const grantAdmissionRevenue = computed(() => {
 
 const grantBarContribution = computed(() => {
   const barTotal = revenues.value
-    .filter(r => r.source === 'bar_cash' || r.source === 'bar_paypal')
+    .filter(r => r.source === 'bar_cash' || r.source === 'bar_paypal' || r.source === 'bar_sumup')
     .reduce((sum, r) => sum + revenueNet(r), 0)
   return barTotal * 0.2
 })
@@ -1698,16 +1788,18 @@ defineExpose({ toggleFinalStatus })
         button.btn-fetch-all(
           @click="fetchAndApplyAllExternal"
           :disabled="externalDataLoading"
-        ) {{ externalDataLoading ? 'Laden...' : externalDataLoaded ? '↻ Externe Daten neu laden' : '⬇ Externe Daten laden (Pretix + PayPal)' }}
+        ) {{ externalDataLoading ? 'Laden...' : externalDataLoaded ? '↻ Externe Daten neu laden' : '⬇ Externe Daten laden (Pretix + PayPal + SumUp)' }}
         .external-data-status(v-if="externalDataLoaded && !externalDataLoading")
-          span.success(v-if="!pretixError && !paypalBarError") ✓ Daten übernommen
+          span.success(v-if="!pretixError && !paypalBarError && !sumupBarError") ✓ Daten übernommen
           span.pretix-error(v-if="pretixError") Pretix: {{ pretixError }}
           span.pretix-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
+          span.pretix-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
         .pretix-warnings(v-if="pretixData?.warnings?.length")
           .pretix-warning(v-for="w in pretixData.warnings" :key="w") ⚠️ {{ w }}
-        .external-data-summary(v-if="externalDataLoaded && !pretixError && !paypalBarError")
+        .external-data-summary(v-if="externalDataLoaded && !pretixError && !paypalBarError && !sumupBarError")
           span(v-if="pretixData") 🎟️ {{ pretixData.total_tickets }} Tickets ({{ formatCurrency(pretixData.total_revenue) }})
-          span(v-if="paypalBarData") &nbsp;· 🍺 {{ paypalBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(paypalBarCategoryTotals.bar.amount) }}) · 🚪 {{ paypalBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(paypalBarCategoryTotals.entrance.amount) }})
+          span(v-if="paypalBarData") &nbsp;· 💙 {{ paypalBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(paypalBarCategoryTotals.bar.amount) }}) · 🚪 {{ paypalBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(paypalBarCategoryTotals.entrance.amount) }})
+          span(v-if="sumupBarData") &nbsp;· 💳 {{ sumupBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(sumupBarCategoryTotals.bar.amount) }}) · 🚪 {{ sumupBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(sumupBarCategoryTotals.entrance.amount) }})
 
       .section(v-for="group in REVENUE_GROUPS" :key="group.label")
         .section-title-row
@@ -1795,6 +1887,29 @@ defineExpose({ toggleFinalStatus })
                   .col-amount.sub-val {{ formatCurrency(txn.fee) }}
                   .col-amount.sub-val {{ formatCurrency(txn.net) }}
                   button.btn-remove-txn(@click.stop="removePaypalBarTransaction(idx)" title="Transaktion entfernen") ✕
+            template(v-if="(source === 'bar_sumup' || source === 'entrance_sumup') && sumupBarData && sumupTransactionsFor(source === 'bar_sumup' ? 'bar' : 'entrance').length")
+              .revenue-row.sub-row.paypal-cat-actions.expandable(@click="toggleSourceExpanded(source)")
+                .col-source.sub-source
+                  span {{ expandedSources.has(source) ? '▾' : '▸' }} {{ sumupTransactionsFor(source === 'bar_sumup' ? 'bar' : 'entrance').length }} Transaktionen
+                  button.btn-cat-all(@click.stop="setAllSumupCategory(source === 'bar_sumup' ? 'entrance' : 'bar')") Alle → {{ source === 'bar_sumup' ? '🚪 Einlass' : '🍺 Bar' }}
+                  span.entry-price-hint(v-if="source === 'entrance_sumup' && sumupBarData.entry_price") Eintritt: {{ sumupBarData.entry_price }}€{{ sumupBarData.entry_price_ak ? ' / AK ' + sumupBarData.entry_price_ak + '€' : '' }}
+              template(v-if="expandedSources.has(source)")
+                .revenue-row.sub-row.sub-detail(
+                  v-for="{ txn, idx } in sumupTransactionsFor(source === 'bar_sumup' ? 'bar' : 'entrance')"
+                  :key="idx"
+                  :class="{ 'cat-entrance': txn.category === 'entrance', 'cat-bar': txn.category === 'bar' }"
+                )
+                  .col-source.sub-source.sub-detail-source
+                    button.btn-cat-toggle(
+                      @click.stop="toggleSumupCategory(idx)"
+                      :title="source === 'bar_sumup' ? '→ Einlass verschieben' : '→ Bar verschieben'"
+                    ) {{ source === 'bar_sumup' ? '→ 🚪' : '→ 🍺' }}
+                    span {{ txn.name }} · {{ formatTime(txn.timestamp) }}
+                  .col-amount.sub-val {{ formatCurrency(txn.amount) }}
+                  .col-amount.sub-val —
+                  .col-amount.sub-val {{ formatCurrency(txn.fee) }}
+                  .col-amount.sub-val {{ formatCurrency(txn.net) }}
+                  button.btn-remove-txn(@click.stop="removeSumupBarTransaction(idx)" title="Transaktion entfernen") ✕
         .group-total
           span Gesamt {{ group.label }}:
           strong {{ formatCurrency(groupRevenue(group.sources)) }}

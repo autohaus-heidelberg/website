@@ -77,8 +77,10 @@ class RevenueEntry(models.Model):
     SOURCE_CHOICES = [
         ('bar_cash', 'Bar (Bargeld)'),
         ('bar_paypal', 'Bar (PayPal)'),
+        ('bar_sumup', 'Bar (SumUp)'),
         ('entrance_cash', 'Einlass (Bargeld)'),
         ('entrance_paypal', 'Einlass (PayPal)'),
+        ('entrance_sumup', 'Einlass (SumUp)'),
         ('vvk_pretix', 'VVK (Pretix)'),
         ('vvk_paypal', 'VVK (PayPal)'),
         ('vvk_stripe', 'VVK (Stripe)'),

@@ -38,8 +38,10 @@ export interface BeverageItem {
 export type RevenueSource =
   | 'bar_cash'
   | 'bar_paypal'
+  | 'bar_sumup'
   | 'entrance_cash'
   | 'entrance_paypal'
+  | 'entrance_sumup'
   | 'vvk_pretix'
   | 'vvk_paypal'
   | 'vvk_stripe'
@@ -64,8 +66,10 @@ export const VAT_RATE_LABELS: Record<VatRate, string> = {
 export const REVENUE_SOURCE_LABELS: Record<RevenueSource, string> = {
   bar_cash: 'Bar (Bargeld)',
   bar_paypal: 'Bar (PayPal)',
+  bar_sumup: 'Bar (SumUp)',
   entrance_cash: 'Einlass (Bargeld)',
   entrance_paypal: 'Einlass (PayPal)',
+  entrance_sumup: 'Einlass (SumUp)',
   vvk_pretix: 'VVK (Pretix)',
   vvk_paypal: 'VVK (PayPal)',
   vvk_stripe: 'VVK (Stripe)',
@@ -74,16 +78,18 @@ export const REVENUE_SOURCE_LABELS: Record<RevenueSource, string> = {
 export const REVENUE_VAT_RATE_DEFAULTS: Partial<Record<RevenueSource, VatRate>> = {
   bar_cash: '19',
   bar_paypal: '19',
+  bar_sumup: '19',
   entrance_cash: '7',
   entrance_paypal: '7',
+  entrance_sumup: '7',
   vvk_pretix: '7',
   vvk_paypal: '7',
   vvk_stripe: '7',
 }
 
 export const REVENUE_GROUPS: { label: string; sources: RevenueSource[] }[] = [
-  { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal'] },
-  { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'vvk_pretix'] },
+  { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal', 'bar_sumup'] },
+  { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix'] },
 ]
 
 export interface RevenueEntry {
