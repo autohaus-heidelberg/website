@@ -3,8 +3,10 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { artistService, type Artist } from '@/services'
 import type { PaginatedResponse } from '@/types/api'
+import SupportBandsPanel from './SupportBandsPanel.vue'
 
 const router = useRouter()
+const activeTab = ref<'artists' | 'support'>('artists')
 const artistsData = ref<PaginatedResponse<Artist> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
@@ -60,38 +62,45 @@ onMounted(() => {
   .header
     h2 Künstler
 
-  .toolbar
-    input.search-input(
-      v-model="searchQuery"
-      type="text"
-      placeholder="Künstler suchen..."
-    )
-    router-link.btn-primary(to="/admin/artists/create") + Neuer Künstler
+  .tabs
+    button.tab(:class="{ active: activeTab === 'artists' }" @click="activeTab = 'artists'") Künstler
+    button.tab(:class="{ active: activeTab === 'support' }" @click="activeTab = 'support'") 🎸 Support-Pool
 
-  .loading(v-if="isLoading") Künstler werden geladen...
-  .error(v-else-if="error") {{ error }}
+  template(v-if="activeTab === 'artists'")
+    .toolbar
+      input.search-input(
+        v-model="searchQuery"
+        type="text"
+        placeholder="Künstler suchen..."
+      )
+      router-link.btn-primary(to="/admin/artists/create") + Neuer Künstler
 
-  .artists-grid(v-else-if="filteredArtists.length")
-    .artist-card(v-for="artist in filteredArtists" :key="artist.id")
-      .artist-image(v-if="artist.image_url")
-        img(:src="artist.image_url" :alt="artist.name")
-      .artist-placeholder(v-else)
+    .loading(v-if="isLoading") Künstler werden geladen...
+    .error(v-else-if="error") {{ error }}
 
-      .artist-content
-        h3.artist-name {{ artist.name }}
-        p.artist-description(v-if="artist.description") {{ artist.description }}
+    .artists-grid(v-else-if="filteredArtists.length")
+      .artist-card(v-for="artist in filteredArtists" :key="artist.id")
+        .artist-image(v-if="artist.image_url")
+          img(:src="artist.image_url" :alt="artist.name")
+        .artist-placeholder(v-else)
 
-        .artist-links(v-if="artist.link || artist.soundcloud || artist.youtube || artist.bandcamp")
-          a.link(v-if="artist.link" :href="artist.link" target="_blank") Website
-          a.link(v-if="artist.soundcloud" :href="artist.soundcloud" target="_blank") SoundCloud
-          a.link(v-if="artist.youtube" :href="artist.youtube" target="_blank") YouTube
-          a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") Bandcamp
+        .artist-content
+          h3.artist-name {{ artist.name }}
+          p.artist-description(v-if="artist.description") {{ artist.description }}
 
-      .artist-actions
-        router-link.btn-edit(:to="`/admin/artists/${artist.id}`") Bearbeiten
-        button.btn-delete(@click="deleteArtist(artist)") Löschen
+          .artist-links(v-if="artist.link || artist.soundcloud || artist.youtube || artist.bandcamp")
+            a.link(v-if="artist.link" :href="artist.link" target="_blank") Website
+            a.link(v-if="artist.soundcloud" :href="artist.soundcloud" target="_blank") SoundCloud
+            a.link(v-if="artist.youtube" :href="artist.youtube" target="_blank") YouTube
+            a.link(v-if="artist.bandcamp" :href="artist.bandcamp" target="_blank") Bandcamp
 
-  .empty(v-else) Keine Künstler gefunden
+        .artist-actions
+          router-link.btn-edit(:to="`/admin/artists/${artist.id}`") Bearbeiten
+          button.btn-delete(@click="deleteArtist(artist)") Löschen
+
+    .empty(v-else) Keine Künstler gefunden
+
+  SupportBandsPanel(v-else)
 </template>
 
 <style scoped>
@@ -115,6 +124,30 @@ h2 {
   color: black;
   margin: 0;
   font-weight: 900;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 0.25rem solid black;
+}
+
+.tab {
+  padding: 0.625rem 1.25rem;
+  border: 0.25rem solid black;
+  border-bottom: none;
+  background: white;
+  color: black;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: -0.25rem;
+}
+
+.tab.active {
+  background: black;
+  color: white;
 }
 
 .toolbar {

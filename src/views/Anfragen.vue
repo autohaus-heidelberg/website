@@ -182,7 +182,6 @@ function buildMessage(): string {
   const extras: string[] = []
 
   if (form.musicLink) extras.push(`Musik: ${form.musicLink}`)
-  if (form.origin) extras.push(`Herkunft: ${form.origin}`)
   if (form.persons) extras.push(`Personen: ${form.persons}`)
 
   if (extras.length) {
@@ -204,6 +203,7 @@ async function submitForm() {
       budget: form.budget || '',
       honeypot: form.honeypot,
       genre: form.genre || null,
+      origin: form.origin || null,
       dateStart: form.dateStart || null,
       dateEnd: form.dateEnd || null,
       technicalRequirements: form.technicalRequirements || null,
