@@ -117,8 +117,10 @@ Einnahmen werden nach **Quelle** erfasst:
 |--------|-------------|--------------|
 | `bar_cash` | Theke – Bargeld | Wirtschaftlich (19%) |
 | `bar_paypal` | Theke – PayPal | Wirtschaftlich (19%) |
+| `bar_sumup` | Theke – SumUp | Wirtschaftlich (19%) |
 | `entrance_cash` | Eintritt – Bargeld | Zweckbetrieb (7%) |
 | `entrance_paypal` | Eintritt – PayPal | Zweckbetrieb (7%) |
+| `entrance_sumup` | Eintritt – SumUp | Zweckbetrieb (7%) |
 | `vvk_pretix` | VVK über Pretix | Zweckbetrieb (7%) |
 | `vvk_stripe` | VVK über Stripe | Zweckbetrieb (7%) |
 | `vvk_paypal` | VVK über PayPal | Zweckbetrieb (7%) |
@@ -126,11 +128,12 @@ Einnahmen werden nach **Quelle** erfasst:
 **Felder pro Einnahme:**
 - **Einnahme (total)** – Gesamteinnahme inkl. Wechselgeld
 - **Wechselgeld (change_money)** – Muss abgezogen werden (war schon in der Kasse)
-- **Gebühren (fees)** – PayPal/Stripe-Gebühren
+- **Gebühren (fees)** – PayPal/Stripe/SumUp-Gebühren
 
 **Externe Daten:**
 - **Pretix-VVK**: Wird automatisch über die Pretix-API abgefragt (Ticketverkäufe + Stripe/PayPal-Gebühren)
 - **PayPal Bar**: PayPal-Transaktionen für Bar- und Eintritts-Zahlungen werden automatisch zugeordnet
+- **SumUp Bar**: SumUp-Kartenzahlungen für Bar- und Eintritts-Zahlungen werden automatisch zugeordnet
 
 ### 4.3 Inventur (Getränkebestand)
 

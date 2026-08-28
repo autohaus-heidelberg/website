@@ -436,6 +436,40 @@ export const paypalBarService = {
   },
 }
 
+// ── SumUp Bar Transactions ──────────────────────────────────────
+
+export type SumUpCategory = 'bar' | 'entrance'
+
+export interface SumUpBarTransaction {
+  timestamp: string
+  name: string
+  description: string
+  amount: number
+  fee: number
+  net: number
+  type: string
+  category: SumUpCategory
+}
+
+export interface SumUpBarSummary {
+  event_id: string
+  event_date: string
+  entry_price: number | null
+  entry_price_ak: number | null
+  search_window: { start: string; end: string }
+  transaction_count: number
+  total_amount: number
+  total_fees: number
+  total_net: number
+  transactions: SumUpBarTransaction[]
+}
+
+export const sumupBarService = {
+  async getBarTransactions(eventId: string): Promise<SumUpBarSummary> {
+    return api.get<SumUpBarSummary>(`/api/sumup/bar-transactions/${eventId}/`)
+  },
+}
+
 // ── Grant Applications (Förderung) ──────────────────────────────
 
 export const grantService = {
