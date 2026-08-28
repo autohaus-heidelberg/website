@@ -19,6 +19,15 @@ function extractMusicLink(anfrage: Anfrage): string | null {
   return match ? match[1].trim() : null
 }
 
+// Older inquiries embedded these as leading lines in the message body; they are
+// now shown separately (Ort badge, Musik link), so drop them from the preview.
+function cleanMessage(anfrage: Anfrage): string {
+  return anfrage.message
+    .replace(/^(Musik|Herkunft|Personen):.*$/gm, '')
+    .replace(/^\s*\n/, '')
+    .trim()
+}
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('de-DE', {
     day: '2-digit',
@@ -118,9 +127,9 @@ onMounted(() => {
       .band-meta
         span.band-genre(v-if="band.genre") {{ band.genre }}
         span.band-date eingegangen {{ formatDate(band.submittedAt) }}
-      p.band-message {{ band.message }}
+      p.band-message {{ cleanMessage(band) }}
       .band-links
-        a.link(v-if="extractMusicLink(band)" :href="extractMusicLink(band)!" target="_blank" rel="noopener") 🎵 Musik
+        a.link(v-if="extractMusicLink(band)" :href="extractMusicLink(band) || undefined" target="_blank" rel="noopener") 🎵 Musik
         a.link(:href="`mailto:${band.contactEmail}`") ✉️ {{ band.contactEmail }}
       .band-actions
         router-link.btn-view(:to="{ name: 'admin-anfragen' }") In Anfragen öffnen
