@@ -87,8 +87,9 @@ function linkifyText(text: string): string {
   })
 }
 
-function extractOrigin(message: string): string | null {
-  const match = message.match(/^Herkunft:\s*(.+)$/m)
+function extractOrigin(anfrage: Anfrage): string | null {
+  if (anfrage.origin && anfrage.origin.trim()) return anfrage.origin.trim()
+  const match = anfrage.message.match(/^Herkunft:\s*(.+)$/m)
   return match ? match[1].trim() : null
 }
 
@@ -165,6 +166,20 @@ async function toggleAnswered(anfrage: Anfrage) {
     } else {
       await anfrageService.markAnswered(anfrage.id)
       anfrage.isAnswered = true
+    }
+  } catch (e: any) {
+    alert('Fehler: ' + (e.message || 'Unbekannter Fehler'))
+  }
+}
+
+async function toggleSupportCandidate(anfrage: Anfrage) {
+  try {
+    if (anfrage.isSupportCandidate) {
+      await anfrageService.unmarkSupportCandidate(anfrage.id)
+      anfrage.isSupportCandidate = false
+    } else {
+      await anfrageService.markSupportCandidate(anfrage.id)
+      anfrage.isSupportCandidate = true
     }
   } catch (e: any) {
     alert('Fehler: ' + (e.message || 'Unbekannter Fehler'))
@@ -339,7 +354,7 @@ onMounted(() => {
             span.anfrage-name {{ anfrage.name }}
           .anfrage-row2
             span.anfrage-email {{ anfrage.contactEmail }}
-            span.anfrage-origin(v-if="extractOrigin(anfrage.message)") 📍 {{ extractOrigin(anfrage.message) }}
+            span.anfrage-origin(v-if="extractOrigin(anfrage)") 📍 {{ extractOrigin(anfrage) }}
         .anfrage-right
           span.anfrage-time(:title="formatDate(anfrage.submittedAt)") {{ timeAgo(anfrage.submittedAt) }}
           span.expand-icon {{ expandedId === anfrage.id ? '▲' : '▼' }}
@@ -390,6 +405,13 @@ onMounted(() => {
             button.btn-action(:class="anfrage.isAnswered ? 'btn-unanswered' : 'btn-answered'" @click.stop="toggleAnswered(anfrage)")
               span {{ anfrage.isAnswered ? '↩️' : '✅' }}
               | {{ anfrage.isAnswered ? 'Offen markieren' : 'Beantwortet' }}
+            button.btn-action.btn-support(
+              v-if="anfrage.type === 'band'"
+              :class="{ 'btn-support-active': anfrage.isSupportCandidate }"
+              @click.stop="toggleSupportCandidate(anfrage)"
+            )
+              span 🎸
+              | {{ anfrage.isSupportCandidate ? 'Aus Support-Pool entfernen' : 'Für Support-Pool vormerken' }}
             button.btn-action.btn-reply(
               @click.stop="startReply(anfrage)"
               v-if="replyingTo !== anfrage.id"
@@ -973,6 +995,27 @@ h2 {
 
 .btn-unanswered:hover {
   background: #e5e7eb;
+}
+
+.btn-support {
+  background: #fff7ed;
+  border-color: #f59e0b;
+  color: #b45309;
+}
+
+.btn-support:hover {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-support-active {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-support-active:hover {
+  background: #fff7ed;
+  color: #b45309;
 }
 
 .btn-delete {
