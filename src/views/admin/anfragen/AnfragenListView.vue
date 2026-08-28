@@ -202,7 +202,7 @@ function cancelReply() {
   replyGenerateError.value = ''
 }
 
-async function generateReply(anfrage: Anfrage, reason: 'zu_teuer' | 'keine_kapazitaet') {
+async function generateReply(anfrage: Anfrage, reason: 'zu_teuer' | 'keine_kapazitaet' | 'aufgenommen') {
   replyGenerating.value = true
   replyGenerateError.value = ''
   try {
@@ -431,7 +431,7 @@ onMounted(() => {
               .reply-form-to {{ anfrage.contactEmail }}
               button.reply-close(@click.stop="cancelReply") ✕
             .reply-ai-bar
-              span.reply-ai-label ✨ KI-Absage generieren:
+              span.reply-ai-label ✨ KI-Antwort generieren:
               button.btn-ai(
                 @click.stop="generateReply(anfrage, 'zu_teuer')"
                 :disabled="replyGenerating"
@@ -440,6 +440,11 @@ onMounted(() => {
                 @click.stop="generateReply(anfrage, 'keine_kapazitaet')"
                 :disabled="replyGenerating"
               ) 📅 Keine Kapazität
+              button.btn-ai.btn-ai-positive(
+                v-if="anfrage.type === 'band'"
+                @click.stop="generateReply(anfrage, 'aufgenommen')"
+                :disabled="replyGenerating"
+              ) 🎸 Auf dem Radar
               span.ai-generating(v-if="replyGenerating") ⏳ Generiere...
               span.ai-error(v-if="replyGenerateError") ⚠️ {{ replyGenerateError }}
             .reply-form-body
@@ -1102,6 +1107,16 @@ h2 {
 .btn-ai:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-ai-positive {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+
+.btn-ai-positive:hover:not(:disabled) {
+  background: #16a34a;
+  color: white;
 }
 
 .ai-generating {
