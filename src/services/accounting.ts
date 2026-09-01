@@ -5,6 +5,7 @@ import type {
   EventAccounting,
   RevenueEntry,
   InventoryEntry,
+  ConsumptionStats,
   ExpenseEntry,
   AccountingSplit,
   AccountingSummary,
@@ -220,6 +221,14 @@ export const accountingService = {
   async getInventory(accountingId: number): Promise<InventoryEntry[]> {
     const accounting = await this.getById(accountingId)
     return accounting.inventory_entries ?? []
+  },
+
+  /** Historical consumption stats (per drink + per category) for Inventur
+   *  anomaly detection. `excludeId` keeps the current Abrechnung out of the
+   *  baseline. */
+  async getConsumptionStats(excludeId?: number): Promise<ConsumptionStats> {
+    const qs = excludeId ? `?exclude=${excludeId}` : ''
+    return api.get<ConsumptionStats>(`/api/abrechnungen/consumption-stats/${qs}`)
   },
 
   async saveInventory(accountingId: number, entry: Partial<InventoryEntry>): Promise<InventoryEntry> {

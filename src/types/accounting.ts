@@ -123,6 +123,23 @@ export interface InventoryEntry {
   recorded_at?: string
 }
 
+/** Historical consumption statistics per drink, used to warn about likely
+ *  Inventur miscounts (e.g. remaining stock not counted). Keyed by drink id. */
+export interface ConsumptionStat {
+  count: number      // number of past events this drink was consumed at
+  mean: number       // average bottles consumed per event
+  std: number        // sample standard deviation
+  max: number        // highest bottles consumed at any past event
+  threshold: number  // consumption above this is likely a miscount
+}
+
+/** Consumption baselines returned by the stats endpoint: per drink plus a
+ *  per-category fallback for drinks with too little own history. */
+export interface ConsumptionStats {
+  drinks: Record<number, ConsumptionStat>
+  categories: Record<string, ConsumptionStat>
+}
+
 export type ExpensePaidFrom = 'entrance_cash' | 'bar_cash' | 'other_paid' | 'other'
 
 export const EXPENSE_PAID_FROM_LABELS: Record<ExpensePaidFrom, string> = {
