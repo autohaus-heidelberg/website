@@ -9,7 +9,7 @@ import type {
   RevenueEntry,
   RevenueSource,
   InventoryEntry,
-  ConsumptionStat,
+  ConsumptionStats,
   ExpenseEntry,
   AccountingSplit,
   ExpensePaidFrom,
@@ -118,10 +118,10 @@ const stockChangedWarning = ref('')
 type InventoryConflict = { drink: string; available: number; requested: number }
 const inventoryConflicts = reactive(new Map<number, InventoryConflict>())
 
-// Historical per-drink consumption stats (keyed by drink id) used to warn when
+// Historical consumption stats (per drink + per category) used to warn when
 // the entered consumption is unusually high — a strong hint that remaining
 // stock was forgotten during the Inventur. Loaded once per Abrechnung.
-const consumptionStats = ref<Record<number, ConsumptionStat>>({})
+const consumptionStats = ref<ConsumptionStats>({ drinks: {}, categories: {} })
 
 // Optimistic-concurrency conflict: another user updated the same Abrechnung
 // in parallel. Set on HTTP 409; the only resolution is to reload (otherwise
@@ -673,9 +673,14 @@ const MIN_ANOMALY_HISTORY = 3
 
 /** Returns anomaly info when the entered consumption for a row is unusually
  *  high compared to the drink's history — the typical signature of a forgotten
- *  Restbestand (remaining stock booked as consumed). Null when unremarkable. */
-function consumptionAnomaly(entry: InventoryEntry): { mean: number; max: number; consumed: number } | null {
-  const stat = consumptionStats.value[entry.beverage_item]
+ *  Restbestand (remaining stock booked as consumed). Falls back to the drink's
+ *  category baseline when the drink itself has too little history (e.g. a new
+ *  Sekt). Null when unremarkable. */
+function consumptionAnomaly(entry: InventoryEntry, beverage?: BeverageItem): { mean: number; max: number; consumed: number } | null {
+  let stat = consumptionStats.value.drinks[entry.beverage_item]
+  if ((!stat || stat.count < MIN_ANOMALY_HISTORY) && beverage?.category) {
+    stat = consumptionStats.value.categories[beverage.category]
+  }
   if (!stat || stat.count < MIN_ANOMALY_HISTORY) return null
   const consumed = inventoryConsumption(entry)
   if (consumed <= stat.threshold) return null
@@ -2018,7 +2023,7 @@ defineExpose({ toggleFinalStatus })
             .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
 
           template(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
-            .inventory-row(v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry) }")
+            .inventory-row(v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage) }")
               .col-inv-name
                 router-link.bev-name.bev-name-link(
                   v-if="authStore.isInventoryManager && beverage.id"
@@ -2083,7 +2088,7 @@ defineExpose({ toggleFinalStatus })
               .col-inv-num {{ formatQty(entry.quantity_before) }}
               .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatQty(inventoryConsumption(entry)) }}
                 span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
-                span.miscount-warning(v-if="consumptionAnomaly(entry)" :title="`Ungewöhnlich hoher Verbrauch – üblich Ø ${consumptionAnomaly(entry)?.mean}, max ${consumptionAnomaly(entry)?.max}. Restbestand vergessen?`") ⚠
+                span.miscount-warning(v-if="consumptionAnomaly(entry, beverage)" :title="`Ungewöhnlich hoher Verbrauch – üblich Ø ${consumptionAnomaly(entry, beverage)?.mean}, max ${consumptionAnomaly(entry, beverage)?.max}. Restbestand vergessen?`") ⚠
               .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
 
             .inventory-row-conflict(v-if="inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
@@ -2091,14 +2096,14 @@ defineExpose({ toggleFinalStatus })
               span.conflict-text
                 | {{ beverage.name }}: Du möchtest #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}] verbrauchen, aber aktuell sind nur noch #[strong {{ inventoryConflicts.get(beverage.id)?.available }}] verfügbar. Bitte „Nachher" um mindestens #[strong {{ ((inventoryConflicts.get(beverage.id)?.requested ?? 0) - (inventoryConflicts.get(beverage.id)?.available ?? 0)) }}] erhöhen.
 
-            .inventory-row-miscount(v-if="consumptionAnomaly(entry) && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
+            .inventory-row-miscount(v-if="consumptionAnomaly(entry, beverage) && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
               span.miscount-icon 💡
               span.miscount-text
-                | {{ beverage.name }}: #[strong {{ formatQty(consumptionAnomaly(entry)?.consumed) }}] verbraucht – üblich sind Ø #[strong {{ consumptionAnomaly(entry)?.mean }}] (max #[strong {{ consumptionAnomaly(entry)?.max }}]). Wurde evtl. Restbestand nicht gezählt?
+                | {{ beverage.name }}: #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich sind Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Wurde evtl. Restbestand nicht gezählt?
 
         //- Mobile cards
         .inventory-cards.mobile-only
-          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry) }")
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage) }")
             .inv-card-header
               .inv-card-name
                 router-link.inv-card-name-link(
@@ -2110,9 +2115,9 @@ defineExpose({ toggleFinalStatus })
             .inv-card-conflict(v-if="inventoryConflicts.has(beverage.id)")
               span ⚠️
               | {{ beverage.name }}: angefordert #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}], verfügbar #[strong {{ inventoryConflicts.get(beverage.id)?.available }}]. Nachher erhöhen.
-            .inv-card-miscount(v-if="consumptionAnomaly(entry) && !inventoryConflicts.has(beverage.id)")
+            .inv-card-miscount(v-if="consumptionAnomaly(entry, beverage) && !inventoryConflicts.has(beverage.id)")
               span 💡
-              | #[strong {{ formatQty(consumptionAnomaly(entry)?.consumed) }}] verbraucht – üblich Ø #[strong {{ consumptionAnomaly(entry)?.mean }}] (max #[strong {{ consumptionAnomaly(entry)?.max }}]). Restbestand vergessen?
+              | #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Restbestand vergessen?
             .inv-card-info
               span.inv-info-item
                 span.inv-info-label V:

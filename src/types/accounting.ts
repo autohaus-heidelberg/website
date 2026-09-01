@@ -133,6 +133,13 @@ export interface ConsumptionStat {
   threshold: number  // consumption above this is likely a miscount
 }
 
+/** Consumption baselines returned by the stats endpoint: per drink plus a
+ *  per-category fallback for drinks with too little own history. */
+export interface ConsumptionStats {
+  drinks: Record<number, ConsumptionStat>
+  categories: Record<string, ConsumptionStat>
+}
+
 export type ExpensePaidFrom = 'entrance_cash' | 'bar_cash' | 'other_paid' | 'other'
 
 export const EXPENSE_PAID_FROM_LABELS: Record<ExpensePaidFrom, string> = {
