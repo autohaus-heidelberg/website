@@ -1,5 +1,46 @@
 [
     {
+        "id": "20261006-metal-carousel",
+        "date": "2026-10-09T17:00:00+00:00",
+        "title": "Alt-Rock Underground",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Carousel presents Alt-Rock Underground</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/20261006-metal-carousel/",
+        "img": "/img/39e45c69-ebe2-408a-829c-446a53c693fc.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Sight Set Forward",
+                "link": "https://www.instagram.com/sightsetforward/?hl=de",
+                "description": "Sight Set Forward ist eine alternative Rockband, die von Spannung, Melodie und Bewegung lebt. Inspiriert von Bands wie A Day To Remember, Architects und Three Days Grace, spielen Sight Set Forward nicht einfach nur Musik - sie kanalisieren eine Stimmung, eine Erinnerung, einen Impuls. Mit Texten, die von Isolation und Verzweiflung, aber auch von Hoffnung und Selbstfindung handeln, liefert die Band Live-Auftritte, die roh und mitrei\u00dfend sind. Ob man nun laut mitsingt oder sich im Sound versinken l\u00e4sst, Sight Set Forward erinnert daran, dass es selbst im L\u00e4rm immer eine Richtung gibt, der es sich lohnt, zu folgen.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/abeff70b-8c3c-4633-a88c-b7fb4e0a6367.webp"
+            },
+            {
+                "name": "Broken Zebra",
+                "link": "https://music.youtube.com/channel/UCZjgMKBn_dlcJ2AfVTyCjdA?feature=shared",
+                "description": "Leben l\u00e4sst sich nicht planen und passiert oft anders als wir es uns w\u00fcnschen. Dieses\nbeklemmende Gef\u00fchl kennt jeder von uns. Seien es schwere Schicksalsschl\u00e4ge, verflossene Freundschaften oder unwiderruflich zerst\u00f6rte Beziehungen. Da scheint es leicht in all dem Schmerz, der Traurigkeit, der Unsicherheit und Angst zu ertrinken. Und doch gibt es Sie in all den schwierigen Zeiten: Lichtblicke. Mal gro\u00df und nicht zu \u00fcbersehen, mal klein und kaum wahrnehmbar. Diese Momente der Hoffnung zu sehen, besonders dann, f\u00e4llt oft schwer. \nGenau das haben sich die Jungs von BROKEN ZEBRA zur Aufgabe gemacht: Mut in Allem auch das Gute zu sehen. Ohne zu besch\u00f6nigen. Ohne zu verurteilen. Der Traurigkeit raum gebend. Ihre Single \u201cStrangers\u201d (2025) bildet die dazugeh\u00f6rige Hymne. Sie soll uns Mut machen wieder zu tr\u00e4umen, zu hoffen und zu wagen.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/0ece746a-f85a-4406-87f6-3f691c0e33c5.webp"
+            },
+            {
+                "name": "Colored Surge",
+                "link": "",
+                "description": "Minuten f\u00fchlen sich wie Tage an und alles um einen herum scheint still zu stehen \u2026\nMit einem starken Drang nach Ver\u00e4nderung schlossen sich das Quartett \u201eColored Surge\u201c aus Mannheim, Heidelberg und Ludwigshafen zusammen, um dem farblosen Alltag ein Ende zu setzen. \nMit klarem Fokus auf Alternative-Rock/Metal spielen sie seit 2014 in der klassischen Rockband-Besetzung (Gesang, Gitarre, Bass und Schlagzeug). Stetig, aber subtil wird in ihren Songs mit Einfl\u00fcssen aus Metal, Pop und Punk experimentiert, um ihrem Sound die n\u00f6tige Energie f\u00fcr ihre Live-Auftritte zu verleihen. Durch die fr\u00fche Teilnahme an etablierten deutschen Band-Contests konnte die Band schnell zahlreiche Kontakte mit unterschiedlichsten Bands in der Szene kn\u00fcpfen. \nBis dato spielten Colored Surge mehr als 50 Konzerte verteilt in Deutschland, unter anderem auf dem Schlossgrabenfest in Darmstadt oder bei Rock im Hinterland. 2019 erschien ihr Deb\u00fctalbum \u201eon my own\u201c, welches den Grundstein f\u00fcr weitere Musikvideos und Singleauskopplungen legte.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/c05afd46-0ee4-4235-9fc2-f15be4bfadea.webp"
+            }
+        ]
+    },
+    {
         "id": "designer-capacopter",
         "date": "2026-09-28T17:00:00+00:00",
         "title": "Designer (Rock'n'Roll) & Capacopter (Heavy Rock)",

@@ -1,5 +1,46 @@
 [
     {
+        "id": "20261006-metal-carousel",
+        "date": "2026-10-09T17:00:00+00:00",
+        "title": "Alt-Rock Underground",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Carousel presents Alt-Rock Underground</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/20261006-metal-carousel/",
+        "img": "/img/39e45c69-ebe2-408a-829c-446a53c693fc.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Sight Set Forward",
+                "link": "https://www.instagram.com/sightsetforward/?hl=de",
+                "description": "Sight Set Forward ist eine alternative Rockband, die von Spannung, Melodie und Bewegung lebt. Inspiriert von Bands wie A Day To Remember, Architects und Three Days Grace, spielen Sight Set Forward nicht einfach nur Musik - sie kanalisieren eine Stimmung, eine Erinnerung, einen Impuls. Mit Texten, die von Isolation und Verzweiflung, aber auch von Hoffnung und Selbstfindung handeln, liefert die Band Live-Auftritte, die roh und mitrei\u00dfend sind. Ob man nun laut mitsingt oder sich im Sound versinken l\u00e4sst, Sight Set Forward erinnert daran, dass es selbst im L\u00e4rm immer eine Richtung gibt, der es sich lohnt, zu folgen.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/abeff70b-8c3c-4633-a88c-b7fb4e0a6367.webp"
+            },
+            {
+                "name": "Broken Zebra",
+                "link": "https://music.youtube.com/channel/UCZjgMKBn_dlcJ2AfVTyCjdA?feature=shared",
+                "description": "Leben l\u00e4sst sich nicht planen und passiert oft anders als wir es uns w\u00fcnschen. Dieses\nbeklemmende Gef\u00fchl kennt jeder von uns. Seien es schwere Schicksalsschl\u00e4ge, verflossene Freundschaften oder unwiderruflich zerst\u00f6rte Beziehungen. Da scheint es leicht in all dem Schmerz, der Traurigkeit, der Unsicherheit und Angst zu ertrinken. Und doch gibt es Sie in all den schwierigen Zeiten: Lichtblicke. Mal gro\u00df und nicht zu \u00fcbersehen, mal klein und kaum wahrnehmbar. Diese Momente der Hoffnung zu sehen, besonders dann, f\u00e4llt oft schwer. \nGenau das haben sich die Jungs von BROKEN ZEBRA zur Aufgabe gemacht: Mut in Allem auch das Gute zu sehen. Ohne zu besch\u00f6nigen. Ohne zu verurteilen. Der Traurigkeit raum gebend. Ihre Single \u201cStrangers\u201d (2025) bildet die dazugeh\u00f6rige Hymne. Sie soll uns Mut machen wieder zu tr\u00e4umen, zu hoffen und zu wagen.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/0ece746a-f85a-4406-87f6-3f691c0e33c5.webp"
+            },
+            {
+                "name": "Colored Surge",
+                "link": "",
+                "description": "Minuten f\u00fchlen sich wie Tage an und alles um einen herum scheint still zu stehen \u2026\nMit einem starken Drang nach Ver\u00e4nderung schlossen sich das Quartett \u201eColored Surge\u201c aus Mannheim, Heidelberg und Ludwigshafen zusammen, um dem farblosen Alltag ein Ende zu setzen. \nMit klarem Fokus auf Alternative-Rock/Metal spielen sie seit 2014 in der klassischen Rockband-Besetzung (Gesang, Gitarre, Bass und Schlagzeug). Stetig, aber subtil wird in ihren Songs mit Einfl\u00fcssen aus Metal, Pop und Punk experimentiert, um ihrem Sound die n\u00f6tige Energie f\u00fcr ihre Live-Auftritte zu verleihen. Durch die fr\u00fche Teilnahme an etablierten deutschen Band-Contests konnte die Band schnell zahlreiche Kontakte mit unterschiedlichsten Bands in der Szene kn\u00fcpfen. \nBis dato spielten Colored Surge mehr als 50 Konzerte verteilt in Deutschland, unter anderem auf dem Schlossgrabenfest in Darmstadt oder bei Rock im Hinterland. 2019 erschien ihr Deb\u00fctalbum \u201eon my own\u201c, welches den Grundstein f\u00fcr weitere Musikvideos und Singleauskopplungen legte.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/c05afd46-0ee4-4235-9fc2-f15be4bfadea.webp"
+            }
+        ]
+    },
+    {
         "id": "designer-capacopter",
         "date": "2026-09-28T17:00:00+00:00",
         "title": "Designer (Rock'n'Roll) & Capacopter (Heavy Rock)",
@@ -28,38 +69,6 @@
                 "youtube": "https://www.youtube.com/embed/mJKc1bg5AM8",
                 "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=365936098/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
                 "image": "/img/2c3239b6-938e-4aec-8e14-f701818c8090.webp"
-            }
-        ]
-    },
-    {
-        "id": "event20260827",
-        "date": "2026-08-27T17:00:00+00:00",
-        "title": "Alvilda & A Silly Walk, (The Runnings - cancelled!)",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p><strong>LINE-UP CHANGE:</strong> Leider mussten The Runnings ihre Show heute Abend absagen. Aber wir haben wunderbaren Ersatz gefunden: <strong>A Silly Walk springen spontan ein!</strong> \u2764\ufe0f</p>\n<p>----</p>\n<p><br>Wir finden es immer wieder ziemlich cute, wenn nach all der Zeit noch jemand das Carousel aufsucht, um f&uuml;r sein Auto etwas zu kl&auml;ren. &nbsp;Am 27. August h&auml;tte diese Person eine ausserordentlich gro&szlig;e Portion Gl&uuml;ck im Gep&auml;ck, denn es besuchen uns aus Paris Alvilda und aus Leipzig The Runnings am selben Tag!<br><br>Alvilda haben das Carousel bereits abgerissen, und The Runnings er&ouml;ffenen den Abend in der architektonischen Stilikone des ersten Heidelberger Baubooms ausserhalb der Kernstadt.&nbsp;</p>\n<p>Wir freuen uns.</p>\n<p>#surfgarage #bouncypowerpop</p>\n<p>flyer art by electric.lizard</p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/event20260827/",
-        "img": "/img/2e15ef66-616a-426c-9131-040b81752118.webp",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "Alvilda",
-                "link": "https://linktr.ee/alvildalp",
-                "description": "With their scruffy power pop and contagious freshness, these four Parisians came to attention with their debut EP \"N\u00e9gatif\", joyfully making us dancing through the summer of 2021. But behind the effortlessly cool fa\u00e7ade hide four incredibly hardworking women who have since toured relentlessly, turning their band into a ruthless dancing machine now opening for prestigious acts (The BellRays, The Nomads), before their long-awaited LP comes out in 2024.\n \nAlvilda plays garage rock wonderfully. '60s girl group vocal harmonies backed by a tough punk-y guitar sound with pop flourishes. The songs are so catchy, you start to sing along on the first listen. The French accents lend an extra air of coolness. Their bouncy songs are full of energy and a lot of fun, but also really well executed and sound strikingly authentic like this is some long lost late seventies gem. Alvilda mix \u201960s girl group with \u201970s Good Vibrations pop punk influences and je t\u2019aime it a lot. It\u2019s insane that these are the first recordings of the band.\nOne smile at a time.",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/0WLX5LRif_4",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3747921211/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/abf965b00d38efea9883010871ee3d6a.webp"
-            },
-            {
-                "name": "A Silly Walk",
-                "link": "https://www.asillywalk.de/",
-                "description": "A Silly Walk (/\u0259 \u02c8s\u026ali w\u0254k/)\n\n(Substantiv, Neutrum)\n\nDefinition von Nischenband. Auch franz. \u201cUne marche stupide\u201d.\n\nGruppe bestehend aus 4 gleichgesinnten Musikanten, die versuchen ein eigenes Genre zu definieren oder aber auch alle Nischen zu bedienen. Haupts\u00e4chlich ist es aber eher Punk, Noise und Garage Rock.",
-                "soundcloud": "",
-                "youtube": "",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=143617213/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
-                "image": ""
             }
         ]
     }
