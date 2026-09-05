@@ -73,6 +73,19 @@
         ]
     },
     {
+        "id": "mm-260905",
+        "date": "2026-09-09T19:00:00+00:00",
+        "title": "Open Air Kino: Midnight Madness",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<p>Teil drei unseres Midnight-Madness-90s-Specials <strong>&ndash;</strong> und wir lassen Teil eins des gr&ouml;&szlig;ten Horror-Phantoms der 90er &uuml;ber die Open-Air-Leinwand flimmern. Denn dank eines Altmeisters des Genres, der die <span style=\"color: #e03e2d;\">Teenie-Slasher</span> der 80er in all ihrer <span style=\"color: #000000;\">blutigen</span> Pracht wieder auferstehen l&auml;sst, d&uuml;rfen wir ein sehr einpr&auml;gsames Gespenstergesicht auf seinem blutigen Feldzug beobachten. So gelingt ein unvergleichlicher Spagat zwischen selbstironischer Parodie und ernsthaftem Schock. Die deutsche Filmzeitschrift Cinema schrieb: &bdquo;Wer sich hier nicht erschreckt, mu&szlig; tot sein!&ldquo; Wir w&uuml;rden erg&auml;nzen: Wer hier nicht lacht, muss ebenfalls tot sein! Schreit ihr also vor Lachen oder vor Schreck? Herzklopfen ist bei diesem Film in jedem Fall garantiert.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://karlstorkino.de/programm/midnight-madness-carousel-open-air-ueberraschungsfilm-2",
+        "img": "/img/c270267f-ac72-495e-a56c-8680e1acfb8b.webp",
+        "cancelled": false,
+        "artists": []
+    },
+    {
         "id": "event20260827",
         "date": "2026-08-27T17:00:00+00:00",
         "title": "Alvilda & A Silly Walk, (The Runnings - cancelled!)",
