@@ -41,6 +41,38 @@
         ]
     },
     {
+        "id": "dark-thoughts",
+        "date": "2026-09-30T17:00:00+00:00",
+        "title": "Dark Thoughts (Punk) und Geoduck Diodes (Egg Punk)",
+        "fee": "12",
+        "feeAk": "15",
+        "descriptionShort": "<p>Willkommen zur offiziellen Pre-Show des inoffiziellen Rocktobers im Carousel! Der Goldesel bedient sich dabei allerdings nicht eines Programm subtiler Natur sondern f&auml;llt mit T&uuml;r samt unbeliebten Freunden ins Haus. Niemand geringeres als Dark Thoughts aus Philadelphia kommen um uns die Leviten in bester Ramones Manier zu lesen. 2025 ver&ouml;ffentlichten Jim Shomo, Amy Opsasnick und Daniel Cox ihr Album Highway To The End welches den roten Faden der gesamten bisherigen Diskografie aufnimmt: 11 Songs, 16 Minuten, Geschwindigkeiten jenseits Gut und B&ouml;se, (fast) ausnahmslos ein Gitarrensound sowie tighter Bass ohne Schn&ouml;rkel. Dazu der kannst-mir-nix Gesang Shomos und ihr wisst Bescheid.</p>\n<p>Passt gut zu: Vans Authentic, K&uuml;ndigen, Adrenalin.</p>\n<p>Aus T&uuml;bingen hallte es 2024 \"Must Fry All Planets\" und trotzdem scheint unseres Wissens nach die Band Geoduck Diodes nach dem Sommer 2026 immer noch vollz&auml;hlig auf freiem Fu&szlig; zu sein. Eventuell kamen sie damit durch, den Titel ihres Erstlingswerks spielerisch zu deuten und auf das Genre des Egg Punk mit einem Spiegelei in Verbindungen zu bringen. Wir halten es aber f&uuml;r wenig plausibel da sie mit den 14 Tracks so ziemlich alles abfackeln zu drohen, was sich Ihnen in den Weg stellt.</p>\n<p>Goldesel Serviceleistung: das Rauchen einer Zigarette kann bis zu 7-8 Minuten dauern. Wartet ggf. damit bis nach den Sets oder raucht wie Jan Ullrich um nicht zuviel zu verpassen.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/dark-thoughts/",
+        "img": "",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Dark Thoughts",
+                "link": "https://www.instagram.com/darkthoughtsusapunkofficial/",
+                "description": "Dark Thoughts formed in Philadelphia in late 2013, brought together by a simple shared obsession: they all loved the Ramones . The trio \u2014 Jim \u201cJam\u201d Shomo on vocals and guitar, Amy Opsasnick on bass, and Daniel Cox on drums \u2014 quickly found their footing in West Philly\u2019s DIY punk community, shaping a sound built on ultra-tight, fast, melodic songs with zero excess. In interviews, the band has said The Ramones are the one band they all really think about when writing, but their music isn\u2019t imitation \u2014 they lace the speed and minimalism with bittersweet melodies, sharp personal lyrics, and flashes of power-pop color . Their early material, recorded in West Philadelphia and released through Sorry State Records, showed their commitment to brevity: 12 songs in just over 19 minutes on their debut LP .\n\nOffstage, all three members have long balanced band life with low-wage service jobs, often working as baristas; this working-class reality bleeds directly into their songwriting, especially on the album At Work, which deals bluntly with daily frustrations, money stress, and the grind of trying to stay afloat in the city . Critics have praised their ability to fuse speed and emotion \u2014 No Echo described their sound as \u201ceconomical, melodic, and taut\u201d and even coined the term \u201cbubblegum hardcore\u201d for their mix of Ramones-core and early U.S. hardcore punch . Stereogum called their work \u201cshort and fun and catchy and vicious,\u201d praising the band\u2019s commitment to elemental, no-frills punk that still carries serious heart .\n\nAfter releasing Must Be Nice in 2019 \u2014 recorded with producer Kyle Gilbride and featuring a guest appearance from Cynthia Schemmer of Radiator Hospital \u2014 the band went quiet for a few years. They returned in 2025 with a four-song cassette and announced their next album, Highway to the End, recorded in Philadelphia and mastered by Arthur Rizk, continuing to refine their signature mix of speed, hooks, and emotional weight . Throughout their career, Dark Thoughts have remained one of Philly\u2019s most reliable, heartfelt punk bands \u2014 unpretentious, relentless, and driven purely by a love of the music they grew up on and the community around them.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/JUA1VKOT_-4",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2054234080/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/ddf4da57-a8f3-4c50-ad15-ab9f9f5579fc.webp"
+            },
+            {
+                "name": "Geoduck Diodes",
+                "link": "",
+                "description": "Absolutely wild solo project from T\u00fcbingen, Germany, \u201crecorded on my intergalactic couch and bed\u2019.\u201d If you\u2019re of the mindset that egg-punk is over, I suggest you let GEODUCK DIODES have a word with you. Personally, I am in full support of the home-recorded solo projects. I mean, what are the truly maniacal wacko punkers out there supposed to do? There\u2019s no way a group of friends could be convinced to learn and record this mayhem, so it\u2019s off to the intergalactic bedroom! Keep \u2018em coming, GEODUCK DIODES rule. - MRR",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1197761158/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "designer-capacopter",
         "date": "2026-09-28T17:00:00+00:00",
         "title": "Designer (Rock'n'Roll) & Capacopter (Heavy Rock)",
