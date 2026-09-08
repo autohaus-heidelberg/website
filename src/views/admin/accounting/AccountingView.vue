@@ -2396,9 +2396,13 @@ defineExpose({ toggleFinalStatus })
           .summary-hint(v-if="authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)")
             | (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
           template(v-if="resultExpandRevenue")
-            .summary-row.summary-detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
-              span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
-              span.summary-value {{ formatCurrency(revenueNet(rev)) }}
+            template(v-for="group in REVENUE_GROUPS" :key="group.label")
+              .summary-row.summary-detail.summary-group-subtotal(v-if="groupRevenue(group.sources) !== 0")
+                span.summary-label {{ group.sources[0].startsWith('bar_') ? '🍺 Bar' : '🚪 Einlass' }}
+                span.summary-value {{ formatCurrency(groupRevenue(group.sources)) }}
+              .summary-row.summary-detail.summary-detail-nested(v-for="rev in revenues.filter(r => group.sources.includes(r.source))" :key="rev.source" v-show="revenueNet(rev) !== 0")
+                span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
+                span.summary-value {{ formatCurrency(revenueNet(rev)) }}
             .summary-row.summary-detail.summary-subtotal-minor(v-if="expensesPaidFromRegister === 0")
               span.summary-label = Gezählte Einnahmen
               span.summary-value {{ formatCurrency(totalRevenue) }}
@@ -4630,6 +4634,18 @@ h2 {
 .summary-row.summary-subtotal-minor {
   font-weight: 700;
   border-top: 1px solid #ccc;
+}
+
+/* Zwischensumme je Einnahmen-Bereich (Bar / Einlass) innerhalb der Drilldown-Liste */
+.summary-row.summary-group-subtotal {
+  font-weight: 700;
+  color: #333;
+  background: #f0f0f0;
+}
+
+/* Einzelne Quelle unterhalb einer Bereichs-Zwischensumme, stärker eingerückt */
+.summary-row.summary-detail-nested {
+  padding-left: 3rem;
 }
 
 /* Plausibilitäts-Hinweis unter der Einnahmen-Zeile (Verbrauch → erwartete Einnahmen) */
