@@ -667,6 +667,46 @@ function groupInventoryValue(items: { beverage: BeverageItem; entry: InventoryEn
   return items.reduce((sum, { beverage, entry }) => sum + inventoryValue(entry, beverage), 0)
 }
 
+/** Erwarteter Kassen-Umsatz aus dem gezählten Verbrauch (VK-Preis statt EK-Preis) —
+ *  dient als Plausibilitätscheck gegen die tatsächlich gezählten Einnahmen.
+ *  Bei Portionsverkauf (z.B. offene Weinflasche) wird über portions_per_bottle
+ *  auf den Portionspreis umgerechnet. */
+function expectedInventoryRevenue(entry: InventoryEntry, beverage: BeverageItem): number {
+  const consumed = inventoryConsumption(entry)
+  if (beverage.portions_per_bottle && beverage.selling_price_portion) {
+    return consumed * beverage.portions_per_bottle * parseFloat(beverage.selling_price_portion)
+  }
+  const price = parseFloat(entry.snapshot_selling_price || beverage.selling_price || '0')
+  return consumed * price
+}
+
+function groupExpectedRevenue(items: { beverage: BeverageItem; entry: InventoryEntry }[]): number {
+  return items.reduce((sum, { beverage, entry }) => sum + expectedInventoryRevenue(entry, beverage), 0)
+}
+
+const totalExpectedRevenue = computed(() => {
+  return Object.values(inventoryBySupplier.value).reduce(
+    (sum, items) => sum + groupExpectedRevenue(items), 0
+  )
+})
+
+/** Namen der konsumierten Getränke ohne hinterlegten VK-Preis (weder pro Flasche
+ *  noch pro Portion) — totalExpectedRevenue ist für diese Artikel 0, obwohl
+ *  tatsächlich Umsatz gemacht wurde. Wird im Hint aufgelistet, damit man genau
+ *  weiß, wo im Getränke-Stamm ein Preis nachgetragen werden muss. */
+const missingSellingPriceBeverages = computed(() => {
+  const names: string[] = []
+  for (const items of Object.values(inventoryBySupplier.value)) {
+    for (const { beverage, entry } of items) {
+      if (inventoryConsumption(entry) <= 0) continue
+      const hasPortionPrice = !!(beverage.portions_per_bottle && beverage.selling_price_portion)
+      const hasBottlePrice = !!(entry.snapshot_selling_price || beverage.selling_price)
+      if (!hasPortionPrice && !hasBottlePrice) names.push(beverage.name)
+    }
+  }
+  return names
+})
+
 // Need at least this many past events before a consumption baseline is
 // trustworthy enough to warn about outliers.
 const MIN_ANOMALY_HISTORY = 3
@@ -2353,6 +2393,8 @@ defineExpose({ toggleFinalStatus })
           .summary-row.summary-expandable(@click="resultExpandRevenue = !resultExpandRevenue")
             span.summary-label {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen
             span.summary-value {{ formatCurrency(adjustedRevenue) }}
+          .summary-hint(v-if="authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)")
+            | (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
           template(v-if="resultExpandRevenue")
             .summary-row.summary-detail(v-for="rev in revenues" :key="rev.source" v-show="revenueNet(rev) !== 0")
               span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
@@ -4588,6 +4630,14 @@ h2 {
 .summary-row.summary-subtotal-minor {
   font-weight: 700;
   border-top: 1px solid #ccc;
+}
+
+/* Plausibilitäts-Hinweis unter der Einnahmen-Zeile (Verbrauch → erwartete Einnahmen) */
+.summary-hint {
+  padding: 0 1rem 0.5rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #888;
 }
 
 /* Schwarzer Balken: Ergebnis-Subtotals (vor USt / nach USt / nach Doordeal) */
