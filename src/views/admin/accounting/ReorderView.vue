@@ -16,6 +16,9 @@ const orderQty = ref<Record<number, number>>({})
 const notes = ref('')
 const checkedItems = ref<Set<number>>(new Set())
 
+// Event-Auswahl fuer die Bedarfskalkulation
+const selectedEventIds = ref<string[]>([])
+
 // -- Computed: aufgeteilt nach Lieferant, sortiert nach Kategorie --
 type CatHeader = { type: 'header'; key: string; emoji: string; label: string }
 type ItemRow = { type: 'item'; key: string; item: ReorderSuggestion }
@@ -112,17 +115,28 @@ function eventDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })
 }
 
-async function loadData() {
+async function loadData(eventIds?: string[]) {
   isLoading.value = true
   error.value = ''
   try {
-    data.value = await stockService.getReorderSuggestions()
+    data.value = await stockService.getReorderSuggestions(eventIds)
+    selectedEventIds.value = [...data.value.selected_event_ids]
     initOrder()
   } catch (e: any) {
     error.value = e.message || 'Bestellvorschlaege konnten nicht geladen werden'
   } finally {
     isLoading.value = false
   }
+}
+
+function toggleEvent(id: string) {
+  const set = new Set(selectedEventIds.value)
+  if (set.has(id)) {
+    set.delete(id)
+  } else {
+    set.add(id)
+  }
+  loadData([...set])
 }
 
 async function sendOrder() {
@@ -152,23 +166,30 @@ onMounted(() => { loadData() })
   .reorder-header
     h3 Bestellvorschlaege
     p.hint
-      | Berechnet den Bedarf fuer alle noch geplanten Veranstaltungen dieses Monats.
-      | Nur 1x im Monat bestellen &mdash; alles auf einmal.
+      | Bei Bedarf bestellen &mdash; unabhaengig vom Kalendermonat.
+      | Waehle aus, fuer welche der geplanten Veranstaltungen kalkuliert werden soll.
 
   .loading(v-if="isLoading") Bestellvorschlaege werden berechnet...
   .error-msg(v-else-if="error") {{ error }}
 
   template(v-else-if="data")
 
-    .month-banner
-      .month-title 📅 {{ data.month_label }}
-      .event-pills
-        template(v-if="data.upcoming_count === 0")
-          span.pill.pill-empty Keine weiteren Veranstaltungen dieses Monat
-        template(v-else)
-          span.pill(v-for="ev in data.upcoming_events" :key="ev.id")
-            | {{ ev.title }} &middot; {{ eventDate(ev.date) }}
-          span.pill.pill-count {{ data.upcoming_count }} VA{{ data.upcoming_count !== 1 ? 's' : '' }}
+    .event-selector
+      .selector-head
+        span.selector-title 📅 Fuer welche Veranstaltungen bestellen?
+        span.selector-summary {{ data.selected_count }} von {{ data.upcoming_count }} VA ausgewaehlt
+      .no-events(v-if="data.upcoming_count === 0") Keine zukuenftigen Veranstaltungen im System angelegt.
+      .event-list(v-else)
+        label.event-option(
+          v-for="ev in data.upcoming_events"
+          :key="ev.id"
+          :class="{ active: selectedEventIds.includes(ev.id) }"
+        )
+          input(type="checkbox" :checked="selectedEventIds.includes(ev.id)" @change="toggleEvent(ev.id)")
+          span.ev-title {{ ev.title }}
+          span.ev-date {{ eventDate(ev.date) }}
+      p.selector-hint(v-if="data.upcoming_count > 0")
+        | Vorausgewaehlt: naechste {{ Math.round(data.default_horizon_days / 7) }} Wochen.
 
     .section
       .section-header
@@ -183,7 +204,7 @@ onMounted(() => { loadData() })
             span.col-name Getraenk
             span.col-stock Bestand
             span.col-avg Oe / VA
-            span.col-need Bedarf ({{ data.upcoming_count }} VA)
+            span.col-need Bedarf ({{ data.selected_count }} VA)
             span.col-shortfall Fehlbestand
             span.col-order Kisten bestellen
           template(v-for="row in getraenkestationRows" :key="row.key")
@@ -200,10 +221,10 @@ onMounted(() => { loadData() })
                 span.stock-val(:class="'level-' + stockLevel(row.item)") {{ fmtNum(row.item.current_stock, 0) }} Fl.
                 span.crate-hint(v-if="row.item.units_per_crate > 1")  ({{ Math.floor(row.item.current_stock / row.item.units_per_crate) }}K)
               span.col-avg {{ fmtNum(row.item.avg_consumption) }} Fl.
-              span.col-need(v-if="data.upcoming_count > 0") {{ fmtNum(row.item.needed_this_month, 0) }} Fl.
+              span.col-need(v-if="data.selected_count > 0") {{ fmtNum(row.item.needed, 0) }} Fl.
               span.col-need.muted(v-else) -
               span.col-shortfall(:class="{ negative: row.item.shortfall > 0 }")
-                template(v-if="data.upcoming_count === 0") -
+                template(v-if="data.selected_count === 0") -
                 template(v-else-if="row.item.shortfall > 0") -{{ fmtNum(row.item.shortfall, 0) }} Fl.
                 template(v-else) ✓
               .col-order(@click.stop)
@@ -223,7 +244,7 @@ onMounted(() => { loadData() })
             span.col-name Getraenk
             span.col-stock Bestand
             span.col-avg Oe / VA
-            span.col-need Bedarf ({{ data.upcoming_count }} VA)
+            span.col-need Bedarf ({{ data.selected_count }} VA)
             span.col-shortfall Fehlbestand
             span.col-order Info
           template(v-for="row in otherRows" :key="row.key")
@@ -240,10 +261,10 @@ onMounted(() => { loadData() })
                 span.stock-val(:class="'level-' + stockLevel(row.item)") {{ fmtNum(row.item.current_stock, 0) }} Fl.
                 span.crate-hint(v-if="row.item.units_per_crate > 1")  ({{ Math.floor(row.item.current_stock / row.item.units_per_crate) }}K)
               span.col-avg {{ fmtNum(row.item.avg_consumption) }} Fl.
-              span.col-need(v-if="data.upcoming_count > 0") {{ fmtNum(row.item.needed_this_month, 0) }} Fl.
+              span.col-need(v-if="data.selected_count > 0") {{ fmtNum(row.item.needed, 0) }} Fl.
               span.col-need.muted(v-else) -
               span.col-shortfall(:class="{ negative: row.item.shortfall > 0 }")
-                template(v-if="data.upcoming_count === 0") -
+                template(v-if="data.selected_count === 0") -
                 template(v-else-if="row.item.shortfall > 0") -{{ fmtNum(row.item.shortfall, 0) }} Fl.
                 template(v-else) ✓
               span.col-order.supplier-note {{ row.item.supplier_group || 'Selbst kaufen' }}
@@ -293,8 +314,8 @@ onMounted(() => { loadData() })
       .success-banner(v-if="sendSuccess") ✅ Bestellung wurde erfolgreich an info@getraenkestation.com gesendet!
       .error-banner(v-if="sendError") {{ sendError }}
 
-    .no-selection(v-else-if="getraenkestationItems.length > 0 && data.upcoming_count > 0")
-      | Alle Getraenkestation-Getraenke haben ausreichend Bestand fuer {{ data.upcoming_count }} VA{{ data.upcoming_count !== 1 ? 's' : '' }} ✓
+    .no-selection(v-else-if="getraenkestationItems.length > 0 && data.selected_count > 0")
+      | Alle Getraenkestation-Getraenke haben ausreichend Bestand fuer {{ data.selected_count }} VA{{ data.selected_count !== 1 ? 's' : '' }} ✓
 
   .no-data(v-else) Keine Daten verfuegbar.
 </template>
@@ -315,21 +336,41 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
 }
 .error-msg { color: #c00; }
 
-.month-banner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+.event-selector {
+  padding: 0.85rem 1rem;
   background: #f8f8f8;
   border: 0.25rem solid black;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
 }
-.month-title { font-weight: 900; font-size: 1rem; white-space: nowrap; }
-.event-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.pill { padding: 0.2rem 0.6rem; background: black; color: white; font-size: 0.8rem; font-weight: 600; }
-.pill-empty { background: #ccc; color: #555; }
-.pill-count { background: #444; }
+.selector-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+.selector-title { font-weight: 900; font-size: 1rem; }
+.selector-summary { font-weight: 700; font-size: 0.8rem; color: #444; white-space: nowrap; }
+.selector-hint { font-size: 0.78rem; color: #777; margin: 0.6rem 0 0; }
+.no-events { font-size: 0.85rem; color: #666; }
+.event-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.event-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: #eaeaea;
+  border: 0.15rem solid #ccc;
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+}
+.event-option:hover { border-color: #999; }
+.event-option.active { background: black; color: white; border-color: black; }
+.event-option input { cursor: pointer; }
+.event-option .ev-title { font-weight: 700; }
+.event-option .ev-date { opacity: 0.7; }
 
 .section { margin-bottom: 2rem; }
 .section-other { opacity: 0.85; }
