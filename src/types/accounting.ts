@@ -285,7 +285,7 @@ export interface ReorderSuggestion {
   bottle_size: string | null
   current_stock: number
   avg_consumption: number
-  needed_this_month: number
+  needed: number
   shortfall: number
   suggested_order_bottles: number
   suggested_order_crates: number
@@ -295,7 +295,9 @@ export interface ReorderSuggestion {
 export interface ReorderResponse {
   upcoming_events: { id: string; title: string; date: string }[]
   upcoming_count: number
-  month_label: string
+  selected_event_ids: string[]
+  selected_count: number
+  default_horizon_days: number
   items: ReorderSuggestion[]
 }
 

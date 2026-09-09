@@ -376,8 +376,9 @@ export const stockService = {
     )
   },
 
-  async getReorderSuggestions(): Promise<ReorderResponse> {
-    return api.get<ReorderResponse>('/api/drinks/reorder-suggestions/')
+  async getReorderSuggestions(eventIds?: string[]): Promise<ReorderResponse> {
+    const qs = eventIds ? `?events=${eventIds.join(',')}` : ''
+    return api.get<ReorderResponse>(`/api/drinks/reorder-suggestions/${qs}`)
   },
 
   async sendOrder(payload: SendOrderPayload): Promise<{ success: boolean; message: string; body: string }> {
