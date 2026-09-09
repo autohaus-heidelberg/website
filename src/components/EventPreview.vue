@@ -4,13 +4,13 @@
 router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border
         .title
-            span(v-resize-text)
+            span
                 template(v-for="part in titleParts" :key="part.text")
                     span.title-paren(v-if="part.isParen") {{ part.text }}
                     template(v-else) {{ part.text }}
             .cancelled-label(v-if="event.cancelled") ABGESAGT
         .date()
-            .date(v-resize-text="{ratio: 2}" :class="{ 'date-cancelled': event.cancelled }")
+            .date(:class="{ 'date-cancelled': event.cancelled }")
                 span {{ date.format("dd")  }}.
                 span {{ date.format('DD') }}
                 span {{ date.format('MMM') }}
@@ -18,7 +18,7 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
                 span {{ time }}
         .date-diff(ref="dateContainer")
             .side-date-content(ref="dateContent")
-                div(v-resize-text={ratio: 2}) {{ dateDiff }}
+                div {{ dateDiff }}
         .event-img
             img.img(v-if="event.img" :src="event.img" crossorigin="anonymous")
             .cancelled-stamp(v-if="event.cancelled") ABGESAGT
@@ -135,6 +135,22 @@ margin-bottom: 1rem;
   .event-preview {
     max-width: 100%;
     min-width: unset;
+  }
+}
+
+/* Small phones (iPhone SE and similar) */
+@media screen and (max-width: 480px) {
+  .title {
+    font-size: 1.35rem;
+    padding: 0.2rem;
+  }
+
+  .date {
+    font-size: 1.05rem;
+  }
+
+  .date-diff {
+    font-size: 1.1rem;
   }
 }
 

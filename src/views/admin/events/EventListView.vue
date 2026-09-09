@@ -566,6 +566,7 @@ h2 {
 
 .events-container {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
@@ -1069,6 +1070,37 @@ a.fee:hover {
     padding: 1rem;
   }
 
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    overflow-wrap: break-word;
+  }
+
+  .tab-bar {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .tab {
+    flex: 1;
+    min-width: 0;
+    padding: 0.625rem 0.5rem;
+    font-size: 0.9rem;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: center;
+    border-right: none;
+    border-bottom: 0.25rem solid black;
+  }
+
+  .tab:last-child {
+    border-bottom: none;
+  }
+
   .toolbar {
     flex-direction: column;
     align-items: stretch;
@@ -1080,12 +1112,22 @@ a.fee:hover {
     max-width: 100%;
   }
 
+  .btn-primary {
+    white-space: normal;
+    text-align: center;
+  }
+
   .sort-btn {
     margin-left: 0;
   }
 
   .status-badge {
     white-space: normal;
+  }
+
+  .event-header {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
   }
 
   .event-header-right {
@@ -1100,6 +1142,7 @@ a.fee:hover {
 
   .event-actions {
     width: 100%;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
 }

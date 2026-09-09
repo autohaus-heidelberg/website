@@ -1,9 +1,9 @@
 <template lang="pug">
 .event
     h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }} Uhr
-    h1.accent(v-if="showDatediff") {{ dateDiff }}
+    h1.accent.datediff(v-if="showDatediff") {{ dateDiff }}
     .cancelled-display(v-if="event.cancelled") ABGESAGT
-    h1.accent {{ event.title }}
+    h1.accent.title {{ event.title }}
     .event-img-wrapper(v-if="imageUrl")
         img.event-img(:src="imageUrl" crossorigin="anonymous")
         .cancelled-stamp(v-if="event.cancelled") ABGESAGT
@@ -144,6 +144,21 @@ const dateDiff = computed(() => {
     align-items: center;
     max-width: 75ch;
     margin: auto;
+}
+
+.date {
+    font-size: clamp(1.1rem, 5vw, 1.75rem);
+    margin: 1rem 0 0.5rem;
+}
+
+.datediff {
+    font-size: clamp(1.1rem, 5vw, 1.75rem);
+    margin: 0.5rem 0 1rem;
+}
+
+.title {
+    font-size: clamp(1.5rem, 7vw, 3.5rem);
+    margin: 1rem 0 2rem;
 }
 
 </style>

@@ -298,8 +298,26 @@ h3 {
   background: #f5f5f5;
 }
 
+/* Stack label above value on narrow screens so long values get full width to wrap in */
+@media (max-width: 480px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-label {
+    border-bottom: none;
+    padding-bottom: 0.15rem;
+  }
+
+  .info-value {
+    padding-top: 0;
+  }
+}
+
 .info-value {
   font-size: 0.85rem;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .request-form {
