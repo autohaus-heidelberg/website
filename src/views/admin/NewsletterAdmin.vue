@@ -129,27 +129,28 @@ function eventDateShort(iso: string): string {
 // Sichtbare Betreff-Länge in gängigen Postfächern liegt bei ~70 Zeichen.
 const MAX_SUBJECT = 70
 
-// Bis 2 Events: einzelne Titel; ab 3: kompakt als Anzahl + Zeitraum,
-// damit der Betreff nicht abgeschnitten wird.
+// 1 Event: Datum + Titel; mehrere: mit dem nächsten Event führen und
+// den Rest als "+ N weitere Termine" anhängen. Immer auf MAX_SUBJECT begrenzt.
 function buildSubject(evs: Event[]): string {
-  if (evs.length <= 2) {
-    const detailed = evs.map(e => `${eventDateShort(e.date)} ${e.title}`).join('  /  ')
-    // Auch bei 1-2 Events kann der Betreff durch lange Titel zu lang werden.
-    if (detailed.length <= MAX_SUBJECT) return detailed
-    // Zwei Events: zusammenfassen; ein Event: Titel kürzen.
-    if (evs.length === 2) return subjectRange(evs)
+  if (evs.length === 1) {
     const e = evs[0]
     const prefix = `${eventDateShort(e.date)} `
     return prefix + truncate(e.title, MAX_SUBJECT - prefix.length)
   }
-  return subjectRange(evs)
+  if (evs.length === 2) {
+    const detailed = evs.map(e => `${eventDateShort(e.date)} ${e.title}`).join('  /  ')
+    if (detailed.length <= MAX_SUBJECT) return detailed
+  }
+  return leadSubject(evs)
 }
 
-function subjectRange(evs: Event[]): string {
-  const start = eventDateShort(evs[0].date)
-  const end = eventDateShort(evs[evs.length - 1].date)
-  const range = start === end ? `am ${start}` : `vom ${start} – ${end}`
-  return `${evs.length} Veranstaltungen ${range}`
+function leadSubject(evs: Event[]): string {
+  const first = evs[0]
+  const rest = evs.length - 1
+  const suffix = rest === 1 ? ' + 1 weiterer Termin' : ` + ${rest} weitere Termine`
+  const prefix = `${eventDateShort(first.date)} `
+  const title = truncate(first.title, MAX_SUBJECT - prefix.length - suffix.length)
+  return prefix + title + suffix
 }
 
 function truncate(str: string, max: number): string {
