@@ -148,6 +148,8 @@ async function sendOrder() {
     const items = selectedItems.value.map(s => ({
       name: orderLabel(s),
       quantity: orderQty.value[s.id],
+      category: s.category,
+      category_emoji: s.category_emoji,
     }))
     await stockService.sendOrder({ delivery_date: deliveryDate.value, items, notes: notes.value })
     sendSuccess.value = true

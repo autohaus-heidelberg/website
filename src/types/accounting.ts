@@ -304,6 +304,8 @@ export interface ReorderResponse {
 export interface OrderItem {
   name: string
   quantity: number
+  category?: string
+  category_emoji?: string
 }
 
 export interface SendOrderPayload {
