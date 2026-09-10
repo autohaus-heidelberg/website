@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/de'
 import { eventService } from '@/services/events'
@@ -14,6 +14,16 @@ const isGenerating = ref(false)
 const isSending = ref(false)
 const sendSuccess = ref<'test' | 'live' | null>(null)
 const error = ref('')
+
+// Kandidaten (kommende Events) und die vom Nutzer gewählte Teilmenge
+const candidateEvents = ref<Event[]>([])
+const selectedEventIds = ref<string[]>([])
+
+const selectedEvents = computed(() =>
+  candidateEvents.value
+    .filter(e => selectedEventIds.value.includes(e.id))
+    .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
+)
 
 function getNextWeekRange(): { start: dayjs.Dayjs; end: dayjs.Dayjs } {
   const today = dayjs()
@@ -112,6 +122,24 @@ function buildNewsletterText(events: Event[]): string {
   return text
 }
 
+function eventDateShort(iso: string): string {
+  return dayjs(iso).locale('de').format('DD.MM.')
+}
+
+function rebuildNewsletter() {
+  const evs = selectedEvents.value
+  if (evs.length === 0) {
+    title.value = ''
+    content.value = ''
+    textContent.value = ''
+    return
+  }
+  const titleParts = evs.map(e => `${eventDateShort(e.date)} ${e.title}`)
+  title.value = titleParts.join('  /  ')
+  content.value = buildNewsletterHtml(evs)
+  textContent.value = buildNewsletterText(evs)
+}
+
 async function generateProposal() {
   isGenerating.value = true
   error.value = ''
@@ -122,30 +150,41 @@ async function generateProposal() {
     const response = await eventService.getAll()
     const allEvents: Event[] = response.results || []
 
-    const weekEvents = allEvents
+    const upcoming = allEvents
+      .filter(e => dayjs(e.date).isAfter(start.subtract(1, 'ms')))
+      .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
+
+    if (upcoming.length === 0) {
+      candidateEvents.value = []
+      selectedEventIds.value = []
+      error.value = 'Keine kommenden Veranstaltungen gefunden.'
+      return
+    }
+
+    candidateEvents.value = upcoming
+    // Standardmäßig die Events der nächsten Woche vorauswählen
+    selectedEventIds.value = upcoming
       .filter(e => {
         const d = dayjs(e.date)
         return d.isAfter(start.subtract(1, 'ms')) && d.isBefore(end.add(1, 'ms'))
       })
-      .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
+      .map(e => e.id)
 
-    if (weekEvents.length === 0) {
-      error.value = `Keine Events in der Woche ${start.format('DD.MM.')} – ${end.format('DD.MM.YYYY')} gefunden.`
-      return
-    }
-
-    const titleParts = weekEvents.map(e => {
-      const dateShort = dayjs(e.date).locale('de').format('DD.MM.')
-      return `${dateShort} ${e.title}`
-    })
-    title.value = titleParts.join('  /  ')
-    content.value = buildNewsletterHtml(weekEvents)
-    textContent.value = buildNewsletterText(weekEvents)
+    rebuildNewsletter()
   } catch (e: any) {
     error.value = 'Fehler beim Laden der Events: ' + (e?.message || e)
   } finally {
     isGenerating.value = false
   }
+}
+
+function toggleEvent(id: string) {
+  if (selectedEventIds.value.includes(id)) {
+    selectedEventIds.value = selectedEventIds.value.filter(x => x !== id)
+  } else {
+    selectedEventIds.value = [...selectedEventIds.value, id]
+  }
+  rebuildNewsletter()
 }
 
 async function sendNewsletter(test = false) {
@@ -168,7 +207,7 @@ async function sendNewsletter(test = false) {
 <template lang="pug">
 .newsletter-admin
   .page-header
-    h1 Newsletter versenden
+    h2 Newsletter versenden
 
   .proposal-section
     button.btn-primary(
@@ -181,6 +220,21 @@ async function sendNewsletter(test = false) {
   .error-message(v-if="error") {{ error }}
   .success-message(v-if="sendSuccess === 'test'") Test-Newsletter erfolgreich versendet!
   .success-message(v-if="sendSuccess === 'live'") Newsletter erfolgreich versendet!
+
+  .event-selector(v-if="candidateEvents.length")
+    .selector-head
+      span.selector-title 📅 Welche Veranstaltungen aufnehmen?
+      span.selector-summary {{ selectedEventIds.length }} von {{ candidateEvents.length }} ausgewählt
+    .event-list
+      label.event-option(
+        v-for="ev in candidateEvents"
+        :key="ev.id"
+        :class="{ active: selectedEventIds.includes(ev.id) }"
+      )
+        input(type="checkbox" :checked="selectedEventIds.includes(ev.id)" @change="toggleEvent(ev.id)")
+        span.ev-title {{ ev.title }}
+        span.ev-date {{ eventDateShort(ev.date) }}
+    p.selector-hint Auswahl ändern erzeugt Betreff und Inhalt neu.
 
   .form-section
     .field
@@ -224,17 +278,17 @@ async function sendNewsletter(test = false) {
 
 <style scoped>
 .newsletter-admin {
-  max-width: 900px;
+  background: white;
+  padding: 2rem;
+  border: 0.5rem solid black;
 }
 
 .page-header {
   margin-bottom: 2rem;
-  border-bottom: 0.5rem solid black;
-  padding-bottom: 1rem;
 }
 
-.page-header h1 {
-  font-size: 2rem;
+.page-header h2 {
+  font-size: 1.75rem;
   font-weight: 900;
   margin: 0;
 }
@@ -268,6 +322,46 @@ async function sendNewsletter(test = false) {
   background: white;
   color: black;
 }
+
+.event-selector {
+  padding: 0.85rem 1rem;
+  background: #f8f8f8;
+  border: 0.25rem solid black;
+  margin-bottom: 2rem;
+}
+
+.selector-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.selector-title { font-weight: 900; font-size: 1rem; }
+.selector-summary { font-weight: 700; font-size: 0.8rem; color: #444; white-space: nowrap; }
+.selector-hint { font-size: 0.78rem; color: #777; margin: 0.6rem 0 0; }
+
+.event-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.event-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  background: #eaeaea;
+  border: 0.15rem solid #ccc;
+  font-size: 0.82rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.event-option:hover { border-color: #999; }
+.event-option.active { background: black; color: white; border-color: black; }
+.event-option input { cursor: pointer; }
+.event-option .ev-title { font-weight: 700; }
+.event-option .ev-date { opacity: 0.7; }
 
 .form-section {
   display: flex;
