@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/de'
 import { eventService } from '@/services/events'
@@ -186,6 +186,10 @@ function toggleEvent(id: string) {
   }
   rebuildNewsletter()
 }
+
+onMounted(() => {
+  generateProposal()
+})
 
 async function sendNewsletter(test = false) {
   if (!title.value || !content.value) return
