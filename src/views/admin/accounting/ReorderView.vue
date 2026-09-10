@@ -92,6 +92,10 @@ const selectedItems = computed(() =>
   (data.value?.items ?? []).filter(s => checkedItems.value.has(s.id) && orderQty.value[s.id] > 0)
 )
 
+// Grouped like the actual order email the backend sends (see send_order/
+// group_drinks_by_category in api_views.py), so the preview matches reality.
+const previewRows = computed(() => toFlatRows(selectedItems.value))
+
 function formatBottleSize(s: ReorderSuggestion): string {
   if (!s.bottle_size) return ''
   return ` ${parseFloat(s.bottle_size).toLocaleString('de-DE')}l`
@@ -280,7 +284,7 @@ onMounted(() => { loadData() })
 
       .form-row
         label Anmerkung (optional)
-        textarea(v-model="notes" placeholder="z.B. Bitte Pfandflaschen mitbringen" rows="2")
+        textarea(v-model="notes" placeholder="z.B. Leergut steht zur Abholung bereit" rows="2")
 
       .order-preview
         h5 Vorschau (an info@getraenkestation.com)
@@ -297,8 +301,12 @@ onMounted(() => { loadData() })
             | wir wuerden gerne folgende Bestellung aufgeben:
           br
           .order-lines
-            div(v-for="s in selectedItems" :key="s.id")
-              strong {{ orderLabel(s) }}: {{ orderQty[s.id] }}
+            template(v-for="row in previewRows" :key="row.key")
+              .order-cat-header(v-if="row.type === 'header'")
+                span.cat-emoji {{ row.emoji }}
+                | {{ row.label }}
+              div(v-else)
+                strong {{ orderLabel(row.item) }}: {{ orderQty[row.item.id] }}
           template(v-if="notes")
             br
             p {{ notes }}
@@ -458,6 +466,14 @@ h5 { font-weight: 700; font-size: 0.9rem; margin: 0 0 0.5rem; }
 }
 .preview-text p { margin: 0 0 0.25rem; }
 .order-lines div { margin: 0.1rem 0; }
+.order-cat-header {
+  margin: 0.5rem 0 0.15rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  color: #444;
+}
 
 .send-row { display: flex; gap: 1rem; align-items: center; }
 .btn-send { padding: 0.75rem 1.5rem; background: black; color: white; border: none; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
