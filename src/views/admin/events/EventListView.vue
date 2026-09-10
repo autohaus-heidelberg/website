@@ -13,7 +13,7 @@ const grants = ref<GrantApplication[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
-const activeFilter = ref<'all' | 'upcoming' | 'past' | 'live' | 'draft' | 'accounted'>('upcoming')
+const activeFilter = ref<'all' | 'upcoming' | 'past'>('upcoming')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 const now = new Date()
 const activeView = ref<'events' | 'grants'>('events')
@@ -51,9 +51,6 @@ const filters = [
   { key: 'all' as const, label: 'Alle' },
   { key: 'upcoming' as const, label: 'Kommend' },
   { key: 'past' as const, label: 'Vergangen' },
-  { key: 'live' as const, label: 'Live' },
-  { key: 'draft' as const, label: 'Entwurf' },
-  { key: 'accounted' as const, label: 'Abgerechnet' },
 ]
 
 const events = computed(() => eventsData.value?.results || [])
@@ -97,12 +94,6 @@ const filteredEvents = computed(() => {
     list = list.filter(e => new Date(e.date) > now)
   } else if (activeFilter.value === 'past') {
     list = list.filter(e => new Date(e.date) <= now)
-  } else if (activeFilter.value === 'live') {
-    list = list.filter(e => publishedIds.value.has(e.id))
-  } else if (activeFilter.value === 'draft') {
-    list = list.filter(e => !publishedIds.value.has(e.id))
-  } else if (activeFilter.value === 'accounted') {
-    list = list.filter(e => hasResult(e.id))
   }
 
   list = [...list].sort((a, b) => {
@@ -125,15 +116,12 @@ function filterCount(key: string) {
   if (key === 'all') return list.length
   if (key === 'upcoming') return list.filter(e => new Date(e.date) > now).length
   if (key === 'past') return list.filter(e => new Date(e.date) <= now).length
-  if (key === 'live') return list.filter(e => publishedIds.value.has(e.id)).length
-  if (key === 'draft') return list.filter(e => !publishedIds.value.has(e.id)).length
-  if (key === 'accounted') return list.filter(e => hasResult(e.id)).length
   return 0
 }
 
 // Auto-set sort direction based on filter
 watch(activeFilter, (filter) => {
-  if (filter === 'upcoming' || filter === 'draft') {
+  if (filter === 'upcoming') {
     sortOrder.value = 'asc'
   } else {
     sortOrder.value = 'desc'
