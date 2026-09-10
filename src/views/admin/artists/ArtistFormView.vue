@@ -153,6 +153,7 @@ onMounted(() => {
   background: white;
   padding: 2rem;
   border: 0.5rem solid black;
+  min-width: 0;
 }
 
 .form-header {
@@ -200,6 +201,8 @@ input, textarea {
   font-family: inherit;
   font-weight: 600;
   transition: background 0.2s, color 0.2s;
+  width: 100%;
+  max-width: 100%;
 }
 
 input:focus, textarea:focus {
@@ -211,6 +214,7 @@ input:focus, textarea:focus {
 .field-hint {
   font-size: 0.85rem;
   color: black;
+  overflow-wrap: break-word;
 }
 
 .error {
@@ -269,6 +273,7 @@ input:focus, textarea:focus {
   background: white;
   padding: 2rem;
   border: 0.5rem solid black;
+  min-width: 0;
 }
 
 .preview-title {
@@ -289,6 +294,9 @@ input:focus, textarea:focus {
 .artist h2.accent {
   margin: 0 0 1rem 0;
   text-align: center;
+  overflow-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .artist-img {
@@ -336,6 +344,15 @@ input:focus, textarea:focus {
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .form-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .form-actions {
+    flex-wrap: wrap;
   }
 }
 </style>

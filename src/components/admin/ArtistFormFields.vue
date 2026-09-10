@@ -179,6 +179,7 @@ input, textarea {
   font-family: inherit;
   font-weight: 600;
   transition: background 0.2s, color 0.2s;
+  width: 100%;
 }
 
 input:focus, textarea:focus {
@@ -190,6 +191,7 @@ input:focus, textarea:focus {
 .field-hint {
   font-size: 0.85rem;
   color: black;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 768px) {

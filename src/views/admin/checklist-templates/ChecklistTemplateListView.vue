@@ -403,12 +403,14 @@ h2 {
   padding: 1rem 1.5rem;
   background: black;
   color: white;
+  gap: 1rem;
 }
 
 .phase-title {
   font-size: 1.1rem;
   font-weight: 900;
   margin: 0;
+  min-width: 0;
 }
 
 .btn-add {
@@ -420,6 +422,7 @@ h2 {
   font-weight: 900;
   font-size: 0.9rem;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-add:hover:not(:disabled) {

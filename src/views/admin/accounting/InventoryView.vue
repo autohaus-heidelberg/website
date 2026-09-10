@@ -123,4 +123,44 @@ h2 {
 .btn-action:hover {
   background: #333;
 }
+
+@media (max-width: 768px) {
+  .inventory-view {
+    padding: 1rem;
+  }
+
+  .inventory-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    overflow-wrap: break-word;
+    min-width: 0;
+  }
+
+  .tab-bar {
+    flex-direction: column;
+  }
+
+  .tab {
+    border-right: none;
+    border-bottom: 0.25rem solid black;
+  }
+
+  .tab:last-child {
+    border-bottom: none;
+  }
+
+  .sub-toolbar {
+    text-align: stretch;
+  }
+
+  .btn-action {
+    display: block;
+    text-align: center;
+    white-space: normal;
+  }
+}
 </style>

@@ -650,6 +650,7 @@ h2 {
 /* Cards */
 .anfragen-container {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 0.75rem;
 }
 

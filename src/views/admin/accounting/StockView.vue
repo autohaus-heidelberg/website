@@ -570,5 +570,13 @@ onMounted(() => {
   .col-fifo, .col-deposit, .col-deposit-val, .col-size, .col-value {
     display: none;
   }
+
+  .summary-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summary-value {
+    font-size: 1.1rem;
+  }
 }
 </style>

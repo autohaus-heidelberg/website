@@ -327,5 +327,28 @@ h2 {
   .artists-grid {
     grid-template-columns: 1fr;
   }
+
+  h2 {
+    font-size: 1.4rem;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input {
+    min-width: unset;
+    max-width: 100%;
+  }
+
+  .btn-primary {
+    white-space: normal;
+    text-align: center;
+  }
 }
 </style>
