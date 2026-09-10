@@ -126,6 +126,18 @@ function eventDateShort(iso: string): string {
   return dayjs(iso).locale('de').format('DD.MM.')
 }
 
+// Bis 2 Events: einzelne Titel; ab 3: kompakt als Anzahl + Zeitraum,
+// damit der Betreff nicht abgeschnitten wird.
+function buildSubject(evs: Event[]): string {
+  if (evs.length <= 2) {
+    return evs.map(e => `${eventDateShort(e.date)} ${e.title}`).join('  /  ')
+  }
+  const start = eventDateShort(evs[0].date)
+  const end = eventDateShort(evs[evs.length - 1].date)
+  const range = start === end ? `am ${start}` : `vom ${start} – ${end}`
+  return `${evs.length} Veranstaltungen ${range}`
+}
+
 function rebuildNewsletter() {
   const evs = selectedEvents.value
   if (evs.length === 0) {
@@ -134,8 +146,7 @@ function rebuildNewsletter() {
     textContent.value = ''
     return
   }
-  const titleParts = evs.map(e => `${eventDateShort(e.date)} ${e.title}`)
-  title.value = titleParts.join('  /  ')
+  title.value = buildSubject(evs)
   content.value = buildNewsletterHtml(evs)
   textContent.value = buildNewsletterText(evs)
 }
