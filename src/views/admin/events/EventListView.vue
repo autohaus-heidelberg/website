@@ -281,8 +281,8 @@ onMounted(() => {
   .header
     h2 Veranstaltungen
     .tab-bar
-      button.tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") Veranstaltungen
-      button.tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") Förderungen
+      button.tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") 🎪 Veranstaltungen
+      button.tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") 🏛️ Förderungen
 
   //- ── Events View ──
   template(v-if="activeView === 'events'")
@@ -431,10 +431,9 @@ onMounted(() => {
 
 .header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -854,28 +853,26 @@ a.fee:hover {
 /* ── Tab Bar ── */
 .tab-bar {
   display: flex;
-  gap: 0;
-  border: 0.25rem solid black;
+  align-self: stretch;
+  gap: 0.5rem;
+  border-bottom: 0.25rem solid black;
 }
 
 .tab {
   padding: 0.625rem 1.25rem;
-  background: white;
-  color: black;
-  border: none;
-  border-right: 0.25rem solid black;
+  border: 0.25rem solid black;
+  border-bottom: none;
+  background: #f0f0f0;
+  color: #666;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.15s;
+  margin-bottom: -0.25rem;
 }
 
-.tab:last-child {
-  border-right: none;
-}
-
-.tab:hover {
-  background: #f0f0f0;
+.tab:hover:not(.active) {
+  background: #e0e0e0;
+  color: black;
 }
 
 .tab.active {
@@ -1070,23 +1067,15 @@ a.fee:hover {
 
   .tab-bar {
     width: 100%;
-    flex-direction: column;
+    flex-wrap: wrap;
   }
 
   .tab {
-    flex: 1;
-    min-width: 0;
     padding: 0.625rem 0.5rem;
     font-size: 0.9rem;
     white-space: normal;
     overflow-wrap: break-word;
     text-align: center;
-    border-right: none;
-    border-bottom: 0.25rem solid black;
-  }
-
-  .tab:last-child {
-    border-bottom: none;
   }
 
   .toolbar {

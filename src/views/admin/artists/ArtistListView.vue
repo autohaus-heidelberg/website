@@ -63,7 +63,7 @@ onMounted(() => {
     h2 Künstler
 
   .tabs
-    button.tab(:class="{ active: activeTab === 'artists' }" @click="activeTab = 'artists'") Künstler
+    button.tab(:class="{ active: activeTab === 'artists' }" @click="activeTab = 'artists'") 🎤 Künstler
     button.tab(:class="{ active: activeTab === 'support' }" @click="activeTab = 'support'") 🎸 Support-Pool
 
   template(v-if="activeTab === 'artists'")
@@ -137,12 +137,17 @@ h2 {
   padding: 0.625rem 1.25rem;
   border: 0.25rem solid black;
   border-bottom: none;
-  background: white;
-  color: black;
+  background: #f0f0f0;
+  color: #666;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
   margin-bottom: -0.25rem;
+}
+
+.tab:hover:not(.active) {
+  background: #e0e0e0;
+  color: black;
 }
 
 .tab.active {

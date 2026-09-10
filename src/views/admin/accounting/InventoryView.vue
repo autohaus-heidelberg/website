@@ -11,8 +11,8 @@ const router = useRouter()
 type Tab = 'bestand' | 'einkaufe' | 'bestellung'
 
 const tabs: { id: Tab; label: string }[] = [
-  { id: 'bestand', label: 'Bestand' },
-  { id: 'einkaufe', label: 'Einkäufe' },
+  { id: 'bestand', label: '🍺 Bestand' },
+  { id: 'einkaufe', label: '🛒 Einkäufe' },
   { id: 'bestellung', label: '📦 Bestellung' },
 ]
 
@@ -58,10 +58,9 @@ function switchTab(tab: Tab) {
 
 .inventory-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -79,28 +78,26 @@ h2 {
 
 .tab-bar {
   display: flex;
-  gap: 0;
-  border: 0.25rem solid black;
+  align-self: stretch;
+  gap: 0.5rem;
+  border-bottom: 0.25rem solid black;
 }
 
 .tab {
   padding: 0.625rem 1.25rem;
-  background: white;
-  color: black;
-  border: none;
-  border-right: 0.25rem solid black;
+  border: 0.25rem solid black;
+  border-bottom: none;
+  background: #f0f0f0;
+  color: #666;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.15s;
+  margin-bottom: -0.25rem;
 }
 
-.tab:last-child {
-  border-right: none;
-}
-
-.tab:hover {
-  background: #f0f0f0;
+.tab:hover:not(.active) {
+  background: #e0e0e0;
+  color: black;
 }
 
 .tab.active {
@@ -141,16 +138,7 @@ h2 {
   }
 
   .tab-bar {
-    flex-direction: column;
-  }
-
-  .tab {
-    border-right: none;
-    border-bottom: 0.25rem solid black;
-  }
-
-  .tab:last-child {
-    border-bottom: none;
+    flex-wrap: wrap;
   }
 
   .sub-toolbar {
