@@ -658,6 +658,7 @@ h2 {
   border: 0.2rem solid black;
   transition: all 0.15s;
   background: white;
+  min-width: 0;
 }
 
 .anfrage-card.unread {
@@ -802,6 +803,7 @@ h2 {
   line-height: 1.5;
   border-top: 1px solid #f0f0f0;
   text-align: left;
+  overflow-wrap: break-word;
 }
 
 .anfrage-card.unread .anfrage-preview {
@@ -859,6 +861,7 @@ h2 {
   background: #f8f8f8;
   padding: 1rem;
   border-left: 0.25rem solid #ddd;
+  overflow-wrap: break-word;
 }
 
 .message-text :deep(.message-link),
@@ -931,6 +934,7 @@ h2 {
   line-height: 1.6;
   white-space: pre-wrap;
   color: #333;
+  overflow-wrap: break-word;
 }
 
 /* Actions */
