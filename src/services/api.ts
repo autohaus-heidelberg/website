@@ -5,6 +5,29 @@ import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosR
 const envUrl = import.meta.env.VITE_API_BASE_URL
 export const API_BASE_URL = envUrl !== undefined ? envUrl : 'https://content.hopfner.cc'
 
+// Turns DRF error payloads (e.g. {"date": ["This field is required."]}) into a
+// readable string, so callers relying on `error.message` see the real cause
+// instead of axios's generic "Request failed with status code 400".
+function extractErrorMessage(data: unknown): string | null {
+  if (!data) return null
+  if (typeof data === 'string') return data
+  if (typeof data !== 'object') return null
+
+  const obj = data as Record<string, unknown>
+  if (typeof obj.error === 'string') return obj.error
+  if (typeof obj.detail === 'string') return obj.detail
+
+  const parts: string[] = []
+  for (const [field, value] of Object.entries(obj)) {
+    if (Array.isArray(value)) {
+      parts.push(`${field}: ${value.join(', ')}`)
+    } else if (typeof value === 'string') {
+      parts.push(`${field}: ${value}`)
+    }
+  }
+  return parts.length ? parts.join(' | ') : null
+}
+
 class ApiClient {
   private client: AxiosInstance
 
@@ -35,6 +58,14 @@ class ApiClient {
       (response: AxiosResponse) => response,
       async (error) => {
         const originalRequest = error.config
+
+        // Surface the backend's actual validation/error message (if any) so
+        // callers using `error.message` don't just get "Request failed with
+        // status code 4xx".
+        const extracted = extractErrorMessage(error.response?.data)
+        if (extracted) {
+          error.message = extracted
+        }
 
         // If error is 401 and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
