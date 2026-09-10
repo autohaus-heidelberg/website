@@ -56,7 +56,7 @@ function buildNewsletterHtml(events: Event[]): string {
     const dateStr = dayjs(event.date).locale('de').format('dddd, DD. MMMM YYYY')
     const timeStr = dayjs(event.date).format('HH:mm')
 
-    html += `<h2>Diese Woche im Autohaus: ${dateStr} – ${event.title}</h2>\n`
+    html += `<h2>${dateStr} – ${event.title}</h2>\n`
     html += `<p><strong>Einlass: ${timeStr} Uhr</strong></p>\n`
 
     if (event.image) {
@@ -96,7 +96,7 @@ function buildNewsletterText(events: Event[]): string {
     const dateStr = dayjs(event.date).locale('de').format('dddd, DD. MMMM YYYY')
     const timeStr = dayjs(event.date).format('HH:mm')
 
-    text += `Diese Woche im Autohaus: ${dateStr} – ${event.title}\n`
+    text += `${dateStr} – ${event.title}\n`
     text += `${'='.repeat(60)}\n\n`
     text += `Einlass: ${timeStr} Uhr\n\n`
     text += stripHtml(event.descriptionShort) + '\n'
@@ -215,7 +215,7 @@ async function sendNewsletter(test = false) {
       :disabled="isGenerating || isSending"
     ) {{ isGenerating ? 'Wird geladen...' : 'Vorschlag erstellen' }}
     p.week-info(v-if="!isGenerating")
-      | Nächste Woche: {{ getNextWeekRange().start.format('DD.MM.') }} – {{ getNextWeekRange().end.format('DD.MM.YYYY') }}
+      | Vorausgewählt: nächste Woche ({{ getNextWeekRange().start.format('DD.MM.') }} – {{ getNextWeekRange().end.format('DD.MM.YYYY') }})
 
   .error-message(v-if="error") {{ error }}
   .success-message(v-if="sendSuccess === 'test'") Test-Newsletter erfolgreich versendet!
