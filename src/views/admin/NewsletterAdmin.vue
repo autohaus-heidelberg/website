@@ -126,16 +126,34 @@ function eventDateShort(iso: string): string {
   return dayjs(iso).locale('de').format('DD.MM.')
 }
 
+// Sichtbare Betreff-Länge in gängigen Postfächern liegt bei ~70 Zeichen.
+const MAX_SUBJECT = 70
+
 // Bis 2 Events: einzelne Titel; ab 3: kompakt als Anzahl + Zeitraum,
 // damit der Betreff nicht abgeschnitten wird.
 function buildSubject(evs: Event[]): string {
   if (evs.length <= 2) {
-    return evs.map(e => `${eventDateShort(e.date)} ${e.title}`).join('  /  ')
+    const detailed = evs.map(e => `${eventDateShort(e.date)} ${e.title}`).join('  /  ')
+    // Auch bei 1-2 Events kann der Betreff durch lange Titel zu lang werden.
+    if (detailed.length <= MAX_SUBJECT) return detailed
+    // Zwei Events: zusammenfassen; ein Event: Titel kürzen.
+    if (evs.length === 2) return subjectRange(evs)
+    const e = evs[0]
+    const prefix = `${eventDateShort(e.date)} `
+    return prefix + truncate(e.title, MAX_SUBJECT - prefix.length)
   }
+  return subjectRange(evs)
+}
+
+function subjectRange(evs: Event[]): string {
   const start = eventDateShort(evs[0].date)
   const end = eventDateShort(evs[evs.length - 1].date)
   const range = start === end ? `am ${start}` : `vom ${start} – ${end}`
   return `${evs.length} Veranstaltungen ${range}`
+}
+
+function truncate(str: string, max: number): string {
+  return str.length <= max ? str : str.slice(0, Math.max(0, max - 1)).trimEnd() + '…'
 }
 
 function rebuildNewsletter() {
