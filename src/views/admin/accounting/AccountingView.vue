@@ -129,6 +129,11 @@ const consumptionStats = ref<ConsumptionStats>({ drinks: {}, categories: {} })
 // See backend `AbrechnungSerializer.update` and `tests_abrechnung_occ.py`.
 const staleAbrechnungConflict = ref(false)
 
+// Set when a save fails with no HTTP response (timeout / connection reset /
+// edge 5xx). The write outcome is unknown, so auto-save is paused until the
+// user retries — blindly re-saving could overwrite a parallel editor.
+const saveNetworkError = ref(false)
+
 // ── Pretix VVK ───────────────────────────────────────────────────
 const pretixData = ref<PretixOrderSummary | null>(null)
 const pretixLoading = ref(false)
@@ -1340,6 +1345,7 @@ async function saveAll(silent = false) {
   // A new save attempt invalidates any previous per-drink conflicts; the
   // server will re-issue them in the 400 response if they still apply.
   inventoryConflicts.clear()
+  saveNetworkError.value = false
 
   try {
     const accId = accounting.value.id
@@ -1511,6 +1517,31 @@ async function saveAll(silent = false) {
         autoSaveTimer = null
       }
       autoSaveDirty.value = false
+    } else if (!e.response) {
+      // No HTTP response (timeout / connection reset / edge 5xx). The write may
+      // or may not have committed — never keep auto-saving blindly, or a
+      // parallel editor's changes can be silently overwritten (2026-09 incident).
+      autoSavePausedByConflict.value = true
+      if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer)
+        autoSaveTimer = null
+      }
+      autoSaveDirty.value = false
+      // Reconcile against the server: if it advanced past our last confirmed
+      // save, our edits are now stale → force the same reload path as a 409.
+      try {
+        const accId = accounting.value?.id
+        const fresh = accId ? await accountingService.getById(accId) : null
+        if (fresh?.updated_at && accounting.value?.updated_at
+            && fresh.updated_at !== accounting.value.updated_at) {
+          staleAbrechnungConflict.value = true
+        } else {
+          saveNetworkError.value = true
+        }
+      } catch {
+        // Still unreachable → surface the connection error, stay paused.
+        saveNetworkError.value = true
+      }
     } else {
       if (!silent) error.value = e.message || 'Fehler beim Speichern'
     }
@@ -1531,6 +1562,18 @@ async function saveAll(silent = false) {
  */
 function reloadAfterStaleConflict() {
   window.location.reload()
+}
+
+/**
+ * Resolve a save network-error by retrying once, explicitly (non-silent).
+ *
+ * Only reachable when the post-error reconcile found the server unchanged
+ * (our write did not land), so a retry is safe and won't overwrite anyone.
+ */
+async function retryAfterNetworkError() {
+  saveNetworkError.value = false
+  autoSavePausedByConflict.value = false
+  await saveAll(false)
 }
 
 async function downloadAntrag() {
@@ -1852,6 +1895,18 @@ defineExpose({ toggleFinalStatus })
           | Damit deine Änderungen nicht die andere Person überschreiben,
           | lade bitte neu. Deine ungespeicherten Eingaben gehen dabei verloren.
       button.btn-primary(@click="reloadAfterStaleConflict") Neu laden
+
+    //- ── Save Connection-Error Banner ──
+    //- Shown when a save got no response (timeout / connection lost). The write
+    //- outcome is unknown; auto-save is paused so we can't silently overwrite a
+    //- parallel editor. The user retries deliberately once the connection is back.
+    .stale-banner(v-if="saveNetworkError")
+      .stale-banner-icon 📡
+      .stale-banner-text
+        strong Speichern fehlgeschlagen – keine Verbindung.
+        span  Deine letzte Änderung wurde nicht bestätigt. Automatisches
+          | Speichern ist pausiert. Prüfe die Verbindung und versuche es erneut.
+      button.btn-primary(@click="retryAfterNetworkError") Erneut speichern
 
     //- ── Cash Count Tab ──
     .tab-content(v-if="activeTab === 'cashcount'")
