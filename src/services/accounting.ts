@@ -639,8 +639,13 @@ export interface EventDocument {
 }
 
 export const documentService = {
-  async list(eventId: string): Promise<EventDocument[]> {
-    const data = await api.get<any>(`/api/events/${eventId}/documents/`)
+  // `sync` triggers a (slow) Google Drive re-sync on the backend. Off by default
+  // so routine loads (e.g. opening the accounting) return the DB-cached list
+  // without a worker-blocking Drive round-trip; only the dedicated documents
+  // page requests a fresh sync.
+  async list(eventId: string, sync = false): Promise<EventDocument[]> {
+    const qs = sync ? '?sync=1' : ''
+    const data = await api.get<any>(`/api/events/${eventId}/documents/${qs}`)
     return Array.isArray(data) ? data : data.results || []
   },
 
