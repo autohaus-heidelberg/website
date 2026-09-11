@@ -2,16 +2,16 @@ import { ref, type Ref } from 'vue'
 
 type SortDir = 'asc' | 'desc'
 
-export function useSort<T>() {
-  const sortKey = ref('') as Ref<string>
-  const sortDir = ref<SortDir>('asc')
+export function useSort<T>(initialKey = '', initialDir: SortDir = 'asc') {
+  const sortKey = ref(initialKey) as Ref<string>
+  const sortDir = ref<SortDir>(initialDir)
 
-  function toggle(key: string) {
+  function toggle(key: string, initialDir: SortDir = 'desc') {
     if (sortKey.value === key) {
       sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
     } else {
       sortKey.value = key
-      sortDir.value = 'desc'
+      sortDir.value = initialDir
     }
   }
 

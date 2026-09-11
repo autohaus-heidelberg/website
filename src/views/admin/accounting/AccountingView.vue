@@ -286,13 +286,14 @@ function sumupTransactionsFor(category: 'bar' | 'entrance') {
 }
 
 // ── Sorting ──────────────────────────────────────────────────────
-const invSort = useSort<{ beverage: BeverageItem; entry: InventoryEntry }>()
+const invSort = useSort<{ beverage: BeverageItem; entry: InventoryEntry }>('category', 'asc')
 const expSort = useSort<ExpenseEntry>()
 
 function sortedInventory(items: { beverage: BeverageItem; entry: InventoryEntry }[]) {
   return invSort.sorted(items, (item, key) => {
     switch (key) {
       case 'name': return item.beverage.name.toLowerCase()
+      case 'category': return `${(item.beverage.category || '\uffff').toLowerCase()}\u0000${item.beverage.name.toLowerCase()}`
       case 'before': return parseFloat(item.entry.quantity_before || '0')
       case 'after': return parseFloat(item.entry.quantity_after || '0')
       case 'consumed': return inventoryConsumption(item.entry)
@@ -301,6 +302,22 @@ function sortedInventory(items: { beverage: BeverageItem; entry: InventoryEntry 
     }
   })
 }
+
+// Der „Getränk"-Header zykelt: Name ▲ → Name ▼ → Kategorie ▲ → Kategorie ▼.
+function cycleInventoryNameSort() {
+  const { sortKey, sortDir } = invSort
+  if (sortKey.value === 'name' && sortDir.value === 'asc') sortDir.value = 'desc'
+  else if (sortKey.value === 'name') { sortKey.value = 'category'; sortDir.value = 'asc' }
+  else if (sortKey.value === 'category' && sortDir.value === 'asc') sortDir.value = 'desc'
+  else { sortKey.value = 'name'; sortDir.value = 'asc' }
+}
+
+const inventoryNameHeader = computed(() => {
+  const arrow = invSort.sortDir.value === 'asc' ? ' ▲' : ' ▼'
+  if (invSort.sortKey.value === 'category') return `Getränk · Kategorie${arrow}`
+  if (invSort.sortKey.value === 'name') return `Getränk${arrow}`
+  return 'Getränk'
+})
 
 const sortedExpenses = computed(() => {
   return expSort.sorted(expenses.value, (item, key) => {
@@ -2109,7 +2126,7 @@ defineExpose({ toggleFinalStatus })
         //- Desktop table
         .inventory-table.desktop-only
           .inventory-header
-            .col-inv-name.sortable(@click="invSort.toggle('name')") Getränk{{ invSort.indicator('name') }}
+            .col-inv-name.sortable(@click="cycleInventoryNameSort") {{ inventoryNameHeader }}
             .col-inv-info Kiste
             .col-inv-pair.sortable(@click="invSort.toggle('before')") Vorher{{ invSort.indicator('before') }}
             .col-inv-pair.sortable(@click="invSort.toggle('after')") Nachher{{ invSort.indicator('after') }}
@@ -3529,6 +3546,7 @@ h2 {
 .inventory-toolbar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 1rem;
   margin-bottom: 0.75rem;
 }
@@ -3551,6 +3569,7 @@ h2 {
   color: #dc2626;
   font-weight: 600;
 }
+
 .consumption-warning {
   font-size: 0.75rem;
   color: #dc2626;
