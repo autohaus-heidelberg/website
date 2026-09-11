@@ -34,7 +34,7 @@ async function loadEvent() {
 async function loadDocuments() {
   isLoadingDocs.value = true
   try {
-    documents.value = await documentService.list(props.eventId)
+    documents.value = await documentService.list(props.eventId, true)
   } catch {
     // silently fail
   } finally {
