@@ -2480,12 +2480,12 @@ defineExpose({ toggleFinalStatus })
           .summary-row.summary-expandable(@click="resultExpandRevenue = !resultExpandRevenue")
             span.summary-label {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen
             span.summary-value {{ formatCurrency(adjustedRevenue) }}
-          .summary-hint(v-if="authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)")
-            | (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
           template(v-if="resultExpandRevenue")
             template(v-for="group in REVENUE_GROUPS" :key="group.label")
               .summary-row.summary-detail.summary-group-subtotal(v-if="groupRevenue(group.sources) !== 0")
-                span.summary-label {{ group.sources[0].startsWith('bar_') ? '🍺 Bar' : '🚪 Einlass' }}
+                span.summary-label
+                  | {{ group.sources[0].startsWith('bar_') ? '🍺 Bar' : '🚪 Einlass' }}
+                  span.summary-inline-hint(v-if="group.sources[0].startsWith('bar_') && authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)") (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
                 span.summary-value {{ formatCurrency(groupRevenue(group.sources)) }}
               .summary-row.summary-detail.summary-detail-nested(v-for="rev in revenues.filter(r => group.sources.includes(r.source))" :key="rev.source" v-show="revenueNet(rev) !== 0")
                 span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
@@ -4743,6 +4743,15 @@ h2 {
   font-size: 0.8rem;
   font-style: italic;
   color: #888;
+}
+
+/* Unauffälliger Klammer-Hinweis direkt hinter dem Bar-Label */
+.summary-inline-hint {
+  margin-left: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-style: italic;
+  color: #999;
 }
 
 /* Schwarzer Balken: Ergebnis-Subtotals (vor USt / nach USt / nach Doordeal) */
