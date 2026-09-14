@@ -150,7 +150,6 @@ const sumupBarLoading = ref(false)
 const sumupBarError = ref('')
 
 // ── Grant (Förderung) ────────────────────────────────────────────
-const grantTouched = ref(false)
 const grantRecord = ref<GrantApplication | null>(null)
 const grantSummary = ref<GrantSummary | null>(null)
 const grantSubTab = ref<'antrag' | 'nachweis'>('antrag')
@@ -1194,6 +1193,19 @@ const budgetGrantAmount = computed(() => {
   return Math.min(1000, budgetEligibleAmount.value)
 })
 
+// True only when real grant data has been entered. Mirrors the backend
+// `GrantApplication.is_submitted` heuristic so we never create an empty
+// placeholder record just from opening/auto-saving the accounting.
+// Deliberately excludes the auto-generated Sachbericht, own_revenue and the
+// default Mietpauschale — those are auto/default values, not user intent.
+const grantHasContent = computed(() => {
+  if (approvedAmount.value != null) return true
+  if (zuwendungsbescheidDate.value) return true
+  if (auszahlungAmount.value != null) return true
+  return [...budgetKuenstler.value, ...budgetSachkosten.value, ...budgetSonstiges.value]
+    .some(i => i.name.trim() !== '' || (parseFloat(i.amount) || 0) > 0)
+})
+
 // ── Format helpers ───────────────────────────────────────────────
 
 function formatCurrency(value: number): string {
@@ -1326,8 +1338,10 @@ async function loadData() {
     error.value = e.message || 'Daten konnten nicht geladen werden'
   } finally {
     isLoading.value = false
-    // Enable auto-save after initial load is complete
-    suppressAutoSave = false
+    // Defer past Vue's watcher flush so load-time writes (e.g. grant fields
+    // populated by generateDefaultSachbericht) don't fire a phantom save on
+    // open. Same guard refreshStockAndCorrect uses.
+    setTimeout(() => { suppressAutoSave = false }, 0)
   }
 }
 
@@ -1453,8 +1467,12 @@ async function saveAll(silent = false) {
       }
     }
 
-    // Also save grant data if grant tab has data
-    if (activeTab.value === 'grant' || grantRecord.value || grantTouched.value) {
+    // Also save grant data — but only persist a record when the event
+    // actually has grant content. An existing record is kept in sync (so the
+    // Verwendungsnachweis gets fresh actuals); a new one is created only when
+    // real data was entered (see grantHasContent). This prevents phantom
+    // placeholder grants from merely opening/auto-saving the accounting.
+    if (grantRecord.value?.id || grantHasContent.value) {
       const budgetPlan = {
         expenses: {
           kuenstlerhonorar: budgetKuenstler.value.filter(i => i.name || parseFloat(i.amount) > 0).map(i => ({ name: i.name, amount: parseFloat(i.amount) || 0 })),
@@ -1492,7 +1510,6 @@ async function saveAll(silent = false) {
         grantRecord.value = await grantService.create(data)
       }
 
-      grantTouched.value = false
       const eventYear = event.value?.date ? new Date(event.value.date).getFullYear() : new Date().getFullYear()
       grantSummary.value = await grantService.getSummary(eventYear)
     }
@@ -1761,23 +1778,14 @@ watch(
   },
   { deep: true }
 )
+// Everything else (notes, door deal, grant fields) just triggers a save.
+// scheduleAutoSave() itself ignores writes during the initial load.
 watch(
-  () => [accounting.value?.notes],
-  () => { scheduleAutoSave() }
-)
-watch(
-  [doorDealEnabled, doorDealSplits],
-  () => { scheduleAutoSave() },
-  { deep: true }
-)
-watch(
-  [sachbericht, grantNotes, budgetKuenstler, budgetSachkosten, budgetSonstiges,
+  [() => accounting.value?.notes, doorDealEnabled, doorDealSplits,
+   sachbericht, grantNotes, budgetKuenstler, budgetSachkosten, budgetSonstiges,
    budgetRevEintritt, budgetRevGetraenke, budgetRevEigenmittel, budgetRevDrittmittel,
    budgetRevSonstige, approvedAmount, zuwendungsbescheidDate, auszahlungAmount, rentFlatAmount],
-  () => {
-    grantTouched.value = true
-    scheduleAutoSave()
-  },
+  () => { scheduleAutoSave() },
   { deep: true }
 )
 
