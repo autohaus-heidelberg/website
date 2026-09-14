@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { api } from '@/services/api'
 
 interface ChangeEntry {
@@ -9,15 +10,43 @@ interface ChangeEntry {
   at: string
 }
 
+const route = useRoute()
 const entries = ref<ChangeEntry[]>([])
 const expanded = ref(false)
 const loading = ref(false)
 let timer: ReturnType<typeof setInterval> | null = null
 
+// Map the current admin route to a backend feed scope so the footer only
+// shows changes relevant to what the user is looking at.
+const context = computed<{ scope: string; id?: string; title: string }>(() => {
+  const id = route.params.id as string | undefined
+  switch (route.name) {
+    case 'admin-event-edit':
+      return { scope: 'event', id, title: 'Änderungen an dieser Veranstaltung' }
+    case 'admin-events':
+    case 'admin-event-create':
+      return { scope: 'events', title: 'Änderungen an Veranstaltungen' }
+    case 'admin-lager':
+      return { scope: 'lager', title: 'Änderungen im Lager' }
+    case 'admin-beverage-edit':
+    case 'admin-beverage-create':
+      return { scope: 'drinks', title: 'Änderungen an Getränken' }
+    case 'admin-purchase-edit':
+    case 'admin-purchase-create':
+      return { scope: 'purchases', title: 'Änderungen an Einkäufen' }
+    case 'admin-anfragen':
+      return { scope: 'anfragen', title: 'Änderungen an Anfragen' }
+    default:
+      return { scope: 'all', title: 'Letzte Änderungen' }
+  }
+})
+
 async function load() {
   loading.value = true
   try {
-    entries.value = await api.get<ChangeEntry[]>('/api/recent-changes/')
+    const params = new URLSearchParams({ scope: context.value.scope })
+    if (context.value.id) params.set('id', context.value.id)
+    entries.value = await api.get<ChangeEntry[]>(`/api/recent-changes/?${params.toString()}`)
   } catch {
     // Feed is non-critical; stay silent on failure.
   } finally {
@@ -43,6 +72,9 @@ function toggle() {
   if (expanded.value) load()
 }
 
+// Reload whenever the context (route/record) changes.
+watch(context, load)
+
 onMounted(() => {
   load()
   // Refresh in the background so the footer stays reasonably current.
@@ -58,6 +90,7 @@ onUnmounted(() => {
 footer.activity-feed(:class="{ 'is-expanded': expanded }")
   button.activity-summary(@click="toggle" :aria-expanded="expanded")
     span.activity-dot
+    span.activity-scope {{ context.title }}
     template(v-if="entries.length")
       span.activity-latest
         strong {{ entries[0].user || 'Jemand' }}
@@ -109,6 +142,17 @@ footer.activity-feed(:class="{ 'is-expanded': expanded }")
   background: black;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.activity-scope {
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: black;
+  flex-shrink: 0;
+  border-right: 1px solid #ccc;
+  padding-right: 0.6rem;
 }
 
 .activity-latest {
