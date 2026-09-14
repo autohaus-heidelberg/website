@@ -71,7 +71,7 @@ router-link.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin-dashboard
     //- .video
     //-   video(autoplay loop muted :height="logoHeight")
     //-     source(src="/header_video.mp4")
-    CircularLogo(:diameter="logoHeight" :key="logoHeight")
+    CircularLogo(:diameter="logoHeight")
     //- img.img-animate(:src="imgSrc1", :style="styleImg1") 
     //- img.img-animate(:src="imgSrc2", :style="styleImg2") 
     //- img.img-outline(src="/img/logo_outline.svg")
@@ -288,7 +288,6 @@ p Wir sind das Carousel im alten Autohaus.
 
 .logo-container {
   height: 500px;
-  width: 0;
   color: var(--link-color)
 }
 

@@ -116,9 +116,12 @@ watch(isMobileMenuOpen, (isOpen) => {
   flex-direction: column;
   border-right: 0.5rem solid black;
   position: fixed;
+  top: 0;
   height: 100vh;
-  overflow-y: scroll;
-  -webkit-overflow-scrolling: touch;
+  /* Use the dynamic viewport height so the bottom entries stay reachable on
+     iPad/iOS Safari, where 100vh is taller than the visible area. */
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .admin-nav-header {
@@ -319,6 +322,7 @@ watch(isMobileMenuOpen, (isOpen) => {
     left: 0;
     width: 280px;
     height: 100vh;
+    height: 100dvh;
     transform: translateX(-100%);
     transition: transform 0.3s ease-out;
     z-index: 1000;
