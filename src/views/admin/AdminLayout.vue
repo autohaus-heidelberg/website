@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import AdminActivityFeed from '@/components/admin/AdminActivityFeed.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -96,6 +97,7 @@ watch(isMobileMenuOpen, (isOpen) => {
 
   main.admin-content
     router-view
+    AdminActivityFeed
 </template>
 
 <style scoped>
