@@ -17,10 +17,14 @@ const loading = ref(false)
 let timer: ReturnType<typeof setInterval> | null = null
 
 // Map the current admin route to a backend feed scope so the footer only
-// shows changes relevant to what the user is looking at.
-const context = computed<{ scope: string; id?: string; title: string }>(() => {
+// shows changes relevant to what the user is looking at. Returns null on pages
+// without a meaningful scope (e.g. artists, settings) so the footer is hidden
+// there instead of showing a confusing global feed — that stays on the dashboard.
+const context = computed<{ scope: string; id?: string; title: string } | null>(() => {
   const id = route.params.id as string | undefined
   switch (route.name) {
+    case 'admin-dashboard':
+      return { scope: 'all', title: 'Letzte Änderungen' }
     case 'admin-event-edit':
       return { scope: 'event', id, title: 'Änderungen an dieser Veranstaltung' }
     case 'admin-events':
@@ -37,15 +41,17 @@ const context = computed<{ scope: string; id?: string; title: string }>(() => {
     case 'admin-anfragen':
       return { scope: 'anfragen', title: 'Änderungen an Anfragen' }
     default:
-      return { scope: 'all', title: 'Letzte Änderungen' }
+      return null
   }
 })
 
 async function load() {
+  const ctx = context.value
+  if (!ctx) { entries.value = []; return }
   loading.value = true
   try {
-    const params = new URLSearchParams({ scope: context.value.scope })
-    if (context.value.id) params.set('id', context.value.id)
+    const params = new URLSearchParams({ scope: ctx.scope })
+    if (ctx.id) params.set('id', ctx.id)
     entries.value = await api.get<ChangeEntry[]>(`/api/recent-changes/?${params.toString()}`)
   } catch {
     // Feed is non-critical; stay silent on failure.
@@ -87,7 +93,7 @@ onUnmounted(() => {
 </script>
 
 <template lang="pug">
-footer.activity-feed(:class="{ 'is-expanded': expanded }")
+footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
   button.activity-summary(@click="toggle" :aria-expanded="expanded")
     span.activity-dot
     span.activity-scope {{ context.title }}
