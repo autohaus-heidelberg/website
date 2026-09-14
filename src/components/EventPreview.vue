@@ -76,7 +76,6 @@ margin-bottom: 1rem;
     justify-content: center;
     font-family: "Geologica";
     grid-area: title;
-    word-break: break-word;
     /* text-align: justify; */
   	hyphens: auto;
     height: 100%;
