@@ -1,0 +1,4 @@
+- Vue project 
+- public page at / with no backend, data coming from json file
+- admin page at /admin using backend data and requiring auth
+- Design guide can be found in ./DESIGN.md

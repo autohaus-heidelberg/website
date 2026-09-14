@@ -138,21 +138,6 @@ margin-bottom: 1rem;
   }
 }
 
-/* Small phones (iPhone SE and similar) */
-@media screen and (max-width: 480px) {
-  .title {
-    font-size: 1.35rem;
-    padding: 0.2rem;
-  }
-
-  .date {
-    font-size: 1.05rem;
-  }
-
-  .date-diff {
-    font-size: 1.1rem;
-  }
-}
 
 .event-preview:hover {
     transform: rotate(2deg) scale(1.02);
