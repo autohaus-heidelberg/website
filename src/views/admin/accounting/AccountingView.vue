@@ -538,6 +538,15 @@ function groupRevenueGross(sources: RevenueSource[]): number {
   return net + paidOut
 }
 
+// "Gezählt" bezieht sich nur auf die physische Kasse; PayPal/SumUp/Pretix
+// werden aus den Zahlungsdienstleister-Reports übernommen, nicht gezählt.
+function cashSourcesOf(sources: RevenueSource[]): RevenueSource[] {
+  return sources.filter(s => s.endsWith('_cash'))
+}
+function digitalSourcesOf(sources: RevenueSource[]): RevenueSource[] {
+  return sources.filter(s => !s.endsWith('_cash'))
+}
+
 function toggleSourceExpanded(source: string) {
   if (expandedSources.value.has(source)) {
     expandedSources.value.delete(source)
@@ -2065,13 +2074,16 @@ defineExpose({ toggleFinalStatus })
             span.summary-label {{ expandedSources.has('beverage_detail') ? '▾' : '▸' }} Getränkeverkauf
             span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
           template(v-if="expandedSources.has('beverage_detail')")
-            .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
-              span.summary-label Gezählt (brutto)
-              span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
+            .summary-line.summary-sub
+              span.summary-label Gezählt (Kasse, brutto)
+              span.summary-value {{ formatCurrency(groupRevenue(cashSourcesOf(REVENUE_GROUPS[0].sources))) }}
             .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
               span.summary-label + Aus Kasse bezahlt
               span.summary-value + {{ formatCurrency(expensesFromSource('bar_cash')) }}
-            .summary-line.summary-sub.summary-highlight(v-if="expensesFromSource('bar_cash') > 0")
+            .summary-line.summary-sub(v-if="groupRevenue(digitalSourcesOf(REVENUE_GROUPS[0].sources)) > 0")
+              span.summary-label + Digital (PayPal/SumUp)
+              span.summary-value + {{ formatCurrency(groupRevenue(digitalSourcesOf(REVENUE_GROUPS[0].sources))) }}
+            .summary-line.summary-sub.summary-highlight
               span.summary-label = Getränke brutto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources)) }}
             .summary-line.summary-sub
@@ -2084,13 +2096,16 @@ defineExpose({ toggleFinalStatus })
             span.summary-label {{ expandedSources.has('entrance_detail') ? '▾' : '▸' }} Eintritt
             span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
           template(v-if="expandedSources.has('entrance_detail')")
-            .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
-              span.summary-label Gezählt (brutto)
-              span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
+            .summary-line.summary-sub
+              span.summary-label Gezählt (Kasse, brutto)
+              span.summary-value {{ formatCurrency(groupRevenue(cashSourcesOf(REVENUE_GROUPS[1].sources))) }}
             .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
               span.summary-label + Aus Kasse bezahlt (z.B. Honorare)
               span.summary-value + {{ formatCurrency(expensesFromSource('entrance_cash')) }}
-            .summary-line.summary-sub.summary-highlight(v-if="expensesFromSource('entrance_cash') > 0")
+            .summary-line.summary-sub(v-if="groupRevenue(digitalSourcesOf(REVENUE_GROUPS[1].sources)) > 0")
+              span.summary-label + Digital (PayPal/SumUp/VVK)
+              span.summary-value + {{ formatCurrency(groupRevenue(digitalSourcesOf(REVENUE_GROUPS[1].sources))) }}
+            .summary-line.summary-sub.summary-highlight
               span.summary-label = Eintritt brutto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources)) }}
             .summary-line.summary-sub
