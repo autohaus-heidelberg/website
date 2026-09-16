@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { eventService, artistService, pretixService, accountingService, documentService } from '@/services'
 import { API_BASE_URL } from '@/services/api'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
@@ -79,6 +79,9 @@ const presaleSuccess = ref('')
 const presaleCopied = ref(false)
 const originalDate = ref<string | null>(null)
 const previewArtists = ref<Artist[]>([])
+// Snapshot of the last loaded/saved form state, used to detect unsaved edits before navigating away.
+const formSnapshot = ref('')
+const isFormDirty = computed(() => JSON.stringify(form.value) !== formSnapshot.value || imageFile.value !== null)
 const loadingArtists = ref(false)
 
 // Pretix VVK state
@@ -167,6 +170,7 @@ async function loadEvent() {
       artist_ids: event.artists.map(a => a.id!)
     }
     originalDate.value = event.date.substring(0, 16)
+    formSnapshot.value = JSON.stringify(form.value)
     // Set image preview if there's an existing image
     if (event.image_url) {
       imagePreview.value = event.image_url
@@ -443,6 +447,8 @@ async function handleSubmit() {
       }
     }
 
+    formSnapshot.value = JSON.stringify(form.value)
+    imageFile.value = null
     router.push('/admin/events')
   } catch (e: any) {
     error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
@@ -558,6 +564,10 @@ function closeOverflow(e: MouseEvent) {
 
 onMounted(async () => {
   await loadEvent()
+  if (!isEditing.value) {
+    formSnapshot.value = JSON.stringify(form.value)
+  }
+  window.addEventListener('beforeunload', handleBeforeUnload)
 
   // Check accounting status
   if (props.id) {
@@ -586,6 +596,20 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('click', closeOverflow)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (isFormDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+
+onBeforeRouteLeave(() => {
+  if (isFormDirty.value) {
+    return window.confirm('Es gibt ungespeicherte Änderungen an der Veranstaltung. Trotzdem verlassen?')
+  }
 })
 
 // ── Publish / Unpublish ──
@@ -719,7 +743,6 @@ function closeDeployModal() {
       )
         span.badge-default Abr. offen
         span.badge-hover ▶ Abschließen
-      router-link.btn-cancel(to="/admin/events") Abbrechen
 
   .event-tabs(v-if="isEditing")
     button.tab.tab-section(
