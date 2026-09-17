@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { eventService, accountingService, grantService, pretixService, type Event } from '@/services'
+import { eventService, accountingService, grantService, pretixService, statisticsService, type Event, type Artist } from '@/services'
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
+import type { AiTagsResponse } from '@/services/statistics'
 import publishedEvents from '@/events.json'
 
 const route = useRoute()
@@ -16,8 +17,14 @@ const searchQuery = ref('')
 const activeFilter = ref<'all' | 'upcoming' | 'past'>('upcoming')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 const now = new Date()
-const activeView = ref<'events' | 'grants'>('events')
+const activeView = ref<'events' | 'grants' | 'statistics'>('events')
 const selectedYear = ref(new Date().getFullYear())
+
+// ── Statistik ──
+const aiTags = ref<AiTagsResponse | null>(null)
+const isLoadingAi = ref(false)
+const aiError = ref('')
+const expandedCountry = ref<string | null>(null)
 
 // Undo delete
 const pendingDelete = ref<{ event: Event; timer: ReturnType<typeof setTimeout> } | null>(null)
@@ -232,7 +239,11 @@ function formatDate(date: string) {
 // ── Grants ──
 const grantYears = computed(() => {
   const current = new Date().getFullYear()
-  return Array.from({ length: 5 }, (_, i) => current - i)
+  const years = new Set<number>([current])
+  for (const g of grants.value) {
+    if (g.event_date) years.add(new Date(g.event_date).getFullYear())
+  }
+  return Array.from(years).sort((a, b) => b - a)
 })
 
 const filteredGrants = computed(() => {
@@ -263,9 +274,132 @@ async function downloadAntrag(grant: GrantApplication) {
   await grantService.downloadAntrag(grant.id, grant.event_title || grant.event)
 }
 
+// ── Statistik ──
+// Nur bereits stattgefundene, nicht abgesagte Events zählen als "durchgeführt".
+const heldEvents = computed(() => {
+  return events.value
+    .filter(e => !e.cancelled && new Date(e.date) <= now)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+})
+
+const yearGroups = computed(() => {
+  const groups = new Map<number, Event[]>()
+  for (const e of heldEvents.value) {
+    const year = new Date(e.date).getFullYear()
+    if (!groups.has(year)) groups.set(year, [])
+    groups.get(year)!.push(e)
+  }
+  return [...groups.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([year, list]) => ({ year, events: list }))
+})
+
+const totalHeldCount = computed(() => heldEvents.value.length)
+const activeYearsCount = computed(() => yearGroups.value.length)
+const avgPerYear = computed(() => (activeYearsCount.value ? totalHeldCount.value / activeYearsCount.value : 0))
+
+// Alle Künstler, die bei mindestens einem durchgeführten Event dabei waren (dedupliziert).
+const allArtists = computed(() => {
+  const map = new Map<number, Artist>()
+  for (const e of heldEvents.value) {
+    for (const a of e.artists) {
+      if (a.id != null) map.set(a.id, a)
+    }
+  }
+  return [...map.values()]
+})
+
+function countBy<T>(items: T[], keyFn: (item: T) => string) {
+  const counts = new Map<string, number>()
+  for (const item of items) {
+    const key = keyFn(item)
+    counts.set(key, (counts.get(key) || 0) + 1)
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, count]) => ({ label, count }))
+}
+
+const eventCategoryBreakdown = computed(() => {
+  if (!aiTags.value) return []
+  const cats = aiTags.value.event_categories
+  const breakdown = countBy(heldEvents.value, e => cats[e.id] || 'Unbekannt')
+  const max = breakdown[0]?.count || 1
+  return breakdown.map(b => ({ ...b, pct: Math.round((b.count / max) * 100) }))
+})
+
+const artistCountryBreakdown = computed(() => {
+  if (!aiTags.value) return []
+  const countries = aiTags.value.artist_countries
+  const breakdown = countBy(allArtists.value, a => countries[String(a.id)] || 'Unbekannt')
+  const max = breakdown[0]?.count || 1
+  return breakdown.map(b => ({ ...b, pct: Math.round((b.count / max) * 100) }))
+})
+
+function artistsForCountry(country: string): Artist[] {
+  if (!aiTags.value) return []
+  const countries = aiTags.value.artist_countries
+  return allArtists.value.filter(a => (countries[String(a.id)] || 'Unbekannt') === country)
+}
+
+function toggleCountry(country: string) {
+  expandedCountry.value = expandedCountry.value === country ? null : country
+}
+
+async function loadAiTags(force = false) {
+  if (force && !confirm('Alle Kategorien/Länder neu von der KI schätzen lassen? Das überschreibt auch bereits von Hand korrigierte Werte.')) {
+    return
+  }
+  isLoadingAi.value = true
+  aiError.value = ''
+  try {
+    aiTags.value = await statisticsService.getAiTags(force)
+  } catch (e: any) {
+    aiError.value = e.message || 'KI-Schätzung fehlgeschlagen'
+  } finally {
+    isLoadingAi.value = false
+  }
+}
+
+async function correctEventCategory(event: Event) {
+  if (!aiTags.value) return
+  const current = aiTags.value.event_categories[event.id] || ''
+  const value = window.prompt(`Art der Veranstaltung für "${event.title}":`, current)
+  if (!value || !value.trim()) return
+  try {
+    await statisticsService.overrideAiTag('event', event.id, value.trim())
+    aiTags.value.event_categories[event.id] = value.trim()
+  } catch (e: any) {
+    alert('Fehler beim Speichern: ' + e.message)
+  }
+}
+
+async function correctArtistCountry(artist: Artist) {
+  if (!aiTags.value || artist.id == null) return
+  const current = aiTags.value.artist_countries[String(artist.id)] || ''
+  const value = window.prompt(`Herkunftsland für "${artist.name}":`, current)
+  if (!value || !value.trim()) return
+  try {
+    await statisticsService.overrideAiTag('artist', artist.id, value.trim())
+    aiTags.value.artist_countries[String(artist.id)] = value.trim()
+  } catch (e: any) {
+    alert('Fehler beim Speichern: ' + e.message)
+  }
+}
+
+function formatDateShort(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function printStatistics() {
+  window.print()
+}
+
 onMounted(() => {
   if (route.query.view === 'grants') {
     activeView.value = 'grants'
+  } else if (route.query.view === 'statistics') {
+    activeView.value = 'statistics'
   }
   const filterParam = route.query.filter as string | undefined
   if (filterParam && filters.some(f => f.key === filterParam)) {
@@ -273,6 +407,10 @@ onMounted(() => {
   }
   loadEvents().then(() => loadVvkData())
   grantService.getAll().then(({ results }) => { grants.value = results })
+  // Bereits von der KI geschätzte/korrigierte Werte sind serverseitig gecached
+  // — direkt automatisch nachladen, statt den User zwingend nochmal auf
+  // "Mit KI schätzen" klicken zu lassen.
+  loadAiTags()
 })
 </script>
 
@@ -283,6 +421,7 @@ onMounted(() => {
     .tab-bar
       button.tab(:class="{ active: activeView === 'events' }" @click="activeView = 'events'") 🎪 Veranstaltungen
       button.tab(:class="{ active: activeView === 'grants' }" @click="activeView = 'grants'") 🏛️ Förderungen
+      button.tab(:class="{ active: activeView === 'statistics' }" @click="activeView = 'statistics'") 📊 Statistik
 
   //- ── Events View ──
   template(v-if="activeView === 'events'")
@@ -404,6 +543,89 @@ onMounted(() => {
                 button.btn-download(@click="downloadAntrag(g)") PDF
 
       .empty(v-else) Keine Förderanträge für {{ selectedYear }}.
+
+  //- ── Statistik View ──
+  template(v-if="activeView === 'statistics'")
+    .stats-header
+      p.stats-subtitle Übersicht der durchgeführten Veranstaltungen pro Jahr — z.B. für Anträge oder Nachweise gegenüber der Stadt Heidelberg als gemeinnütziger Verein.
+      button.btn-print(type="button" @click="printStatistics") Drucken / PDF
+
+    .summary-cards
+      .card
+        .card-label Veranstaltungen gesamt
+        .card-value {{ totalHeldCount }}
+      .card
+        .card-label Aktive Jahre
+        .card-value {{ activeYearsCount }}
+      .card
+        .card-label Ø pro Jahr
+        .card-value {{ avgPerYear.toFixed(1) }}
+
+    .ai-section
+      .ai-section-header
+        h3 Art der Veranstaltungen & Herkunft der Künstler
+        .ai-section-actions
+          button.btn-ai(type="button" @click="loadAiTags(false)" :disabled="isLoadingAi")
+            | {{ isLoadingAi ? 'Wird geschätzt...' : (aiTags ? 'Neue Events/Künstler schätzen' : 'Mit KI schätzen') }}
+          button.btn-ai.btn-ai-force(v-if="aiTags" type="button" @click="loadAiTags(true)" :disabled="isLoadingAi") Alle neu schätzen
+      .error(v-if="aiError") {{ aiError }}
+      p.ai-disclaimer(v-if="aiTags")
+        | KI-Schätzung — Künstler-Herkunft wird per Websuche recherchiert (u.a. Bandcamp/SoundCloud), Veranstaltungsart aus Titel/Beschreibung. Bitte vor offizieller Verwendung prüfen und ggf. korrigieren (Klick auf einen Eintrag).
+
+      .ai-columns(v-if="aiTags")
+        .ai-column
+          h4 Art der Veranstaltungen
+          .bar-list
+            .bar-row(v-for="b in eventCategoryBreakdown" :key="b.label")
+              .bar-label {{ b.label }}
+              .bar-track
+                .bar-fill(:style="{ width: b.pct + '%' }")
+              .bar-count {{ b.count }}
+
+        .ai-column
+          h4 Herkunft der Künstler
+          .bar-list
+            div(v-for="b in artistCountryBreakdown" :key="b.label")
+              .bar-row.clickable(@click="toggleCountry(b.label)")
+                .bar-label {{ b.label }}
+                .bar-track
+                  .bar-fill(:style="{ width: b.pct + '%' }")
+                .bar-count {{ b.count }}
+              .artist-list(v-if="expandedCountry === b.label")
+                span.artist-chip(
+                  v-for="artist in artistsForCountry(b.label)"
+                  :key="artist.id"
+                  @click="correctArtistCountry(artist)"
+                  title="Klicken zum Korrigieren"
+                ) {{ artist.name }}
+
+    .events-table-wrap
+      table.events-table
+        thead
+          tr
+            th.col-thumb Flyer
+            th Titel
+            th Datum
+            th Art
+        tbody(v-for="group in yearGroups" :key="group.year")
+          tr.year-row
+            td(colspan="4") {{ group.year }} · {{ group.events.length }} {{ group.events.length === 1 ? 'Veranstaltung' : 'Veranstaltungen' }}
+          tr(v-for="event in group.events" :key="event.id")
+            td.col-thumb
+              .event-thumb
+                img(v-if="event.image_url" :src="event.image_url" :alt="event.title")
+                .event-thumb-placeholder(v-else) {{ event.title.charAt(0) }}
+            td {{ event.title }}
+            td {{ formatDateShort(event.date) }}
+            td
+              span.category-badge(
+                v-if="aiTags"
+                @click="correctEventCategory(event)"
+                title="Klicken zum Korrigieren"
+              ) {{ aiTags.event_categories[event.id] || 'Unbekannt' }}
+              span(v-else) —
+
+    .empty(v-if="!yearGroups.length") Noch keine durchgeführten Veranstaltungen erfasst.
 
   //- ── Cancel Dialog ──
   .dialog-overlay(v-if="cancelDialog" @click.self="cancelDialog = null")
@@ -1048,6 +1270,264 @@ a.fee:hover {
 .snackbar-leave-to {
   opacity: 0;
   transform: translateX(-50%) translateY(1rem);
+}
+
+/* ── Statistik ── */
+.stats-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.stats-subtitle {
+  max-width: 60ch;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.btn-print {
+  padding: 0.5rem 1.25rem;
+  background: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-print:hover {
+  filter: brightness(120%);
+}
+
+.ai-section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.ai-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.ai-section-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ai-section-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-ai {
+  padding: 0.4rem 0.9rem;
+  background: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-ai:hover {
+  filter: brightness(120%);
+}
+
+.btn-ai:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.btn-ai-force {
+  background: white;
+  color: #333;
+  border: 0.15rem solid #666;
+}
+
+.btn-ai-force:hover {
+  background: #f0f0f0;
+  border-color: black;
+  filter: none;
+}
+
+.ai-disclaimer {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 1.25rem;
+}
+
+.ai-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.ai-column h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 0.75rem;
+}
+
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) 1fr 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar-row.clickable {
+  cursor: pointer;
+}
+
+.bar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: break-word;
+}
+
+.bar-track {
+  height: 0.6rem;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: black;
+}
+
+.bar-count {
+  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.artist-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.4rem 0 0.6rem 0;
+}
+
+.artist-chip {
+  background: #f0f0f0;
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.artist-chip:hover {
+  background: black;
+  color: white;
+}
+
+.events-table-wrap {
+  overflow-x: auto;
+}
+
+.events-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.events-table th,
+.events-table td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  vertical-align: middle;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #eee;
+}
+
+.events-table thead th {
+  font-weight: 600;
+  color: #555;
+  background: #fafafa;
+}
+
+.events-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.year-row td {
+  background: #f0f0f0;
+  color: black;
+  font-weight: 600;
+  border-bottom: 1px solid #ddd;
+}
+
+.col-thumb {
+  width: 56px;
+}
+
+.category-badge {
+  display: inline-block;
+  background: white;
+  color: #555;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.category-badge:hover {
+  background: black;
+  color: white;
+  border-color: black;
+}
+
+.event-thumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+}
+
+.event-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-thumb-placeholder {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #999;
+}
+
+@media print {
+  .btn-print {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
