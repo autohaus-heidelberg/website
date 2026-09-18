@@ -677,7 +677,18 @@ const inventoryBySupplier = computed(() => {
     getOrInitCrateState(bev.id!, bev.units_per_crate || 1, entry)
     groups[group].push({ beverage: bev, entry })
   }
-  return groups
+  // Reihenfolge der Gruppen war bisher Zufall (Einfüge-Reihenfolge = wo das
+  // alphabetisch erste Getränk der Gruppe in der Gesamtliste auftaucht).
+  // "Getränkestation" ist unser Hauptlieferant und soll immer zuerst kommen,
+  // der Rest bleibt in der bisherigen (zufälligen) Reihenfolge dahinter.
+  const ordered: typeof groups = {}
+  const mainSupplier = 'Getränkestation'
+  if (groups[mainSupplier]) ordered[mainSupplier] = groups[mainSupplier]
+  for (const [group, items] of Object.entries(groups)) {
+    if (group === mainSupplier) continue
+    ordered[group] = items
+  }
+  return ordered
 })
 
 function inventoryConsumption(entry: InventoryEntry): number {
