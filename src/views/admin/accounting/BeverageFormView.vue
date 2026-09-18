@@ -45,6 +45,7 @@ const form = ref<Partial<BeverageItem>>({
   portions_per_bottle: null,
   selling_price_portion: '',
   aliases: '',
+  order_alias: '',
 })
 
 const isLoading = ref(false)
@@ -257,6 +258,15 @@ onMounted(() => {
         placeholder="z.B. Afri Cola, Coca Cola"
       )
       .hint Komma-getrennt. Beim Bon-Scan werden diese Marken automatisch diesem Getränk zugeordnet statt ein neues anzulegen.
+
+    .form-group.full
+      label(for="order_alias") Bestellname (an Lieferant)
+      input#order_alias(
+        v-model="form.order_alias"
+        type="text"
+        placeholder="z.B. Distelhäuser (leer = generischer Name wird bestellt)"
+      )
+      .hint Wird in Bestell-Mail und Telegram-Warnung statt des generischen Namens verwendet, damit der Lieferant weiß, welche Marke gemeint ist. Von Hand aktuell halten, wenn sich die gelieferte Marke ändert — unabhängig von den Aliasen oben.
 
     h3.section-title Gebinde & Flasche
     .hint.section-hint Einzelflasche (z.B. Spirituosen): Fl./Kiste = 1. Kistenware (z.B. Bier): Fl./Kiste = Anzahl Flaschen.
