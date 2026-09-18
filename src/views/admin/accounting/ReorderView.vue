@@ -218,7 +218,7 @@ onMounted(() => { loadData() })
               | {{ row.emoji }} {{ row.label }}
             .table-row(v-else :class="['level-' + stockLevel(row.item), { selected: checkedItems.has(row.item.id) }]" @click="toggleItem(row.item)")
               span.col-check
-                input(type="checkbox" :checked="checkedItems.has(row.item.id)" @change.stop="toggleItem(row.item)")
+                input(type="checkbox" :checked="checkedItems.has(row.item.id)" @click.stop="toggleItem(row.item)")
               span.col-name
                 span.cat-emoji {{ row.item.category_emoji }}
                 | {{ row.item.name }}
