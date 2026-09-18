@@ -31,6 +31,7 @@ export interface BeverageItem {
   selling_price_portion?: string | null
   category?: string
   category_emoji?: string
+  aliases?: string
   created_at?: string
   updated_at?: string
 }

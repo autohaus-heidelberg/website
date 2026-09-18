@@ -44,6 +44,7 @@ const form = ref<Partial<BeverageItem>>({
   is_active: true,
   portions_per_bottle: null,
   selling_price_portion: '',
+  aliases: '',
 })
 
 const isLoading = ref(false)
@@ -238,6 +239,15 @@ onMounted(() => {
       )
       datalist#supplier-suggestions
         option(v-for="s in supplierSuggestions" :key="s" :value="s")
+
+    .form-group.full
+      label(for="aliases") Andere Marken/Sorten (Alias)
+      input#aliases(
+        v-model="form.aliases"
+        type="text"
+        placeholder="z.B. Afri Cola, Coca Cola"
+      )
+      .hint Komma-getrennt. Beim Bon-Scan werden diese Marken automatisch diesem Getränk zugeordnet statt ein neues anzulegen.
 
     h3.section-title Gebinde & Flasche
     .hint.section-hint Einzelflasche (z.B. Spirituosen): Fl./Kiste = 1. Kistenware (z.B. Bier): Fl./Kiste = Anzahl Flaschen.
