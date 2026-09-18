@@ -57,6 +57,11 @@ function isSingleBottleRow(idx: number): boolean {
 // Track scanned names and units_per_crate for unmatched items
 const scannedNames = ref<string[]>([])
 const scannedUnitsPerCrate = ref<(number | null)[]>([])
+// Vom Lieferschein abgelesene Positionssumme ("Preis"-Spalte), getrennt von der
+// aus unit_price × Menge neu berechneten total_price — so lässt sich ein
+// Rechenfehler des Lieferanten auf dem Papier erkennen (Zeile bleibt sonst
+// unbemerkt, da total_price im Formular immer selbst neu berechnet wird).
+const scannedTotals = ref<(number | null)[]>([])
 
 // Inline new-beverage creation
 const showNewBeverage = ref(false)
@@ -159,6 +164,7 @@ async function scanReceipt(event: Event) {
 
     scannedNames.value = []
     scannedUnitsPerCrate.value = []
+    scannedTotals.value = []
     for (const scanned of (result.items ?? [])) {
       const matchedBev = scanned.drink_id
         ? beverages.value.find(b => b.id === scanned.drink_id)
@@ -170,6 +176,7 @@ async function scanReceipt(event: Event) {
 
       scannedNames.value.push(scanned.name || '')
       scannedUnitsPerCrate.value.push(scanned.units_per_crate ?? null)
+      scannedTotals.value.push(scanned.total != null ? Number(scanned.total) : null)
 
       if (upc <= 1) {
         // Single bottle: treat scanned crates as bottles
@@ -291,6 +298,9 @@ function removeItem(idx: number) {
   form.value.items = (form.value.items ?? []).filter((_, i) => i !== idx)
   itemCrates.value.splice(idx, 1)
   itemLoose.value.splice(idx, 1)
+  scannedNames.value.splice(idx, 1)
+  scannedUnitsPerCrate.value.splice(idx, 1)
+  scannedTotals.value.splice(idx, 1)
 }
 
 function onBeverageChange(item: PurchaseItem, idx: number) {
@@ -338,6 +348,48 @@ function beverageName(id: number): string {
 
 function formatItemTotal(item: PurchaseItem): string {
   return formatCurrency(parseFloat(item.total_price || '0'))
+}
+
+// Erkennt Zeilen, deren total_price nicht zu quantity × unit_price passt
+// (z.B. Tippfehler des Lieferanten im Lieferschein oder abweichende manuelle
+// Bearbeitung außerhalb dieses Formulars). Toleranz 1 Cent wegen Rundung.
+// unit_price ist der Preis pro KISTE, quantity aber in FLASCHEN — deshalb
+// muss durch units_per_crate geteilt werden (analog zu recalcItem).
+function expectedItemTotal(item: PurchaseItem): number {
+  const bev = beverages.value.find(b => b.id === item.beverage_item)
+  const upc = bev?.units_per_crate || 1
+  return ((Number(item.quantity) || 0) * (parseFloat(item.unit_price || '0') || 0)) / upc
+}
+
+function itemMismatch(item: PurchaseItem): boolean {
+  const expected = expectedItemTotal(item)
+  const actual = parseFloat(item.total_price || '0')
+  return Math.abs(expected - actual) > 0.01
+}
+
+// Vergleicht die vom Bon abgelesene Positionssumme mit unit_price × Menge —
+// deckt Rechenfehler des Lieferanten auf dem Papier auf (z.B. 5 × 14,00 €
+// korrekt gescannt, aber der Lieferschein selbst weist 75,00 € statt 70,00 €
+// aus). item.total_price wird im Formular immer neu berechnet und würde
+// diesen Fehler sonst verschlucken.
+function scanTotalMismatch(idx: number, item: PurchaseItem): boolean {
+  const scannedTotal = scannedTotals.value[idx]
+  if (scannedTotal == null) return false
+  return Math.abs(expectedItemTotal(item) - scannedTotal) > 0.01
+}
+
+function rowHasError(idx: number, item: PurchaseItem): boolean {
+  return itemMismatch(item) || scanTotalMismatch(idx, item)
+}
+
+function rowErrorTitle(idx: number, item: PurchaseItem): string {
+  if (scanTotalMismatch(idx, item)) {
+    return `⚠ Lieferschein-Summe passt nicht: ${formatQty(item.quantity)} Einh. × ${item.unit_price}€ = ${formatCurrency(expectedItemTotal(item))}, auf dem Beleg stehen ${formatCurrency(scannedTotals.value[idx]!)}`
+  }
+  if (itemMismatch(item)) {
+    return `⚠ Summe passt nicht: erwartet ${formatCurrency(expectedItemTotal(item))}, gespeichert ${formatItemTotal(item)}`
+  }
+  return ''
 }
 
 async function loadData() {
@@ -479,7 +531,7 @@ onMounted(() => {
       span.col-total Gesamt (€)
       span.col-action &nbsp;
 
-    .item-row(v-for="(item, idx) in form.items" :key="idx")
+    .item-row(v-for="(item, idx) in form.items" :key="idx" :class="{ 'row-error': rowHasError(idx, item) }" :title="rowErrorTitle(idx, item)")
       .col-bev
         select(v-model.number="item.beverage_item" :class="{ unmatched: !item.beverage_item }" @change="onBeverageChange(item, idx)")
           option(v-if="!item.beverage_item" :value="0" disabled)
@@ -522,7 +574,8 @@ onMounted(() => {
         min="0"
         @input="recalcItem(item, idx)"
       )
-      span.col-total {{ formatItemTotal(item) }}
+      span.col-total(:class="{ 'total-error': rowHasError(idx, item) }") {{ formatItemTotal(item) }}
+        span.row-error-icon(v-if="rowHasError(idx, item)") ⚠
       button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
 
     button.btn-add(type="button" @click="addItem") + Position hinzufügen
@@ -768,6 +821,21 @@ h2 {
   border: 0.25rem solid black;
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.item-row.row-error {
+  outline: 0.2rem solid #dc2626;
+  outline-offset: 2px;
+  background: #fef2f2;
+}
+
+.col-total.total-error {
+  color: #dc2626;
+  font-weight: 900;
+}
+
+.row-error-icon {
+  margin-left: 0.3rem;
 }
 
 .item-row select:focus,
