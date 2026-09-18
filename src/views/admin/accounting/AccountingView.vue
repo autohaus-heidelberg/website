@@ -1217,6 +1217,15 @@ function formatQty(val: number | string): string {
   return isNaN(n) ? '0' : n.toLocaleString('de-DE')
 }
 
+/** Flaschengröße als " 0,5l" (mit führendem Leerzeichen) oder '' — direkt an
+ *  den Namen gehängt, damit gleichnamige Getränke unterschiedlicher Größe
+ *  (z.B. zwei "Pils") in der Inventurliste auf einen Blick unterscheidbar
+ *  sind, ohne erst die kleine Info-Zeile lesen zu müssen. */
+function bevSize(beverage: { bottle_size?: string | null }): string {
+  if (!beverage.bottle_size) return ''
+  return ` ${parseFloat(beverage.bottle_size).toLocaleString('de-DE')}l`
+}
+
 function formatTime(isoString: string): string {
   if (!isoString) return ''
   const d = new Date(isoString)
@@ -2164,8 +2173,8 @@ defineExpose({ toggleFinalStatus })
                   v-if="authStore.isInventoryManager && beverage.id"
                   :to="beverageLinkTo(beverage)"
                   :title="`„${beverage.name}\" im Stamm bearbeiten`"
-                ) {{ beverage.name }}
-                .bev-name(v-else) {{ beverage.name }}
+                ) {{ beverage.name }}{{ bevSize(beverage) }}
+                .bev-name(v-else) {{ beverage.name }}{{ bevSize(beverage) }}
                 .bev-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St. · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }} · Pf. {{ formatCurrency(parseFloat(beverage.deposit || '0')) }}
                 .bev-info(v-else) Flasche · {{ formatCurrency(parseFloat(beverage.purchase_price || '0')) }}
               .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
@@ -2245,8 +2254,8 @@ defineExpose({ toggleFinalStatus })
                   v-if="authStore.isInventoryManager && beverage.id"
                   :to="beverageLinkTo(beverage)"
                   :title="`„${beverage.name}\" im Stamm bearbeiten`"
-                ) {{ beverage.name }}
-                template(v-else) {{ beverage.name }}
+                ) {{ beverage.name }}{{ bevSize(beverage) }}
+                template(v-else) {{ beverage.name }}{{ bevSize(beverage) }}
             .inv-card-conflict(v-if="inventoryConflicts.has(beverage.id)")
               span ⚠️
               | {{ beverage.name }}: angefordert #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}], verfügbar #[strong {{ inventoryConflicts.get(beverage.id)?.available }}]. Nachher erhöhen.
