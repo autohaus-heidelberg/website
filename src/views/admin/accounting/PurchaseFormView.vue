@@ -37,9 +37,16 @@ const inventoryCorrectionMode = ref(false)
 
 const activeBeverages = computed(() => beverages.value.filter(b => b.is_active))
 
+/** Flaschengröße als " 0,5l" (mit führendem Leerzeichen) oder ''. */
+function bevSize(bev: BeverageItem): string {
+  if (!bev.bottle_size) return ''
+  return ` ${parseFloat(bev.bottle_size).toLocaleString('de-DE')}l`
+}
+
 function beverageLabel(bev: BeverageItem): string {
   const upc = bev.units_per_crate
-  return upc > 1 ? `${bev.name} (${upc}er Kiste)` : bev.name
+  const size = bevSize(bev)
+  return upc > 1 ? `${bev.name}${size} (${upc}er Kiste)` : `${bev.name}${size}`
 }
 
 function isSingleBottleRow(idx: number): boolean {

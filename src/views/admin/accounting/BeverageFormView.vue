@@ -147,6 +147,14 @@ const mergeTargets = computed(() =>
   allBeverages.value.filter(b => b.id !== Number(props.id))
 )
 
+/** Name + Größe + Gebinde, damit gleichnamige Getränke (z.B. zwei "Pils"
+ *  unterschiedlicher Größe) im Merge-Dropdown nicht verwechselt werden. */
+function mergeTargetLabel(b: BeverageItem): string {
+  const size = b.bottle_size ? ` ${parseFloat(b.bottle_size).toLocaleString('de-DE')}l` : ''
+  const crate = (b.units_per_crate ?? 1) > 1 ? ` (${b.units_per_crate}er Kiste)` : ''
+  return `${b.name}${size}${crate}`
+}
+
 async function openMerge() {
   showMerge.value = true
   if (allBeverages.value.length === 0) {
@@ -159,7 +167,8 @@ async function executeMerge() {
   if (!mergeTargetId.value) return
   const target = allBeverages.value.find(b => b.id === mergeTargetId.value)
   if (!target) return
-  if (!confirm(`„${form.value.name}" in „${target.name}" zusammenführen? Alle Einkäufe und Abrechnungen werden übertragen. Dieses Getränk wird gelöscht.`)) return
+  const sourceLabel = mergeTargetLabel(form.value as BeverageItem)
+  if (!confirm(`„${sourceLabel}" in „${mergeTargetLabel(target)}" zusammenführen? Alle Einkäufe und Abrechnungen werden übertragen. Dieses Getränk wird gelöscht.`)) return
   mergeLoading.value = true
   try {
     await beverageService.merge(Number(props.id), mergeTargetId.value)
@@ -454,7 +463,7 @@ onMounted(() => {
       .merge-form
         select.merge-select(v-model="mergeTargetId")
           option(:value="null" disabled) Ziel-Getränk auswählen…
-          option(v-for="b in mergeTargets" :key="b.id" :value="b.id") {{ b.name }}
+          option(v-for="b in mergeTargets" :key="b.id" :value="b.id") {{ mergeTargetLabel(b) }}
         button.btn-danger(:disabled="!mergeTargetId || mergeLoading" @click="executeMerge")
           | {{ mergeLoading ? 'Wird zusammengeführt...' : 'Zusammenführen' }}
         button.btn-cancel-sm(@click="showMerge = false") Abbrechen
