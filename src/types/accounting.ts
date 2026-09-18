@@ -32,6 +32,7 @@ export interface BeverageItem {
   category?: string
   category_emoji?: string
   aliases?: string
+  order_alias?: string
   created_at?: string
   updated_at?: string
 }
