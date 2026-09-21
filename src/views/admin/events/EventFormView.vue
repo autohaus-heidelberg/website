@@ -132,6 +132,39 @@ function handleIdInput(e: Event) {
   target.value = sanitized
 }
 
+// Fri/Sat events default to 20:00, all other weekdays to 19:00.
+function defaultTimeForDate(dateStr: string): string {
+  const day = new Date(`${dateStr}T00:00:00`).getDay()
+  const hour = day === 5 || day === 6 ? 20 : 19
+  return `${String(hour).padStart(2, '0')}:00`
+}
+
+// Tracks whether the current time is still the auto-filled default, so switching
+// the date between weekday/weekend keeps following the default until the user
+// edits the time field themselves.
+const timeIsDefault = ref(true)
+
+// datetime-local inputs only report a value once both date and time are filled,
+// so the date and time are edited as separate native inputs and combined here.
+const dateOnly = computed({
+  get: () => (form.value.date ? form.value.date.slice(0, 10) : ''),
+  set: (val: string) => {
+    const currentTime = form.value.date?.includes('T') ? form.value.date.slice(11, 16) : ''
+    const time = timeIsDefault.value || !currentTime ? defaultTimeForDate(val) : currentTime
+    timeIsDefault.value = true
+    form.value.date = val ? `${val}T${time}` : ''
+  },
+})
+
+const timeOnly = computed({
+  get: () => (form.value.date?.includes('T') ? form.value.date.slice(11, 16) : ''),
+  set: (val: string) => {
+    const datePart = form.value.date ? form.value.date.slice(0, 10) : ''
+    timeIsDefault.value = false
+    if (datePart) form.value.date = `${datePart}T${val}`
+  },
+})
+
 const presaleUrl = computed(() => {
   return `${window.location.origin}/presale/${presaleToken.value}`
 })
@@ -169,6 +202,7 @@ async function loadEvent() {
       date: event.date.substring(0, 16),
       artist_ids: event.artists.map(a => a.id!)
     }
+    timeIsDefault.value = false
     originalDate.value = event.date.substring(0, 16)
     formSnapshot.value = JSON.stringify(form.value)
     // Set image preview if there's an existing image
@@ -794,11 +828,17 @@ function closeDeployModal() {
 
             .form-group
               label(for="date") Datum & Uhrzeit *
-              input#date(
-                v-model="form.date"
-                type="datetime-local"
-                required
-              )
+              .date-time-row
+                input#date(
+                  v-model="dateOnly"
+                  type="date"
+                  required
+                )
+                input#time(
+                  v-model="timeOnly"
+                  type="time"
+                  required
+                )
 
           .form-group
             label(for="title") Titel *
@@ -830,9 +870,9 @@ function closeDeployModal() {
               label(for="feeAk") AK-Preis
               input#feeAk(
                 v-model="form.feeAk"
-                placeholder="z.B. 8"
+                placeholder="z.B. 12"
               )
-              .field-hint Preis muss eine Zahl sein (z.B. 8 für 8€)
+              .field-hint Preis muss eine Zahl sein (z.B. 12 für 12€)
 
           .form-group
             label(for="shopLink") Ticket-Shop-Link
@@ -1265,6 +1305,16 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.date-time-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.date-time-row input {
+  flex: 1;
+  min-width: 0;
 }
 
 label {
