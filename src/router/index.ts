@@ -22,7 +22,6 @@ const router = createRouter({
     {
       path: '/past-events/',
       name: 'pastEvents',
-      props: true,
       component: () => import('../views/PastEvents.vue')
     },
     {
@@ -34,7 +33,8 @@ const router = createRouter({
     {
       path: '/flyers/',
       name: 'flyerGallery',
-      component: () => import('../views/FlyerGallery.vue')
+      component: () => import('../views/PastEvents.vue'),
+      props: { view: 'gallery' }
     },
     {
       path: '/about',

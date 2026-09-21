@@ -128,15 +128,12 @@ p Wir sind das Carousel im alten Autohaus.
 
     .past-events
       h1 Vergangene Events
-      p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß?
-      router-link(:to="{ name: 'pastEvents' }") 
-        button Vergangenge Events
-
-    .flyer-gallery
-      h1 Flyer Galerie
-      p Stöbert durch die Flyer-Artworks all unserer Events.
-      router-link(:to="{ name: 'flyerGallery' }")
-        button Flyer Galerie
+      p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß, oder einfach durch die Flyer-Artworks stöbern?
+      .past-events-links
+        router-link(:to="{ name: 'pastEvents' }")
+          button Liste
+        router-link(:to="{ name: 'flyerGallery' }")
+          button Galerie
 
     #about
       h1 Über uns
@@ -284,6 +281,12 @@ p Wir sind das Carousel im alten Autohaus.
   margin-top: 1rem;
   height: max(300px, 20vh);
   width: 100%;
+}
+
+.past-events-links {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .page-content {
