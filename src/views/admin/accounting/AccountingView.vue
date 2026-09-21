@@ -1270,6 +1270,22 @@ async function loadData() {
 
       // Nested data is included in the accounting response
       revenues.value = acc.revenues ?? []
+      // Backfill missing rows for all revenue sources up front, while
+      // auto-save is still suppressed. `getRevenue()` used to do this
+      // lazily from the template (v-model="getRevenue(source).total"),
+      // which meant merely *viewing* the Kassenbericht tab pushed rows
+      // into the watched `revenues` array and fired a phantom auto-save.
+      for (const source of allRevenueSources) {
+        if (!revenues.value.some(r => r.source === source)) {
+          revenues.value.push({
+            accounting: acc.id || 0,
+            source,
+            total: '0.00',
+            change_money: '0.00',
+            fees: '0.00',
+          })
+        }
+      }
       inventory.value = acc.inventory_entries ?? []
       // Normalize and mark loaded entries as confirmed if they have consumption
       for (const entry of inventory.value) {
