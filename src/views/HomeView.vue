@@ -132,6 +132,12 @@ p Wir sind das Carousel im alten Autohaus.
       router-link(:to="{ name: 'pastEvents' }") 
         button Vergangenge Events
 
+    .flyer-gallery
+      h1 Flyer Galerie
+      p Stöbert durch die Flyer-Artworks all unserer Events.
+      router-link(:to="{ name: 'flyerGallery' }")
+        button Flyer Galerie
+
     #about
       h1 Über uns
       p Wir sind ein gemeinnütziger Verein, getragen von ehrenamtlicher Arbeit. 
