@@ -24,7 +24,13 @@ const selectedYear = ref(new Date().getFullYear())
 const aiTags = ref<AiTagsResponse | null>(null)
 const isLoadingAi = ref(false)
 const aiError = ref('')
+const aiPending = ref(0)
 const expandedCountry = ref<string | null>(null)
+
+const aiLoadButtonLabel = computed(() => {
+  if (!isLoadingAi.value) return aiTags.value ? 'Neue Events/Künstler schätzen' : 'Mit KI schätzen'
+  return aiPending.value > 0 ? `Wird geschätzt... (noch ${aiPending.value} offen)` : 'Wird geschätzt...'
+})
 
 // Undo delete
 const pendingDelete = ref<{ event: Event; timer: ReturnType<typeof setTimeout> } | null>(null)
@@ -346,14 +352,26 @@ function toggleCountry(country: string) {
   expandedCountry.value = expandedCountry.value === country ? null : country
 }
 
-async function loadAiTags(force = false) {
+// Artist-Herkunft wird per echter Websuche recherchiert (langsam, und mit sehr
+// knappem Gemini-Freikontingent) — der Server bearbeitet pro Aufruf nur ein
+// Zeitbudget voller Künstler. Bei den paar neuen Künstlern/Monat reicht ein
+// Klick praktisch immer; für den einmaligen Bestand ggf. den Button an
+// mehreren Tagen klicken (Kontingent resettet täglich). Deshalb hier nur EIN
+// Aufruf statt einer Polling-Schleife, die das Tageskontingent sprengen würde.
+async function loadAiTags(force = false, retryUnknown = false) {
   if (force && !confirm('Alle Kategorien/Länder neu von der KI schätzen lassen? Das überschreibt auch bereits von Hand korrigierte Werte.')) {
     return
   }
   isLoadingAi.value = true
   aiError.value = ''
+  aiPending.value = 0
   try {
-    aiTags.value = await statisticsService.getAiTags(force)
+    const res = await statisticsService.getAiTags(force, retryUnknown)
+    aiTags.value = res
+    aiPending.value = res.artist_countries_pending
+    if (res.artist_countries_quota_exhausted) {
+      aiError.value = 'Google-Suchlimit für die Künstler-Recherche erreicht — bitte morgen (Kontingent resettet täglich) nochmal auf den Button klicken.'
+    }
   } catch (e: any) {
     aiError.value = e.message || 'KI-Schätzung fehlgeschlagen'
   } finally {
@@ -565,12 +583,14 @@ onMounted(() => {
       .ai-section-header
         h3 Art der Veranstaltungen & Herkunft der Künstler
         .ai-section-actions
-          button.btn-ai(type="button" @click="loadAiTags(false)" :disabled="isLoadingAi")
-            | {{ isLoadingAi ? 'Wird geschätzt...' : (aiTags ? 'Neue Events/Künstler schätzen' : 'Mit KI schätzen') }}
+          button.btn-ai(type="button" @click="loadAiTags(false)" :disabled="isLoadingAi") {{ aiLoadButtonLabel }}
+          button.btn-ai(v-if="aiTags" type="button" @click="loadAiTags(false, true)" :disabled="isLoadingAi") Unbekannte erneut versuchen
           button.btn-ai.btn-ai-force(v-if="aiTags" type="button" @click="loadAiTags(true)" :disabled="isLoadingAi") Alle neu schätzen
       .error(v-if="aiError") {{ aiError }}
       p.ai-disclaimer(v-if="aiTags")
         | KI-Schätzung — Künstler-Herkunft wird per Websuche recherchiert (u.a. Bandcamp/SoundCloud), Veranstaltungsart aus Titel/Beschreibung. Bitte vor offizieller Verwendung prüfen und ggf. korrigieren (Klick auf einen Eintrag).
+      p.ai-disclaimer(v-if="!isLoadingAi && aiPending > 0")
+        | Noch {{ aiPending }} Künstler offen — einfach den Button nochmal klicken (ggf. an einem anderen Tag, falls das Suchlimit erreicht ist).
 
       .ai-columns(v-if="aiTags")
         .ai-column
