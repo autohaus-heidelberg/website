@@ -134,7 +134,7 @@ watchEffect(async () => {
 
 .flyer img {
   display: block;
-  height: 260px;
+  height: 400px;
   width: auto;
   max-width: 100%;
   object-fit: cover;
@@ -143,13 +143,13 @@ watchEffect(async () => {
 
 @media (max-width: 800px) {
   .flyer img {
-    height: 180px;
+    height: 260px;
   }
 }
 
 @media (max-width: 500px) {
   .flyer img {
-    height: 140px;
+    height: 200px;
   }
 }
 </style>
