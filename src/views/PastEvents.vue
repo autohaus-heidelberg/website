@@ -11,7 +11,7 @@
 
   .gallery(v-else)
     router-link.flyer(
-      v-for="event in flyers"
+      v-for="event in dedupedFlyers"
       :key="event.id"
       :to="{ name: 'event', params: { id: encodeURI(event.id) } }"
       :title="event.title"
@@ -21,8 +21,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from "vue";
-import { events } from "../events";
+import { computed, ref, watchEffect } from "vue";
+import { events, type Event } from "../events";
 import EventPreview from "../components/EventPreview.vue";
 import dayjs from "dayjs";
 
@@ -44,6 +44,35 @@ const upcoming = computed(() =>
 const flyers = computed(() =>
   upcoming.value.filter((event) => event.img)
 );
+
+// Recurring series (e.g. cinema nights) often reuse the exact same artwork
+// under a freshly generated filename each time, so dedup by file content
+// rather than by URL. Starts out un-deduped, then narrows once hashed.
+const dedupedFlyers = ref(flyers.value);
+
+async function hashImage(url: string): Promise<string> {
+  const buffer = await (await fetch(url)).arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+watchEffect(async () => {
+  const list = flyers.value;
+  const hashes = await Promise.all(
+    list.map((event) => hashImage(event.img!).catch(() => null))
+  );
+  const seen = new Set<string>();
+  const result: (Event & { date_d: dayjs.Dayjs })[] = [];
+  list.forEach((event, i) => {
+    const hash = hashes[i];
+    // Hashing failed (e.g. offline) - keep the image rather than hide it.
+    if (hash === null || !seen.has(hash)) result.push(event);
+    if (hash !== null) seen.add(hash);
+  });
+  dedupedFlyers.value = result;
+});
 </script>
 
 <style scoped>
