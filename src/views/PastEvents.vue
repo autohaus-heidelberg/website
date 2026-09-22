@@ -42,10 +42,7 @@ const upcoming = computed(() =>
 );
 
 const flyers = computed(() =>
-  events
-    .filter((event) => event.img)
-    .map((event) => ({ ...event, date_d: dayjs(event.date) }))
-    .sort((a, b) => (a.date_d.isBefore(b.date_d) ? 1 : -1))
+  upcoming.value.filter((event) => event.img)
 );
 </script>
 
@@ -95,38 +92,35 @@ const flyers = computed(() =>
 }
 
 .gallery {
-  column-count: 4;
-  column-gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-top: 2rem;
 }
 
 .flyer {
   display: block;
-  break-inside: avoid;
-  margin-bottom: 1rem;
+  flex-grow: 1;
 }
 
 .flyer img {
   display: block;
-  width: 100%;
+  height: 260px;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
   margin: 0;
 }
 
-@media (max-width: 1200px) {
-  .gallery {
-    column-count: 3;
-  }
-}
-
 @media (max-width: 800px) {
-  .gallery {
-    column-count: 2;
+  .flyer img {
+    height: 180px;
   }
 }
 
 @media (max-width: 500px) {
-  .gallery {
-    column-count: 1;
+  .flyer img {
+    height: 140px;
   }
 }
 </style>
