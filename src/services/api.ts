@@ -115,7 +115,10 @@ class ApiClient {
 
   // POST request
   async post<T>(url: string, data?: any): Promise<T> {
-    const config = data instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {}
+    // For FormData, Content-Type must be left unset so axios/the browser can
+    // add the multipart boundary itself — hardcoding it here breaks parsing
+    // server-side (request.FILES ends up empty).
+    const config = data instanceof FormData ? { headers: { 'Content-Type': undefined } } : {}
     const response = await this.client.post<T>(url, data, config)
     return response.data
   }
@@ -145,7 +148,7 @@ class ApiClient {
 
     const response = await this.client.patch<T>(url, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': undefined,
       },
     })
     return response.data
