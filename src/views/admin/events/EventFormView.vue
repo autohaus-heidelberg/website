@@ -9,6 +9,7 @@ import publishedEvents from '@/events.json'
 import { useEventSource } from '@/composables/useEventSource'
 import DeployModal from '@/components/admin/DeployModal.vue'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
+import ArtistDealFields from '@/components/admin/ArtistDealFields.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
 import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
 import AccountingView from '@/views/admin/accounting/AccountingView.vue'
@@ -51,7 +52,8 @@ const form = ref<Partial<AppEvent>>({
   shopLink: '',
   helferpadLink: '',
   artistOrder: '',
-  artist_ids: []
+  artist_ids: [],
+  artist_deals: {}
 })
 
 const isLoading = ref(false)
@@ -929,6 +931,15 @@ function closeDeployModal() {
             ArtistSelector(
               v-model="form.artist_ids"
               v-model:artistOrder="form.artistOrder"
+            )
+
+          .form-group(v-if="previewArtists.length")
+            label Gagen / Deals
+            ArtistDealFields(
+              :artists="previewArtists"
+              v-model="form.artist_deals"
+              :vvk-price="form.fee"
+              :ak-price="form.feeAk"
             )
 
           .form-group

@@ -13,6 +13,21 @@ export interface Artist {
   bandcamp?: string
 }
 
+/** Wie eine Band bei einem konkreten Event bezahlt wird. */
+export type ArtistDealType = 'guarantee' | 'door_deal' | 'guarantee_plus_door'
+
+export interface ArtistDeal {
+  deal_type: ArtistDealType
+  /** Feste Gage in €, relevant für 'guarantee' und 'guarantee_plus_door'. */
+  guarantee_amount?: string
+  /** Anteil an den Türeinnahmen in %, relevant für 'door_deal' und 'guarantee_plus_door'. */
+  door_deal_percentage?: string
+  notes?: string
+}
+
+/** Deal-Infos pro Band, keyed by Artist-ID (als String). */
+export type ArtistDeals = Record<string, ArtistDeal>
+
 export interface Event {
   id: string
   user?: number
@@ -32,6 +47,7 @@ export interface Event {
   artistOrder?: string
   artists: Artist[]
   artist_ids?: number[]
+  artist_deals?: ArtistDeals
   artist_count?: number
   cancelled?: boolean
 }

@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { accountingService, beverageService, eventService, pretixService, paypalBarService, sumupBarService, grantService, stockService, documentService } from '@/services'
-import type { Event } from '@/services'
+import type { Event, ArtistDeal } from '@/services'
 import type { PretixOrderSummary, PayPalBarSummary, PayPalCategory, SumUpBarSummary, SumUpCategory, EventDocument } from '@/services/accounting'
 import type {
   EventAccounting,
@@ -31,6 +31,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
+import { resolveComboDeal, findDuplicateNames } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -102,8 +103,12 @@ const expenses = ref<ExpenseEntry[]>([])
 const splits = ref<AccountingSplit[]>([])
 
 // ── Doordeal ─────────────────────────────────────────────────────
-const doorDealEnabled = ref(false)
+// Kein manuelles An/Aus mehr — die Sektion ist immer sichtbar (wie Gewinn-
+// verteilung), "aktiv" ist sie sobald mindestens eine Partei einen Namen hat.
+// Ein leerer Platzhalter-Eintrag (Default beim Laden) darf NICHTS vom
+// Ergebnis abziehen, siehe doorDealArtistAmount/doorDealVenueShare unten.
 const doorDealSplits = ref<{ name: string; share: number }[]>([])
+const doorDealActive = computed(() => doorDealSplits.value.some(s => s.name.trim() !== ''))
 
 const isLoading = ref(false)
 const isSaving = ref(false)
@@ -918,6 +923,177 @@ function removeExpense(index: number) {
   expenses.value.splice(index, 1)
 }
 
+// Gagen sind immer Zweckbetrieb (Kernaufgabe des Vereins) — beim manuellen
+// Zuordnen einer Ausgabe zur Förder-Kategorie "Künstler" die Sphäre erzwingen.
+// Gagen dürfen auch NICHT von der Doordeal-Basis abgezogen werden (im
+// Gegensatz zu GEMA/KSK) — sonst würde eine Band ihre eigene Gage von ihrer
+// eigenen Doordeal-Basis abziehen.
+function onGrantCategoryChange(exp: ExpenseEntry) {
+  if (exp.grant_category === 'kuenstlerhonorar') {
+    exp.tax_sphere = 'zweckbetrieb'
+    exp.door_deal_deductible = false
+  }
+}
+
+// ── Gagen-/Deal-Vorschläge aus den beim Event hinterlegten Deals ──
+// Beim Event-Anlegen kann pro Band eine Garantie und/oder ein Doordeal-Anteil
+// hinterlegt werden (Event.artist_deals). Hier wird daraus ein übernehmbarer
+// Vorschlag für den Ausgaben-Tab (Garantie → Ausgaben-Zeile) bzw. die
+// Doordeal-Konfiguration (Ergebnis-Tab) gebaut.
+//
+// WICHTIG (Vertragslogik Garantie+Doordeal, siehe Team-Absprache): die Band
+// bekommt NIE Garantie UND %-Anteil addiert, sondern IMMER nur das Höhere von
+// beidem ("Garantie = Untergrenze"). Bei diesem Kombi-Typ wird daher NICHT
+// wie bei reinem Doordeal ein zweiter Doordeal-Split angeboten, sondern der
+// %-Anteil hier schon gegen die aktuelle Netto-Türeinnahme (doorDealBase)
+// aufgelöst und nur der gewinnende Betrag als EINE Ausgaben-Zeile
+// vorgeschlagen. Die eigentliche Auflösung (resolveComboDeal) lebt in
+// utils/artistDeals.ts — dort auch unit-getestet.
+interface ArtistDealSuggestion {
+  artistId: number
+  artistName: string
+  dealType: string
+  guaranteeAmount: number
+  doorDealPercentage: number
+  /** Bei guarantee_plus_door: max(Garantie, %-Anteil der aktuellen Netto-Türeinnahme). Sonst = guaranteeAmount bzw. n/a. */
+  resolvedAmount: number
+  /** Welche Seite bei guarantee_plus_door gerade gewinnt — nur fürs Label. */
+  resolvedSource: 'guarantee' | 'doordeal'
+  notes: string
+  guaranteeApplied: boolean
+  doorDealApplied: boolean
+}
+
+const artistDealSuggestions = computed<ArtistDealSuggestion[]>(() => {
+  const deals = event.value?.artist_deals || {}
+  const artists = event.value?.artists || []
+  return artists
+    .filter(a => a.id != null && deals[String(a.id)])
+    .map((a): ArtistDealSuggestion => {
+      const d = deals[String(a.id!)]
+      const isCombo = d.deal_type === 'guarantee_plus_door'
+      const resolved = isCombo ? resolveComboDeal(d, doorDealBase.value) : null
+      const guaranteeAmount = resolved?.guaranteeAmount ?? (parseFloat(d.guarantee_amount || '0') || 0)
+      const doorDealPercentage = resolved?.doorDealPercentage ?? (parseFloat(d.door_deal_percentage || '0') || 0)
+      return {
+        artistId: a.id!,
+        artistName: a.name,
+        dealType: d.deal_type,
+        guaranteeAmount,
+        doorDealPercentage,
+        resolvedAmount: resolved?.resolvedAmount ?? guaranteeAmount,
+        resolvedSource: resolved?.resolvedSource ?? 'guarantee',
+        notes: d.notes || '',
+        guaranteeApplied: expenses.value.some(e => e.description.trim() === a.name.trim()),
+        doorDealApplied: doorDealSplits.value.some(s => s.name.trim() === a.name.trim()),
+      }
+    })
+    .filter(s => {
+      // guarantee_plus_door löst sich in EINE Ausgaben-Zeile auf (nicht zusätzlich in einen Doordeal-Split).
+      if (s.dealType === 'guarantee_plus_door') return !s.guaranteeApplied
+      const needsGuarantee = s.dealType === 'guarantee'
+      const needsDoorDeal = s.dealType === 'door_deal'
+      return (needsGuarantee && !s.guaranteeApplied) || (needsDoorDeal && !s.doorDealApplied)
+    })
+})
+
+function applyGuaranteeSuggestion(s: ArtistDealSuggestion) {
+  const isCombo = s.dealType === 'guarantee_plus_door'
+  const comboNote = isCombo
+    ? `Doordeal-Vergleich: Garantie ${formatCurrency(s.guaranteeAmount)} vs. ${s.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(s.doorDealPercentage / 100 * doorDealBase.value)} — ${s.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
+    : ''
+  expenses.value.push({
+    accounting: accounting.value?.id || 0,
+    description: s.artistName,
+    amount: (isCombo ? s.resolvedAmount : s.guaranteeAmount).toFixed(2),
+    notes: [s.notes, comboNote].filter(Boolean).join(' — '),
+    // Gagen werden aus der Einlasskasse (Türeinnahmen) bezahlt, nicht aus der Barkasse.
+    paid_from: 'entrance_cash',
+    grant_category: 'kuenstlerhonorar',
+    // Gagen sind immer Zweckbetrieb (Kernaufgabe des Vereins).
+    tax_sphere: 'zweckbetrieb',
+  })
+}
+
+function applyDoorDealSuggestion(s: ArtistDealSuggestion) {
+  doorDealSplits.value.push({ name: s.artistName, share: s.doorDealPercentage })
+}
+
+// Der übernommene Kombi-Betrag ist ein SNAPSHOT — die Basis (Netto-Türeinnahme)
+// ist vor dem Event unbekannt und ändert sich mit jeder weiteren Kassen-/
+// Ausgaben-Eintragung. Statt den bereits übernommenen Ausgaben-Betrag still
+// zu überschreiben (könnte eine bewusste manuelle Korrektur verwerfen),
+// wird hier nur eine Abweichung angezeigt, die die Kassenwart:in per Klick
+// nachziehen kann.
+interface ComboDiscrepancy {
+  artistId: number
+  artistName: string
+  currentAmount: number
+  resolvedAmount: number
+  resolvedSource: 'guarantee' | 'doordeal'
+}
+
+const comboDiscrepancies = computed<ComboDiscrepancy[]>(() => {
+  const deals = event.value?.artist_deals || {}
+  const artists = event.value?.artists || []
+  const result: ComboDiscrepancy[] = []
+  for (const a of artists) {
+    if (a.id == null) continue
+    const d = deals[String(a.id)]
+    if (!d || d.deal_type !== 'guarantee_plus_door') continue
+    const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
+    if (!exp) continue // noch nicht übernommen — das deckt artistDealSuggestions ab
+    const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
+    const currentAmount = parseFloat(exp.amount || '0') || 0
+    if (Math.abs(resolvedAmount - currentAmount) > 0.01) {
+      result.push({
+        artistId: a.id,
+        artistName: a.name,
+        currentAmount,
+        resolvedAmount,
+        resolvedSource,
+      })
+    }
+  }
+  return result
+})
+
+function updateComboExpense(d: ComboDiscrepancy) {
+  const exp = expenses.value.find(e => e.description.trim() === d.artistName.trim())
+  if (exp) exp.amount = d.resolvedAmount.toFixed(2)
+}
+
+// Kombi-Deal-Status für die Ergebnis-Tab-Anzeige — reflektiert IMMER (auch
+// ohne aktivierten Doordeal-Toggle, den es nicht mehr gibt), damit sichtbar
+// ist, dass es hier einen Doordeal-Bestandteil gibt, auch wenn er bereits
+// vollständig als Ausgabe erfasst ist.
+interface ComboDealStatus {
+  artistId: number
+  artistName: string
+  resolvedAmount: number
+  resolvedSource: 'guarantee' | 'doordeal'
+  applied: boolean
+}
+
+const comboDealStatuses = computed<ComboDealStatus[]>(() => {
+  const deals = event.value?.artist_deals || {}
+  const artists = event.value?.artists || []
+  return artists
+    .filter(a => a.id != null && deals[String(a.id)]?.deal_type === 'guarantee_plus_door')
+    .map((a): ComboDealStatus => {
+      const d = deals[String(a.id!)]
+      const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
+      return {
+        artistId: a.id!,
+        artistName: a.name,
+        resolvedAmount,
+        resolvedSource,
+        applied: expenses.value.some(e => e.description.trim() === a.name.trim()),
+      }
+    })
+})
+
+
 function triggerExpenseScan() {
   scanExpenseError.value = ''
   expenseScanInput.value?.click()
@@ -1056,6 +1232,15 @@ function removeSplit(index: number) {
   splits.value.splice(index, 1)
 }
 
+// Namensdopplungen in %-Split-Tabellen (Doordeal, Gewinnverteilung) sind so
+// gut wie immer ein Versehen (zwei Zeilen für dieselbe Partei splitten den
+// Betrag künstlich auf zwei Zahlen, statt einfach einen höheren %-Satz zu
+// nehmen) — im Gegensatz zu Ausgaben-Beschreibungen, wo Duplikate normal sind
+// (z.B. zweimal Kaufland für Catering). Daher NUR hier geprüft, nicht generell.
+// (findDuplicateNames lebt in utils/artistDeals.ts — dort auch unit-getestet.)
+const duplicateDoorDealNames = computed(() => findDuplicateNames(doorDealSplits.value.map(p => p.name)))
+const duplicateSplitNames = computed(() => findDuplicateNames(splits.value.map(s => s.participant_name)))
+
 // Verteilungsbasis ist das Ergebnis nach USt — die USt-Zahllast gehört dem
 // Finanzamt und ist kein Gewinn der Beteiligten. Sie wird in der UI als
 // separate, nicht-editierbare „Finanzamt"-Position oben in der Splits-Tabelle
@@ -1071,8 +1256,9 @@ const totalSplitPercentage = computed(() => {
 
 // Ergebnis nach USt und nach Doordeal-Auszahlung — das ist die Basis für
 // die Gewinnverteilung (Bernd/Carousel). Der Künstleranteil ist kein Vereinsgewinn.
+// doorDealArtistAmount ist bereits 0, wenn keine Partei einen Namen hat —
+// kein separates "enabled"-Flag nötig.
 const resultAfterDoorDeal = computed(() => {
-  if (!doorDealEnabled.value) return resultAfterVat.value
   return resultAfterVat.value - doorDealArtistAmount.value
 })
 
@@ -1111,14 +1297,19 @@ const doorDealBase = computed(() => {
   return Math.max(0, doorDealEntranceRevenue.value - doorDealDeductions.value)
 })
 
-// Gesamtbetrag aller Doordeal-Parteien
+// Gesamtbetrag aller Doordeal-Parteien (nur Zeilen mit echtem Namen — der
+// leere Default-Platzhalter beim Laden soll nichts abziehen)
 const doorDealArtistAmount = computed(() => {
-  return doorDealSplits.value.reduce((sum, p) => sum + doorDealBase.value * (p.share / 100), 0)
+  return doorDealSplits.value
+    .filter(p => p.name.trim() !== '')
+    .reduce((sum, p) => sum + doorDealBase.value * (p.share / 100), 0)
 })
 
-// Carousel-Anteil = was nach allen Parteien übrig bleibt
+// Carousel-Anteil = was nach allen (benannten) Parteien übrig bleibt
 const doorDealVenueShare = computed(() => {
-  return 100 - doorDealSplits.value.reduce((sum, p) => sum + p.share, 0)
+  return 100 - doorDealSplits.value
+    .filter(p => p.name.trim() !== '')
+    .reduce((sum, p) => sum + p.share, 0)
 })
 
 const doorDealVenueAmount = computed(() => {
@@ -1305,16 +1496,25 @@ async function loadData() {
             exp.grant_category = 'sachkosten'
           }
         }
+        // Gagen sind immer Zweckbetrieb und nie von der Doordeal-Basis abzugsfähig —
+        // unabhängig davon, wie/wann grant_category gesetzt wurde.
+        if (exp.grant_category === 'kuenstlerhonorar') {
+          exp.tax_sphere = 'zweckbetrieb'
+          exp.door_deal_deductible = false
+        }
       }
       splits.value = (acc.splits ?? [])
         .filter(s => s.participant_name?.toLowerCase() !== 'carousel e.v.')
         .map(s => ({ ...s, share_percentage: String(Math.round(parseFloat(s.share_percentage || '0'))) }))
 
-      // Doordeal fields
-      doorDealEnabled.value = acc.door_deal_enabled ?? false
-      doorDealSplits.value = Array.isArray(acc.door_deal_splits) && acc.door_deal_splits.length
-        ? acc.door_deal_splits
-        : [{ name: '', share: 70 }]
+      // Doordeal fields — "enabled" ist jetzt abgeleitet (doorDealActive/Länge), nicht
+      // geladen. Alte Datensätze (aus der Zeit des manuellen An/Aus-Togglers) haben oft
+      // einen leeren "{name:'', share:70}"-Platzhalter gespeichert, der beim Deaktivieren
+      // nie aufgeräumt wurde — namenlose Zeilen beim Laden verwerfen, statt selbst wieder
+      // einen leeren Platzhalter nachzuschieben (die Sektion zeigt sich sonst für JEDES
+      // Event, auch ganz ohne Doordeal — siehe leerer .config-table-Zweig unten).
+      doorDealSplits.value = (Array.isArray(acc.door_deal_splits) ? acc.door_deal_splits : [])
+        .filter(s => s.name.trim() !== '')
 
       // Consumption baseline for Inventur miscount warnings (optional).
       try {
@@ -1432,7 +1632,7 @@ async function saveAll(silent = false) {
     // already ignores for non-treasurers, but omitting is cleaner).
     const payload: any = {
       notes: accounting.value.notes,
-      door_deal_enabled: doorDealEnabled.value,
+      door_deal_enabled: doorDealActive.value,
       door_deal_splits: doorDealSplits.value,
       revenues: revenues.value
         .filter(rev => rev.id || parseFloat(rev.total || '0') !== 0 || parseFloat(rev.change_money || '0') !== 0 || parseFloat(rev.fees || '0') !== 0),
@@ -1817,7 +2017,7 @@ watch(
 // Everything else (notes, door deal, grant fields) just triggers a save.
 // scheduleAutoSave() itself ignores writes during the initial load.
 watch(
-  [() => accounting.value?.notes, doorDealEnabled, doorDealSplits,
+  [() => accounting.value?.notes, doorDealSplits,
    sachbericht, grantNotes, budgetKuenstler, budgetSachkosten, budgetSonstiges,
    budgetRevEintritt, budgetRevGetraenke, budgetRevEigenmittel, budgetRevDrittmittel,
    budgetRevSonstige, approvedAmount, zuwendungsbescheidDate, auszahlungAmount, rentFlatAmount],
@@ -2374,6 +2574,33 @@ defineExpose({ toggleFinalStatus })
       p.reminder-text 💡 Denk an: Honorare/Gagen · Hotel · GEMA · Werbung (Flyer/Poster) · Catering
       p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
 
+      //- Vorschläge aus den beim Event hinterlegten Band-Deals (Garantie/Doordeal)
+      .artist-deal-suggestions(v-if="artistDealSuggestions.length")
+        .artist-deal-suggestion(v-for="s in artistDealSuggestions" :key="s.artistId")
+          span.suggestion-text(v-if="s.dealType === 'guarantee'")
+            | 💡 {{ s.artistName }}: Garantie {{ formatCurrency(s.guaranteeAmount) }}
+          span.suggestion-text(v-else-if="s.dealType === 'door_deal'")
+            | 💡 {{ s.artistName }}: Doordeal {{ s.doorDealPercentage }}%
+          span.suggestion-text(v-else)
+            | 💡 {{ s.artistName }}: Garantie {{ formatCurrency(s.guaranteeAmount) }} vs. Doordeal {{ s.doorDealPercentage }}% — {{ s.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt ({{ formatCurrency(s.resolvedAmount) }})
+          .suggestion-actions
+            button.btn-add-sm(
+              v-if="(s.dealType === 'guarantee' || s.dealType === 'guarantee_plus_door') && !s.guaranteeApplied"
+              @click="applyGuaranteeSuggestion(s)"
+            ) Gage übernehmen
+            button.btn-add-sm(
+              v-if="s.dealType === 'door_deal' && !s.doorDealApplied"
+              @click="applyDoorDealSuggestion(s)"
+            ) Doordeal übernehmen
+
+      //- Bereits übernommener Kombi-Betrag ist veraltet (Basis hat sich seither geändert)
+      .artist-deal-suggestions(v-if="comboDiscrepancies.length")
+        .artist-deal-suggestion(v-for="d in comboDiscrepancies" :key="d.artistId")
+          span.suggestion-text
+            | ⚠️ {{ d.artistName }}: übernommen mit {{ formatCurrency(d.currentAmount) }}, aktuell wären {{ formatCurrency(d.resolvedAmount) }} korrekt ({{ d.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt jetzt) — Türeinnahmen/Ausgaben haben sich seit der Übernahme geändert.
+          .suggestion-actions
+            button.btn-add-sm(@click="updateComboExpense(d)") Betrag aktualisieren
+
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
         ref="expenseScanInput"
@@ -2392,13 +2619,13 @@ defineExpose({ toggleFinalStatus })
       )
 
       //- Erfasste Ausgaben
-      .expenses-table(v-if="expenses.length" :class="{ 'door-deal-active': doorDealEnabled }")
+      .expenses-table(v-if="expenses.length" :class="{ 'door-deal-active': doorDealActive }")
         .expense-header
           span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
           span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
           span Bezahlt aus
           span Sphäre
-          span.col-doordeal(v-if="doorDealEnabled" title="Vom Doordeal abziehen") 🚪
+          span.col-doordeal(v-if="doorDealActive" title="Vom Doordeal abziehen") 🚪
           span
 
         .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
@@ -2422,7 +2649,7 @@ defineExpose({ toggleFinalStatus })
             option(:value="null" disabled hidden) Sphäre wählen
             option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
               | {{ label }}
-          .col-doordeal(v-if="doorDealEnabled")
+          .col-doordeal(v-if="doorDealActive")
             input(
               type="checkbox"
               v-model="exp.door_deal_deductible"
@@ -2591,8 +2818,20 @@ defineExpose({ toggleFinalStatus })
               span.summary-label Ergebnis (nach USt)
               span.summary-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
 
-          //- Doordeal-Sub-Rechnung (nur wenn aktiv)
-          template(v-if="doorDealEnabled")
+          //- Garantie+Doordeal-Bands: immer sichtbar sobald es einen solchen Deal gibt,
+          //- unabhängig davon, ob er bereits als Ausgabe erfasst wurde oder ob es
+          //- daneben noch eine reine %-Verteilung (unten) gibt.
+          template(v-if="comboDealStatuses.length")
+            .summary-row.summary-subblock-header
+              span.summary-label 🎤 Garantie+Doordeal-Bands
+            .summary-row.summary-sub-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
+              span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
+              .summary-value-group
+                span.summary-value {{ formatCurrency(status.resolvedAmount) }}
+                span.summary-pct(:class="status.applied ? 'positive' : 'negative'") {{ status.applied ? '✓ als Ausgabe erfasst' : '⚠ noch nicht erfasst' }}
+
+          //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert)
+          template(v-if="doorDealActive")
             .summary-row.summary-subblock-header
               span.summary-label 🚪 Doordeal-Verteilung
             .summary-row.summary-sub-detail
@@ -2604,8 +2843,8 @@ defineExpose({ toggleFinalStatus })
             .summary-row.summary-sub-base
               span.summary-label = Verteilungsbasis
               span.summary-value {{ formatCurrency(doorDealBase) }}
-            .summary-row.summary-sub-detail(v-for="party in doorDealSplits" :key="'p' + party.name")
-              span.summary-label {{ party.name || '(kein Name)' }}
+            .summary-row.summary-sub-detail(v-for="party in doorDealSplits.filter(p => p.name.trim() !== '')" :key="'p' + party.name")
+              span.summary-label {{ party.name }}
               .summary-value-group
                 span.summary-pct {{ party.share }}%
                 span.summary-value −{{ formatCurrency(doorDealBase * party.share / 100) }}
@@ -2618,6 +2857,7 @@ defineExpose({ toggleFinalStatus })
             .summary-row.summary-total
               span.summary-label Ergebnis (nach Doordeal)
               span.summary-value(:class="resultAfterDoorDeal >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterDoorDeal) }}
+
 
           //- Gewinnverteilung-Auszahlung (treasurer + Splits konfiguriert)
           template(v-if="authStore.isTreasurer && splits.length")
@@ -2636,19 +2876,20 @@ defineExpose({ toggleFinalStatus })
                   | {{ formatCurrency(remainingAfterSplits) }}
 
       //- ═══ B) Doordeal-Konfiguration ════════════════════════════
+      //- Kein manuelles An/Aus mehr — "aktiv" ergibt sich daraus, ob es
+      //- überhaupt Parteien gibt. Ohne welche bleibt die Sektion auf einen
+      //- kurzen Hinweis + Hinzufügen-Button reduziert, statt für jedes Event
+      //- (auch ganz ohne Doordeal) eine leere Konfig-Tabelle zu zeigen.
       .section
         .section-title-row
-          h3.section-title
-            label.toggle-label-inline
-              input(type="checkbox" v-model="doorDealEnabled")
-              span 🚪 Doordeal
-        template(v-if="doorDealEnabled")
+          h3.section-title 🚪 Doordeal
+        template(v-if="doorDealSplits.length")
           .config-table
             .config-header
               span Partei
               span Anteil
               span
-            .config-row(v-for="(party, index) in doorDealSplits" :key="index")
+            .config-row(v-for="(party, index) in doorDealSplits" :key="index" :class="{ 'config-row-duplicate': duplicateDoorDealNames.has(party.name.trim().toLowerCase()) }")
               input.text-input(v-model="party.name" type="text" placeholder="Name")
               .input-group
                 input.amount-input(v-model.number="party.share" type="number" min="0" max="100" step="1")
@@ -2656,15 +2897,21 @@ defineExpose({ toggleFinalStatus })
               button.btn-remove(@click="doorDealSplits.splice(index, 1)") ×
             .config-row-add
               button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + hinzufügen
-            .config-deductions(v-if="expenses.filter(e => e.description).length")
+            .config-warning(v-if="duplicateDoorDealNames.size") ⚠️ Doppelter Name: {{ Array.from(duplicateDoorDealNames).join(', ') }} — wird sonst doppelt abgezogen.
+            .config-hint(v-if="doorDealVenueShare >= 0") Rest ({{ doorDealVenueShare.toFixed(0) }}%) verbleibt automatisch bei 🏠 Carousel e.V.
+            .config-warning(v-else) ⚠️ Türanteile summieren sich auf {{ (100 - doorDealVenueShare).toFixed(0) }}% — mehr als die verfügbaren 100% der Türeinnahmen.
+            .config-deductions(v-if="expenses.filter(e => e.description && e.grant_category !== 'kuenstlerhonorar').length")
               .config-deductions-header Vom Doordeal abzugsfähige Ausgaben
               label.config-deduction-item(
-                v-for="exp in expenses.filter(e => e.description)"
+                v-for="exp in expenses.filter(e => e.description && e.grant_category !== 'kuenstlerhonorar')"
                 :key="exp.id || exp.description"
               )
                 input(type="checkbox" v-model="exp.door_deal_deductible")
                 span.config-deduction-name {{ exp.description }}
                 span.config-deduction-amount −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
+        .empty-hint(v-else)
+          span Kein Doordeal für dieses Event.
+          button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + Doordeal hinzufügen
 
       //- ═══ C) Gewinnverteilung-Konfiguration ════════════════════
       //- Nur für Treasurer sichtbar — Backend liefert splits=[] für andere
@@ -2676,7 +2923,7 @@ defineExpose({ toggleFinalStatus })
             span Empfänger
             span Anteil
             span
-          .config-row(v-for="(split, index) in splits" :key="index")
+          .config-row(v-for="(split, index) in splits" :key="index" :class="{ 'config-row-duplicate': duplicateSplitNames.has(split.participant_name.trim().toLowerCase()) }")
             input.text-input(v-model="split.participant_name" type="text" placeholder="Name")
             .input-group
               input.amount-input(v-model.number="split.share_percentage" type="number" min="0" max="100" step="1")
@@ -2684,6 +2931,7 @@ defineExpose({ toggleFinalStatus })
             button.btn-remove(@click="removeSplit(index)") ×
           .config-row-add
             button.btn-add-sm(@click="addSplit") + hinzufügen
+          .config-warning(v-if="duplicateSplitNames.size") ⚠️ Doppelter Name: {{ Array.from(duplicateSplitNames).join(', ') }} — wird sonst doppelt ausgezahlt.
           .config-hint Rest ({{ (100 - totalSplitPercentage).toFixed(0) }}%) verbleibt automatisch bei 🏠 Carousel e.V.
 
       //- ═══ D) Notizen ═══════════════════════════════════════════
@@ -2872,7 +3120,7 @@ defineExpose({ toggleFinalStatus })
                 .col-desc {{ exp.description || '–' }}
                 .col-amount {{ formatCurrency(parseFloat(exp.amount || '0')) }}
                 .col-grant-cat
-                  select.select-input(v-model="exp.grant_category")
+                  select.select-input(v-model="exp.grant_category" @change="onGrantCategoryChange(exp)")
                     option(:value="null") –
                     option(value="kuenstlerhonorar") Künstler
                     option(value="sachkosten") Sachkosten
@@ -3348,6 +3596,18 @@ h2 {
   font-weight: 600;
 }
 
+.config-warning {
+  padding: 0.5rem 1rem;
+  color: #f57c00;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-top: 1px solid #ddd;
+}
+
+.config-row-duplicate {
+  background: #fff3e0;
+}
+
 /* ── Revenue Table ── */
 
 .revenue-table {
@@ -3551,11 +3811,38 @@ h2 {
   color: #777;
   font-size: 0.9rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
 }
 .reminder-text {
   font-size: 0.8rem;
   color: #888;
   margin: 0 0 0.75rem;
+}
+.artist-deal-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+}
+.artist-deal-suggestion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  background: #fffbe6;
+  border: 0.125rem dashed #d4b106;
+}
+.artist-deal-suggestion .suggestion-text {
+  font-size: 0.9rem;
+}
+.artist-deal-suggestion .suggestion-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 .sphere-info {
   margin-top: 1.25rem;
