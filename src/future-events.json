@@ -32,6 +32,38 @@
         ]
     },
     {
+        "id": "dieknoepfe-bikinizone",
+        "date": "2026-10-16T17:00:00+00:00",
+        "title": "Die Kn\u00f6pfe und Bikinizone (Punk/NDW, Berlin) + Vernissage \"Jugend unter Druck\"",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Es ist wieder soweit!</p>\n<p>Im Autohaus gibt es mal wieder was Tolles auf die Ohren. Am 16.10. erwartet euch <strong>feinster Punk und NDW </strong>von Die Kn&ouml;pfe und Bikinzone aus Berlin!&nbsp;</p>\n<p>Zum allerersten Mal beherbergt unser halbrunder Veranstaltungsraum au&szlig;erdem eine Fotoausstellung.&nbsp;Vor den Konzerten feiern wir die <strong>Vernissage der Fotoausstellung \"Jugend unter Druck\",</strong> mehr dazu in K&uuml;rze.</p>\n<p>Und weil das alles kr&auml;ftig gefeiert werden darf, legt<strong> DJ FFWD </strong>tanzbare Platten zur Aftershow auf!</p>\n<p>Sagt euren Freund*innen Bescheid und kommt vorbei!</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/dieknoepfe-bikinizone/",
+        "img": "/img/d0283ae7-0821-45e3-ae95-31c61ea4ca90.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Die Kn\u00f6pfe",
+                "link": "",
+                "description": "Hailing from Berlin, Die Kn\u00f6pfe are an all-girls punk band born in the spring of 2025. Blending Punk, NDW and New Wave, they flirt between soft and harsh creating a sound they've dubbed \u201epillow punk\".",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/nQKcVB4FdZ0",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1652696701/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/886a752c-122f-42f3-ba6f-bcf89a076e62.webp"
+            },
+            {
+                "name": "Bikinizone",
+                "link": "",
+                "description": "\"Alles geklaut\" von Bikinizone beschreibt eine Reise durch Erlebtes, Geh\u00f6rtes, Referenzen und Bez\u00fcge. Berlin kann hier wie eine Kamera oder ein Sp\u00e4hposten gesehen und geh\u00f6rt werden.\nEin Blick auf ein vollgeschriebenes Notizblatt.\n-s",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=196667556/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/486bfb9b-6252-4cea-adc6-5cd7c37b4d67.webp"
+            }
+        ]
+    },
+    {
         "id": "20261006-metal-carousel",
         "date": "2026-10-09T18:00:00+00:00",
         "title": "Alt-Rock Underground",
