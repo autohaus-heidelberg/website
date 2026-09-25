@@ -1,5 +1,37 @@
 [
     {
+        "id": "20261114-Come-SkinnyMirror",
+        "date": "2026-11-14T18:00:00+00:00",
+        "title": "COME (Athens) & Skinny Mirror (Cologne)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Come is a raw, high-voltage rock trio born from the romance of a pagan wedding and the madness of a summer busking adventure<span class=\"bcTruncateMore\">&nbsp;<span class=\"peekaboo-text\">in Mykonos. Formed in early 2024, the band quickly broke into the Greek underground scene with an electrifying blend of punk attitude and psychedelic texture.</span></span></p>\n<p>&nbsp;</p>\n<p><span class=\"bcTruncateMore\"><span class=\"peekaboo-text\">Supported by Skinny Mirror from Cologne</span></span></p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/20261114-Come-SkinnyMirror/",
+        "img": "/img/b7e994a9-46c3-44e3-b836-cac6ceb11082.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "COME",
+                "link": "https://comeseeconquer.bandcamp.com/",
+                "description": "Come is a raw, high-voltage rock trio born from the romance of a pagan wedding and the madness of a summer busking adventure in Mykonos. Formed in early 2024, the band quickly broke into the Greek underground scene with an electrifying blend of punk attitude and psychedelic texture.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/jN5vpD97W84",
+                "bandcamp": "",
+                "image": "/img/60df59ff-5741-4dfd-b85b-fba633604d4c.webp"
+            },
+            {
+                "name": "Skinny Mirror",
+                "link": "https://skinnymirror.bandcamp.com/album/demo-tape",
+                "description": "Support Cologne DIY Punk",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/x6akaGApKQs",
+                "bandcamp": "",
+                "image": "/img/dffc8302-937a-46f6-9ab8-82953cb2cc0b.webp"
+            }
+        ]
+    },
+    {
         "id": "20261006-metal-carousel",
         "date": "2026-10-09T18:00:00+00:00",
         "title": "Alt-Rock Underground",
@@ -55,7 +87,7 @@
             {
                 "name": "Useless Eaters",
                 "link": "https://www.instagram.com/useless.eaters/",
-                "description": "Useless Eaters is the long-running project of Seth Sutton, blending crude punk energy and minimalist experimentalism since its origin in Memphis in 2008. Over the course of its career, the project has released eight full-length albums and seventeen EPs through influential underground labels like Jay Reatard\u2019s Shattered Records, Goner Records, and Castle\nFace.\nFollowing a five-year stint in Berlin after their San Francisco\ncreative hub was shuttered, Sutton returned to the USA in 2022, settling in Washington DC where he is now based, reviving the band to complete multiple tours and prepare their first new music in nearly a decade. Useless Eaters is set to release the vinyl edition of their 10th full-length album,\nMUSIC FOR CLOUT, through Total Punk Records later this summer (2026).\nThe digital version of the album was released on May 11, 2026, via HALO FX, marking the band's first new LP in a decade.\nThis comeback is further marked by the release of the Ego Shell/Rub 7\u201d single on Italy's Goodbye Boozy Records\u2014the same label that issued their debut Agoraphobic single in 2008. Critics have praised this return for its multidimensional post-punk attack, cementing Sutton's status as a visionary trailblazer at the intersection of punk, experimentation, and\nvisual art.",
+                "description": "Useless Eaters is the long-running project of Seth Sutton, blending crude punk energy and minimalist experimentalism since its origin in Memphis in 2008. Over the course of its career, the project has released eight full-length albums and seventeen EPs through influential underground labels like Jay Reatard\u2019s Shattered Records, Goner Records, and Castle Face.\nFollowing a five-year stint in Berlin after their San Francisco creative hub was shuttered, Sutton returned to the USA in 2022, settling in Washington DC where he is now based, reviving the band to complete multiple tours and prepare their first new music in nearly a decade. Useless Eaters is set to release the vinyl edition of their 10th full-length album, MUSIC FOR CLOUT, through Total Punk Records later this summer (2026).\nThe digital version of the album was released on May 11, 2026, via HALO FX, marking the band's first new LP in a decade.\nThis comeback is further marked by the release of the Ego Shell/Rub 7\u201d single on Italy's Goodbye Boozy Records\u2014the same label that issued their debut Agoraphobic single in 2008. Critics have praised this return for its multidimensional post-punk attack, cementing Sutton's status as a visionary trailblazer at the intersection of punk, experimentation, and visual art.",
                 "soundcloud": "",
                 "youtube": "https://www.youtube.com/embed/p1svMXwrqqg",
                 "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1178957718/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
@@ -132,7 +164,7 @@
                 "soundcloud": "",
                 "youtube": "https://www.youtube.com/embed/fdUkiDOvcp4",
                 "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2513625277/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": ""
+                "image": "/img/7e5a9d07-f7b8-4c14-8bd6-35e195c7385d.webp"
             },
             {
                 "name": "Capacopter",
@@ -144,18 +176,5 @@
                 "image": "/img/2c3239b6-938e-4aec-8e14-f701818c8090.webp"
             }
         ]
-    },
-    {
-        "id": "mm-260905",
-        "date": "2026-09-09T19:00:00+00:00",
-        "title": "Open Air Kino: Midnight Madness",
-        "fee": "5",
-        "feeAk": "5",
-        "descriptionShort": "<p>Teil drei unseres Midnight-Madness-90s-Specials <strong>&ndash;</strong> und wir lassen Teil eins des gr&ouml;&szlig;ten Horror-Phantoms der 90er &uuml;ber die Open-Air-Leinwand flimmern. Denn dank eines Altmeisters des Genres, der die <span style=\"color: #e03e2d;\">Teenie-Slasher</span> der 80er in all ihrer <span style=\"color: #000000;\">blutigen</span> Pracht wieder auferstehen l&auml;sst, d&uuml;rfen wir ein sehr einpr&auml;gsames Gespenstergesicht auf seinem blutigen Feldzug beobachten. So gelingt ein unvergleichlicher Spagat zwischen selbstironischer Parodie und ernsthaftem Schock. Die deutsche Filmzeitschrift Cinema schrieb: &bdquo;Wer sich hier nicht erschreckt, mu&szlig; tot sein!&ldquo; Wir w&uuml;rden erg&auml;nzen: Wer hier nicht lacht, muss ebenfalls tot sein! Schreit ihr also vor Lachen oder vor Schreck? Herzklopfen ist bei diesem Film in jedem Fall garantiert.</p>",
-        "descriptionLong": "",
-        "shopLink": "https://karlstorkino.de/programm/midnight-madness-carousel-open-air-ueberraschungsfilm-2",
-        "img": "/img/c270267f-ac72-495e-a56c-8680e1acfb8b.webp",
-        "cancelled": false,
-        "artists": []
     }
 ]
