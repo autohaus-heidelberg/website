@@ -293,5 +293,26 @@ const comboTicketHint = computed(() => {
   font-weight: 600;
   margin: 0 0 1rem;
 }
+
+/* ── Mobile: 3-Spalten-Grid quetscht Select/Inputs sonst unlesbar zusammen ── */
+@media (max-width: 768px) {
+  .artist-deal-header {
+    display: none;
+  }
+
+  .artist-deal-row {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .artist-deal-name {
+    padding-top: 0;
+  }
+
+  .artist-deal-values .input-group {
+    flex: 1 1 auto;
+  }
+}
 </style>
 
