@@ -64,6 +64,38 @@
         ]
     },
     {
+        "id": "thegoods-jcusumano",
+        "date": "2026-10-13T17:00:00+00:00",
+        "title": "The Goods (Oakland, CA) + Joel Cusumano (Bay Area, CA)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Der 13.! Leider kein Freitag, sondern Dienstag. Macht nix: THE POP ALWAYS WINS &ndash; zumindest bis das Bier alle ist!</p>\n<p><strong>THE GOODS</strong> aus Oakland liefern feinsten Power Pop zwischen Big Star, The Byrds und Teenage Fanclub: Jingle-Jangle, gro&szlig;e Melodien und so viele Hooks, dass sie dich sp&auml;testens nach Song 2 an der Angel haben. Auf ihrem Deb&uuml;t &bdquo;Don&rsquo;t Spoil the Fun&ldquo; geht es um Liebe, Verbindung und die Suche nach Bedeutung im ganzen Durcheinander.</p>\n<p><strong>JOEL CUSUMANO</strong> bleibt gleich in der Familie: Sein Deb&uuml;t &bdquo;WAXWORLD&ldquo; wurde von The-Goods-Frontmann Rob Good aufgenommen, der darauf auch musikalisch mitmischt. Die Hooks bleiben, die Gedanken werden etwas dunkler: Herzschmerz, Selbstzweifel und die eigene Bedeutungslosigkeit in einer chaotischen Welt. Alle sch&ouml;n verpackt in bitters&uuml;&szlig;e Power-Pop-Ohrw&uuml;rmer.</p>\n<p>\ud83d\udc08&zwj;\u2b1b Schwarze Katzen, Leitern und sonstiges Voodoo-Material haben dieses Mal leider keinen freien Eintritt. Dieser 13. ist ein Gl&uuml;ckstag.</p>\n<p>Door 19 &middot; Show 20<br><br>\ud83d\udc9c Flyer Art by:&nbsp;<a href=\"https://www.instagram.com/artmakesmira/\">Mira Arnoul</a></p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/thegoods-jcusumano/",
+        "img": "/img/52b1ddd8-27d6-4a1c-bf4c-795370877bb5.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "The Goods",
+                "link": "https://linktr.ee/the_goods_music",
+                "description": "Oakland power pop band The Goods return with Don\u2019t Spoil the Fun, their first full-length album. Written and produced by frontman Rob Good, the record captures the band\u2019s sunny technicolor jangle, where arpeggios ring and harmonies soar atop a bed of sprightly strummed guitars and bouncing bass lines. Channeling the classic shimmer of The Byrds and Big Star with the energy of Teenage Fanclub and Matthew Sweet, The Goods\u2019 signature sound feels both familiar and fresh.\n\nAcross its eleven tracks, Don\u2019t Spoil the Fun explores the search for love, connection, and meaning with warmth and empathy. From the chiming immediacy of lead single \u201cApril Fools\u201d to the wistful reflection of \u201cSarah Says,\u201d the album moves fluidly between exuberant and introspective moods.\n\n\u201cPhotograph\u201d memorializes a lost San Francisco Bay Area venue where The Goods played their first show, while \u201cAurora\u201d celebrates staying rooted instead of chasing dreams elsewhere. \u201cMe and My Ghost\u201d turns a song written for a friend into a self-reflection on solitude, and \u201cKeep It Safe\u201d closes the album with a gentle reminder to protect one\u2019s mental health amid chaos.\n\nWith their blend of bright guitars, fuzz-drenched hooks, and honest storytelling, The Goods present a record that balances classic influences with a distinctly modern heart. Don\u2019t Spoil the Fun is out now on Dandy Boy Records.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/dyUnhw6sKpE",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=567595924/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
+                "image": "/img/5ed0b3ae-6687-4337-91e0-70bed7e0636f.webp"
+            },
+            {
+                "name": "Joel Cusumano",
+                "link": "https://linktr.ee/joelcusumanomusic",
+                "description": "FOR IMMEDIATE RELEASE!!!\n\nDandy Boy Records is releasing the debut album, WAXWORLD, by Bay Area pop oddity, Joel Cusumano. 90\u2019s tinged power pop for smart punks and sensitive pop fans, WAXWORLD is out OCT. 24th on vinyl and digital streaming.\n\nJoel has been a staple in the Bay Area underground scene for years as the frontman of SOB STORIES as well as the guitarist and collaborator in a wide-ranging lineup of bands such as COCKTAILS, R.E. SERAPHIN, and BODY DOUBLE. His palpably catchy power pop debut solo LP WAXWORLD balances quirky hooks and exuberant melodies with deeply introspective lyrics. Cusumano ponders his insignificance in a chaotic world and works through heartbreak and mental illness as he blasts out buzzy power pop earworms. A fascination with ancient and medieval art and history are as abundant as the nods to left-of-the-dial college rock heroes like R.E.M., TEENAGE FANCLUB, THE REPLACEMENTS, and PAVEMENT.\n\nThe album was engineered by Rob Good (RYLI), and features musical contributions from Good, Phil Lantz (CHIME SCHOOL, NEUTRALS, TELEPHONE NUMBERS), Ray Seraphin (R.E. SERAPHIN, THE PENNYS), Stephen Patterson (WHITE RABBITS, HAMILTON LEITHAUSER), Yea-Ming Chen (YEA-MING & THE RUMORS, RYLI), Matt Bullimore (THE MANTLES), and more.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/-z7GH1loEIo",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=3836365903/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
+                "image": "/img/9a44b214-4c18-43b6-9056-ba8bb6a97c5e.webp"
+            }
+        ]
+    },
+    {
         "id": "20261006-metal-carousel",
         "date": "2026-10-09T18:00:00+00:00",
         "title": "Alt-Rock Underground",
