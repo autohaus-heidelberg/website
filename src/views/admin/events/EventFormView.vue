@@ -58,6 +58,7 @@ const form = ref<Partial<AppEvent>>({
 
 const isLoading = ref(false)
 const error = ref('')
+const saveSuccess = ref('')
 const showOverflow = ref(false)
 const overflowDropdownStyle = ref<Record<string, string>>({ top: '0px', left: '0px' })
 const pendingDelete = ref<{ timer: ReturnType<typeof setTimeout> } | null>(null)
@@ -485,7 +486,16 @@ async function handleSubmit() {
 
     formSnapshot.value = JSON.stringify(form.value)
     imageFile.value = null
-    router.push('/admin/events')
+
+    if (isEditing.value) {
+      // Stay on the page after updating instead of jumping back to the overview
+      saveSuccess.value = 'Veranstaltung aktualisiert.'
+      setTimeout(() => {
+        saveSuccess.value = ''
+      }, 4000)
+    } else {
+      router.push('/admin/events')
+    }
   } catch (e: any) {
     error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
   } finally {
@@ -991,6 +1001,7 @@ function closeDeployModal() {
                 @click="downloadFile(qr.url, qr.name)"
               ) ⬇ {{ qr.name }}
 
+          .success-message(v-if="saveSuccess") {{ saveSuccess }}
           .error(v-if="error") {{ error }}
 
           .form-actions
