@@ -17,13 +17,16 @@ export const statisticsService = {
    * `force: true` re-classifies everything, overwriting previous AI values
    * and manual corrections. `retryUnknown: true` re-attempts only artists
    * currently stuck on "Unbekannt". Artist lookups are slow (real web
-   * search), so a large batch is only partially processed per call —
+   * search) and use a very small shared daily quota — `readonly: true`
+   * skips calling the AI entirely and just returns what's cached, for
+   * passive display (e.g. on page load) without spending that quota.
    * check `artist_countries_pending` and call again to continue.
    */
-  async getAiTags(force = false, retryUnknown = false): Promise<AiTagsResponse> {
+  async getAiTags(force = false, retryUnknown = false, readonly = false): Promise<AiTagsResponse> {
     const params = new URLSearchParams()
     if (force) params.set('force', 'true')
     if (retryUnknown) params.set('retry_unknown', 'true')
+    if (readonly) params.set('readonly', 'true')
     const query = params.toString()
     return api.get<AiTagsResponse>(`/api/statistics/ai-tags/${query ? `?${query}` : ''}`)
   },

@@ -353,12 +353,11 @@ function toggleCountry(country: string) {
 }
 
 // Artist-Herkunft wird per echter Websuche recherchiert (langsam, und mit sehr
-// knappem Gemini-Freikontingent) — der Server bearbeitet pro Aufruf nur ein
-// Zeitbudget voller Künstler. Bei den paar neuen Künstlern/Monat reicht ein
-// Klick praktisch immer; für den einmaligen Bestand ggf. den Button an
-// mehreren Tagen klicken (Kontingent resettet täglich). Deshalb hier nur EIN
-// Aufruf statt einer Polling-Schleife, die das Tageskontingent sprengen würde.
-async function loadAiTags(force = false, retryUnknown = false) {
+// knappem Gemini-Freikontingent, geteilt mit allen anderen KI-Features der
+// App). Deshalb hier nur EIN Aufruf statt einer Polling-Schleife, und beim
+// Seitenaufruf (onMounted) `readonly`, damit reines Öffnen der Seite nicht
+// von selbst Kontingent verbrennt — neu schätzen passiert nur auf Knopfdruck.
+async function loadAiTags(force = false, retryUnknown = false, readonly = false) {
   if (force && !confirm('Alle Kategorien/Länder neu von der KI schätzen lassen? Das überschreibt auch bereits von Hand korrigierte Werte.')) {
     return
   }
@@ -366,7 +365,7 @@ async function loadAiTags(force = false, retryUnknown = false) {
   aiError.value = ''
   aiPending.value = 0
   try {
-    const res = await statisticsService.getAiTags(force, retryUnknown)
+    const res = await statisticsService.getAiTags(force, retryUnknown, readonly)
     aiTags.value = res
     aiPending.value = res.artist_countries_pending
     if (res.artist_countries_quota_exhausted) {
@@ -426,9 +425,9 @@ onMounted(() => {
   loadEvents().then(() => loadVvkData())
   grantService.getAll().then(({ results }) => { grants.value = results })
   // Bereits von der KI geschätzte/korrigierte Werte sind serverseitig gecached
-  // — direkt automatisch nachladen, statt den User zwingend nochmal auf
-  // "Mit KI schätzen" klicken zu lassen.
-  loadAiTags()
+  // — direkt automatisch anzeigen, aber readonly: reines Öffnen der Seite
+  // soll nicht von selbst das (winzige, geteilte) Tageskontingent verbrennen.
+  loadAiTags(false, false, true)
 })
 </script>
 
