@@ -2565,14 +2565,30 @@ defineExpose({ toggleFinalStatus })
     .tab-content(v-if="activeTab === 'expenses'")
       h3.section-title 🧾 Ausgaben & Belege
 
-      //- Beleg erfassen: manuell, per KI-Foto oder als Datei
-      .capture-bar
-        button.capture-card(@click="addExpense") ✏️ Manuell
-        button.capture-card.capture-ai(@click="triggerExpenseScan" :disabled="scanningExpense")
-          | {{ scanningExpense ? '🤖 Wird gelesen…' : '📸 Foto scannen (KI)' }}
-        button.capture-card(@click="triggerFileUpload") 📎 Datei hochladen
+      //- Beleg erfassen: manuell, per KI-Foto, als Datei-Upload oder per Drag & Drop
+      //- Der Drop-Bereich umfasst Buttons + Hinweiszeile, damit man überall in der Fläche ablegen kann.
+      .capture-wrapper(
+        @dragover.prevent="dragOver = true"
+        @dragleave="dragOver = false"
+        @drop.prevent="handleDrop"
+        :class="{ 'drag-over': dragOver }"
+      )
+        .capture-bar
+          button.capture-card(@click="addExpense") ✏️ Manuell
+          button.capture-card.capture-ai(@click="triggerExpenseScan" :disabled="scanningExpense")
+            | {{ scanningExpense ? '🤖 Wird gelesen…' : '📸 Foto scannen (KI)' }}
+          button.capture-card(@click="triggerFileUpload") 📎 Datei hochladen
+        p.dragdrop-hint {{ dragOver ? 'Loslassen zum Hochladen…' : '📥 Beleg-Datei oder Foto lässt sich auch per Drag & Drop hierher ziehen' }}
       p.reminder-text 💡 Denk an: Honorare/Gagen · Hotel · GEMA · Werbung (Flyer/Poster) · Catering
       p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
+
+      .upload-progress(v-if="uploadingFiles.length")
+        .upload-item(v-for="f in uploadingFiles" :key="f.name")
+          span {{ f.name }}
+          span.status ⏳ wird hochgeladen…
+
+      .upload-error(v-if="uploadError")
+        p ⚠️ {{ uploadError }}
 
       //- Vorschläge aus den beim Event hinterlegten Band-Deals (Garantie/Doordeal)
       .artist-deal-suggestions(v-if="artistDealSuggestions.length")
@@ -2669,23 +2685,6 @@ defineExpose({ toggleFinalStatus })
           h3.section-title Belege
           .header-actions
             router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
-
-        .drop-zone(
-          @dragover.prevent="dragOver = true"
-          @dragleave="dragOver = false"
-          @drop.prevent="handleDrop"
-          :class="{ 'drag-over': dragOver }"
-        )
-          p(v-if="!dragOver") Belege (Bons, Quittungen) per „Datei hochladen“ oder hierher ziehen
-          p(v-else) Loslassen zum Hochladen…
-
-        .upload-progress(v-if="uploadingFiles.length")
-          .upload-item(v-for="f in uploadingFiles" :key="f.name")
-            span {{ f.name }}
-            span.status ⏳ wird hochgeladen…
-
-        .upload-error(v-if="uploadError")
-          p ⚠️ {{ uploadError }}
 
         .documents-list(v-if="documents.length")
           table.documents-table
@@ -3763,12 +3762,24 @@ h2 {
   border-top: 1px solid #eee;
   padding-top: 1rem;
 }
+.capture-wrapper {
+  width: 100%;
+  margin: 0.75rem 0 1.25rem;
+  padding: 0.5rem;
+  border: 0.25rem solid transparent;
+  border-radius: 4px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.capture-wrapper.drag-over {
+  border-color: var(--color-accent, #4f46e5);
+  background: rgba(79, 70, 229, 0.05);
+}
 .capture-bar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   width: 100%;
   gap: 0.5rem;
-  margin: 0.75rem 0 1.25rem;
 }
 .capture-card {
   flex: 1;
@@ -3815,6 +3826,21 @@ h2 {
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
+}
+.dragdrop-hint {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-accent, #4f46e5);
+  border: 0.0625rem dashed var(--color-accent, #4f46e5);
+  border-radius: 4px;
+  background: rgba(79, 70, 229, 0.06);
+  padding: 0.4rem 0.75rem;
+  margin: 0.5rem 0 0;
+  text-align: center;
+  transition: font-size 0.15s;
+}
+.capture-wrapper.drag-over .dragdrop-hint {
+  font-size: 0.95rem;
 }
 .reminder-text {
   font-size: 0.8rem;
@@ -5782,18 +5808,6 @@ h2 {
   border-radius: 4px;
   cursor: pointer;
   text-decoration: none;
-}
-.drop-zone {
-  border: 2px dashed #444;
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: center;
-  margin-bottom: 1rem;
-  transition: border-color 0.2s, background 0.2s;
-}
-.drop-zone.drag-over {
-  border-color: var(--color-accent, #4f46e5);
-  background: rgba(79, 70, 229, 0.05);
 }
 .upload-progress {
   margin-bottom: 1rem;
