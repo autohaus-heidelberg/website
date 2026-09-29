@@ -5379,10 +5379,12 @@ h2 {
 
 .positive {
   font-weight: 900;
+  color: #16a34a;
 }
 
 .negative {
   font-weight: 900;
+  color: #dc2626;
 }
 
 .splits-summary {
