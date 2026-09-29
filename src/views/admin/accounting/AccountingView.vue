@@ -2743,7 +2743,7 @@ defineExpose({ toggleFinalStatus, refreshEventData })
             .band-deal-info
               span.band-deal-name {{ row.artistName }}
               span.band-deal-deal {{ row.dealLabel }}
-              span.band-deal-recorded erfasst: {{ row.recordedLabel }}
+              span.band-deal-recorded → {{ row.recordedLabel }}
             .band-deal-actions
               span.band-deal-tag.tag-ok(v-if="row.allGood") ✓ übernommen
               template(v-if="row.issues.suggestExpense && !row.issues.orphanSplit")
@@ -4007,18 +4007,20 @@ h2 {
 }
 .band-deal-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  flex-flow: row wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
   min-width: 0;
-}
-.band-deal-name {
-  font-weight: 900;
-}
-.band-deal-deal {
   font-size: 0.9rem;
 }
+.band-deal-name {
+  font-weight: 700;
+}
+.band-deal-deal {
+  color: #333;
+}
 .band-deal-recorded {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: #666;
 }
 .band-deal-actions {
