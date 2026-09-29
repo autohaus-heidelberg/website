@@ -31,7 +31,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
-import { resolveComboDeal, findDuplicateNames, bandDealIssues } from '@/utils/artistDeals'
+import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
 
@@ -552,6 +552,28 @@ function cashSourcesOf(sources: RevenueSource[]): RevenueSource[] {
 function digitalSourcesOf(sources: RevenueSource[]): RevenueSource[] {
   return sources.filter(s => !s.endsWith('_cash'))
 }
+
+// Besucherschätzung aus dem gezählten Eintritt: VVK-Tickets sind über Pretix
+// exakt bekannt, der Rest der Eintrittseinnahmen ist Abendkasse. Getrennt nach
+// VVK-/AK-Preis aufgeteilt statt einer Spanne über die gesamte Summe — sonst
+// wird die Schätzung bei größeren Anteilen aus der Kasse bezahlter Ausgaben
+// (Bandgagen etc.) unnötig ungenau.
+const entranceVisitorEstimate = computed(() => {
+  const vvkPrice = parsePrice(event.value?.fee)
+  const akPrice = parsePrice(event.value?.feeAk) || vvkPrice
+  if (!vvkPrice && !akPrice) return null
+
+  const vvkEntry = revenues.value.find(r => r.source === 'vvk_pretix')
+  const vvkTickets = pretixData.value
+    ? pretixData.value.total_tickets
+    : (vvkPrice > 0 ? Math.round(parseFloat(vvkEntry?.total || '0') / vvkPrice) : 0)
+
+  const doorRevenueGross = groupRevenueGross(REVENUE_GROUPS[1].sources) - (vvkEntry ? revenueNet(vvkEntry) : 0)
+  const doorTickets = akPrice > 0 ? Math.max(0, Math.round(doorRevenueGross / akPrice)) : 0
+
+  const total = vvkTickets + doorTickets
+  return total > 0 ? `${total}` : null
+})
 
 function toggleSourceExpanded(source: string) {
   if (expandedSources.value.has(source)) {
@@ -2487,6 +2509,7 @@ defineExpose({ toggleFinalStatus, refreshEventData })
             .summary-line.summary-sub
               span.summary-label Netto (abzgl. 7% USt)
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources) / 1.07) }}
+            .summary-hint(v-if="entranceVisitorEstimate") Entspricht ca. {{ entranceVisitorEstimate }} Besuchern (basierend auf VVK-/AK-Preis)
           .summary-line.summary-total
             span.summary-label Gesamteinnahmen (gezählt)
             span.summary-value {{ formatCurrency(totalRevenue) }}
