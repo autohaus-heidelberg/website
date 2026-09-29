@@ -31,7 +31,8 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
-import { resolveComboDeal, findDuplicateNames, needsDealSuggestion, bandDealIssues } from '@/utils/artistDeals'
+import { resolveComboDeal, findDuplicateNames, bandDealIssues } from '@/utils/artistDeals'
+import type { BandDealIssues } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -936,103 +937,22 @@ function onGrantCategoryChange(exp: ExpenseEntry) {
   }
 }
 
-// ── Gagen-/Deal-Vorschläge aus den beim Event hinterlegten Deals ──
-// Beim Event-Anlegen kann pro Band eine Garantie und/oder ein Doordeal-Anteil
-// hinterlegt werden (Event.artist_deals). Hier wird daraus ein übernehmbarer
-// Vorschlag für den Ausgaben-Tab (Garantie → Ausgaben-Zeile) bzw. die
-// Doordeal-Konfiguration (Ergebnis-Tab) gebaut.
+// ── Band-Deals Übersicht (Ausgaben-Tab) ──────────────────────────
+// EINE feste Liste ALLER Bands mit hinterlegtem Deal (Event.artist_deals),
+// immer sichtbar — auch wenn alles passt. Ersetzt die früheren vier
+// situativen Einzel-Banner (Vorschläge / Betrag-Abweichung / verwaiste
+// Ausgabe / verwaister Split). Ganze Entscheidungslogik kommt aus der reinen,
+// erschöpfend getesteten Funktion bandDealIssues (utils/artistDeals.ts).
 //
-// WICHTIG (Vertragslogik Garantie+Doordeal, siehe Team-Absprache): die Band
-// bekommt NIE Garantie UND %-Anteil addiert, sondern IMMER nur das Höhere von
-// beidem ("Garantie = Untergrenze"). Bei diesem Kombi-Typ wird daher NICHT
-// wie bei reinem Doordeal ein zweiter Doordeal-Split angeboten, sondern der
-// %-Anteil hier schon gegen die aktuelle Netto-Türeinnahme (doorDealBase)
-// aufgelöst und nur der gewinnende Betrag als EINE Ausgaben-Zeile
-// vorgeschlagen. Die eigentliche Auflösung (resolveComboDeal) lebt in
-// utils/artistDeals.ts — dort auch unit-getestet.
-interface ArtistDealSuggestion {
-  artistId: number
-  artistName: string
-  dealType: string
-  guaranteeAmount: number
-  doorDealPercentage: number
-  /** Bei guarantee_plus_door: max(Garantie, %-Anteil der aktuellen Netto-Türeinnahme). Sonst = guaranteeAmount bzw. n/a. */
-  resolvedAmount: number
-  /** Welche Seite bei guarantee_plus_door gerade gewinnt — nur fürs Label. */
-  resolvedSource: 'guarantee' | 'doordeal'
-  notes: string
-  guaranteeApplied: boolean
-  doorDealApplied: boolean
-}
-
-const artistDealSuggestions = computed<ArtistDealSuggestion[]>(() => {
-  const deals = event.value?.artist_deals || {}
-  const artists = event.value?.artists || []
-  return artists
-    .filter(a => a.id != null && deals[String(a.id)])
-    .map((a): ArtistDealSuggestion => {
-      const d = deals[String(a.id!)]
-      const isCombo = d.deal_type === 'guarantee_plus_door'
-      const resolved = isCombo ? resolveComboDeal(d, doorDealBase.value) : null
-      const guaranteeAmount = resolved?.guaranteeAmount ?? (parseFloat(d.guarantee_amount || '0') || 0)
-      const doorDealPercentage = resolved?.doorDealPercentage ?? (parseFloat(d.door_deal_percentage || '0') || 0)
-      return {
-        artistId: a.id!,
-        artistName: a.name,
-        dealType: d.deal_type,
-        guaranteeAmount,
-        doorDealPercentage,
-        resolvedAmount: resolved?.resolvedAmount ?? guaranteeAmount,
-        resolvedSource: resolved?.resolvedSource ?? 'guarantee',
-        notes: d.notes || '',
-        guaranteeApplied: expenses.value.some(e => e.description.trim() === a.name.trim()),
-        doorDealApplied: doorDealSplits.value.some(s => s.name.trim() === a.name.trim()),
-      }
-    })
-    .filter(s => needsDealSuggestion(s.dealType, s.guaranteeApplied, s.doorDealApplied))
-})
-
-function applyGuaranteeSuggestion(s: ArtistDealSuggestion) {
-  const isCombo = s.dealType === 'guarantee_plus_door'
-  const comboNote = isCombo
-    ? `Doordeal-Vergleich: Garantie ${formatCurrency(s.guaranteeAmount)} vs. ${s.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(s.doorDealPercentage / 100 * doorDealBase.value)} — ${s.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
-    : ''
-  expenses.value.push({
-    accounting: accounting.value?.id || 0,
-    description: s.artistName,
-    amount: (isCombo ? s.resolvedAmount : s.guaranteeAmount).toFixed(2),
-    notes: [s.notes, comboNote].filter(Boolean).join(' — '),
-    // Gagen werden aus der Einlasskasse (Türeinnahmen) bezahlt, nicht aus der Barkasse.
-    paid_from: 'entrance_cash',
-    grant_category: 'kuenstlerhonorar',
-    // Gagen sind immer Zweckbetrieb (Kernaufgabe des Vereins).
-    tax_sphere: 'zweckbetrieb',
-  })
-}
-
-function applyDoorDealSuggestion(s: ArtistDealSuggestion) {
-  doorDealSplits.value.push({ name: s.artistName, share: s.doorDealPercentage })
-}
-
-// Der übernommene Kombi-Betrag ist ein SNAPSHOT — die Basis (Netto-Türeinnahme)
-// ist vor dem Event unbekannt und ändert sich mit jeder weiteren Kassen-/
-// Ausgaben-Eintragung. `amount` ist Kassenbuch-Prinzip (siehe Team-Absprache):
-// er darf NIE automatisch überschrieben werden, nur die Kassenwart:in
-// entscheidet bewusst per Klick, ob der bereits gezahlte Betrag stehen
-// bleibt oder auf den neu berechneten Betrag korrigiert wird.
-interface ComboDiscrepancy {
-  artistId: number
-  artistName: string
-  dealType: string
-  currentAmount: number
-  resolvedAmount: number
-  resolvedSource: 'guarantee' | 'doordeal'
-}
+// WICHTIG (Vertragslogik Garantie+Doordeal): die Band bekommt NIE Garantie
+// UND %-Anteil addiert, sondern IMMER nur das Höhere (resolveComboDeal). Ein
+// Kombi-Deal löst sich in EINE Ausgabe auf (nicht in einen Doordeal-Split);
+// ein reiner Doordeal läuft über einen Split, eine reine Garantie über eine
+// Ausgabe.
 
 // Marker in den Notizen, mit dem "gezahlten Betrag beibehalten" für GENAU
 // diesen berechneten Betrag bestätigt wurde — ändert sich die Berechnung
-// später erneut (neue Kassen-/Ausgaben-Eintragung), passt der Marker nicht
-// mehr und die Warnung taucht mit den neuen Zahlen wieder auf.
+// später erneut, passt der Marker nicht mehr und die Warnung kommt zurück.
 const DOORDEAL_ACK_PREFIX = '[Doordeal-Diff bestätigt: '
 const DOORDEAL_ACK_SUFFIX = '€]'
 
@@ -1047,63 +967,126 @@ function stripDoordealAckMarkers(notes: string): string {
     .join(' — ')
 }
 
-const comboDiscrepancies = computed<ComboDiscrepancy[]>(() => {
+interface BandDealRow {
+  artistId: number
+  artistName: string
+  dealType: string
+  dealLabel: string
+  recordedLabel: string
+  guaranteeAmount: number
+  doorDealPercentage: number
+  resolvedAmount: number
+  resolvedSource: 'guarantee' | 'doordeal'
+  notes: string
+  currentAmount: number | null
+  splitIndex: number
+  splitShare: number | null
+  issues: BandDealIssues
+  allGood: boolean
+}
+
+function dealLabelFor(row: Pick<BandDealRow, 'dealType' | 'guaranteeAmount' | 'doorDealPercentage' | 'resolvedAmount' | 'resolvedSource'>): string {
+  if (row.dealType === 'guarantee') return `💶 Festgage ${formatCurrency(row.guaranteeAmount)}`
+  if (row.dealType === 'door_deal') return `🚪 Doordeal ${row.doorDealPercentage}%`
+  const winner = row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'
+  return `🎤 Garantie ${formatCurrency(row.guaranteeAmount)} vs. Doordeal ${row.doorDealPercentage}% → ${winner} gewinnt (${formatCurrency(row.resolvedAmount)})`
+}
+
+function recordedLabelFor(currentAmount: number | null, splitShare: number | null): string {
+  const parts: string[] = []
+  if (currentAmount != null) parts.push(`Ausgabe ${formatCurrency(currentAmount)}`)
+  if (splitShare != null) parts.push(`Doordeal-Split ${splitShare}%`)
+  return parts.length ? parts.join(' + ') : 'noch nicht erfasst'
+}
+
+const bandDealOverview = computed<BandDealRow[]>(() => {
   const deals = event.value?.artist_deals || {}
   const artists = event.value?.artists || []
-  const result: ComboDiscrepancy[] = []
+  const rows: BandDealRow[] = []
   for (const a of artists) {
     if (a.id == null) continue
     const d = deals[String(a.id)]
-    // Betrag-Diskrepanz betrifft jeden Deal mit fixer Ausgaben-Komponente:
-    // reine Garantie UND Kombi. Reiner Doordeal hat keine Ausgabe (dort greift
-    // orphanedDealExpenses). Früher NUR Kombi geprüft — beim Umstellen auf
-    // reine Garantie mit veraltetem Betrag kam dadurch KEINE Warnung.
-    if (!d || (d.deal_type !== 'guarantee_plus_door' && d.deal_type !== 'guarantee')) continue
+    if (!d) continue
+    const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, doorDealBase.value)
     const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
-    if (!exp) continue // noch nicht übernommen — das deckt artistDealSuggestions ab
-    const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
-    const currentAmount = parseFloat(exp.amount || '0') || 0
+    const currentAmount = exp ? (parseFloat(exp.amount || '0') || 0) : null
+    const splitIndex = doorDealSplits.value.findIndex(s => s.name.trim() === a.name.trim())
+    const splitShare = splitIndex >= 0 ? doorDealSplits.value[splitIndex].share : null
     const issues = bandDealIssues({
       dealType: d.deal_type,
-      hasExpense: true,
-      hasSplit: false,
+      hasExpense: exp != null,
+      hasSplit: splitIndex >= 0,
       expenseAmount: currentAmount,
       expectedAmount: resolvedAmount,
-      mismatchAcknowledged: exp.notes.includes(doordealAckMarker(resolvedAmount)),
+      mismatchAcknowledged: exp ? exp.notes.includes(doordealAckMarker(resolvedAmount)) : false,
     })
-    if (issues.amountMismatch) {
-      result.push({
-        artistId: a.id,
-        artistName: a.name,
-        dealType: d.deal_type,
-        currentAmount,
-        resolvedAmount,
-        resolvedSource,
-      })
+    const allGood = !issues.suggestGuarantee && !issues.suggestDoorDeal
+      && !issues.orphanExpense && !issues.orphanSplit && !issues.amountMismatch
+    const partial = {
+      dealType: d.deal_type, guaranteeAmount, doorDealPercentage, resolvedAmount, resolvedSource,
     }
+    rows.push({
+      artistId: a.id,
+      artistName: a.name,
+      ...partial,
+      dealLabel: dealLabelFor(partial),
+      recordedLabel: recordedLabelFor(currentAmount, splitShare),
+      notes: d.notes || '',
+      currentAmount,
+      splitIndex,
+      splitShare,
+      issues,
+      allGood,
+    })
   }
-  return result
+  return rows
 })
 
-// Gezahlten Betrag bewusst beibehalten (z.B. Band wurde bereits real
-// ausgezahlt) — `amount` bleibt unverändert, nur ein Bestätigungs-Marker
-// wird vermerkt, der die Warnung für diesen Betrag stummschaltet.
-function keepPaidAmount(d: ComboDiscrepancy) {
-  const exp = expenses.value.find(e => e.description.trim() === d.artistName.trim())
+function applyGuaranteeRow(row: BandDealRow) {
+  const isCombo = row.dealType === 'guarantee_plus_door'
+  const comboNote = isCombo
+    ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * doorDealBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
+    : ''
+  expenses.value.push({
+    accounting: accounting.value?.id || 0,
+    description: row.artistName,
+    amount: (isCombo ? row.resolvedAmount : row.guaranteeAmount).toFixed(2),
+    notes: [row.notes, comboNote].filter(Boolean).join(' — '),
+    // Gagen werden aus der Einlasskasse (Türeinnahmen) bezahlt, nicht aus der Barkasse.
+    paid_from: 'entrance_cash',
+    grant_category: 'kuenstlerhonorar',
+    // Gagen sind immer Zweckbetrieb (Kernaufgabe des Vereins).
+    tax_sphere: 'zweckbetrieb',
+  })
+}
+
+function applyDoorDealRow(row: BandDealRow) {
+  doorDealSplits.value.push({ name: row.artistName, share: row.doorDealPercentage })
+}
+
+// Gezahlten Betrag bewusst beibehalten — `amount` bleibt unverändert
+// (Kassenbuch-Prinzip), nur ein Bestätigungs-Marker schaltet die Warnung stumm.
+function keepPaidAmountRow(row: BandDealRow) {
+  const exp = expenses.value.find(e => e.description.trim() === row.artistName.trim())
   if (!exp) return
-  exp.notes = [stripDoordealAckMarkers(exp.notes), doordealAckMarker(d.resolvedAmount)]
+  exp.notes = [stripDoordealAckMarkers(exp.notes), doordealAckMarker(row.resolvedAmount)]
     .filter(Boolean)
     .join(' — ')
 }
 
-// Neu berechneten Betrag bewusst übernehmen (z.B. Band wurde noch nicht
-// ausgezahlt) — Notiz mit dem alten Betrag für Nachvollziehbarkeit.
-function applyResolvedAmount(d: ComboDiscrepancy) {
-  const exp = expenses.value.find(e => e.description.trim() === d.artistName.trim())
+// Neu berechneten Betrag bewusst übernehmen — Notiz mit dem alten Betrag zur Nachvollziehbarkeit.
+function applyResolvedAmountRow(row: BandDealRow) {
+  const exp = expenses.value.find(e => e.description.trim() === row.artistName.trim())
   if (!exp) return
-  const auditNote = `Betrag von ${formatCurrency(d.currentAmount)} auf ${formatCurrency(d.resolvedAmount)} angepasst (Deal-Anpassung)`
-  exp.amount = d.resolvedAmount.toFixed(2)
+  const auditNote = `Betrag von ${formatCurrency(row.currentAmount ?? 0)} auf ${formatCurrency(row.resolvedAmount)} angepasst (Deal-Anpassung)`
+  exp.amount = row.resolvedAmount.toFixed(2)
   exp.notes = [stripDoordealAckMarkers(exp.notes), auditNote].filter(Boolean).join(' — ')
+}
+
+// Verwaisten Doordeal-Split entfernen — reine %-Konfig, kein Geldfluss, daher
+// gefahrlos direkt löschbar (im Gegensatz zu einer bereits gezahlten Ausgabe).
+function removeOrphanSplitRow(row: BandDealRow) {
+  if (row.splitIndex >= 0) doorDealSplits.value.splice(row.splitIndex, 1)
 }
 
 // Kombi-Deal-Status für die Ergebnis-Tab-Anzeige — reflektiert IMMER (auch
@@ -1120,7 +1103,8 @@ interface ComboDealStatus {
   applied: boolean
   // Tatsächlich als Ausgabe gebuchter Betrag; kann vom aktuell korrekten
   // resolvedAmount abweichen, wenn sich die Doordeal-Basis seit der
-  // Übernahme geändert hat (siehe comboDiscrepancies) — genau dieser Fall
+  // Übernahme geändert hat (siehe bandDealOverview amountMismatch) — genau
+  // dieser Fall
   // wurde bisher fälschlich als "✓ als Ausgabe erfasst" auf resolvedAmount
   // angezeigt, obwohl der gebuchte Betrag ein anderer war.
   currentAmount: number | null
@@ -1181,7 +1165,7 @@ function expenseComboHint(exp: ExpenseEntry): string {
 // den Ausgaben selbst: zählt NUR tatsächlich als Ausgabe gebuchte Bands
 // (applied), und zwar mit dem wirklich gebuchten Betrag (currentAmount), NICHT
 // dem theoretisch aktuell korrekten resolvedAmount (kann bei einer Diskrepanz
-// abweichen, siehe comboDiscrepancies/keepPaidAmount/applyResolvedAmount).
+// abweichen, siehe bandDealOverview amountMismatch / keepPaidAmountRow / applyResolvedAmountRow).
 // Noch nicht gebuchte Vorschläge zählen nicht — das Geld ist ja noch nicht
 // aus dem Topf raus. Nur wenn Doordeal aktuell gewinnt (resolvedSource ===
 // 'doordeal') ist der Betrag konzeptionell ein %-Anteil der Türeinnahmen; eine
@@ -1193,68 +1177,6 @@ const comboDoorDealShareAmount = computed(() => {
   return comboDealStatuses.value
     .filter(s => s.resolvedSource === 'doordeal' && s.applied)
     .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
-})
-
-// Eine Ausgaben-Zeile, deren Beschreibung genau dem Namen einer Band
-// entspricht, die jetzt einen reinen Doordeal-Deal hat (kein Garantie-Anteil
-// mehr) — d.h. die Ausgabe stammt vermutlich noch von einer früheren
-// Garantie/Kombi-Vereinbarung und wurde nicht angepasst, als der Deal
-// nachträglich in den Event-Details geändert wurde. Rein informativ, kein
-// Auto-Fix (siehe Kassenbuch-Prinzip) — die Kassenwart:in entscheidet, ob
-// die Ausgabe noch stimmt oder korrigiert/entfernt werden soll.
-interface OrphanedDealExpense {
-  expenseKey: string
-  artistName: string
-  amount: number
-}
-
-const orphanedDealExpenses = computed<OrphanedDealExpense[]>(() => {
-  const deals = event.value?.artist_deals || {}
-  const artists = event.value?.artists || []
-  const result: OrphanedDealExpense[] = []
-  for (const exp of expenses.value) {
-    const name = exp.description.trim()
-    if (!name) continue
-    const artist = artists.find(a => a.name.trim() === name)
-    if (!artist || artist.id == null) continue
-    const d = deals[String(artist.id)]
-    if (!d || d.deal_type !== 'door_deal') continue
-    result.push({
-      expenseKey: String(exp.id ?? name),
-      artistName: name,
-      amount: parseFloat(exp.amount || '0') || 0,
-    })
-  }
-  return result
-})
-
-// Umgekehrter Fall: ein Doordeal-Split-Eintrag (Section 2), dessen Name genau
-// einer Band entspricht, die jetzt KEINEN reinen Doordeal-Deal mehr hat
-// (auf Festgage oder Garantie+Doordeal-Kombi umgestellt) — der Split stammt
-// dann vermutlich noch von vor der Umstellung. Bei guarantee_plus_door läuft
-// der Doordeal-Anteil über eine einzelne Ausgabe (siehe resolveComboDeal),
-// nie über diesen Split — auch dort also potenziell veraltet.
-interface OrphanedDoorDealSplit {
-  splitIndex: number
-  artistName: string
-  share: number
-  currentDealType: string
-}
-
-const orphanedDoorDealSplits = computed<OrphanedDoorDealSplit[]>(() => {
-  const deals = event.value?.artist_deals || {}
-  const artists = event.value?.artists || []
-  const result: OrphanedDoorDealSplit[] = []
-  doorDealSplits.value.forEach((party, idx) => {
-    const name = party.name.trim()
-    if (!name) return
-    const artist = artists.find(a => a.name.trim() === name)
-    if (!artist || artist.id == null) return
-    const d = deals[String(artist.id)]
-    if (!d || d.deal_type === 'door_deal') return
-    result.push({ splitIndex: idx, artistName: name, share: party.share, currentDealType: d.deal_type })
-  })
-  return result
 })
 
 function triggerExpenseScan() {
@@ -2779,49 +2701,33 @@ defineExpose({ toggleFinalStatus, refreshEventData })
       .upload-error(v-if="uploadError")
         p ⚠️ {{ uploadError }}
 
-      //- Vorschläge aus den beim Event hinterlegten Band-Deals (Garantie/Doordeal)
-      .artist-deal-suggestions(v-if="artistDealSuggestions.length")
-        .artist-deal-suggestion(v-for="s in artistDealSuggestions" :key="s.artistId")
-          span.suggestion-text(v-if="s.dealType === 'guarantee'")
-            | 💡 {{ s.artistName }}: Garantie {{ formatCurrency(s.guaranteeAmount) }}
-          span.suggestion-text(v-else-if="s.dealType === 'door_deal'")
-            | 💡 {{ s.artistName }}: Doordeal {{ s.doorDealPercentage }}%
-          span.suggestion-text(v-else)
-            | 💡 {{ s.artistName }}: Garantie {{ formatCurrency(s.guaranteeAmount) }} vs. Doordeal {{ s.doorDealPercentage }}% — {{ s.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt ({{ formatCurrency(s.resolvedAmount) }})
-          .suggestion-actions
-            button.btn-add-sm(
-              v-if="(s.dealType === 'guarantee' || s.dealType === 'guarantee_plus_door') && !s.guaranteeApplied"
-              @click="applyGuaranteeSuggestion(s)"
-            ) Gage übernehmen
-            button.btn-add-sm(
-              v-if="s.dealType === 'door_deal' && !s.doorDealApplied"
-              @click="applyDoorDealSuggestion(s)"
-            ) Doordeal übernehmen
-
-      //- Bereits übernommener Betrag ist veraltet (Deal/Türeinnahmen haben sich seither geändert)
-      .artist-deal-suggestions(v-if="comboDiscrepancies.length")
-        .artist-deal-suggestion(v-for="d in comboDiscrepancies" :key="d.artistId")
-          span.suggestion-text(v-if="d.dealType === 'guarantee_plus_door'")
-            | ⚠️ {{ d.artistName }}: gezahlt {{ formatCurrency(d.currentAmount) }}, berechnet wären {{ formatCurrency(d.resolvedAmount) }} korrekt ({{ d.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt jetzt) — Türeinnahmen/Ausgaben haben sich seit der Übernahme geändert.
-          span.suggestion-text(v-else)
-            | ⚠️ {{ d.artistName }}: gezahlt {{ formatCurrency(d.currentAmount) }}, laut Deal wären {{ formatCurrency(d.resolvedAmount) }} (Festgage) — die Garantie im Event wurde seit der Übernahme geändert.
-          .suggestion-actions
-            button.btn-add-sm(@click="keepPaidAmount(d)") {{ formatCurrency(d.currentAmount) }} beibehalten
-            button.btn-add-sm(@click="applyResolvedAmount(d)") {{ formatCurrency(d.resolvedAmount) }} übernehmen
-
-      //- Ausgabe passt nicht mehr zum aktuellen Deal (z.B. Festgage-Ausgabe,
-      //- Deal wurde nachträglich auf reinen Doordeal ohne Garantie umgestellt)
-      .artist-deal-suggestions(v-if="orphanedDealExpenses.length")
-        .artist-deal-suggestion(v-for="o in orphanedDealExpenses" :key="o.expenseKey")
-          span.suggestion-text
-            | ⚠️ {{ o.artistName }}: Ausgabe {{ formatCurrency(o.amount) }} gebucht, aktueller Deal ist aber reiner Doordeal (keine Garantie mehr) — prüfen, ob das noch stimmt.
-
-      //- Umgekehrter Fall: Doordeal-Split passt nicht mehr zum aktuellen Deal
-      //- (z.B. Deal wurde nachträglich auf Festgage ohne Doordeal umgestellt)
-      .artist-deal-suggestions(v-if="orphanedDoorDealSplits.length")
-        .artist-deal-suggestion(v-for="o in orphanedDoorDealSplits" :key="'ods' + o.splitIndex")
-          span.suggestion-text
-            | ⚠️ {{ o.artistName }}: Doordeal-Split {{ o.share }}% eingetragen, aktueller Deal ist aber {{ o.currentDealType === 'guarantee_plus_door' ? 'Garantie+Doordeal (läuft über eine Ausgabe, nicht über diesen Split)' : 'reine Garantie (kein Doordeal-Anteil mehr)' }} — prüfen, ob das noch stimmt.
+      //- Band-Deals Übersicht: eine feste Liste ALLER Bands mit Deal, immer
+      //- sichtbar (auch wenn alles passt) — ersetzt die früheren vier
+      //- situativen Banner. Status/Aktionen aus bandDealIssues.
+      .band-deal-overview(v-if="bandDealOverview.length")
+        .band-deal-overview-head 🎤 Band-Deals
+        .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId" :class="{ 'is-ok': row.allGood }")
+          .band-deal-info
+            span.band-deal-name {{ row.artistName }}
+            span.band-deal-deal {{ row.dealLabel }}
+            span.band-deal-recorded erfasst: {{ row.recordedLabel }}
+          .band-deal-actions
+            span.band-deal-tag.tag-ok(v-if="row.allGood") ✓ übernommen
+            template(v-if="row.issues.suggestGuarantee")
+              span.band-deal-tag.tag-suggest 💡 noch nicht als Ausgabe erfasst
+              button.btn-add-sm(@click="applyGuaranteeRow(row)") Gage übernehmen
+            template(v-if="row.issues.suggestDoorDeal")
+              span.band-deal-tag.tag-suggest 💡 noch nicht als Doordeal-Split erfasst
+              button.btn-add-sm(@click="applyDoorDealRow(row)") Doordeal übernehmen
+            template(v-if="row.issues.amountMismatch")
+              span.band-deal-tag.tag-warn ⚠ gezahlt {{ formatCurrency(row.currentAmount || 0) }}, laut Deal {{ formatCurrency(row.resolvedAmount) }}
+              button.btn-add-sm(@click="keepPaidAmountRow(row)") {{ formatCurrency(row.currentAmount || 0) }} behalten
+              button.btn-add-sm(@click="applyResolvedAmountRow(row)") {{ formatCurrency(row.resolvedAmount) }} übernehmen
+            template(v-if="row.issues.orphanExpense")
+              span.band-deal-tag.tag-warn ⚠ Ausgabe gebucht, Deal ist aber reiner Doordeal — Ausgabe unten prüfen
+            template(v-if="row.issues.orphanSplit")
+              span.band-deal-tag.tag-warn ⚠ Doordeal-Split {{ row.splitShare }}% vorhanden, {{ row.dealType === 'guarantee_plus_door' ? 'läuft aber über die Ausgabe (nicht über diesen Split)' : 'Deal hat aber keinen Doordeal-Anteil' }}
+              button.btn-add-sm(@click="removeOrphanSplitRow(row)") Split entfernen
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
@@ -4077,28 +3983,64 @@ h2 {
   color: #888;
   margin: 0 0 0.75rem;
 }
-.artist-deal-suggestions {
+.band-deal-overview {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   margin: 0 0 1.25rem;
+  border: 0.125rem solid black;
 }
-.artist-deal-suggestion {
+.band-deal-overview-head {
+  font-weight: 900;
+  padding: 0.5rem 0.85rem;
+  background: black;
+  color: white;
+}
+.band-deal-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.5rem 1rem;
   padding: 0.6rem 0.85rem;
+  border-top: 0.0625rem solid #e5e5e5;
   background: #fffbe6;
-  border: 0.125rem dashed #d4b106;
 }
-.artist-deal-suggestion .suggestion-text {
+.band-deal-row.is-ok {
+  background: #f2fbf3;
+}
+.band-deal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.band-deal-name {
+  font-weight: 700;
+}
+.band-deal-deal {
   font-size: 0.9rem;
 }
-.artist-deal-suggestion .suggestion-actions {
+.band-deal-recorded {
+  font-size: 0.8rem;
+  color: #666;
+}
+.band-deal-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
+}
+.band-deal-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.band-deal-tag.tag-ok {
+  color: #16a34a;
+}
+.band-deal-tag.tag-suggest {
+  color: #92700a;
+}
+.band-deal-tag.tag-warn {
+  color: #dc2626;
 }
 .sphere-info {
   margin-top: 1.25rem;
