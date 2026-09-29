@@ -2719,7 +2719,7 @@ defineExpose({ toggleFinalStatus, refreshEventData })
       //- situativen Banner. Status/Aktionen aus bandDealIssues.
       .band-deal-overview(v-if="bandDealOverview.length")
         .band-deal-overview-head 🎤 Band-Deals
-        .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId" :class="{ 'is-ok': row.allGood }")
+        .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId")
           .band-deal-info
             span.band-deal-name {{ row.artistName }}
             span.band-deal-deal {{ row.dealLabel }}
@@ -3990,14 +3990,16 @@ h2 {
 .band-deal-overview {
   display: flex;
   flex-direction: column;
-  margin: 0 0 1.25rem;
-  border: 0.125rem solid black;
+  margin: 0 0 1.5rem;
+  border: 0.25rem solid black;
 }
 .band-deal-overview-head {
   font-weight: 900;
-  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
   background: black;
   color: white;
+  border-bottom: 0.25rem solid black;
 }
 .band-deal-row {
   display: flex;
@@ -4005,20 +4007,24 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem 1rem;
-  padding: 0.6rem 0.85rem;
-  border-top: 0.0625rem solid #e5e5e5;
-  background: #fffbe6;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #ddd;
+  background: white;
 }
-.band-deal-row.is-ok {
-  background: #f2fbf3;
+.band-deal-row:nth-child(even) {
+  background: #f5f5f5;
+}
+.band-deal-row:last-child {
+  border-bottom: none;
 }
 .band-deal-info {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  min-width: 0;
 }
 .band-deal-name {
-  font-weight: 700;
+  font-weight: 900;
 }
 .band-deal-deal {
   font-size: 0.9rem;
