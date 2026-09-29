@@ -2930,11 +2930,15 @@ defineExpose({ toggleFinalStatus })
           //- Breakdown auf/zuklappbar wie der Rest der Tabelle; die Ergebnis-Zeile
           //- danach bleibt IMMER sichtbar, unabhängig vom Klapp-Zustand — genau wie
           //- "Ergebnis (vor/nach USt)" oben nie vom Aufklappen der jeweiligen
-          //- Breakdown-Sektion abhängt.
+          //- Breakdown-Sektion abhängt. Kopfzeilen-Betrag = NUR doorDealArtistAmount,
+          //- denn genau das (und nichts anderes) zieht resultAfterDoorDeal von
+          //- resultAfterVat ab — comboDoorDealShareAmount ist schon vorher über die
+          //- normale Ausgaben-Zeile in "Ergebnis vor USt" abgezogen, hier nur noch
+          //- zur Erklärung des Carousel-Anteils in der Aufklapp-Ansicht sichtbar.
           template(v-if="doorDealActive")
             .summary-row.summary-expandable(@click="resultExpandDoorDeal = !resultExpandDoorDeal")
               span.summary-label {{ resultExpandDoorDeal ? '▼' : '▶' }} 🚪 − Doordeal-Verteilung
-              span.summary-value −{{ formatCurrency(doorDealArtistAmount + comboDoorDealShareAmount) }}
+              span.summary-value −{{ formatCurrency(doorDealArtistAmount) }}
             template(v-if="resultExpandDoorDeal")
               .summary-row.summary-sub-detail
                 span.summary-label Türeinnahmen (Einlass + VVK, netto)
