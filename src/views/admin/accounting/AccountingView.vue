@@ -1101,6 +1101,8 @@ interface ComboDealStatus {
   artistName: string
   resolvedAmount: number
   resolvedSource: 'guarantee' | 'doordeal'
+  guaranteeAmount: number
+  doorDealPercentage: number
   applied: boolean
   // Tatsächlich als Ausgabe gebuchter Betrag; kann vom aktuell korrekten
   // resolvedAmount abweichen, wenn sich die Doordeal-Basis seit der
@@ -1118,7 +1120,7 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
     .filter(a => a.id != null && deals[String(a.id)]?.deal_type === 'guarantee_plus_door')
     .map((a): ComboDealStatus => {
       const d = deals[String(a.id!)]
-      const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
+      const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, doorDealBase.value)
       const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
       const currentAmount = exp ? (parseFloat(exp.amount || '0') || 0) : null
       return {
@@ -1126,12 +1128,39 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
         artistName: a.name,
         resolvedAmount,
         resolvedSource,
+        guaranteeAmount,
+        doorDealPercentage,
         applied: !!exp,
         currentAmount,
         matches: currentAmount != null && Math.abs(currentAmount - resolvedAmount) <= 0.01,
       }
     })
 })
+
+// Lookup für die Inline-Anmerkung an der jeweiligen Ausgaben-Zeile (statt
+// einer separaten Liste weiter unten, siehe Team-Absprache) — nur Bands mit
+// bereits gebuchter Ausgabe haben hier einen Eintrag.
+const comboStatusByName = computed(() => {
+  const map = new Map<string, ComboDealStatus>()
+  for (const s of comboDealStatuses.value) {
+    if (s.applied) map.set(s.artistName.trim(), s)
+  }
+  return map
+})
+
+function comboStatusHint(status: ComboDealStatus): string {
+  const winner = status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt'
+  const calc = `${status.doorDealPercentage}% von ${formatCurrency(doorDealBase.value)} = ${formatCurrency(status.doorDealPercentage / 100 * doorDealBase.value)} vs. Garantie ${formatCurrency(status.guaranteeAmount)}`
+  const mismatch = status.matches ? '' : ` — ⚠ korrekt wären ${formatCurrency(status.resolvedAmount)}`
+  return `🎤 ${winner}: ${calc}${mismatch}`
+}
+
+// Wrapper ohne TS non-null-assertion (die bricht im pug-Template zur
+// Laufzeit, siehe Notiz) — gibt '' zurück statt eines optionalen Werts.
+function expenseComboHint(exp: ExpenseEntry): string {
+  const status = comboStatusByName.value.get(exp.description.trim())
+  return status ? comboStatusHint(status) : ''
+}
 
 // Wie viel vom selben doorDealBase-Topf bereits über Garantie+Doordeal-Bands
 // (comboDealStatuses) an Bands ausgezahlt wurde — Kassenbuch-Prinzip wie bei
@@ -2914,22 +2943,14 @@ defineExpose({ toggleFinalStatus, refreshEventData })
             span.summary-value −{{ formatCurrency(totalExpenses) }}
           template(v-if="resultExpandExpenses")
             .summary-row.summary-detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
-              span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
+              span.summary-label
+                | {{ exp.description || '(ohne Beschreibung)' }}
+                //- Garantie+Doordeal-Details direkt an der betroffenen Ausgabe
+                //- statt in einer separaten Liste weiter unten (siehe Team-Absprache) —
+                //- rein informativ, ändert nichts an der Ausgabe selbst.
+                span.summary-inline-hint(v-if="expenseComboHint(exp)")
+                  |  ({{ expenseComboHint(exp) }})
               span.summary-value −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
-            //- Garantie+Doordeal-Status: rein informativ, keine zusätzliche
-            //- Abzugszeile — die Beträge sind schon oben in den einzelnen
-            //- Ausgaben-Zeilen enthalten. Zeigt nur, ob Garantie oder Doordeal
-            //- gerade gewinnt und ob der gebuchte Betrag noch dazu passt.
-            template(v-if="comboDealStatuses.length")
-              .summary-row.summary-detail.summary-subtotal-minor
-                span.summary-label 🎤 Garantie+Doordeal-Status
-              .summary-row.summary-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
-                span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
-                .summary-value-group
-                  span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
-                    template(v-if="!status.applied") ⚠ noch nicht erfasst
-                    template(v-else-if="status.matches") ✓ als Ausgabe erfasst
-                    template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount || 0) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
 
           //- ═══ Ergebnis vor USt ═══
           .summary-row.summary-total
