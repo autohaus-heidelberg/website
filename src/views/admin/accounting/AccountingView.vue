@@ -1138,6 +1138,20 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
     })
 })
 
+// Wie viel vom selben doorDealBase-Topf bereits über Garantie+Doordeal-Bands
+// (comboDealStatuses) an Bands ausgezahlt wurde/wird — nur der Anteil, bei
+// dem Doordeal tatsächlich gewinnt (resolvedSource === 'doordeal'), denn nur
+// dann ist der Betrag als %-Anteil der Türeinnahmen definiert; eine
+// gewinnende Garantie ist ein fixer Betrag, keine Tür-Beteiligung. Ohne
+// diesen Abzug würde "🏠 Carousel-Anteil (verbleibt im Topf)" in der
+// Doordeal-Split-Sektion unten so tun, als sei dieses Geld noch da, obwohl es
+// über eine andere Ausgaben-Zeile schon rausgegangen ist.
+const comboDoorDealShareAmount = computed(() => {
+  return comboDealStatuses.value
+    .filter(s => s.resolvedSource === 'doordeal')
+    .reduce((sum, s) => sum + s.resolvedAmount, 0)
+})
+
 
 function triggerExpenseScan() {
   scanExpenseError.value = ''
@@ -1358,7 +1372,15 @@ const doorDealVenueShare = computed(() => {
 })
 
 const doorDealVenueAmount = computed(() => {
-  return doorDealBase.value * (doorDealVenueShare.value / 100)
+  return doorDealBase.value * (doorDealVenueShare.value / 100) - comboDoorDealShareAmount.value
+})
+
+// Anzeige-% für "Carousel-Anteil" — im Gegensatz zu doorDealVenueShare (das
+// nur die benannten Section-2-Parteien kennt) bezieht das hier auch ab, was
+// Garantie+Doordeal-Bands (Section 1) schon vom selben Topf abbekommen haben.
+const doorDealVenueDisplayPct = computed(() => {
+  if (doorDealBase.value <= 0) return doorDealVenueShare.value
+  return (doorDealVenueAmount.value / doorDealBase.value) * 100
 })
 
 // ── Grant computeds ──────────────────────────────────────────────
@@ -2902,11 +2924,17 @@ defineExpose({ toggleFinalStatus })
               .summary-value-group
                 span.summary-pct {{ party.share }}%
                 span.summary-value −{{ formatCurrency(doorDealBase * party.share / 100) }}
+            //- Was Garantie+Doordeal-Bands (oben) schon vom selben Topf bekommen
+            //- haben — ohne das würde "verbleibt im Topf" unten so tun, als wäre
+            //- dieses Geld noch da (siehe Team-Absprache).
+            .summary-row.summary-sub-detail(v-if="comboDoorDealShareAmount > 0")
+              span.summary-label 🎤 Garantie+Doordeal-Bands (bereits ausgezahlt)
+              span.summary-value −{{ formatCurrency(comboDoorDealShareAmount) }}
             .summary-row.summary-sub-remaining
               span.summary-label 🏠 Carousel-Anteil (verbleibt im Topf)
               .summary-value-group
-                span.summary-pct {{ doorDealVenueShare.toFixed(0) }}%
-                span.summary-value {{ formatCurrency(doorDealVenueAmount) }}
+                span.summary-pct {{ doorDealVenueDisplayPct.toFixed(0) }}%
+                span.summary-value(:class="doorDealVenueAmount < 0 ? 'negative' : ''") {{ formatCurrency(doorDealVenueAmount) }}
             //- ═══ Ergebnis nach Doordeal ═══
             .summary-row.summary-total
               span.summary-label Ergebnis (nach Doordeal)
