@@ -1073,6 +1073,13 @@ interface ComboDealStatus {
   resolvedAmount: number
   resolvedSource: 'guarantee' | 'doordeal'
   applied: boolean
+  // Tatsächlich als Ausgabe gebuchter Betrag; kann vom aktuell korrekten
+  // resolvedAmount abweichen, wenn sich die Doordeal-Basis seit der
+  // Übernahme geändert hat (siehe comboDiscrepancies) — genau dieser Fall
+  // wurde bisher fälschlich als "✓ als Ausgabe erfasst" auf resolvedAmount
+  // angezeigt, obwohl der gebuchte Betrag ein anderer war.
+  currentAmount: number | null
+  matches: boolean
 }
 
 const comboDealStatuses = computed<ComboDealStatus[]>(() => {
@@ -1083,12 +1090,16 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
     .map((a): ComboDealStatus => {
       const d = deals[String(a.id!)]
       const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
+      const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
+      const currentAmount = exp ? (parseFloat(exp.amount || '0') || 0) : null
       return {
         artistId: a.id!,
         artistName: a.name,
         resolvedAmount,
         resolvedSource,
-        applied: expenses.value.some(e => e.description.trim() === a.name.trim()),
+        applied: !!exp,
+        currentAmount,
+        matches: currentAmount != null && Math.abs(currentAmount - resolvedAmount) <= 0.01,
       }
     })
 })
@@ -2193,9 +2204,15 @@ defineExpose({ toggleFinalStatus })
         .pretix-warnings(v-if="pretixData?.warnings?.length")
           .pretix-warning(v-for="w in pretixData.warnings" :key="w") ⚠️ {{ w }}
         .external-data-summary(v-if="externalDataLoaded && !pretixError && !paypalBarError && !sumupBarError")
-          span(v-if="pretixData") 🎟️ {{ pretixData.total_tickets }} Tickets ({{ formatCurrency(pretixData.total_revenue) }})
-          span(v-if="paypalBarData") &nbsp;· 💙 {{ paypalBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(paypalBarCategoryTotals.bar.amount) }}) · 🚪 {{ paypalBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(paypalBarCategoryTotals.entrance.amount) }})
-          span(v-if="sumupBarData") &nbsp;· 💳 {{ sumupBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(sumupBarCategoryTotals.bar.amount) }}) · 🚪 {{ sumupBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(sumupBarCategoryTotals.entrance.amount) }})
+          .summary-line(v-if="pretixData") 🎟️ Pretix: {{ pretixData.total_tickets }} Tickets ({{ formatCurrency(pretixData.total_revenue) }})
+          .summary-line(
+            v-if="paypalBarData"
+            title="Kategorisierung ist eine Schätzung anhand des Betrags (Vielfaches des Eintrittspreises = Einlass). Bei Bedarf in der Liste unten manuell korrigieren."
+          ) 💙 PayPal: 🍺 {{ paypalBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(paypalBarCategoryTotals.bar.amount) }}) · 🚪 {{ paypalBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(paypalBarCategoryTotals.entrance.amount) }})
+          .summary-line(
+            v-if="sumupBarData"
+            title="Kategorisierung ist eine Schätzung anhand des Betrags (Vielfaches des Eintrittspreises = Einlass). Bei Bedarf in der Liste unten manuell korrigieren."
+          ) 💳 SumUp: 🍺 {{ sumupBarCategoryTotals.bar.count }} Bar ({{ formatCurrency(sumupBarCategoryTotals.bar.amount) }}) · 🚪 {{ sumupBarCategoryTotals.entrance.count }} Einlass ({{ formatCurrency(sumupBarCategoryTotals.entrance.amount) }})
 
       .section(v-for="group in REVENUE_GROUPS" :key="group.label")
         .section-title-row
@@ -2826,8 +2843,11 @@ defineExpose({ toggleFinalStatus })
             .summary-row.summary-sub-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
               span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
               .summary-value-group
-                span.summary-value {{ formatCurrency(status.resolvedAmount) }}
-                span.summary-pct(:class="status.applied ? 'positive' : 'negative'") {{ status.applied ? '✓ als Ausgabe erfasst' : '⚠ noch nicht erfasst' }}
+                span.summary-value {{ formatCurrency(status.applied && !status.matches ? status.currentAmount! : status.resolvedAmount) }}
+                span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
+                  template(v-if="!status.applied") ⚠ noch nicht erfasst
+                  template(v-else-if="status.matches") ✓ als Ausgabe erfasst
+                  template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount!) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
 
           //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert)
           template(v-if="doorDealActive")
@@ -3549,6 +3569,9 @@ h2 {
   font-size: 0.8rem;
   font-weight: 600;
   color: #333;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .btn-pretix {
