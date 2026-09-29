@@ -993,10 +993,10 @@ function dealLabelFor(row: Pick<BandDealRow, 'dealType' | 'guaranteeAmount' | 'd
 }
 
 function recordedLabelFor(currentAmount: number | null, splitShare: number | null): string {
-  const parts: string[] = []
-  if (currentAmount != null) parts.push(`Ausgabe ${formatCurrency(currentAmount)}`)
-  if (splitShare != null) parts.push(`Doordeal-Split ${splitShare}%`)
-  return parts.length ? parts.join(' + ') : 'noch nicht erfasst'
+  if (currentAmount != null) return `Ausgabe ${formatCurrency(currentAmount)}`
+  // Ein Split für eine Band ist im Modell A+B veraltet (Splits = nur externe Parteien).
+  if (splitShare != null) return `⚠ als externe Split-Zeile (${splitShare}%, veraltet)`
+  return 'noch nicht erfasst'
 }
 
 const bandDealOverview = computed<BandDealRow[]>(() => {
@@ -1020,8 +1020,7 @@ const bandDealOverview = computed<BandDealRow[]>(() => {
       expectedAmount: resolvedAmount,
       mismatchAcknowledged: exp ? exp.notes.includes(doordealAckMarker(resolvedAmount)) : false,
     })
-    const allGood = !issues.suggestGuarantee && !issues.suggestDoorDeal
-      && !issues.orphanExpense && !issues.orphanSplit && !issues.amountMismatch
+    const allGood = !issues.suggestExpense && !issues.orphanSplit && !issues.amountMismatch
     const partial = {
       dealType: d.deal_type, guaranteeAmount, doorDealPercentage, resolvedAmount, resolvedSource,
     }
@@ -1042,26 +1041,32 @@ const bandDealOverview = computed<BandDealRow[]>(() => {
   return rows
 })
 
-function applyGuaranteeRow(row: BandDealRow) {
-  const isCombo = row.dealType === 'guarantee_plus_door'
-  const comboNote = isCombo
+// Bands, die (noch) als externer Split geführt werden — Warnung in Sektion B.
+const bandNamesInExternalSplit = computed(() =>
+  bandDealOverview.value.filter(r => r.issues.orphanSplit).map(r => r.artistName),
+)
+
+// Jeder Band-Deal (Festgage/Doordeal/Kombi) wird als EINE Ausgabe gebucht —
+// Betrag = resolvedAmount (bei Doordeal = %-Anteil der Türbasis, bei Kombi das
+// Höhere). Bands landen NIE in door_deal_splits (das ist nur für externe
+// Mitveranstalter). Kassenbuch-Prinzip: der gebuchte Betrag ist ein Snapshot.
+function applyExpenseRow(row: BandDealRow) {
+  const calcNote = row.dealType === 'guarantee_plus_door'
     ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * doorDealBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
-    : ''
+    : row.dealType === 'door_deal'
+      ? `Doordeal ${row.doorDealPercentage}% von ${formatCurrency(doorDealBase.value)} Netto-Türeinnahme.`
+      : ''
   expenses.value.push({
     accounting: accounting.value?.id || 0,
     description: row.artistName,
-    amount: (isCombo ? row.resolvedAmount : row.guaranteeAmount).toFixed(2),
-    notes: [row.notes, comboNote].filter(Boolean).join(' — '),
+    amount: row.resolvedAmount.toFixed(2),
+    notes: [row.notes, calcNote].filter(Boolean).join(' — '),
     // Gagen werden aus der Einlasskasse (Türeinnahmen) bezahlt, nicht aus der Barkasse.
     paid_from: 'entrance_cash',
     grant_category: 'kuenstlerhonorar',
     // Gagen sind immer Zweckbetrieb (Kernaufgabe des Vereins).
     tax_sphere: 'zweckbetrieb',
   })
-}
-
-function applyDoorDealRow(row: BandDealRow) {
-  doorDealSplits.value.push({ name: row.artistName, share: row.doorDealPercentage })
 }
 
 // Gezahlten Betrag bewusst beibehalten — `amount` bleibt unverändert
@@ -1083,10 +1088,13 @@ function applyResolvedAmountRow(row: BandDealRow) {
   exp.notes = [stripDoordealAckMarkers(exp.notes), auditNote].filter(Boolean).join(' — ')
 }
 
-// Verwaisten Doordeal-Split entfernen — reine %-Konfig, kein Geldfluss, daher
-// gefahrlos direkt löschbar (im Gegensatz zu einer bereits gezahlten Ausgabe).
-function removeOrphanSplitRow(row: BandDealRow) {
+// Migration eines veralteten Band-Splits (Bands gehören nicht mehr in
+// door_deal_splits): Split entfernen und — falls noch keine Ausgabe existiert —
+// direkt als Ausgabe buchen.
+function convertSplitToExpenseRow(row: BandDealRow) {
   if (row.splitIndex >= 0) doorDealSplits.value.splice(row.splitIndex, 1)
+  const alreadyExpensed = expenses.value.some(e => e.description.trim() === row.artistName.trim())
+  if (!alreadyExpensed) applyExpenseRow(row)
 }
 
 // Kombi-Deal-Status für die Ergebnis-Tab-Anzeige — reflektiert IMMER (auch
@@ -1115,7 +1123,9 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
   const deals = event.value?.artist_deals || {}
   const artists = event.value?.artists || []
   return artists
-    .filter(a => a.id != null && deals[String(a.id)]?.deal_type === 'guarantee_plus_door')
+    // Doordeal-relevante Deals: Kombi UND reiner Doordeal (beide werden aus dem
+    // Türeinnahmen-Topf bezahlt und mindern den Carousel-Anteil unten).
+    .filter(a => a.id != null && ['guarantee_plus_door', 'door_deal'].includes(deals[String(a.id)]?.deal_type))
     .map((a): ComboDealStatus => {
       const d = deals[String(a.id!)]
       const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, doorDealBase.value)
@@ -1147,10 +1157,13 @@ const comboStatusByName = computed(() => {
 })
 
 function comboStatusHint(status: ComboDealStatus): string {
-  const winner = status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt'
-  const calc = `${status.doorDealPercentage}% von ${formatCurrency(doorDealBase.value)} = ${formatCurrency(status.doorDealPercentage / 100 * doorDealBase.value)} vs. Garantie ${formatCurrency(status.guaranteeAmount)}`
+  const doorShare = `${status.doorDealPercentage}% von ${formatCurrency(doorDealBase.value)} = ${formatCurrency(status.doorDealPercentage / 100 * doorDealBase.value)}`
+  // Reiner Doordeal (keine Garantie) vs. Kombi (Vergleich Garantie/Türanteil).
+  const calc = status.guaranteeAmount > 0
+    ? `${status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt'}: ${doorShare} vs. Garantie ${formatCurrency(status.guaranteeAmount)}`
+    : `Doordeal: ${doorShare}`
   const mismatch = status.matches ? '' : ` — ⚠ korrekt wären ${formatCurrency(status.resolvedAmount)}`
-  return `🎤 ${winner}: ${calc}${mismatch}`
+  return `🎤 ${calc}${mismatch}`
 }
 
 // Wrapper ohne TS non-null-assertion (die bricht im pug-Template zur
@@ -2713,21 +2726,16 @@ defineExpose({ toggleFinalStatus, refreshEventData })
             span.band-deal-recorded erfasst: {{ row.recordedLabel }}
           .band-deal-actions
             span.band-deal-tag.tag-ok(v-if="row.allGood") ✓ übernommen
-            template(v-if="row.issues.suggestGuarantee")
+            template(v-if="row.issues.suggestExpense && !row.issues.orphanSplit")
               span.band-deal-tag.tag-suggest 💡 noch nicht als Ausgabe erfasst
-              button.btn-add-sm(@click="applyGuaranteeRow(row)") Gage übernehmen
-            template(v-if="row.issues.suggestDoorDeal")
-              span.band-deal-tag.tag-suggest 💡 noch nicht als Doordeal-Split erfasst
-              button.btn-add-sm(@click="applyDoorDealRow(row)") Doordeal übernehmen
+              button.btn-add-sm(@click="applyExpenseRow(row)") Als Ausgabe übernehmen
             template(v-if="row.issues.amountMismatch")
               span.band-deal-tag.tag-warn ⚠ gezahlt {{ formatCurrency(row.currentAmount || 0) }}, laut Deal {{ formatCurrency(row.resolvedAmount) }}
               button.btn-add-sm(@click="keepPaidAmountRow(row)") {{ formatCurrency(row.currentAmount || 0) }} behalten
               button.btn-add-sm(@click="applyResolvedAmountRow(row)") {{ formatCurrency(row.resolvedAmount) }} übernehmen
-            template(v-if="row.issues.orphanExpense")
-              span.band-deal-tag.tag-warn ⚠ Ausgabe gebucht, Deal ist aber reiner Doordeal — Ausgabe unten prüfen
             template(v-if="row.issues.orphanSplit")
-              span.band-deal-tag.tag-warn ⚠ Doordeal-Split {{ row.splitShare }}% vorhanden, {{ row.dealType === 'guarantee_plus_door' ? 'läuft aber über die Ausgabe (nicht über diesen Split)' : 'Deal hat aber keinen Doordeal-Anteil' }}
-              button.btn-add-sm(@click="removeOrphanSplitRow(row)") Split entfernen
+              span.band-deal-tag.tag-warn ⚠ steht als externer Split ({{ row.splitShare }}%) — Bands gehören in die Ausgaben, nicht in den externen Split
+              button.btn-add-sm(@click="convertSplitToExpenseRow(row)") {{ row.currentAmount != null ? 'Externen Split entfernen' : 'In Ausgabe umwandeln' }}
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
@@ -2996,19 +3004,15 @@ defineExpose({ toggleFinalStatus, refreshEventData })
                 span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
                   | {{ formatCurrency(remainingAfterSplits) }}
 
-      //- ═══ B) Doordeal-Konfiguration ════════════════════════════
-      //- Kein manuelles An/Aus mehr — "aktiv" ergibt sich daraus, ob es
-      //- überhaupt Parteien gibt. Ohne welche bleibt die Sektion auf einen
-      //- kurzen Hinweis + Hinzufügen-Button reduziert, statt für jedes Event
-      //- (auch ganz ohne Doordeal) eine leere Konfig-Tabelle zu zeigen.
+      //- ═══ B) Externer Türeinnahmen-Split (Mitveranstalter) ══════
+      //- NUR für externe Parteien (Mitveranstalter). Band-Gagen — auch reine
+      //- Doordeals — laufen im Modell A+B komplett über die Ausgaben (siehe
+      //- 🎤 Band-Deals im Ausgaben-Tab), nie über diese Liste.
       .section
         .section-title-row
-          h3.section-title 🚪 Doordeal-Split (Türeinnahmen)
-        //- Unabhängig von Garantie+Doordeal bei einzelnen Bands (die kommen aus
-        //- den Band-Deals im Event, siehe 🎤-Block oben) — das hier ist ein
-        //- ZUSÄTZLICHER Split der Türeinnahmen mit externen Parteien
-        //- (z.B. Mitveranstalter), komplett unabhängig konfiguriert.
-        p.section-subtitle Zusätzlicher Split der Türeinnahmen mit externen Parteien — unabhängig von Garantie+Doordeal einzelner Bands (siehe Band-Deals im Event).
+          h3.section-title 🤝 Externer Türeinnahmen-Split (Mitveranstalter)
+        p.section-subtitle Nur für externe Parteien (z.B. Mitveranstalter), mit denen die Türeinnahmen geteilt werden. Band-Gagen — auch reine Doordeals — gehören in die Ausgaben (siehe 🎤 Band-Deals im Ausgaben-Tab), nicht hierher.
+        .config-warning(v-if="bandNamesInExternalSplit.length") ⚠️ {{ bandNamesInExternalSplit.join(', ') }} ist eine Band mit Deal — bitte im Ausgaben-Tab (🎤 Band-Deals) „In Ausgabe umwandeln" statt hier als externen Split zu führen.
         template(v-if="doorDealSplits.length")
           .config-table
             .config-header
@@ -3036,8 +3040,8 @@ defineExpose({ toggleFinalStatus, refreshEventData })
                 span.config-deduction-name {{ exp.description }}
                 span.config-deduction-amount −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
         .empty-hint(v-else)
-          span Kein zusätzlicher Türeinnahmen-Split mit externen Parteien für dieses Event.
-          button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + Doordeal-Split hinzufügen
+          span Kein externer Türeinnahmen-Split (Mitveranstalter) für dieses Event.
+          button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + Externen Split hinzufügen
 
       //- ═══ C) Gewinnverteilung-Konfiguration ════════════════════
       //- Nur für Treasurer sichtbar — Backend liefert splits=[] für andere

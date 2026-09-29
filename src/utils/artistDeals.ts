@@ -65,12 +65,17 @@ export function showsDoorDeal(type?: ArtistDealType): boolean {
  * Deal — die EINE Quelle der Wahrheit für alle Hinweise/Vorschläge im
  * Ausgaben-Tab. Bewusst als reine Funktion, damit die gesamte Matrix
  * (Deal-Typ × Ausgabe-vorhanden × Split-vorhanden × Betrag-passt) erschöpfend
- * getestet werden kann — genau die Kombinationen, die beim nachträglichen
- * Umstellen des Deal-Typs + Entfernen der Ausgabe schieflaufen konnten.
+ * getestet werden kann.
  *
- * `expectedAmount` = der aus dem Deal aktuell korrekte Ausgaben-Betrag
- * (resolveComboDeal().resolvedAmount — bei reiner Garantie == Garantie, bei
- * Kombi das Höhere von Garantie/Türanteil). `mismatchAcknowledged` = die
+ * WICHTIG (Modell A+B, Team-Absprache 2026-09-29): JEDER Band-Deal (Festgage,
+ * Doordeal, Kombi) löst sich in GENAU EINE Ausgabe auf — reiner Doordeal ist
+ * nur ein Kombi mit Garantie 0 (resolveComboDeal → resolvedAmount = %-Anteil
+ * der Türbasis). Bands gehören NIE in `door_deal_splits`; diese Liste ist
+ * ausschließlich für externe Parteien (Mitveranstalter). Steht dort trotzdem
+ * ein Bandname → `orphanSplit` (veraltet, in Ausgabe umwandeln).
+ *
+ * `expectedAmount` = resolveComboDeal().resolvedAmount (Festgage == Garantie,
+ * Doordeal == %-Türanteil, Kombi == das Höhere). `mismatchAcknowledged` = die
  * Kassenwart:in hat den abweichenden gezahlten Betrag bewusst bestätigt.
  */
 export interface BandDealState {
@@ -83,26 +88,22 @@ export interface BandDealState {
 }
 
 export interface BandDealIssues {
-  /** Vorschlag: Gage/Kombi-Betrag als Ausgabe übernehmen. */
-  suggestGuarantee: boolean
-  /** Vorschlag: Doordeal-Split anlegen. */
-  suggestDoorDeal: boolean
-  /** Warnung: Ausgabe vorhanden, Deal ist aber reiner Doordeal (keine Festgage). */
-  orphanExpense: boolean
-  /** Warnung: Doordeal-Split vorhanden, Deal hat aber keinen Doordeal-Anteil. */
-  orphanSplit: boolean
+  /** Vorschlag: Deal-Betrag als Ausgabe übernehmen (gilt für alle Deal-Typen). */
+  suggestExpense: boolean
   /** Warnung/Wahl: Ausgabe vorhanden, Betrag weicht vom aktuell korrekten ab. */
   amountMismatch: boolean
+  /** Warnung: Band steht in door_deal_splits — dort gehören nur externe Parteien hin. */
+  orphanSplit: boolean
 }
 
 export function bandDealIssues(s: BandDealState): BandDealIssues {
-  const isGuarantee = s.dealType === 'guarantee'
-  const isCombo = s.dealType === 'guarantee_plus_door'
-  const isDoorDeal = s.dealType === 'door_deal'
-  const wantsExpense = isGuarantee || isCombo
+  const hasDeal =
+    s.dealType === 'guarantee' ||
+    s.dealType === 'door_deal' ||
+    s.dealType === 'guarantee_plus_door'
 
   const amountMismatch =
-    wantsExpense &&
+    hasDeal &&
     s.hasExpense &&
     !s.mismatchAcknowledged &&
     s.expenseAmount != null &&
@@ -110,33 +111,10 @@ export function bandDealIssues(s: BandDealState): BandDealIssues {
     Math.abs(s.expenseAmount - s.expectedAmount) > 0.01
 
   return {
-    suggestGuarantee: wantsExpense && !s.hasExpense,
-    suggestDoorDeal: isDoorDeal && !s.hasSplit,
-    orphanExpense: isDoorDeal && s.hasExpense,
-    orphanSplit: wantsExpense && s.hasSplit,
+    suggestExpense: hasDeal && !s.hasExpense,
     amountMismatch,
+    orphanSplit: hasDeal && s.hasSplit,
   }
-}
-
-/**
- * Ob für einen Band-Deal noch ein Übernahme-Vorschlag (Ausgaben-Tab) gezeigt
- * werden soll — dünner Wrapper über `bandDealIssues` (nur der Vorschlags-Teil),
- * damit bestehende Aufrufer/Tests unverändert bleiben.
- */
-export function needsDealSuggestion(
-  dealType: ArtistDealType | string | undefined,
-  guaranteeApplied: boolean,
-  doorDealApplied: boolean,
-): boolean {
-  const i = bandDealIssues({
-    dealType,
-    hasExpense: guaranteeApplied,
-    hasSplit: doorDealApplied,
-    expenseAmount: null,
-    expectedAmount: null,
-    mismatchAcknowledged: false,
-  })
-  return i.suggestGuarantee || i.suggestDoorDeal
 }
 
 /**

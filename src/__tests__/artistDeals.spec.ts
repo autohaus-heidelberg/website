@@ -7,7 +7,6 @@ import {
   estimateTicketRange,
   showsGuarantee,
   showsDoorDeal,
-  needsDealSuggestion,
   bandDealIssues,
 } from '../utils/artistDeals'
 
@@ -130,43 +129,6 @@ describe('showsGuarantee / showsDoorDeal', () => {
   })
 })
 
-describe('needsDealSuggestion', () => {
-  // Exhaustive truth table over every (dealType, guaranteeApplied,
-  // doorDealApplied) combination — this is exactly the logic that decides
-  // whether the "Gage/Doordeal übernehmen"-Vorschlag im Ausgaben-Tab
-  // erscheint. Written after a real-world report ("nach dem Entfernen einer
-  // Ausgabe erscheint nicht immer ein Vorschlag") to pin down the exact
-  // intended behaviour per deal type/combination.
-  it.each([
-    // dealType,            guaranteeApplied, doorDealApplied, expected
-    ['guarantee', false, false, true],
-    ['guarantee', false, true, true], // door split irrelevant for a pure guarantee deal
-    ['guarantee', true, false, false],
-    ['guarantee', true, true, false],
-
-    ['door_deal', false, false, true],
-    ['door_deal', false, true, false],
-    ['door_deal', true, false, true], // stale/leftover expense irrelevant — only the door split counts
-    ['door_deal', true, true, false],
-
-    ['guarantee_plus_door', false, false, true],
-    ['guarantee_plus_door', false, true, true], // combo resolves into ONE expense — door split state irrelevant
-    ['guarantee_plus_door', true, false, false],
-    ['guarantee_plus_door', true, true, false],
-  ] as [string, boolean, boolean, boolean][])(
-    '%s (guaranteeApplied=%s, doorDealApplied=%s) -> %s',
-    (dealType, guaranteeApplied, doorDealApplied, expected) => {
-      expect(needsDealSuggestion(dealType, guaranteeApplied, doorDealApplied)).toBe(expected)
-    },
-  )
-
-  it('never suggests anything for an unknown/undefined deal type', () => {
-    expect(needsDealSuggestion(undefined, false, false)).toBe(false)
-    expect(needsDealSuggestion('', false, false)).toBe(false)
-    expect(needsDealSuggestion('something_else', false, false)).toBe(false)
-  })
-})
-
 describe('bandDealIssues', () => {
   const base = {
     expenseAmount: null as number | null,
@@ -174,38 +136,36 @@ describe('bandDealIssues', () => {
     mismatchAcknowledged: false,
   }
 
+  // Model A+B: EVERY band deal (guarantee/door_deal/combo) resolves to ONE
+  // expense; bands never belong in door_deal_splits (external parties only).
   // Exhaustive matrix over (dealType × hasExpense × hasSplit) for the
-  // suggestion + orphan flags (amount ignored here). This is the full set of
-  // states a band can be in as the treasurer switches deal types and
-  // adds/removes expenses/splits — exactly the transitions that were buggy.
+  // suggestExpense + orphanSplit flags (amount ignored here).
   it.each([
-    // dealType, hasExpense, hasSplit -> suggestGuarantee, suggestDoorDeal, orphanExpense, orphanSplit
-    ['guarantee', false, false, true, false, false, false],
-    ['guarantee', false, true, true, false, false, true], // leftover split from a former doordeal
-    ['guarantee', true, false, false, false, false, false],
-    ['guarantee', true, true, false, false, false, true],
+    // dealType, hasExpense, hasSplit -> suggestExpense, orphanSplit
+    ['guarantee', false, false, true, false],
+    ['guarantee', false, true, true, true], // band never belongs in a split
+    ['guarantee', true, false, false, false],
+    ['guarantee', true, true, false, true],
 
-    ['door_deal', false, false, false, true, false, false],
-    ['door_deal', false, true, false, false, false, false],
-    ['door_deal', true, false, false, true, true, false], // leftover fixed-fee expense from a former guarantee
-    ['door_deal', true, true, false, false, true, false],
+    ['door_deal', false, false, true, false], // door_deal is now an expense too
+    ['door_deal', false, true, true, true], // a legacy split for this band is orphan
+    ['door_deal', true, false, false, false],
+    ['door_deal', true, true, false, true],
 
-    ['guarantee_plus_door', false, false, true, false, false, false],
-    ['guarantee_plus_door', false, true, true, false, false, true], // combo never uses a manual split
-    ['guarantee_plus_door', true, false, false, false, false, false],
-    ['guarantee_plus_door', true, true, false, false, false, true],
+    ['guarantee_plus_door', false, false, true, false],
+    ['guarantee_plus_door', false, true, true, true],
+    ['guarantee_plus_door', true, false, false, false],
+    ['guarantee_plus_door', true, true, false, true],
 
     // No deal at all (deal removed): nothing deal-driven, leftovers are ambiguous
-    [null, true, true, false, false, false, false],
-    [undefined, true, true, false, false, false, false],
-  ] as [string | null | undefined, boolean, boolean, boolean, boolean, boolean, boolean][])(
-    '%s (expense=%s, split=%s) -> sG=%s sD=%s oExp=%s oSplit=%s',
-    (dealType, hasExpense, hasSplit, sG, sD, oExp, oSplit) => {
+    [null, true, true, false, false],
+    [undefined, true, true, false, false],
+  ] as [string | null | undefined, boolean, boolean, boolean, boolean][])(
+    '%s (expense=%s, split=%s) -> suggestExpense=%s orphanSplit=%s',
+    (dealType, hasExpense, hasSplit, suggestExpense, orphanSplit) => {
       const r = bandDealIssues({ ...base, dealType, hasExpense, hasSplit })
-      expect(r.suggestGuarantee).toBe(sG)
-      expect(r.suggestDoorDeal).toBe(sD)
-      expect(r.orphanExpense).toBe(oExp)
-      expect(r.orphanSplit).toBe(oSplit)
+      expect(r.suggestExpense).toBe(suggestExpense)
+      expect(r.orphanSplit).toBe(orphanSplit)
     },
   )
 
@@ -226,6 +186,14 @@ describe('bandDealIssues', () => {
       expect(r.amountMismatch).toBe(true)
     })
 
+    it('flags a door_deal expense whose amount differs from the resolved door share', () => {
+      const r = bandDealIssues({
+        dealType: 'door_deal', hasExpense: true, hasSplit: false,
+        expenseAmount: 285, expectedAmount: 272.36, mismatchAcknowledged: false,
+      })
+      expect(r.amountMismatch).toBe(true)
+    })
+
     it('does not flag when the amounts match (within a cent)', () => {
       const r = bandDealIssues({
         dealType: 'guarantee', hasExpense: true, hasSplit: false,
@@ -238,14 +206,6 @@ describe('bandDealIssues', () => {
       const r = bandDealIssues({
         dealType: 'guarantee', hasExpense: true, hasSplit: false,
         expenseAmount: 285, expectedAmount: 200, mismatchAcknowledged: true,
-      })
-      expect(r.amountMismatch).toBe(false)
-    })
-
-    it('never flags a pure door_deal (no fixed-fee expense expected)', () => {
-      const r = bandDealIssues({
-        dealType: 'door_deal', hasExpense: true, hasSplit: false,
-        expenseAmount: 285, expectedAmount: 0, mismatchAcknowledged: false,
       })
       expect(r.amountMismatch).toBe(false)
     })
