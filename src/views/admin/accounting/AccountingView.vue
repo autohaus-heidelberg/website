@@ -2936,7 +2936,12 @@ defineExpose({ toggleFinalStatus })
       //- (auch ganz ohne Doordeal) eine leere Konfig-Tabelle zu zeigen.
       .section
         .section-title-row
-          h3.section-title 🚪 Doordeal
+          h3.section-title 🚪 Doordeal-Split (Türeinnahmen)
+        //- Unabhängig von Garantie+Doordeal bei einzelnen Bands (die kommen aus
+        //- den Band-Deals im Event, siehe 🎤-Block oben) — das hier ist ein
+        //- ZUSÄTZLICHER Split der Türeinnahmen mit externen Parteien
+        //- (z.B. Mitveranstalter), komplett unabhängig konfiguriert.
+        p.section-subtitle Zusätzlicher Split der Türeinnahmen mit externen Parteien — unabhängig von Garantie+Doordeal einzelner Bands (siehe Band-Deals im Event).
         template(v-if="doorDealSplits.length")
           .config-table
             .config-header
@@ -2964,8 +2969,8 @@ defineExpose({ toggleFinalStatus })
                 span.config-deduction-name {{ exp.description }}
                 span.config-deduction-amount −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
         .empty-hint(v-else)
-          span Kein Doordeal für dieses Event.
-          button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + Doordeal hinzufügen
+          span Kein zusätzlicher Türeinnahmen-Split mit externen Parteien für dieses Event.
+          button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + Doordeal-Split hinzufügen
 
       //- ═══ C) Gewinnverteilung-Konfiguration ════════════════════
       //- Nur für Treasurer sichtbar — Backend liefert splits=[] für andere
@@ -3530,6 +3535,12 @@ h2 {
 
 .section-title-row .section-title {
   flex: 1;
+}
+
+.section-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 0.5rem 1rem 0;
 }
 
 .section-header-row {
