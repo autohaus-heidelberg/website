@@ -61,6 +61,29 @@ export function showsDoorDeal(type?: ArtistDealType): boolean {
 }
 
 /**
+ * Ob für einen Band-Deal noch ein Übernahme-Vorschlag (Ausgaben-Tab) gezeigt
+ * werden soll. `guaranteeApplied`/`doorDealApplied` = gibt es bereits eine
+ * passende Ausgaben-Zeile bzw. einen Doordeal-Split mit dem Bandnamen.
+ * - guarantee_plus_door: löst sich in EINE Ausgaben-Zeile auf (siehe
+ *   resolveComboDeal) — hängt daher NUR von guaranteeApplied ab, ein
+ *   zweiter Doordeal-Split ist hier nie gemeint/nötig.
+ * - guarantee: reine Festgage, hängt nur von guaranteeApplied ab.
+ * - door_deal: reiner %-Anteil, hängt nur von doorDealApplied ab — eine
+ *   evtl. noch vorhandene (veraltete) Ausgabe ändert daran nichts, siehe
+ *   orphanedDealExpenses in AccountingView.vue für die separate Warnung.
+ */
+export function needsDealSuggestion(
+  dealType: ArtistDealType | string | undefined,
+  guaranteeApplied: boolean,
+  doorDealApplied: boolean,
+): boolean {
+  if (dealType === 'guarantee_plus_door') return !guaranteeApplied
+  const needsGuarantee = dealType === 'guarantee'
+  const needsDoorDeal = dealType === 'door_deal'
+  return (needsGuarantee && !guaranteeApplied) || (needsDoorDeal && !doorDealApplied)
+}
+
+/**
  * Netto-Eintrittsumsatz, ab dem die Summe der Doordeal-Anteile mehr wert ist
  * als die Summe der zugehörigen Garantien (nur Kombi-Deals). Grobe Schätzung
  * — die echte Abrechnung zieht abzugsfähige Kosten vor der Aufteilung ab,

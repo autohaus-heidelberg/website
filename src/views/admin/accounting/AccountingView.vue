@@ -31,7 +31,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
-import { resolveComboDeal, findDuplicateNames } from '@/utils/artistDeals'
+import { resolveComboDeal, findDuplicateNames, needsDealSuggestion } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -989,13 +989,7 @@ const artistDealSuggestions = computed<ArtistDealSuggestion[]>(() => {
         doorDealApplied: doorDealSplits.value.some(s => s.name.trim() === a.name.trim()),
       }
     })
-    .filter(s => {
-      // guarantee_plus_door löst sich in EINE Ausgaben-Zeile auf (nicht zusätzlich in einen Doordeal-Split).
-      if (s.dealType === 'guarantee_plus_door') return !s.guaranteeApplied
-      const needsGuarantee = s.dealType === 'guarantee'
-      const needsDoorDeal = s.dealType === 'door_deal'
-      return (needsGuarantee && !s.guaranteeApplied) || (needsDoorDeal && !s.doorDealApplied)
-    })
+    .filter(s => needsDealSuggestion(s.dealType, s.guaranteeApplied, s.doorDealApplied))
 })
 
 function applyGuaranteeSuggestion(s: ArtistDealSuggestion) {

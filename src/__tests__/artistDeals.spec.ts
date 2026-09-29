@@ -7,6 +7,7 @@ import {
   estimateTicketRange,
   showsGuarantee,
   showsDoorDeal,
+  needsDealSuggestion,
 } from '../utils/artistDeals'
 
 describe('resolveComboDeal', () => {
@@ -125,5 +126,42 @@ describe('showsGuarantee / showsDoorDeal', () => {
     expect(showsDoorDeal('door_deal')).toBe(true)
     expect(showsDoorDeal('guarantee_plus_door')).toBe(true)
     expect(showsDoorDeal('guarantee')).toBe(false)
+  })
+})
+
+describe('needsDealSuggestion', () => {
+  // Exhaustive truth table over every (dealType, guaranteeApplied,
+  // doorDealApplied) combination — this is exactly the logic that decides
+  // whether the "Gage/Doordeal übernehmen"-Vorschlag im Ausgaben-Tab
+  // erscheint. Written after a real-world report ("nach dem Entfernen einer
+  // Ausgabe erscheint nicht immer ein Vorschlag") to pin down the exact
+  // intended behaviour per deal type/combination.
+  it.each([
+    // dealType,            guaranteeApplied, doorDealApplied, expected
+    ['guarantee', false, false, true],
+    ['guarantee', false, true, true], // door split irrelevant for a pure guarantee deal
+    ['guarantee', true, false, false],
+    ['guarantee', true, true, false],
+
+    ['door_deal', false, false, true],
+    ['door_deal', false, true, false],
+    ['door_deal', true, false, true], // stale/leftover expense irrelevant — only the door split counts
+    ['door_deal', true, true, false],
+
+    ['guarantee_plus_door', false, false, true],
+    ['guarantee_plus_door', false, true, true], // combo resolves into ONE expense — door split state irrelevant
+    ['guarantee_plus_door', true, false, false],
+    ['guarantee_plus_door', true, true, false],
+  ] as [string, boolean, boolean, boolean][])(
+    '%s (guaranteeApplied=%s, doorDealApplied=%s) -> %s',
+    (dealType, guaranteeApplied, doorDealApplied, expected) => {
+      expect(needsDealSuggestion(dealType, guaranteeApplied, doorDealApplied)).toBe(expected)
+    },
+  )
+
+  it('never suggests anything for an unknown/undefined deal type', () => {
+    expect(needsDealSuggestion(undefined, false, false)).toBe(false)
+    expect(needsDealSuggestion('', false, false)).toBe(false)
+    expect(needsDealSuggestion('something_else', false, false)).toBe(false)
   })
 })
