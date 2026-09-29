@@ -1685,6 +1685,18 @@ async function toggleFinalStatus() {
   }
 }
 
+// AccountingView bleibt beim Tab-Wechsel innerhalb der Event-Seite dauerhaft
+// gemountet (v-if einmal true + v-show), lädt `event` also nur einmal beim
+// ersten Öffnen. Ohne diesen expliziten Reload würden Änderungen an den
+// Band-Deals (Garantie/Doordeal) im "Veranstaltung"-Tab hier nie ankommen,
+// solange man nicht die ganze Seite neu lädt. Wird vom Parent beim Wechsel
+// auf den Accounting-Tab aufgerufen (siehe EventFormView.vue).
+async function refreshEventData() {
+  try {
+    event.value = await eventService.getById(props.eventId)
+  } catch { /* Event bleibt auf dem letzten bekannten Stand, kein Hard-Fail */ }
+}
+
 async function saveAll(silent = false) {
   if (!accounting.value?.id) return
   if (isSaving.value) return // prevent concurrent saves
@@ -2186,7 +2198,7 @@ onUnmounted(() => {
   if (autoSaveTimer) clearTimeout(autoSaveTimer)
 })
 
-defineExpose({ toggleFinalStatus })
+defineExpose({ toggleFinalStatus, refreshEventData })
 </script>
 
 <template lang="pug">

@@ -42,6 +42,16 @@ const accountingViewRef = ref<InstanceType<typeof AccountingView> | null>(null)
 const activeSection = ref<'event' | 'accounting'>('event')
 const activeTab = ref('details')
 
+// AccountingView bleibt beim Tab-Wechsel gemountet (v-if einmal true + v-show),
+// bekommt Änderungen an den Band-Deals (Garantie/Doordeal) aus dem
+// "Veranstaltung"-Tab also nie automatisch mit — explizit neu laden beim
+// Reinwechseln in den Accounting-Tab.
+watch(activeSection, (section) => {
+  if (section === 'accounting') {
+    accountingViewRef.value?.refreshEventData()
+  }
+})
+
 const form = ref<Partial<AppEvent>>({
   id: '',
   date: '',
