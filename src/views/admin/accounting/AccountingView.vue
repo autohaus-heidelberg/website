@@ -1214,6 +1214,35 @@ const orphanedDealExpenses = computed<OrphanedDealExpense[]>(() => {
   return result
 })
 
+// Umgekehrter Fall: ein Doordeal-Split-Eintrag (Section 2), dessen Name genau
+// einer Band entspricht, die jetzt KEINEN reinen Doordeal-Deal mehr hat
+// (auf Festgage oder Garantie+Doordeal-Kombi umgestellt) — der Split stammt
+// dann vermutlich noch von vor der Umstellung. Bei guarantee_plus_door läuft
+// der Doordeal-Anteil über eine einzelne Ausgabe (siehe resolveComboDeal),
+// nie über diesen Split — auch dort also potenziell veraltet.
+interface OrphanedDoorDealSplit {
+  splitIndex: number
+  artistName: string
+  share: number
+  currentDealType: string
+}
+
+const orphanedDoorDealSplits = computed<OrphanedDoorDealSplit[]>(() => {
+  const deals = event.value?.artist_deals || {}
+  const artists = event.value?.artists || []
+  const result: OrphanedDoorDealSplit[] = []
+  doorDealSplits.value.forEach((party, idx) => {
+    const name = party.name.trim()
+    if (!name) return
+    const artist = artists.find(a => a.name.trim() === name)
+    if (!artist || artist.id == null) return
+    const d = deals[String(artist.id)]
+    if (!d || d.deal_type === 'door_deal') return
+    result.push({ splitIndex: idx, artistName: name, share: party.share, currentDealType: d.deal_type })
+  })
+  return result
+})
+
 function triggerExpenseScan() {
   scanExpenseError.value = ''
   expenseScanInput.value?.click()
@@ -2770,6 +2799,13 @@ defineExpose({ toggleFinalStatus, refreshEventData })
         .artist-deal-suggestion(v-for="o in orphanedDealExpenses" :key="o.expenseKey")
           span.suggestion-text
             | ⚠️ {{ o.artistName }}: Ausgabe {{ formatCurrency(o.amount) }} gebucht, aktueller Deal ist aber reiner Doordeal (keine Garantie mehr) — prüfen, ob das noch stimmt.
+
+      //- Umgekehrter Fall: Doordeal-Split passt nicht mehr zum aktuellen Deal
+      //- (z.B. Deal wurde nachträglich auf Festgage ohne Doordeal umgestellt)
+      .artist-deal-suggestions(v-if="orphanedDoorDealSplits.length")
+        .artist-deal-suggestion(v-for="o in orphanedDoorDealSplits" :key="'ods' + o.splitIndex")
+          span.suggestion-text
+            | ⚠️ {{ o.artistName }}: Doordeal-Split {{ o.share }}% eingetragen, aktueller Deal ist aber {{ o.currentDealType === 'guarantee_plus_door' ? 'Garantie+Doordeal (läuft über eine Ausgabe, nicht über diesen Split)' : 'reine Garantie (kein Doordeal-Anteil mehr)' }} — prüfen, ob das noch stimmt.
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
