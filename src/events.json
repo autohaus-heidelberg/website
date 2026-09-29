@@ -32,6 +32,38 @@
         ]
     },
     {
+        "id": "prize-snuckouts",
+        "date": "2026-10-20T17:00:00+00:00",
+        "title": "The Prize (AUS) & Snuckouts (Mainz)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Der Rocktober ist in vollem Gange! Kracher nach Kracher \ud83e\udde8 und mit einer Granate geht\u2018s weiter: The Prize ist hei\u00df und nehmen den Weg aus Melbourne auf sich, um im sch\u00e4rfsten Rondell der Stadt euch ordentlichen Garage Punk n Roll auf die \u00d6hrchen zu knallen. Doch damit nicht genug: schleichen sich auch die Snuckouts aus Mainz mit einer Prise Post Punk heraus! \r\nVorbeikommen lohnt sich!",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/prize-snuckouts/",
+        "img": "/img/3f8f2e3c-ae81-4ef7-a682-150e8fd67bbf.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "The Prize",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2315014760/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Snuckouts",
+                "link": "https://www.instagram.com/snuckouts.music/",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "dieknoepfe-bikinizone",
         "date": "2026-10-16T17:00:00+00:00",
         "title": "Die Kn\u00f6pfe und Bikinizone (Punk/NDW, Berlin) + Vernissage \"Jugend unter Druck\"",
@@ -69,7 +101,7 @@
         "title": "Fotoausstellung Jugend Unter Druck: 16. Oktober bis 11. Dezember 2026",
         "fee": "10",
         "feeAk": "12",
-        "descriptionShort": "<p>&emsp;</p>\n<h3><strong>Vernissage am Freitag 16. Oktober mit Die Kn&ouml;pfe und Bikinizone (Punk/NDW aus Berlin) und Afterparty mit DJ FFWD (Stuttgart)</strong></h3>\n<p>Das Gef&uuml;hl von Krise ist allgegenw&auml;rtig. Die Liste an Kriegen, Konflikten und in der Ferne erahnbaren Dystopien ist lang, und von vielem sind junge Menschen, Kinder, Jugendliche um ein Vielfaches mehr betroffen als der Rest der Gesellschaft. Sie sind diejenigen, die in einer 2&deg; w&auml;rmeren Welt leben werden m&uuml;ssen und diejenigen, die seit letztem Sommer Post von der Bundeswehr erhalten und bald schon zur Pflichtmusterung gehen werden.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>Was treibt diese jungen Menschen in Deutschland um, von denen nur noch 36% \"mit Optimismus auf die Zukunft der Welt blicken\"? </strong>Wo finden sie Kan&auml;le? L&auml;sst das st&auml;ndigen Hin und Her von Kriegsbildern und scheinperfekte Welten auf Social Media erstarren oder w&uuml;tend und aktiv werden? Wer findet im Rausch ein Ventil und wer zieht sich zur&uuml;ck? Wer tr&auml;gt seine Wut auf die Stra&szlig;e? <br class=\"soft-break\"><br class=\"soft-break\">&emsp;Und wie steht es um diejenigen, die sich mit alldem erst in ein paar Jahren besch&auml;ftigen werden m&uuml;ssen, die gerade erst heranwachsen, noch Kind sind?<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>L&eacute;a Baur, Delsin Brodbeck, Isabella Alicia Mundt und Alonso John Urmersbach </strong>er&ouml;ffnen mit ihren Bildern unterschiedliche Perspektiven auf Jungsein unter allseits pr&auml;senten Krisengef&uuml;hl. Die vier jungen Fotograf*innen werfen Blicke auf (noch) sorgloses Heranwachsen, auf Flucht in Exzess und organisiertes Aufbegehren.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;Das Carousel ist ein selbstorganisierter Konzertraum im Heidelberger Autohaus, mit \"Jugend Unter Druck\" werden dort erstmals Fotografien ausgestellt.<br><br>------</p>\n<p><strong>Die Ausstellung ist zug&auml;nglich bei allen Konzerten.</strong><br><br>Poster: L&eacute;a Baur&nbsp;</p>\n<p>&nbsp;</p>",
+        "descriptionShort": "<p><strong>Vernissage am Freitag 16. Oktober mit Die Kn&ouml;pfe und Bikinizone (Punk/NDW aus Berlin) und Afterparty mit DJ FFWD (Stuttgart)</strong></p>\n<p>Das Gef&uuml;hl von Krise ist allgegenw&auml;rtig. Die Liste an Kriegen, Konflikten und in der Ferne erahnbaren Dystopien ist lang, und von vielem sind junge Menschen, Kinder, Jugendliche um ein Vielfaches mehr betroffen als der Rest der Gesellschaft. Sie sind diejenigen, die in einer 2&deg; w&auml;rmeren Welt leben werden m&uuml;ssen und diejenigen, die seit letztem Sommer Post von der Bundeswehr erhalten und bald schon zur Pflichtmusterung gehen werden.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>Was treibt diese jungen Menschen in Deutschland um, von denen nur noch 36% \"mit Optimismus auf die Zukunft der Welt blicken\"? </strong>Wo finden sie Kan&auml;le? L&auml;sst das st&auml;ndigen Hin und Her von Kriegsbildern und scheinperfekte Welten auf Social Media erstarren oder w&uuml;tend und aktiv werden? Wer findet im Rausch ein Ventil und wer zieht sich zur&uuml;ck? Wer tr&auml;gt seine Wut auf die Stra&szlig;e? <br class=\"soft-break\"><br class=\"soft-break\">&emsp;Und wie steht es um diejenigen, die sich mit alldem erst in ein paar Jahren besch&auml;ftigen werden m&uuml;ssen, die gerade erst heranwachsen, noch Kind sind?<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>L&eacute;a Baur, Delsin Brodbeck, Isabella Alicia Mundt und Alonso John Urmersbach </strong>er&ouml;ffnen mit ihren Bildern unterschiedliche Perspektiven auf Jungsein unter allseits pr&auml;senten Krisengef&uuml;hl. Die vier jungen Fotograf*innen werfen Blicke auf (noch) sorgloses Heranwachsen, auf Flucht in Exzess und organisiertes Aufbegehren.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;Das Carousel ist ein selbstorganisierter Konzertraum im Heidelberger Autohaus, mit \"Jugend Unter Druck\" werden dort erstmals Fotografien ausgestellt.<br><br>------</p>\n<p><strong>Die Ausstellung ist zug&auml;nglich bei allen Konzerten.</strong><br><br>Poster: L&eacute;a Baur&nbsp;</p>\n<p>&nbsp;</p>",
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/dieknoepfe-bikinizone/",
         "img": "/img/6af53950-2fb7-4abf-b5c6-b95abe66bb5f.webp",

@@ -32,6 +32,38 @@
         ]
     },
     {
+        "id": "prize-snuckouts",
+        "date": "2026-10-20T17:00:00+00:00",
+        "title": "The Prize (AUS) & Snuckouts (Mainz)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "Der Rocktober ist in vollem Gange! Kracher nach Kracher \ud83e\udde8 und mit einer Granate geht\u2018s weiter: The Prize ist hei\u00df und nehmen den Weg aus Melbourne auf sich, um im sch\u00e4rfsten Rondell der Stadt euch ordentlichen Garage Punk n Roll auf die \u00d6hrchen zu knallen. Doch damit nicht genug: schleichen sich auch die Snuckouts aus Mainz mit einer Prise Post Punk heraus! \r\nVorbeikommen lohnt sich!",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/prize-snuckouts/",
+        "img": "/img/3f8f2e3c-ae81-4ef7-a682-150e8fd67bbf.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "The Prize",
+                "link": "",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2315014760/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Snuckouts",
+                "link": "https://www.instagram.com/snuckouts.music/",
+                "description": "",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
+            }
+        ]
+    },
+    {
         "id": "dieknoepfe-bikinizone",
         "date": "2026-10-16T17:00:00+00:00",
         "title": "Die Kn\u00f6pfe und Bikinizone (Punk/NDW, Berlin) + Vernissage \"Jugend unter Druck\"",
@@ -69,7 +101,7 @@
         "title": "Fotoausstellung Jugend Unter Druck: 16. Oktober bis 11. Dezember 2026",
         "fee": "10",
         "feeAk": "12",
-        "descriptionShort": "<p>&emsp;</p>\n<h3><strong>Vernissage am Freitag 16. Oktober mit Die Kn&ouml;pfe und Bikinizone (Punk/NDW aus Berlin) und Afterparty mit DJ FFWD (Stuttgart)</strong></h3>\n<p>Das Gef&uuml;hl von Krise ist allgegenw&auml;rtig. Die Liste an Kriegen, Konflikten und in der Ferne erahnbaren Dystopien ist lang, und von vielem sind junge Menschen, Kinder, Jugendliche um ein Vielfaches mehr betroffen als der Rest der Gesellschaft. Sie sind diejenigen, die in einer 2&deg; w&auml;rmeren Welt leben werden m&uuml;ssen und diejenigen, die seit letztem Sommer Post von der Bundeswehr erhalten und bald schon zur Pflichtmusterung gehen werden.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>Was treibt diese jungen Menschen in Deutschland um, von denen nur noch 36% \"mit Optimismus auf die Zukunft der Welt blicken\"? </strong>Wo finden sie Kan&auml;le? L&auml;sst das st&auml;ndigen Hin und Her von Kriegsbildern und scheinperfekte Welten auf Social Media erstarren oder w&uuml;tend und aktiv werden? Wer findet im Rausch ein Ventil und wer zieht sich zur&uuml;ck? Wer tr&auml;gt seine Wut auf die Stra&szlig;e? <br class=\"soft-break\"><br class=\"soft-break\">&emsp;Und wie steht es um diejenigen, die sich mit alldem erst in ein paar Jahren besch&auml;ftigen werden m&uuml;ssen, die gerade erst heranwachsen, noch Kind sind?<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>L&eacute;a Baur, Delsin Brodbeck, Isabella Alicia Mundt und Alonso John Urmersbach </strong>er&ouml;ffnen mit ihren Bildern unterschiedliche Perspektiven auf Jungsein unter allseits pr&auml;senten Krisengef&uuml;hl. Die vier jungen Fotograf*innen werfen Blicke auf (noch) sorgloses Heranwachsen, auf Flucht in Exzess und organisiertes Aufbegehren.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;Das Carousel ist ein selbstorganisierter Konzertraum im Heidelberger Autohaus, mit \"Jugend Unter Druck\" werden dort erstmals Fotografien ausgestellt.<br><br>------</p>\n<p><strong>Die Ausstellung ist zug&auml;nglich bei allen Konzerten.</strong><br><br>Poster: L&eacute;a Baur&nbsp;</p>\n<p>&nbsp;</p>",
+        "descriptionShort": "<p><strong>Vernissage am Freitag 16. Oktober mit Die Kn&ouml;pfe und Bikinizone (Punk/NDW aus Berlin) und Afterparty mit DJ FFWD (Stuttgart)</strong></p>\n<p>Das Gef&uuml;hl von Krise ist allgegenw&auml;rtig. Die Liste an Kriegen, Konflikten und in der Ferne erahnbaren Dystopien ist lang, und von vielem sind junge Menschen, Kinder, Jugendliche um ein Vielfaches mehr betroffen als der Rest der Gesellschaft. Sie sind diejenigen, die in einer 2&deg; w&auml;rmeren Welt leben werden m&uuml;ssen und diejenigen, die seit letztem Sommer Post von der Bundeswehr erhalten und bald schon zur Pflichtmusterung gehen werden.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>Was treibt diese jungen Menschen in Deutschland um, von denen nur noch 36% \"mit Optimismus auf die Zukunft der Welt blicken\"? </strong>Wo finden sie Kan&auml;le? L&auml;sst das st&auml;ndigen Hin und Her von Kriegsbildern und scheinperfekte Welten auf Social Media erstarren oder w&uuml;tend und aktiv werden? Wer findet im Rausch ein Ventil und wer zieht sich zur&uuml;ck? Wer tr&auml;gt seine Wut auf die Stra&szlig;e? <br class=\"soft-break\"><br class=\"soft-break\">&emsp;Und wie steht es um diejenigen, die sich mit alldem erst in ein paar Jahren besch&auml;ftigen werden m&uuml;ssen, die gerade erst heranwachsen, noch Kind sind?<br class=\"soft-break\"><br class=\"soft-break\">&emsp;<strong>L&eacute;a Baur, Delsin Brodbeck, Isabella Alicia Mundt und Alonso John Urmersbach </strong>er&ouml;ffnen mit ihren Bildern unterschiedliche Perspektiven auf Jungsein unter allseits pr&auml;senten Krisengef&uuml;hl. Die vier jungen Fotograf*innen werfen Blicke auf (noch) sorgloses Heranwachsen, auf Flucht in Exzess und organisiertes Aufbegehren.&nbsp;<br class=\"soft-break\"><br class=\"soft-break\">&emsp;Das Carousel ist ein selbstorganisierter Konzertraum im Heidelberger Autohaus, mit \"Jugend Unter Druck\" werden dort erstmals Fotografien ausgestellt.<br><br>------</p>\n<p><strong>Die Ausstellung ist zug&auml;nglich bei allen Konzerten.</strong><br><br>Poster: L&eacute;a Baur&nbsp;</p>\n<p>&nbsp;</p>",
         "descriptionLong": "",
         "shopLink": "https://pretix.eu/carousel/dieknoepfe-bikinizone/",
         "img": "/img/6af53950-2fb7-4abf-b5c6-b95abe66bb5f.webp",
@@ -219,38 +251,6 @@
                 "youtube": "",
                 "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1197761158/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
                 "image": ""
-            }
-        ]
-    },
-    {
-        "id": "designer-capacopter",
-        "date": "2026-09-28T17:00:00+00:00",
-        "title": "Designer (Rock'n'Roll) & Capacopter (Heavy Rock)",
-        "fee": "10",
-        "feeAk": "12",
-        "descriptionShort": "<p>Montags schiebt der Goldesel ja bekanntlich gerne eine kurze Schicht. Und dr&uuml;ckt sich mal wieder mit eleganter Ausrede vor der B-B-Bizepsfarm: Designer kommen in die Stadt.&nbsp;<br><br>F&uuml;nf Asphaltcowboys aus Asheville. S&auml;ngerin vorneweg, zwei Gitarren im Anschlag, Garage-Punk, 70s Rock&rsquo;n&rsquo;Roll und das neue Deb&uuml;talbum&nbsp;<span class=\"is-markup\" data-markup=\"markup-italic\">HEADCASE</span> unterm Arm. Rock&rsquo;n&rsquo;Roll Mayhem, sagen sie dr&uuml;ben. Die Single <span class=\"is-markup\" data-markup=\"markup-italic\">Blood on Your Hands</span> ist der absolute Zonk! <br><br>Und Capacopter sind auch da! Wir freuen uns sehr, die Mannheimer zum ersten Mal bei uns im Carousel zu haben. Tiefe Gitarren, Fuzz und schwere Grooves. Das Deb&uuml;t hei&szlig;t <span class=\"is-markup\" data-markup=\"markup-italic\">CAPACOPTER</span>, die neue Single <span class=\"is-markup\" data-markup=\"markup-italic\">THE CAPADILLO</span>. Be a Capadillo, sagen sie. Der Goldesel stellt keine weiteren Fragen. <br><br>Das wird ein sch&ouml;nes &Uuml;berfallkommando f&uuml;r die Ohren. <br><br>Doors 19:00. Und dann heisst es wieder:&nbsp;<span class=\"is-markup\" data-markup=\"markup-italic\">Geh aufs Ganze!</span> im Carousel! \ud83d\udc34</p>\n<p>&nbsp;</p>\n<p>Flyer art by <a href=\"https://www.instagram.com/joey.controlletti/\">Joey Controlletti</a></p>",
-        "descriptionLong": "",
-        "shopLink": "https://pretix.eu/carousel/designer-capacopter/",
-        "img": "/img/ed92e76a-b98f-4b1f-8a6c-fd587b605774.webp",
-        "cancelled": false,
-        "artists": [
-            {
-                "name": "Designer",
-                "link": "https://www.instagram.com/designertheband",
-                "description": "",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/fdUkiDOvcp4",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=2513625277/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/7e5a9d07-f7b8-4c14-8bd6-35e195c7385d.webp"
-            },
-            {
-                "name": "Capacopter",
-                "link": "https://www.capacopter.de/",
-                "description": "Capacopter ist eine Stoner-Rock-Band aus Mannheim/Frankfurt. Seit 2021 macht die Band gemeinsam Musik. Irgendwo zwischen Stoner Rock, Heavy Rock, Fuzz und anderen Dingen, die gro\u00dfe Verst\u00e4rker rechtfertigen.\nNach diversen Singles, EPs und mittlerweile rund 50 Konzerten erschien am 9. Januar 2026 das selbst ver\u00f6ffentlichte Deb\u00fctalbum \u201eCapacopter\u201c und landete auf Platz 2 der internationalen Doom Charts.\nIm Mai 2026 folgte die Single \u201eThe Capadillo\u201c. Aktuell arbeitet die Band am zweiten Album, das Anfang 2027 \u00fcber Tonzonen Records erscheint.\nBis dahin ist Capacopter weiter auf B\u00fchnen in Deutschland und dar\u00fcber hinaus unterwegs und arbeitet daran, die Population der Capadillos stetig zu vergr\u00f6\u00dfern. Falls also irgendwo noch eine verd\u00e4chtig gro\u00dfe L\u00fccke im Line-up klafft: Die vier kennen da was.",
-                "soundcloud": "",
-                "youtube": "https://www.youtube.com/embed/mJKc1bg5AM8",
-                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=365936098/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
-                "image": "/img/2c3239b6-938e-4aec-8e14-f701818c8090.webp"
             }
         ]
     }
