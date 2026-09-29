@@ -2714,28 +2714,8 @@ defineExpose({ toggleFinalStatus, refreshEventData })
       .upload-error(v-if="uploadError")
         p ⚠️ {{ uploadError }}
 
-      //- Band-Deals Übersicht: eine feste Liste ALLER Bands mit Deal, immer
-      //- sichtbar (auch wenn alles passt) — ersetzt die früheren vier
-      //- situativen Banner. Status/Aktionen aus bandDealIssues.
-      .band-deal-overview(v-if="bandDealOverview.length")
-        .band-deal-overview-head 🎤 Band-Deals
-        .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId")
-          .band-deal-info
-            span.band-deal-name {{ row.artistName }}
-            span.band-deal-deal {{ row.dealLabel }}
-            span.band-deal-recorded erfasst: {{ row.recordedLabel }}
-          .band-deal-actions
-            span.band-deal-tag.tag-ok(v-if="row.allGood") ✓ übernommen
-            template(v-if="row.issues.suggestExpense && !row.issues.orphanSplit")
-              span.band-deal-tag.tag-suggest 💡 noch nicht als Ausgabe erfasst
-              button.btn-add-sm(@click="applyExpenseRow(row)") Als Ausgabe übernehmen
-            template(v-if="row.issues.amountMismatch")
-              span.band-deal-tag.tag-warn ⚠ gezahlt {{ formatCurrency(row.currentAmount || 0) }}, laut Deal {{ formatCurrency(row.resolvedAmount) }}
-              button.btn-add-sm(@click="keepPaidAmountRow(row)") {{ formatCurrency(row.currentAmount || 0) }} behalten
-              button.btn-add-sm(@click="applyResolvedAmountRow(row)") {{ formatCurrency(row.resolvedAmount) }} übernehmen
-            template(v-if="row.issues.orphanSplit")
-              span.band-deal-tag.tag-warn ⚠ steht als externer Split ({{ row.splitShare }}%) — Bands gehören in die Ausgaben, nicht in den externen Split
-              button.btn-add-sm(@click="convertSplitToExpenseRow(row)") {{ row.currentAmount != null ? 'Externen Split entfernen' : 'In Ausgabe umwandeln' }}
+      //- Band-Deals Übersicht ist jetzt in die Ausgaben-Tabelle integriert
+      //- (siehe unten) — kein separater Block mehr.
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
@@ -2754,44 +2734,69 @@ defineExpose({ toggleFinalStatus, refreshEventData })
         style="display: none"
       )
 
-      //- Erfasste Ausgaben
-      .expenses-table(v-if="expenses.length" :class="{ 'door-deal-active': doorDealActive }")
-        .expense-header
-          span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
-          span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
-          span Bezahlt aus
-          span Sphäre
-          span.col-doordeal(v-if="doorDealActive" title="Vom Doordeal abziehen") 🚪
-          span
+      //- Ausgaben + Band-Deals in EINEM Rahmen: oben die Band-Deals (Status
+      //- + Übernahme aus den Event-Deals), darunter die erfassten Ausgaben.
+      .expenses-table(v-if="expenses.length || bandDealOverview.length" :class="{ 'door-deal-active': doorDealActive }")
+        template(v-if="bandDealOverview.length")
+          .expenses-subhead 🎤 Band-Deals
+          .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId")
+            .band-deal-info
+              span.band-deal-name {{ row.artistName }}
+              span.band-deal-deal {{ row.dealLabel }}
+              span.band-deal-recorded erfasst: {{ row.recordedLabel }}
+            .band-deal-actions
+              span.band-deal-tag.tag-ok(v-if="row.allGood") ✓ übernommen
+              template(v-if="row.issues.suggestExpense && !row.issues.orphanSplit")
+                span.band-deal-tag.tag-suggest 💡 noch nicht als Ausgabe erfasst
+                button.btn-add-sm(@click="applyExpenseRow(row)") Als Ausgabe übernehmen
+              template(v-if="row.issues.amountMismatch")
+                span.band-deal-tag.tag-warn ⚠ gezahlt {{ formatCurrency(row.currentAmount || 0) }}, laut Deal {{ formatCurrency(row.resolvedAmount) }}
+                button.btn-add-sm(@click="keepPaidAmountRow(row)") {{ formatCurrency(row.currentAmount || 0) }} behalten
+                button.btn-add-sm(@click="applyResolvedAmountRow(row)") {{ formatCurrency(row.resolvedAmount) }} übernehmen
+              template(v-if="row.issues.orphanSplit")
+                span.band-deal-tag.tag-warn ⚠ steht als externer Split ({{ row.splitShare }}%) — Bands gehören in die Ausgaben, nicht in den externen Split
+                button.btn-add-sm(@click="convertSplitToExpenseRow(row)") {{ row.currentAmount != null ? 'Externen Split entfernen' : 'In Ausgabe umwandeln' }}
 
-        .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
-          input.text-input(
-            v-model="exp.description"
-            type="text"
-            placeholder="z.B. Rewe, Hotel..."
-          )
-          .amount-wrap
-            input.amount-input(
-              v-model="exp.amount"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
+        template(v-if="expenses.length")
+          .expenses-subhead(v-if="bandDealOverview.length") 🧾 Erfasste Ausgaben
+          .expense-header
+            span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
+            span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
+            span Bezahlt aus
+            span Sphäre
+            span.col-doordeal(v-if="doorDealActive" title="Vom Doordeal abziehen") 🚪
+            span
+
+          .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
+            input.text-input(
+              v-model="exp.description"
+              type="text"
+              placeholder="z.B. Rewe, Hotel..."
             )
-          select.select-input(v-model="exp.paid_from")
-            option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
-              | {{ label }}
-          select.select-input(v-model="exp.tax_sphere" :class="{ 'missing': !exp.tax_sphere }")
-            option(:value="null" disabled hidden) Sphäre wählen
-            option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
-              | {{ label }}
-          .col-doordeal(v-if="doorDealActive")
-            input(
-              type="checkbox"
-              v-model="exp.door_deal_deductible"
-              :title="'Von Doordeal-Basis abziehen'"
-            )
-          button.btn-remove(@click="removeExpense(index)") ×
+            .amount-wrap
+              input.amount-input(
+                v-model="exp.amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              )
+            select.select-input(v-model="exp.paid_from")
+              option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
+                | {{ label }}
+            select.select-input(v-model="exp.tax_sphere" :class="{ 'missing': !exp.tax_sphere }")
+              option(:value="null" disabled hidden) Sphäre wählen
+              option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
+                | {{ label }}
+            .col-doordeal(v-if="doorDealActive")
+              input(
+                type="checkbox"
+                v-model="exp.door_deal_deductible"
+                :title="'Von Doordeal-Basis abziehen'"
+              )
+            button.btn-remove(@click="removeExpense(index)") ×
+
+        .band-deal-empty(v-else-if="bandDealOverview.length") Noch keine weiteren Ausgaben – oben manuell eintragen oder einen Beleg abfotografieren.
 
       p.empty-hint(v-else) Noch keine Ausgabe erfasst – oben manuell eintragen oder einen Beleg abfotografieren.
 
@@ -3987,20 +3992,6 @@ h2 {
   color: #888;
   margin: 0 0 0.75rem;
 }
-.band-deal-overview {
-  display: flex;
-  flex-direction: column;
-  margin: 0 0 1.5rem;
-  border: 0.25rem solid black;
-}
-.band-deal-overview-head {
-  font-weight: 900;
-  font-size: 0.8rem;
-  padding: 0.5rem 1rem;
-  background: black;
-  color: white;
-  border-bottom: 0.25rem solid black;
-}
 .band-deal-row {
   display: flex;
   flex-wrap: wrap;
@@ -4010,9 +4001,6 @@ h2 {
   padding: 0.6rem 1rem;
   border-bottom: 1px solid #ddd;
   background: white;
-}
-.band-deal-row:nth-child(even) {
-  background: #f5f5f5;
 }
 .band-deal-row:last-child {
   border-bottom: none;
@@ -4051,6 +4039,23 @@ h2 {
 }
 .band-deal-tag.tag-warn {
   color: #dc2626;
+}
+/* Sub-Header innerhalb der Ausgaben-Tabelle (Band-Deals / Erfasste Ausgaben) */
+.expenses-subhead {
+  font-weight: 900;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ddd;
+}
+.expenses-subhead ~ .expenses-subhead,
+.band-deal-row + .expenses-subhead {
+  border-top: 0.25rem solid black;
+}
+.band-deal-empty {
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: #888;
 }
 .sphere-info {
   margin-top: 1.25rem;
