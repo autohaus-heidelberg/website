@@ -342,6 +342,8 @@ const resultExpandRevenue = ref(false)
 const resultExpandInventory = ref(false)
 const resultExpandExpenses = ref(false)
 const resultExpandVat = ref(false)
+const resultExpandCombo = ref(false)
+const resultExpandDoorDeal = ref(false)
 
 async function fetchAndApplyAllExternal() {
   if (!props.eventId) return
@@ -1155,6 +1157,15 @@ const comboDoorDealShareAmount = computed(() => {
   return comboDealStatuses.value
     .filter(s => s.resolvedSource === 'doordeal' && s.applied)
     .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
+})
+
+// Summe für die kollabierte Kopfzeile des Garantie+Doordeal-Bands-Blocks —
+// derselbe Betrag, der auch pro Zeile angezeigt wird (gebuchter Betrag bei
+// Abweichung, sonst der aktuell korrekte). Rein informativ, ist bereits
+// Teil der normalen Ausgaben oben — keine zusätzliche Subtraktion.
+const comboDealStatusesTotal = computed(() => {
+  return comboDealStatuses.value
+    .reduce((sum, s) => sum + (s.applied && !s.matches ? (s.currentAmount || 0) : s.resolvedAmount), 0)
 })
 
 
@@ -2898,48 +2909,58 @@ defineExpose({ toggleFinalStatus })
 
           //- Garantie+Doordeal-Bands: immer sichtbar sobald es einen solchen Deal gibt,
           //- unabhängig davon, ob er bereits als Ausgabe erfasst wurde oder ob es
-          //- daneben noch eine reine %-Verteilung (unten) gibt.
+          //- daneben noch eine reine %-Verteilung (unten) gibt. Rein informativ (die
+          //- Beträge stecken schon in den Ausgaben oben) — daher auf/zuklappbar wie
+          //- der Rest, mit Summe in der Kopfzeile statt einer eigenen Total-Leiste.
           template(v-if="comboDealStatuses.length")
-            .summary-row.summary-subblock-header
-              span.summary-label 🎤 Garantie+Doordeal-Bands
-            .summary-row.summary-sub-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
-              span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
-              .summary-value-group
-                span.summary-value {{ formatCurrency(status.applied && !status.matches ? (status.currentAmount || 0) : status.resolvedAmount) }}
-                span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
-                  template(v-if="!status.applied") ⚠ noch nicht erfasst
-                  template(v-else-if="status.matches") ✓ als Ausgabe erfasst
-                  template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount || 0) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
+            .summary-row.summary-expandable(@click="resultExpandCombo = !resultExpandCombo")
+              span.summary-label {{ resultExpandCombo ? '▼' : '▶' }} 🎤 Garantie+Doordeal-Bands
+              span.summary-value {{ formatCurrency(comboDealStatusesTotal) }}
+            template(v-if="resultExpandCombo")
+              .summary-row.summary-sub-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
+                span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
+                .summary-value-group
+                  span.summary-value {{ formatCurrency(status.applied && !status.matches ? (status.currentAmount || 0) : status.resolvedAmount) }}
+                  span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
+                    template(v-if="!status.applied") ⚠ noch nicht erfasst
+                    template(v-else-if="status.matches") ✓ als Ausgabe erfasst
+                    template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount || 0) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
 
-          //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert)
+          //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert).
+          //- Breakdown auf/zuklappbar wie der Rest der Tabelle; die Ergebnis-Zeile
+          //- danach bleibt IMMER sichtbar, unabhängig vom Klapp-Zustand — genau wie
+          //- "Ergebnis (vor/nach USt)" oben nie vom Aufklappen der jeweiligen
+          //- Breakdown-Sektion abhängt.
           template(v-if="doorDealActive")
-            .summary-row.summary-subblock-header
-              span.summary-label 🚪 Doordeal-Verteilung
-            .summary-row.summary-sub-detail
-              span.summary-label Türeinnahmen (Einlass + VVK, netto)
-              span.summary-value {{ formatCurrency(doorDealEntranceRevenue) }}
-            .summary-row.summary-sub-detail(v-if="doorDealDeductions > 0")
-              span.summary-label − Abzugsfähige Ausgaben
-              span.summary-value −{{ formatCurrency(doorDealDeductions) }}
-            .summary-row.summary-sub-base
-              span.summary-label = Verteilungsbasis
-              span.summary-value {{ formatCurrency(doorDealBase) }}
-            .summary-row.summary-sub-detail(v-for="party in doorDealSplits.filter(p => p.name.trim() !== '')" :key="'p' + party.name")
-              span.summary-label {{ party.name }}
-              .summary-value-group
-                span.summary-pct {{ party.share }}%
-                span.summary-value −{{ formatCurrency(doorDealBase * party.share / 100) }}
-            //- Was Garantie+Doordeal-Bands (oben) schon vom selben Topf bekommen
-            //- haben — ohne das würde "verbleibt im Topf" unten so tun, als wäre
-            //- dieses Geld noch da (siehe Team-Absprache).
-            .summary-row.summary-sub-detail(v-if="comboDoorDealShareAmount > 0")
-              span.summary-label 🎤 Garantie+Doordeal-Bands (bereits ausgezahlt)
-              span.summary-value −{{ formatCurrency(comboDoorDealShareAmount) }}
-            .summary-row.summary-sub-remaining
-              span.summary-label 🏠 Carousel-Anteil (verbleibt im Topf)
-              .summary-value-group
-                span.summary-pct {{ doorDealVenueDisplayPct.toFixed(0) }}%
-                span.summary-value(:class="doorDealVenueAmount < 0 ? 'negative' : ''") {{ formatCurrency(doorDealVenueAmount) }}
+            .summary-row.summary-expandable(@click="resultExpandDoorDeal = !resultExpandDoorDeal")
+              span.summary-label {{ resultExpandDoorDeal ? '▼' : '▶' }} 🚪 − Doordeal-Verteilung
+              span.summary-value −{{ formatCurrency(doorDealArtistAmount + comboDoorDealShareAmount) }}
+            template(v-if="resultExpandDoorDeal")
+              .summary-row.summary-sub-detail
+                span.summary-label Türeinnahmen (Einlass + VVK, netto)
+                span.summary-value {{ formatCurrency(doorDealEntranceRevenue) }}
+              .summary-row.summary-sub-detail(v-if="doorDealDeductions > 0")
+                span.summary-label − Abzugsfähige Ausgaben
+                span.summary-value −{{ formatCurrency(doorDealDeductions) }}
+              .summary-row.summary-sub-base
+                span.summary-label = Verteilungsbasis
+                span.summary-value {{ formatCurrency(doorDealBase) }}
+              .summary-row.summary-sub-detail(v-for="party in doorDealSplits.filter(p => p.name.trim() !== '')" :key="'p' + party.name")
+                span.summary-label {{ party.name }}
+                .summary-value-group
+                  span.summary-pct {{ party.share }}%
+                  span.summary-value −{{ formatCurrency(doorDealBase * party.share / 100) }}
+              //- Was Garantie+Doordeal-Bands (oben) schon vom selben Topf bekommen
+              //- haben — ohne das würde "verbleibt im Topf" unten so tun, als wäre
+              //- dieses Geld noch da (siehe Team-Absprache).
+              .summary-row.summary-sub-detail(v-if="comboDoorDealShareAmount > 0")
+                span.summary-label 🎤 Garantie+Doordeal-Bands (bereits ausgezahlt)
+                span.summary-value −{{ formatCurrency(comboDoorDealShareAmount) }}
+              .summary-row.summary-sub-remaining
+                span.summary-label 🏠 Carousel-Anteil (verbleibt im Topf)
+                .summary-value-group
+                  span.summary-pct {{ doorDealVenueDisplayPct.toFixed(0) }}%
+                  span.summary-value(:class="doorDealVenueAmount < 0 ? 'negative' : ''") {{ formatCurrency(doorDealVenueAmount) }}
             //- ═══ Ergebnis nach Doordeal ═══
             .summary-row.summary-total
               span.summary-label Ergebnis (nach Doordeal)
