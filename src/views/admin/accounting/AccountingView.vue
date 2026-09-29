@@ -342,7 +342,6 @@ const resultExpandRevenue = ref(false)
 const resultExpandInventory = ref(false)
 const resultExpandExpenses = ref(false)
 const resultExpandVat = ref(false)
-const resultExpandCombo = ref(false)
 const resultExpandDoorDeal = ref(false)
 
 async function fetchAndApplyAllExternal() {
@@ -1157,15 +1156,6 @@ const comboDoorDealShareAmount = computed(() => {
   return comboDealStatuses.value
     .filter(s => s.resolvedSource === 'doordeal' && s.applied)
     .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
-})
-
-// Summe für die kollabierte Kopfzeile des Garantie+Doordeal-Bands-Blocks —
-// derselbe Betrag, der auch pro Zeile angezeigt wird (gebuchter Betrag bei
-// Abweichung, sonst der aktuell korrekte). Rein informativ, ist bereits
-// Teil der normalen Ausgaben oben — keine zusätzliche Subtraktion.
-const comboDealStatusesTotal = computed(() => {
-  return comboDealStatuses.value
-    .reduce((sum, s) => sum + (s.applied && !s.matches ? (s.currentAmount || 0) : s.resolvedAmount), 0)
 })
 
 
@@ -2881,6 +2871,20 @@ defineExpose({ toggleFinalStatus })
             .summary-row.summary-detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
               span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
               span.summary-value −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
+            //- Garantie+Doordeal-Status: rein informativ, keine zusätzliche
+            //- Abzugszeile — die Beträge sind schon oben in den einzelnen
+            //- Ausgaben-Zeilen enthalten. Zeigt nur, ob Garantie oder Doordeal
+            //- gerade gewinnt und ob der gebuchte Betrag noch dazu passt.
+            template(v-if="comboDealStatuses.length")
+              .summary-row.summary-detail.summary-subtotal-minor
+                span.summary-label 🎤 Garantie+Doordeal-Status
+              .summary-row.summary-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
+                span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
+                .summary-value-group
+                  span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
+                    template(v-if="!status.applied") ⚠ noch nicht erfasst
+                    template(v-else-if="status.matches") ✓ als Ausgabe erfasst
+                    template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount || 0) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
 
           //- ═══ Ergebnis vor USt ═══
           .summary-row.summary-total
@@ -2906,25 +2910,6 @@ defineExpose({ toggleFinalStatus })
             .summary-row.summary-total
               span.summary-label Ergebnis (nach USt)
               span.summary-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
-
-          //- Garantie+Doordeal-Bands: immer sichtbar sobald es einen solchen Deal gibt,
-          //- unabhängig davon, ob er bereits als Ausgabe erfasst wurde oder ob es
-          //- daneben noch eine reine %-Verteilung (unten) gibt. Rein informativ (die
-          //- Beträge stecken schon in den Ausgaben oben) — daher auf/zuklappbar wie
-          //- der Rest, mit Summe in der Kopfzeile statt einer eigenen Total-Leiste.
-          template(v-if="comboDealStatuses.length")
-            .summary-row.summary-expandable(@click="resultExpandCombo = !resultExpandCombo")
-              span.summary-label {{ resultExpandCombo ? '▼' : '▶' }} 🎤 Garantie+Doordeal-Bands
-              span.summary-value {{ formatCurrency(comboDealStatusesTotal) }}
-            template(v-if="resultExpandCombo")
-              .summary-row.summary-sub-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
-                span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
-                .summary-value-group
-                  span.summary-value {{ formatCurrency(status.applied && !status.matches ? (status.currentAmount || 0) : status.resolvedAmount) }}
-                  span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
-                    template(v-if="!status.applied") ⚠ noch nicht erfasst
-                    template(v-else-if="status.matches") ✓ als Ausgabe erfasst
-                    template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount || 0) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
 
           //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert).
           //- Breakdown auf/zuklappbar wie der Rest der Tabelle; die Ergebnis-Zeile
