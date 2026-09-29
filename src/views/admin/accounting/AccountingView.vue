@@ -1021,16 +1021,34 @@ function applyDoorDealSuggestion(s: ArtistDealSuggestion) {
 
 // Der übernommene Kombi-Betrag ist ein SNAPSHOT — die Basis (Netto-Türeinnahme)
 // ist vor dem Event unbekannt und ändert sich mit jeder weiteren Kassen-/
-// Ausgaben-Eintragung. Statt den bereits übernommenen Ausgaben-Betrag still
-// zu überschreiben (könnte eine bewusste manuelle Korrektur verwerfen),
-// wird hier nur eine Abweichung angezeigt, die die Kassenwart:in per Klick
-// nachziehen kann.
+// Ausgaben-Eintragung. `amount` ist Kassenbuch-Prinzip (siehe Team-Absprache):
+// er darf NIE automatisch überschrieben werden, nur die Kassenwart:in
+// entscheidet bewusst per Klick, ob der bereits gezahlte Betrag stehen
+// bleibt oder auf den neu berechneten Betrag korrigiert wird.
 interface ComboDiscrepancy {
   artistId: number
   artistName: string
   currentAmount: number
   resolvedAmount: number
   resolvedSource: 'guarantee' | 'doordeal'
+}
+
+// Marker in den Notizen, mit dem "gezahlten Betrag beibehalten" für GENAU
+// diesen berechneten Betrag bestätigt wurde — ändert sich die Berechnung
+// später erneut (neue Kassen-/Ausgaben-Eintragung), passt der Marker nicht
+// mehr und die Warnung taucht mit den neuen Zahlen wieder auf.
+const DOORDEAL_ACK_PREFIX = '[Doordeal-Diff bestätigt: '
+const DOORDEAL_ACK_SUFFIX = '€]'
+
+function doordealAckMarker(amount: number): string {
+  return `${DOORDEAL_ACK_PREFIX}${amount.toFixed(2)}${DOORDEAL_ACK_SUFFIX}`
+}
+
+function stripDoordealAckMarkers(notes: string): string {
+  return notes
+    .split(' — ')
+    .filter(part => !part.startsWith(DOORDEAL_ACK_PREFIX))
+    .join(' — ')
 }
 
 const comboDiscrepancies = computed<ComboDiscrepancy[]>(() => {
@@ -1045,7 +1063,7 @@ const comboDiscrepancies = computed<ComboDiscrepancy[]>(() => {
     if (!exp) continue // noch nicht übernommen — das deckt artistDealSuggestions ab
     const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
     const currentAmount = parseFloat(exp.amount || '0') || 0
-    if (Math.abs(resolvedAmount - currentAmount) > 0.01) {
+    if (Math.abs(resolvedAmount - currentAmount) > 0.01 && !exp.notes.includes(doordealAckMarker(resolvedAmount))) {
       result.push({
         artistId: a.id,
         artistName: a.name,
@@ -1058,9 +1076,25 @@ const comboDiscrepancies = computed<ComboDiscrepancy[]>(() => {
   return result
 })
 
-function updateComboExpense(d: ComboDiscrepancy) {
+// Gezahlten Betrag bewusst beibehalten (z.B. Band wurde bereits real
+// ausgezahlt) — `amount` bleibt unverändert, nur ein Bestätigungs-Marker
+// wird vermerkt, der die Warnung für diesen Betrag stummschaltet.
+function keepPaidAmount(d: ComboDiscrepancy) {
   const exp = expenses.value.find(e => e.description.trim() === d.artistName.trim())
-  if (exp) exp.amount = d.resolvedAmount.toFixed(2)
+  if (!exp) return
+  exp.notes = [stripDoordealAckMarkers(exp.notes), doordealAckMarker(d.resolvedAmount)]
+    .filter(Boolean)
+    .join(' — ')
+}
+
+// Neu berechneten Betrag bewusst übernehmen (z.B. Band wurde noch nicht
+// ausgezahlt) — Notiz mit dem alten Betrag für Nachvollziehbarkeit.
+function applyResolvedAmount(d: ComboDiscrepancy) {
+  const exp = expenses.value.find(e => e.description.trim() === d.artistName.trim())
+  if (!exp) return
+  const auditNote = `Betrag von ${formatCurrency(d.currentAmount)} auf ${formatCurrency(d.resolvedAmount)} angepasst (Doordeal-Neuberechnung)`
+  exp.amount = d.resolvedAmount.toFixed(2)
+  exp.notes = [stripDoordealAckMarkers(exp.notes), auditNote].filter(Boolean).join(' — ')
 }
 
 // Kombi-Deal-Status für die Ergebnis-Tab-Anzeige — reflektiert IMMER (auch
@@ -2630,9 +2664,10 @@ defineExpose({ toggleFinalStatus })
       .artist-deal-suggestions(v-if="comboDiscrepancies.length")
         .artist-deal-suggestion(v-for="d in comboDiscrepancies" :key="d.artistId")
           span.suggestion-text
-            | ⚠️ {{ d.artistName }}: übernommen mit {{ formatCurrency(d.currentAmount) }}, aktuell wären {{ formatCurrency(d.resolvedAmount) }} korrekt ({{ d.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt jetzt) — Türeinnahmen/Ausgaben haben sich seit der Übernahme geändert.
+            | ⚠️ {{ d.artistName }}: gezahlt {{ formatCurrency(d.currentAmount) }}, berechnet wären {{ formatCurrency(d.resolvedAmount) }} korrekt ({{ d.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt jetzt) — Türeinnahmen/Ausgaben haben sich seit der Übernahme geändert.
           .suggestion-actions
-            button.btn-add-sm(@click="updateComboExpense(d)") Betrag aktualisieren
+            button.btn-add-sm(@click="keepPaidAmount(d)") {{ formatCurrency(d.currentAmount) }} beibehalten
+            button.btn-add-sm(@click="applyResolvedAmount(d)") {{ formatCurrency(d.resolvedAmount) }} übernehmen
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
@@ -2843,11 +2878,11 @@ defineExpose({ toggleFinalStatus })
             .summary-row.summary-sub-detail(v-for="status in comboDealStatuses" :key="'c' + status.artistId")
               span.summary-label {{ status.artistName }} ({{ status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt' }})
               .summary-value-group
-                span.summary-value {{ formatCurrency(status.applied && !status.matches ? status.currentAmount! : status.resolvedAmount) }}
+                span.summary-value {{ formatCurrency(status.applied && !status.matches ? (status.currentAmount || 0) : status.resolvedAmount) }}
                 span.summary-pct(:class="status.matches ? 'positive' : 'negative'")
                   template(v-if="!status.applied") ⚠ noch nicht erfasst
                   template(v-else-if="status.matches") ✓ als Ausgabe erfasst
-                  template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount!) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
+                  template(v-else) ⚠ erfasst mit {{ formatCurrency(status.currentAmount || 0) }}, korrekt wären {{ formatCurrency(status.resolvedAmount) }}
 
           //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert)
           template(v-if="doorDealActive")
