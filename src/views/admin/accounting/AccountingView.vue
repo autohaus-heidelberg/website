@@ -1369,10 +1369,15 @@ const remainingAfterSplits = computed(() => {
 // Einnahmen aus Eintritt (Einlass + VVK), netto (USt rausgerechnet)
 const doorDealEntranceRevenue = computed(() => {
   const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
+  // Aus der Einlasskasse gezahlte Ausgaben (v.a. Gagen) mindern den gezählten
+  // entrance_cash-Bestand — für die tatsächliche Türeinnahme wieder aufaddieren
+  // (spiegelt tax_export.py `entrance_payouts` und adjustedRevenue). Ohne das
+  // ist die Doordeal-Basis um die aus der Kasse gezahlten Gagen zu niedrig.
+  const entrancePayouts = expensesFromSource('entrance_cash')
   return revenues.value
     .filter(r => entranceSources.includes(r.source))
     .reduce((sum, r) => {
-      const gross = revenueNet(r)
+      const gross = revenueNet(r) + (r.source === 'entrance_cash' ? entrancePayouts : 0)
       const vatKey = r.vat_rate ?? REVENUE_VAT_RATE_DEFAULTS[r.source] ?? 'none'
       const rate = vatKey === '7' ? 0.07 : vatKey === '19' ? 0.19 : 0
       return sum + (rate ? gross / (1 + rate) : gross)
