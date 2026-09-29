@@ -1139,17 +1139,22 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
 })
 
 // Wie viel vom selben doorDealBase-Topf bereits über Garantie+Doordeal-Bands
-// (comboDealStatuses) an Bands ausgezahlt wurde/wird — nur der Anteil, bei
-// dem Doordeal tatsächlich gewinnt (resolvedSource === 'doordeal'), denn nur
-// dann ist der Betrag als %-Anteil der Türeinnahmen definiert; eine
+// (comboDealStatuses) an Bands ausgezahlt wurde — Kassenbuch-Prinzip wie bei
+// den Ausgaben selbst: zählt NUR tatsächlich als Ausgabe gebuchte Bands
+// (applied), und zwar mit dem wirklich gebuchten Betrag (currentAmount), NICHT
+// dem theoretisch aktuell korrekten resolvedAmount (kann bei einer Diskrepanz
+// abweichen, siehe comboDiscrepancies/keepPaidAmount/applyResolvedAmount).
+// Noch nicht gebuchte Vorschläge zählen nicht — das Geld ist ja noch nicht
+// aus dem Topf raus. Nur wenn Doordeal aktuell gewinnt (resolvedSource ===
+// 'doordeal') ist der Betrag konzeptionell ein %-Anteil der Türeinnahmen; eine
 // gewinnende Garantie ist ein fixer Betrag, keine Tür-Beteiligung. Ohne
 // diesen Abzug würde "🏠 Carousel-Anteil (verbleibt im Topf)" in der
 // Doordeal-Split-Sektion unten so tun, als sei dieses Geld noch da, obwohl es
 // über eine andere Ausgaben-Zeile schon rausgegangen ist.
 const comboDoorDealShareAmount = computed(() => {
   return comboDealStatuses.value
-    .filter(s => s.resolvedSource === 'doordeal')
-    .reduce((sum, s) => sum + s.resolvedAmount, 0)
+    .filter(s => s.resolvedSource === 'doordeal' && s.applied)
+    .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
 })
 
 
