@@ -1158,6 +1158,38 @@ const comboDoorDealShareAmount = computed(() => {
     .reduce((sum, s) => sum + (s.currentAmount || 0), 0)
 })
 
+// Eine Ausgaben-Zeile, deren Beschreibung genau dem Namen einer Band
+// entspricht, die jetzt einen reinen Doordeal-Deal hat (kein Garantie-Anteil
+// mehr) — d.h. die Ausgabe stammt vermutlich noch von einer früheren
+// Garantie/Kombi-Vereinbarung und wurde nicht angepasst, als der Deal
+// nachträglich in den Event-Details geändert wurde. Rein informativ, kein
+// Auto-Fix (siehe Kassenbuch-Prinzip) — die Kassenwart:in entscheidet, ob
+// die Ausgabe noch stimmt oder korrigiert/entfernt werden soll.
+interface OrphanedDealExpense {
+  expenseKey: string
+  artistName: string
+  amount: number
+}
+
+const orphanedDealExpenses = computed<OrphanedDealExpense[]>(() => {
+  const deals = event.value?.artist_deals || {}
+  const artists = event.value?.artists || []
+  const result: OrphanedDealExpense[] = []
+  for (const exp of expenses.value) {
+    const name = exp.description.trim()
+    if (!name) continue
+    const artist = artists.find(a => a.name.trim() === name)
+    if (!artist || artist.id == null) continue
+    const d = deals[String(artist.id)]
+    if (!d || d.deal_type !== 'door_deal') continue
+    result.push({
+      expenseKey: String(exp.id ?? name),
+      artistName: name,
+      amount: parseFloat(exp.amount || '0') || 0,
+    })
+  }
+  return result
+})
 
 function triggerExpenseScan() {
   scanExpenseError.value = ''
@@ -2708,6 +2740,13 @@ defineExpose({ toggleFinalStatus, refreshEventData })
           .suggestion-actions
             button.btn-add-sm(@click="keepPaidAmount(d)") {{ formatCurrency(d.currentAmount) }} beibehalten
             button.btn-add-sm(@click="applyResolvedAmount(d)") {{ formatCurrency(d.resolvedAmount) }} übernehmen
+
+      //- Ausgabe passt nicht mehr zum aktuellen Deal (z.B. Festgage-Ausgabe,
+      //- Deal wurde nachträglich auf reinen Doordeal ohne Garantie umgestellt)
+      .artist-deal-suggestions(v-if="orphanedDealExpenses.length")
+        .artist-deal-suggestion(v-for="o in orphanedDealExpenses" :key="o.expenseKey")
+          span.suggestion-text
+            | ⚠️ {{ o.artistName }}: Ausgabe {{ formatCurrency(o.amount) }} gebucht, aktueller Deal ist aber reiner Doordeal (keine Garantie mehr) — prüfen, ob das noch stimmt.
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
