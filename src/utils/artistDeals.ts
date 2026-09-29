@@ -61,26 +61,82 @@ export function showsDoorDeal(type?: ArtistDealType): boolean {
 }
 
 /**
+ * Vollständiger Abrechnungs-Status EINER Band bezogen auf ihren aktuellen
+ * Deal — die EINE Quelle der Wahrheit für alle Hinweise/Vorschläge im
+ * Ausgaben-Tab. Bewusst als reine Funktion, damit die gesamte Matrix
+ * (Deal-Typ × Ausgabe-vorhanden × Split-vorhanden × Betrag-passt) erschöpfend
+ * getestet werden kann — genau die Kombinationen, die beim nachträglichen
+ * Umstellen des Deal-Typs + Entfernen der Ausgabe schieflaufen konnten.
+ *
+ * `expectedAmount` = der aus dem Deal aktuell korrekte Ausgaben-Betrag
+ * (resolveComboDeal().resolvedAmount — bei reiner Garantie == Garantie, bei
+ * Kombi das Höhere von Garantie/Türanteil). `mismatchAcknowledged` = die
+ * Kassenwart:in hat den abweichenden gezahlten Betrag bewusst bestätigt.
+ */
+export interface BandDealState {
+  dealType: ArtistDealType | string | null | undefined
+  hasExpense: boolean
+  hasSplit: boolean
+  expenseAmount: number | null
+  expectedAmount: number | null
+  mismatchAcknowledged: boolean
+}
+
+export interface BandDealIssues {
+  /** Vorschlag: Gage/Kombi-Betrag als Ausgabe übernehmen. */
+  suggestGuarantee: boolean
+  /** Vorschlag: Doordeal-Split anlegen. */
+  suggestDoorDeal: boolean
+  /** Warnung: Ausgabe vorhanden, Deal ist aber reiner Doordeal (keine Festgage). */
+  orphanExpense: boolean
+  /** Warnung: Doordeal-Split vorhanden, Deal hat aber keinen Doordeal-Anteil. */
+  orphanSplit: boolean
+  /** Warnung/Wahl: Ausgabe vorhanden, Betrag weicht vom aktuell korrekten ab. */
+  amountMismatch: boolean
+}
+
+export function bandDealIssues(s: BandDealState): BandDealIssues {
+  const isGuarantee = s.dealType === 'guarantee'
+  const isCombo = s.dealType === 'guarantee_plus_door'
+  const isDoorDeal = s.dealType === 'door_deal'
+  const wantsExpense = isGuarantee || isCombo
+
+  const amountMismatch =
+    wantsExpense &&
+    s.hasExpense &&
+    !s.mismatchAcknowledged &&
+    s.expenseAmount != null &&
+    s.expectedAmount != null &&
+    Math.abs(s.expenseAmount - s.expectedAmount) > 0.01
+
+  return {
+    suggestGuarantee: wantsExpense && !s.hasExpense,
+    suggestDoorDeal: isDoorDeal && !s.hasSplit,
+    orphanExpense: isDoorDeal && s.hasExpense,
+    orphanSplit: wantsExpense && s.hasSplit,
+    amountMismatch,
+  }
+}
+
+/**
  * Ob für einen Band-Deal noch ein Übernahme-Vorschlag (Ausgaben-Tab) gezeigt
- * werden soll. `guaranteeApplied`/`doorDealApplied` = gibt es bereits eine
- * passende Ausgaben-Zeile bzw. einen Doordeal-Split mit dem Bandnamen.
- * - guarantee_plus_door: löst sich in EINE Ausgaben-Zeile auf (siehe
- *   resolveComboDeal) — hängt daher NUR von guaranteeApplied ab, ein
- *   zweiter Doordeal-Split ist hier nie gemeint/nötig.
- * - guarantee: reine Festgage, hängt nur von guaranteeApplied ab.
- * - door_deal: reiner %-Anteil, hängt nur von doorDealApplied ab — eine
- *   evtl. noch vorhandene (veraltete) Ausgabe ändert daran nichts, siehe
- *   orphanedDealExpenses in AccountingView.vue für die separate Warnung.
+ * werden soll — dünner Wrapper über `bandDealIssues` (nur der Vorschlags-Teil),
+ * damit bestehende Aufrufer/Tests unverändert bleiben.
  */
 export function needsDealSuggestion(
   dealType: ArtistDealType | string | undefined,
   guaranteeApplied: boolean,
   doorDealApplied: boolean,
 ): boolean {
-  if (dealType === 'guarantee_plus_door') return !guaranteeApplied
-  const needsGuarantee = dealType === 'guarantee'
-  const needsDoorDeal = dealType === 'door_deal'
-  return (needsGuarantee && !guaranteeApplied) || (needsDoorDeal && !doorDealApplied)
+  const i = bandDealIssues({
+    dealType,
+    hasExpense: guaranteeApplied,
+    hasSplit: doorDealApplied,
+    expenseAmount: null,
+    expectedAmount: null,
+    mismatchAcknowledged: false,
+  })
+  return i.suggestGuarantee || i.suggestDoorDeal
 }
 
 /**

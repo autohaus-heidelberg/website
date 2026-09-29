@@ -31,7 +31,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
-import { resolveComboDeal, findDuplicateNames, needsDealSuggestion } from '@/utils/artistDeals'
+import { resolveComboDeal, findDuplicateNames, needsDealSuggestion, bandDealIssues } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
 
 
@@ -1023,6 +1023,7 @@ function applyDoorDealSuggestion(s: ArtistDealSuggestion) {
 interface ComboDiscrepancy {
   artistId: number
   artistName: string
+  dealType: string
   currentAmount: number
   resolvedAmount: number
   resolvedSource: 'guarantee' | 'doordeal'
@@ -1053,15 +1054,28 @@ const comboDiscrepancies = computed<ComboDiscrepancy[]>(() => {
   for (const a of artists) {
     if (a.id == null) continue
     const d = deals[String(a.id)]
-    if (!d || d.deal_type !== 'guarantee_plus_door') continue
+    // Betrag-Diskrepanz betrifft jeden Deal mit fixer Ausgaben-Komponente:
+    // reine Garantie UND Kombi. Reiner Doordeal hat keine Ausgabe (dort greift
+    // orphanedDealExpenses). Früher NUR Kombi geprüft — beim Umstellen auf
+    // reine Garantie mit veraltetem Betrag kam dadurch KEINE Warnung.
+    if (!d || (d.deal_type !== 'guarantee_plus_door' && d.deal_type !== 'guarantee')) continue
     const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
     if (!exp) continue // noch nicht übernommen — das deckt artistDealSuggestions ab
     const { resolvedAmount, resolvedSource } = resolveComboDeal(d, doorDealBase.value)
     const currentAmount = parseFloat(exp.amount || '0') || 0
-    if (Math.abs(resolvedAmount - currentAmount) > 0.01 && !exp.notes.includes(doordealAckMarker(resolvedAmount))) {
+    const issues = bandDealIssues({
+      dealType: d.deal_type,
+      hasExpense: true,
+      hasSplit: false,
+      expenseAmount: currentAmount,
+      expectedAmount: resolvedAmount,
+      mismatchAcknowledged: exp.notes.includes(doordealAckMarker(resolvedAmount)),
+    })
+    if (issues.amountMismatch) {
       result.push({
         artistId: a.id,
         artistName: a.name,
+        dealType: d.deal_type,
         currentAmount,
         resolvedAmount,
         resolvedSource,
@@ -1087,7 +1101,7 @@ function keepPaidAmount(d: ComboDiscrepancy) {
 function applyResolvedAmount(d: ComboDiscrepancy) {
   const exp = expenses.value.find(e => e.description.trim() === d.artistName.trim())
   if (!exp) return
-  const auditNote = `Betrag von ${formatCurrency(d.currentAmount)} auf ${formatCurrency(d.resolvedAmount)} angepasst (Doordeal-Neuberechnung)`
+  const auditNote = `Betrag von ${formatCurrency(d.currentAmount)} auf ${formatCurrency(d.resolvedAmount)} angepasst (Deal-Anpassung)`
   exp.amount = d.resolvedAmount.toFixed(2)
   exp.notes = [stripDoordealAckMarkers(exp.notes), auditNote].filter(Boolean).join(' — ')
 }
@@ -2784,11 +2798,13 @@ defineExpose({ toggleFinalStatus, refreshEventData })
               @click="applyDoorDealSuggestion(s)"
             ) Doordeal übernehmen
 
-      //- Bereits übernommener Kombi-Betrag ist veraltet (Basis hat sich seither geändert)
+      //- Bereits übernommener Betrag ist veraltet (Deal/Türeinnahmen haben sich seither geändert)
       .artist-deal-suggestions(v-if="comboDiscrepancies.length")
         .artist-deal-suggestion(v-for="d in comboDiscrepancies" :key="d.artistId")
-          span.suggestion-text
+          span.suggestion-text(v-if="d.dealType === 'guarantee_plus_door'")
             | ⚠️ {{ d.artistName }}: gezahlt {{ formatCurrency(d.currentAmount) }}, berechnet wären {{ formatCurrency(d.resolvedAmount) }} korrekt ({{ d.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie' }} gewinnt jetzt) — Türeinnahmen/Ausgaben haben sich seit der Übernahme geändert.
+          span.suggestion-text(v-else)
+            | ⚠️ {{ d.artistName }}: gezahlt {{ formatCurrency(d.currentAmount) }}, laut Deal wären {{ formatCurrency(d.resolvedAmount) }} (Festgage) — die Garantie im Event wurde seit der Übernahme geändert.
           .suggestion-actions
             button.btn-add-sm(@click="keepPaidAmount(d)") {{ formatCurrency(d.currentAmount) }} beibehalten
             button.btn-add-sm(@click="applyResolvedAmount(d)") {{ formatCurrency(d.resolvedAmount) }} übernehmen
