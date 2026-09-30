@@ -2,6 +2,7 @@
     {
         "id": "20261114-Come-SkinnyMirror",
         "date": "2026-11-14T18:00:00+00:00",
+        "endDate": null,
         "title": "COME (Athens) & Skinny Mirror (Cologne)",
         "fee": "10",
         "feeAk": "12",
@@ -34,6 +35,7 @@
     {
         "id": "prize-snuckouts",
         "date": "2026-10-20T17:00:00+00:00",
+        "endDate": null,
         "title": "The Prize (AUS) & Snuckouts (Mainz)",
         "fee": "10",
         "feeAk": "12",
@@ -66,6 +68,7 @@
     {
         "id": "dieknoepfe-bikinizone",
         "date": "2026-10-16T17:00:00+00:00",
+        "endDate": null,
         "title": "Die Kn\u00f6pfe und Bikinizone (Punk/NDW, Berlin) + Vernissage \"Jugend unter Druck\"",
         "fee": "10",
         "feeAk": "12",
@@ -98,6 +101,7 @@
     {
         "id": "jugend-unter-druck",
         "date": "2026-10-16T17:00:00+00:00",
+        "endDate": "2026-12-11T22:59:00+00:00",
         "title": "Fotoausstellung Jugend Unter Druck: 16. Oktober bis 11. Dezember 2026",
         "fee": "10",
         "feeAk": "12",
@@ -111,6 +115,7 @@
     {
         "id": "thegoods-jcusumano",
         "date": "2026-10-13T17:00:00+00:00",
+        "endDate": null,
         "title": "The Goods (Oakland, CA) + Joel Cusumano (Bay Area, CA)",
         "fee": "10",
         "feeAk": "12",
@@ -143,6 +148,7 @@
     {
         "id": "20261006-metal-carousel",
         "date": "2026-10-09T18:00:00+00:00",
+        "endDate": null,
         "title": "Alt-Rock Underground",
         "fee": "10",
         "feeAk": "12",
@@ -184,6 +190,7 @@
     {
         "id": "uselesseaters-lothario",
         "date": "2026-10-03T18:00:00+00:00",
+        "endDate": null,
         "title": "Useless Eaters (Punk), Lothario (Punk) und RAYO-X (Garage Punk)",
         "fee": "12",
         "feeAk": "15",
@@ -225,6 +232,7 @@
     {
         "id": "dark-thoughts",
         "date": "2026-09-30T17:00:00+00:00",
+        "endDate": null,
         "title": "Dark Thoughts (Punk) und Geoduck Diodes (Egg Punk)",
         "fee": "12",
         "feeAk": "15",

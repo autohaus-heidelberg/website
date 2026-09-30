@@ -2,6 +2,7 @@
     {
         "id": "20261114-Come-SkinnyMirror",
         "date": "2026-11-14T18:00:00+00:00",
+        "endDate": null,
         "title": "COME (Athens) & Skinny Mirror (Cologne)",
         "fee": "10",
         "feeAk": "12",
@@ -34,6 +35,7 @@
     {
         "id": "prize-snuckouts",
         "date": "2026-10-20T17:00:00+00:00",
+        "endDate": null,
         "title": "The Prize (AUS) & Snuckouts (Mainz)",
         "fee": "10",
         "feeAk": "12",
@@ -66,6 +68,7 @@
     {
         "id": "dieknoepfe-bikinizone",
         "date": "2026-10-16T17:00:00+00:00",
+        "endDate": null,
         "title": "Die Kn\u00f6pfe und Bikinizone (Punk/NDW, Berlin) + Vernissage \"Jugend unter Druck\"",
         "fee": "10",
         "feeAk": "12",
@@ -98,6 +101,7 @@
     {
         "id": "jugend-unter-druck",
         "date": "2026-10-16T17:00:00+00:00",
+        "endDate": "2026-12-11T22:59:00+00:00",
         "title": "Fotoausstellung Jugend Unter Druck: 16. Oktober bis 11. Dezember 2026",
         "fee": "10",
         "feeAk": "12",
@@ -111,6 +115,7 @@
     {
         "id": "thegoods-jcusumano",
         "date": "2026-10-13T17:00:00+00:00",
+        "endDate": null,
         "title": "The Goods (Oakland, CA) + Joel Cusumano (Bay Area, CA)",
         "fee": "10",
         "feeAk": "12",
@@ -143,6 +148,7 @@
     {
         "id": "20261006-metal-carousel",
         "date": "2026-10-09T18:00:00+00:00",
+        "endDate": null,
         "title": "Alt-Rock Underground",
         "fee": "10",
         "feeAk": "12",
@@ -184,6 +190,7 @@
     {
         "id": "uselesseaters-lothario",
         "date": "2026-10-03T18:00:00+00:00",
+        "endDate": null,
         "title": "Useless Eaters (Punk), Lothario (Punk) und RAYO-X (Garage Punk)",
         "fee": "12",
         "feeAk": "15",
@@ -225,6 +232,7 @@
     {
         "id": "dark-thoughts",
         "date": "2026-09-30T17:00:00+00:00",
+        "endDate": null,
         "title": "Dark Thoughts (Punk) und Geoduck Diodes (Egg Punk)",
         "fee": "12",
         "feeAk": "15",
@@ -257,6 +265,7 @@
     {
         "id": "designer-capacopter",
         "date": "2026-09-28T17:00:00+00:00",
+        "endDate": null,
         "title": "Designer (Rock'n'Roll) & Capacopter (Heavy Rock)",
         "fee": "10",
         "feeAk": "12",
@@ -289,6 +298,7 @@
     {
         "id": "mm-260905",
         "date": "2026-09-09T19:00:00+00:00",
+        "endDate": null,
         "title": "Open Air Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -302,6 +312,7 @@
     {
         "id": "event20260827",
         "date": "2026-08-27T17:00:00+00:00",
+        "endDate": null,
         "title": "Alvilda & A Silly Walk, (The Runnings - cancelled!)",
         "fee": "10",
         "feeAk": "12",
@@ -334,6 +345,7 @@
     {
         "id": "mm-260805",
         "date": "2026-08-05T19:30:00+00:00",
+        "endDate": null,
         "title": "Open Air Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -347,6 +359,7 @@
     {
         "id": "the-bats",
         "date": "2026-08-03T17:00:00+00:00",
+        "endDate": null,
         "title": "The Bats (Psych Pop, NZ) & Woog Riots (Electro-Pop)",
         "fee": "18",
         "feeAk": "20",
@@ -379,6 +392,7 @@
     {
         "id": "balaclava-mrstrong",
         "date": "2026-07-22T17:00:00+00:00",
+        "endDate": null,
         "title": "Balaclava (Trash Rock, NYC) und Mr. Strong (Art Punk, Galway/Leipzig)",
         "fee": "12",
         "feeAk": "15",
@@ -411,6 +425,7 @@
     {
         "id": "Diapers-DBR",
         "date": "2026-07-20T17:00:00+00:00",
+        "endDate": null,
         "title": "DIAPERS (L,HAL,MRS), D:B:R (B)",
         "fee": "10",
         "feeAk": "12",
@@ -443,6 +458,7 @@
     {
         "id": "mm-260715",
         "date": "2026-07-15T19:30:00+00:00",
+        "endDate": null,
         "title": "Outdoor Kino: Midnight Madness",
         "fee": "",
         "feeAk": "",
@@ -456,6 +472,7 @@
     {
         "id": "iwan-nostyle",
         "date": "2026-07-10T18:00:00+00:00",
+        "endDate": null,
         "title": "IWAN2 -ohne scheiss-",
         "fee": "10",
         "feeAk": "10",
@@ -497,6 +514,7 @@
     {
         "id": "caro",
         "date": "2026-07-03T18:00:00+00:00",
+        "endDate": null,
         "title": "Ein Abend f\u00fcr Caro",
         "fee": "",
         "feeAk": "",
@@ -510,6 +528,7 @@
     {
         "id": "mm-260625",
         "date": "2026-06-25T18:00:00+00:00",
+        "endDate": null,
         "title": "ABGESAGT Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -523,6 +542,7 @@
     {
         "id": "goodflyingbirds",
         "date": "2026-06-23T17:00:00+00:00",
+        "endDate": null,
         "title": "Good Flying Birds (Garage Pop, Indianapolis) und K!tsch (Punk/NDW, Aschaffenburg)",
         "fee": "12",
         "feeAk": "15",
@@ -555,6 +575,7 @@
     {
         "id": "cherazade",
         "date": "2026-06-20T18:00:00+00:00",
+        "endDate": null,
         "title": "Cherazade, Goonsquad 343, N-REEF, h3xe",
         "fee": "10",
         "feeAk": "12",
@@ -587,6 +608,7 @@
     {
         "id": "screensaver",
         "date": "2026-06-11T17:00:00+00:00",
+        "endDate": null,
         "title": "Screensaver (Post-Punk, Melbourne), Jellybones (Wave Pop, Karlsruhe)",
         "fee": "10",
         "feeAk": "12",
@@ -619,6 +641,7 @@
     {
         "id": "blackboxmassacre20260522",
         "date": "2026-05-22T18:00:00+00:00",
+        "endDate": null,
         "title": "Fuzz Sagrado, Z\u00fcndung",
         "fee": "10",
         "feeAk": "12",
@@ -651,6 +674,7 @@
     {
         "id": "mm-260521",
         "date": "2026-05-21T18:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -664,6 +688,7 @@
     {
         "id": "zoomies-howileft",
         "date": "2026-05-16T18:00:00+00:00",
+        "endDate": null,
         "title": "Zoomies (Americana, Leipzig), How I Left (Indie, Karlsruhe)",
         "fee": "12",
         "feeAk": "15",
@@ -696,6 +721,7 @@
     {
         "id": "lemongrab-socke-invertida-rocket2",
         "date": "2026-05-09T18:00:00+00:00",
+        "endDate": null,
         "title": "Lemongrab + Socke + Invertida + Rocket 2",
         "fee": "10",
         "feeAk": "12",
@@ -746,6 +772,7 @@
     {
         "id": "fivebucks-poopootalks",
         "date": "2026-05-07T18:00:00+00:00",
+        "endDate": null,
         "title": "Five Bucks & Poo Poo Talks - Garage and Egg Punk from Italy",
         "fee": "8",
         "feeAk": "10",
@@ -778,6 +805,7 @@
     {
         "id": "beachtowel-release",
         "date": "2026-04-25T18:00:00+00:00",
+        "endDate": null,
         "title": "Beach Towel - Die unsichtbaren St\u00e4dte - Marla Moya",
         "fee": "10",
         "feeAk": "10",
@@ -819,6 +847,7 @@
     {
         "id": "mm-260422",
         "date": "2026-04-23T18:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -832,6 +861,7 @@
     {
         "id": "dirkandtheseconds-shocktroopers-fatale",
         "date": "2026-04-18T18:00:00+00:00",
+        "endDate": null,
         "title": "Dirk and the Seconds (Garage Punk, Leipzig), Shocktroopers (Crust Punk, Aschaffenburg) und Fatale (Post Punk, Heidelberg)",
         "fee": "10",
         "feeAk": "12",
@@ -873,6 +903,7 @@
     {
         "id": "260411-saxophones",
         "date": "2026-04-11T17:00:00+00:00",
+        "endDate": null,
         "title": "Enjoy Jazz - The Saxophones",
         "fee": "18,60",
         "feeAk": "22",
@@ -896,6 +927,7 @@
     {
         "id": "fruittones-electricjugs",
         "date": "2026-04-02T18:00:00+00:00",
+        "endDate": null,
         "title": "Fruit Tones (UK) & Electric Jugs (DE)",
         "fee": "10",
         "feeAk": "12",
@@ -928,6 +960,7 @@
     {
         "id": "mm-260326",
         "date": "2026-03-26T19:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -941,6 +974,7 @@
     {
         "id": "sexverbot-dustsucker",
         "date": "2026-03-20T19:00:00+00:00",
+        "endDate": null,
         "title": "Sexverbot + \u00d6PNV + Dustsuck!er",
         "fee": "10",
         "feeAk": "12",
@@ -982,6 +1016,7 @@
     {
         "id": "peitschen-laxisme-fatale",
         "date": "2026-03-14T19:00:00+00:00",
+        "endDate": null,
         "title": "Sonne, Licht und Punkrock mit Peitschen (K\u00f6ln), Laxisme (Leipzig) und City Boys (Heidelberg)",
         "fee": "10",
         "feeAk": "12",
@@ -1023,6 +1058,7 @@
     {
         "id": "goldcup-knabenschule",
         "date": "2026-03-03T18:00:00+00:00",
+        "endDate": null,
         "title": "Gold Cup (Manchester) & Knabenschule (HD/Halle)",
         "fee": "10",
         "feeAk": "12",
@@ -1055,6 +1091,7 @@
     {
         "id": "bandsupporter-contest26",
         "date": "2026-02-21T18:00:00+00:00",
+        "endDate": null,
         "title": "Bandsupporter Contest 2026 - Vorrunde",
         "fee": "11,40",
         "feeAk": "12",
@@ -1068,6 +1105,7 @@
     {
         "id": "meltingpalms-glizzer",
         "date": "2026-02-14T19:00:00+00:00",
+        "endDate": null,
         "title": "Melting Palms (Hamburg) & Glizzer (Mannheim)",
         "fee": "10",
         "feeAk": "12",
@@ -1100,6 +1138,7 @@
     {
         "id": "fuller-soulscraper",
         "date": "2026-02-06T19:00:00+00:00",
+        "endDate": null,
         "title": "ABGESAGT!! Fuller (Fr\u00e4nkisch Tour de Force) & Soulscraper (Punk LU) ABGESAGT!!",
         "fee": "10",
         "feeAk": "12",
@@ -1132,6 +1171,7 @@
     {
         "id": "2026-01-24-AP",
         "date": "2026-01-24T14:00:00+00:00",
+        "endDate": null,
         "title": "Solar Punk: Body, Society and Environment beyond Calamity",
         "fee": "8",
         "feeAk": "10",
@@ -1145,6 +1185,7 @@
     {
         "id": "nightcourt-onetrickpony",
         "date": "2026-01-21T18:00:00+00:00",
+        "endDate": null,
         "title": "Night Court (Punk, Vancouver) und One Trick Pony (Frankfurt)",
         "fee": "10",
         "feeAk": "12",
@@ -1177,6 +1218,7 @@
     {
         "id": "mm-260108",
         "date": "2026-01-08T19:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -1190,6 +1232,7 @@
     {
         "id": "wunderbar",
         "date": "2025-12-19T18:00:00+00:00",
+        "endDate": null,
         "title": "komparse | jako b\u00e4r | lukas herbertson | beach towel | die unsichtbaren St\u00e4dte",
         "fee": "10",
         "feeAk": "10",
@@ -1249,6 +1292,7 @@
     {
         "id": "mm181225",
         "date": "2025-12-18T20:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "",
         "feeAk": "5",
@@ -1262,6 +1306,7 @@
     {
         "id": "pathwalker-lifespark-oneverypage",
         "date": "2025-12-05T19:00:00+00:00",
+        "endDate": null,
         "title": "Last Breath of the Year - Pathwalker / Lifespark. / On Every Page",
         "fee": "12",
         "feeAk": "15",
@@ -1303,6 +1348,7 @@
     {
         "id": "turn-down-for-what-291125",
         "date": "2025-11-29T20:00:00+00:00",
+        "endDate": null,
         "title": "MSV pr\u00e4sentiert: Turn Down for WAT!",
         "fee": "10",
         "feeAk": "12",
@@ -1316,6 +1362,7 @@
     {
         "id": "bluezero-watchingbuildingsgrow",
         "date": "2025-11-27T18:00:00+00:00",
+        "endDate": null,
         "title": "Blue Zero (Bay Area Post-Punk) und Watching Buildings Grow (Dream Pop aus Karlsruhe)",
         "fee": "10",
         "feeAk": "12",
@@ -1348,6 +1395,7 @@
     {
         "id": "kino_201125",
         "date": "2025-11-20T20:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "5",
         "feeAk": "5",
@@ -1361,6 +1409,7 @@
     {
         "id": "nevver-atticstories-apartfromus",
         "date": "2025-11-14T18:00:00+00:00",
+        "endDate": null,
         "title": "Nevver (Heidelberg) + Attic Stories (Karlsruhe) + Apart From Us (Frankfurt)",
         "fee": "12",
         "feeAk": "15",
@@ -1402,6 +1451,7 @@
     {
         "id": "dana-mondaze",
         "date": "2025-11-12T18:00:00+00:00",
+        "endDate": null,
         "title": "Dana (Psych Punk, Ohio) & Mondaze (Heavy Shoegaze, Italien)",
         "fee": "10",
         "feeAk": "12",
@@ -1434,6 +1484,7 @@
     {
         "id": "hakan-deaflingo-halloween",
         "date": "2025-10-31T19:00:00+00:00",
+        "endDate": null,
         "title": "Grusel Carousel mit Hakan (Punk, Bergamo) und Deaf Lingo (Garage, Mailand) und DJ Yourself Aftershow Party!",
         "fee": "10",
         "feeAk": "12",
@@ -1466,6 +1517,7 @@
     {
         "id": "jeremyjay-glizzer",
         "date": "2025-10-17T18:00:00+00:00",
+        "endDate": null,
         "title": "ABGESAGT Jeremy Jay (Indie Pop aus London) & Glizzer (Synth Pop aus Mannheim)",
         "fee": "12",
         "feeAk": "15",
@@ -1498,6 +1550,7 @@
     {
         "id": "dub-carousel",
         "date": "2025-10-11T19:00:00+00:00",
+        "endDate": null,
         "title": "Dub Carousel #1",
         "fee": "",
         "feeAk": "10",
@@ -1511,6 +1564,7 @@
     {
         "id": "fungas-zyph",
         "date": "2025-10-07T17:00:00+00:00",
+        "endDate": null,
         "title": "Fungas (Psych-Garage aus Australien) und Zyph (Punk aus Mannheim)",
         "fee": "10",
         "feeAk": "12",
@@ -1543,6 +1597,7 @@
     {
         "id": "narkose-ambulanz-luckyloose",
         "date": "2025-09-27T18:00:00+00:00",
+        "endDate": null,
         "title": "Narkose (Deutschpunk, Ruhrgebiet), Ambulanz (Synth Punk, Leipzig) und Lucky Loose (Garage Surf aus Dresden)",
         "fee": "12",
         "feeAk": "15",
@@ -1584,6 +1639,7 @@
     {
         "id": "mm-2025-09-15",
         "date": "2025-09-25T19:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "",
         "feeAk": "",
@@ -1597,6 +1653,7 @@
     {
         "id": "blitzer-lovebomb",
         "date": "2025-09-21T17:00:00+00:00",
+        "endDate": null,
         "title": "Blitzer (Leipsick) & Lovebomb (Hildesheim)",
         "fee": "",
         "feeAk": "",
@@ -1629,6 +1686,7 @@
     {
         "id": "loneaires-borninmay",
         "date": "2025-09-20T17:30:00+00:00",
+        "endDate": null,
         "title": "Lone Aires EP Release Show (Dreampop/ Shoegaze) + Borninmay (Postpunk/ Bedroom-Pop)",
         "fee": "12",
         "feeAk": "15",
@@ -1661,6 +1719,7 @@
     {
         "id": "savak-forestray-fatale",
         "date": "2025-09-12T18:00:00+00:00",
+        "endDate": null,
         "title": "SAVAK (New York), Forest Ray (Seattle) und Fatale (Heidelberg)",
         "fee": "12",
         "feeAk": "15",
@@ -1702,6 +1761,7 @@
     {
         "id": "rowdy-gba",
         "date": "2025-08-27T17:00:00+00:00",
+        "endDate": null,
         "title": "Rowdy (US) & Game Boy Advance (LPZG)",
         "fee": "10",
         "feeAk": "12",
@@ -1734,6 +1794,7 @@
     {
         "id": "kino-20250821",
         "date": "2025-08-21T18:00:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "",
         "feeAk": "",
@@ -1747,6 +1808,7 @@
     {
         "id": "kueken-solder",
         "date": "2025-07-25T18:00:00+00:00",
+        "endDate": null,
         "title": "K\u00fcken (Hamburg) & Solder (AUS) & The Junktones (Eppelheim)",
         "fee": "10\u20ac",
         "feeAk": "12\u20ac",
@@ -1788,6 +1850,7 @@
     {
         "id": "kino-20250710",
         "date": "2025-07-10T19:30:00+00:00",
+        "endDate": null,
         "title": "Kino: Midnight Madness",
         "fee": "",
         "feeAk": "",
@@ -1801,6 +1864,7 @@
     {
         "id": "metdog-distant-relatives",
         "date": "2025-07-09T17:00:00+00:00",
+        "endDate": null,
         "title": "Metdog (AUS) & Distant Relatives (LPZG)",
         "fee": "10",
         "feeAk": "12",
@@ -1833,6 +1897,7 @@
     {
         "id": "coeur-a-lindex-exceeded-capacity",
         "date": "2025-07-04T18:00:00+00:00",
+        "endDate": null,
         "title": "C\u0153ur \u00e0 l'Index (Br\u00fcssel) und Exceeded Capacity (Autohaus)",
         "fee": "10",
         "feeAk": "12",
@@ -1865,6 +1930,7 @@
     {
         "id": "alien-nosejob",
         "date": "2025-07-02T17:00:00+00:00",
+        "endDate": null,
         "title": "Alien Nosejob (Australien) und City Boys (Autohaus)",
         "fee": "10",
         "feeAk": "12",
@@ -1897,6 +1963,7 @@
     {
         "id": "escape-schule",
         "date": "2025-06-28T18:00:00+00:00",
+        "endDate": null,
         "title": "Escape-Ism (LA) und 375 CEG (FFM)",
         "fee": "10",
         "feeAk": "12",
@@ -1929,6 +1996,7 @@
     {
         "id": "digger-wannabe",
         "date": "2025-06-25T17:00:00+00:00",
+        "endDate": null,
         "title": "Digger & The Pussycats (Melbourne, Australien) und New York Wannabes (Darmstadt)",
         "fee": "10",
         "feeAk": "12",
@@ -1961,6 +2029,7 @@
     {
         "id": "skullcult-socke",
         "date": "2025-06-21T18:00:00+00:00",
+        "endDate": null,
         "title": "Skull Cult (Synth/Garage Punk aus Indiana) + Socke (Autohaus)",
         "fee": "10",
         "feeAk": "12",
@@ -1993,6 +2062,7 @@
     {
         "id": "dccross",
         "date": "2025-06-12T17:00:00+00:00",
+        "endDate": null,
         "title": "R\u00fcckw\u00e4rts in den Sonnenuntergang \u2013 D.C Cross (AUS) & The Long Strange Trip (Autohaus)",
         "fee": "frei / 0\u20ac",
         "feeAk": "",
@@ -2025,6 +2095,7 @@
     {
         "id": "mitraille-neat-mentals-muddux",
         "date": "2025-05-30T18:00:00+00:00",
+        "endDate": null,
         "title": "Mitraille (Garage Punk, Antwerpen), Neat Mentals (Punk Rock, Stuttgart) und MudDux (Autohaus)",
         "fee": "10",
         "feeAk": "12",
@@ -2066,6 +2137,7 @@
     {
         "id": "condor-chemical-threat",
         "date": "2025-05-06T17:00:00+00:00",
+        "endDate": null,
         "title": "Condor (Oi! aus Frankreich) und Chemical Threat (Rhineline Hardcore)",
         "fee": "10",
         "feeAk": "12",
@@ -2098,6 +2170,7 @@
     {
         "id": "wax-head-zuendung",
         "date": "2025-04-26T18:00:00+00:00",
+        "endDate": null,
         "title": "Wax Head (Manchester, UK) und Z\u00fcndung (Heidelberg)",
         "fee": "10",
         "feeAk": "12",
@@ -2121,6 +2194,7 @@
     {
         "id": "snapped-ankles-fatale",
         "date": "2025-04-15T17:00:00+00:00",
+        "endDate": null,
         "title": "Snapped Ankles (London), Fatale (Heidelberg)",
         "fee": "19,47",
         "feeAk": "20",
@@ -2153,6 +2227,7 @@
     {
         "id": "milk-tv-lemongrab-warm-swords",
         "date": "2025-04-04T18:00:00+00:00",
+        "endDate": null,
         "title": "Milk TV (Br\u00fcssel), Lemongrab (Berlin) und Warm Swords (Leipzig)",
         "fee": "12",
         "feeAk": "15",
@@ -2194,6 +2269,7 @@
     {
         "id": "flathead-almostlovers",
         "date": "2025-03-09T14:00:00+00:00",
+        "endDate": null,
         "title": "Flathead (Marseille) & Almost Lovers (Br\u00fcssel/Lille) - gepflegtes Eskalieren! ",
         "fee": "10",
         "feeAk": "12",
@@ -2226,6 +2302,7 @@
     {
         "id": "alvilda_loosey",
         "date": "2025-02-28T19:00:00+00:00",
+        "endDate": null,
         "title": "Alvilda (Paris) mit Loosey (New York) und Aftershow Party mit Punkrock Aerobix!",
         "fee": "15",
         "feeAk": "",
@@ -2267,6 +2344,7 @@
     {
         "id": "sgatv_zz",
         "date": "2025-02-21T19:00:00+00:00",
+        "endDate": null,
         "title": "S.G.A.T.V. (Schweiz), Zero Zeroes (Karlsruhe) und Dispo (Leipzig)",
         "fee": "10",
         "feeAk": "",
@@ -2308,6 +2386,7 @@
     {
         "id": "sleeveens",
         "date": "2025-02-13T19:00:00+00:00",
+        "endDate": null,
         "title": "The Sleeveens (Nashville) und A Silly Walk (Heidelberg)",
         "fee": "10",
         "feeAk": "",
@@ -2340,6 +2419,7 @@
     {
         "id": "negative_gears",
         "date": "2025-02-07T19:00:00+00:00",
+        "endDate": null,
         "title": "Negative Gears (Sydney), Galeere (Heidelberg) und Monochrome Lights (Mannheim)",
         "fee": "10\u20ac",
         "feeAk": "",
@@ -2381,6 +2461,7 @@
     {
         "id": "yggdrasil",
         "date": "2024-12-06T17:00:00+00:00",
+        "endDate": null,
         "title": "Yggdrasil",
         "fee": "10\u20ac",
         "feeAk": "",
@@ -2394,6 +2475,7 @@
     {
         "id": "data-unknown_poo-poo-talks",
         "date": "2024-11-30T19:00:00+00:00",
+        "endDate": null,
         "title": "Data Unknown (Indianapolis) und Poo Poo Talks (Rom)",
         "fee": "10\u20ac",
         "feeAk": "",
@@ -2426,6 +2508,7 @@
     {
         "id": "tyvek_exceeded-capacity",
         "date": "2024-11-15T19:00:00+00:00",
+        "endDate": null,
         "title": "Tyvek (Detroit) und Exceeded Capacity (Heidelberg)",
         "fee": "8\u20ac VVK",
         "feeAk": "",
@@ -2449,6 +2532,7 @@
     {
         "id": "crocodiles_bird-control",
         "date": "2024-11-13T18:00:00+00:00",
+        "endDate": null,
         "title": "Crocodiles (San Diego) und Bird Control (Berlin)",
         "fee": "15 Euro im VVK",
         "feeAk": "",
@@ -2481,6 +2565,7 @@
     {
         "id": "sluts-wkz-socke",
         "date": "2024-10-05T18:00:00+00:00",
+        "endDate": null,
         "title": "Sluts, WKZ und Socke",
         "fee": "10\u20ac",
         "feeAk": "",
@@ -2522,6 +2607,7 @@
     {
         "id": "kino-1309",
         "date": "2024-09-13T19:00:00+00:00",
+        "endDate": null,
         "title": "Open air kino: Repo Man",
         "fee": "Pay what you want",
         "feeAk": "",
@@ -2535,6 +2621,7 @@
     {
         "id": "cool-sorcery",
         "date": "2024-09-11T17:00:00+00:00",
+        "endDate": null,
         "title": "Cool Sorcery (Brasilien) und Zyph (Mannheim)",
         "fee": "10\u20ac",
         "feeAk": "",
@@ -2567,6 +2654,7 @@
     {
         "id": "dgf_wild-mustang",
         "date": "2024-07-27T18:00:00+00:00",
+        "endDate": null,
         "title": "Die Groben Fetten / Wild Mustang",
         "fee": "",
         "feeAk": "",
@@ -2599,6 +2687,7 @@
     {
         "id": "wurst-durst",
         "date": "2024-07-14T12:00:00+00:00",
+        "endDate": null,
         "title": "Wurst & Durst",
         "fee": "",
         "feeAk": "",
@@ -2612,6 +2701,7 @@
     {
         "id": "loons-mustang-fang",
         "date": "2024-07-11T18:00:00+00:00",
+        "endDate": null,
         "title": "The Loons (Psychedelic Garage Beat aus San Diego, Kalifornien) mit Mustang Fang (Karlsruhe)",
         "fee": "",
         "feeAk": "",
@@ -2644,6 +2734,7 @@
     {
         "id": "sommer-2024",
         "date": "2024-06-22T14:00:00+00:00",
+        "endDate": null,
         "title": "Carousel Sommerfest",
         "fee": "",
         "feeAk": "",
@@ -2712,6 +2803,7 @@
     {
         "id": "hdf-31-05-2024",
         "date": "2024-05-31T17:00:00+00:00",
+        "endDate": null,
         "title": "Hodi Flow Hodilicious Release Party",
         "fee": "Spendenbasis",
         "feeAk": "",
@@ -2735,6 +2827,7 @@
     {
         "id": "forest-ray-28-05-2024",
         "date": "2024-05-28T18:00:00+00:00",
+        "endDate": null,
         "title": "Forest Ray \u2764\ufe0f The Roaring 420s",
         "fee": "Spendenbasis",
         "feeAk": "",
