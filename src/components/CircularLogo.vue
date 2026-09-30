@@ -19,13 +19,6 @@ const props = defineProps<{
 const magicNumber = 7.06;
 let circles: { el: HTMLElement; ct: CircleType }[] = [];
 
-// Pull each ring back by half its own width so it is centred horizontally on
-// the box (the rings share a vertical axis). Done via margin because the spin
-// animation already owns `transform`.
-function centerRing(el: HTMLElement) {
-  el.style.marginLeft = `${-el.offsetWidth / 2}px`;
-}
-
 function applyLayout() {
   if (!logo.value || !logo2.value || !logo3.value) return;
   const fontSize = props.diameter / magicNumber;
@@ -55,15 +48,13 @@ onMounted(async () => {
     el,
     ct: new CircleType(el).radius(0),
   }));
-  circles.forEach(({ el }) => centerRing(el));
 });
 
 // Recompute in place on resize instead of remounting, which avoids the flash.
 watch(() => props.diameter, () => {
   applyLayout();
-  circles.forEach(({ el, ct }) => {
+  circles.forEach(({ ct }) => {
     ct.refresh();
-    centerRing(el);
   });
 });
 
