@@ -6,8 +6,9 @@ export type Event = {
   id: string;
   date: string;
   // Optional: for multi-day/long-running events (e.g. exhibitions) that stay
-  // visible past their start date. Absent means a single-date event.
-  endDate?: string;
+  // visible past their start date. Absent (or null from the backend) means a
+  // single-date event.
+  endDate?: string | null;
   title: string;
   // path to image
   img?: string;
