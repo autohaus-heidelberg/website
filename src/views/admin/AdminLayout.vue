@@ -3,10 +3,21 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import AdminActivityFeed from '@/components/admin/AdminActivityFeed.vue'
+import { printInvoiceService } from '@/services/printInvoices'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const isMobileMenuOpen = ref(false)
+const pendingInvoiceCount = ref(0)
+
+async function loadPendingInvoiceCount() {
+  try {
+    const res = await printInvoiceService.getAll('pending')
+    pendingInvoiceCount.value = res.count
+  } catch {
+    // Non-critical badge — ignore failures.
+  }
+}
 
 function handleLogout() {
   authStore.logout()
@@ -30,6 +41,7 @@ function handleEscape(event: KeyboardEvent) {
 
 onMounted(() => {
   document.addEventListener('keydown', handleEscape)
+  loadPendingInvoiceCount()
 })
 
 onUnmounted(() => {
@@ -85,6 +97,9 @@ watch(isMobileMenuOpen, (isOpen) => {
       .nav-section-label Buchhaltung & Lager
       router-link.nav-link(to="/admin/lager" active-class="active" @click="handleNavigation")
         span Lagerverwaltung
+      router-link.nav-link(to="/admin/rechnungen" active-class="active" @click="handleNavigation")
+        span Rechnungen
+        span.nav-badge(v-if="pendingInvoiceCount > 0") {{ pendingInvoiceCount }}
 
       .nav-section-label Verwaltung
       router-link.nav-link(to="/admin/checklist-templates" active-class="active" @click="handleNavigation")
@@ -220,7 +235,16 @@ watch(isMobileMenuOpen, (isOpen) => {
   text-decoration: none;
   transition: all 0.2s;
   font-weight: 600;
+  /* Pin the size: the global body font scales with the viewport
+     (clamp(1rem,1.5vw,2rem)), which on wide screens overflows the
+     fixed-width sidebar and clips long labels. */
+  font-size: 1.125rem;
   border: 0.25rem solid white;
+  min-width: 0;
+}
+
+.nav-link span:not(.nav-badge) {
+  min-width: 0;
 }
 
 .nav-link:hover {
@@ -233,6 +257,24 @@ watch(isMobileMenuOpen, (isOpen) => {
   color: white;
   border: 0.25rem solid black;
   transform: rotate(-1deg);
+}
+
+.nav-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  min-width: 1.4rem;
+  padding: 0.1rem 0.4rem;
+  background: #c00;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 0.75rem;
+}
+
+.nav-link.active .nav-badge {
+  background: white;
+  color: black;
 }
 
 .nav-section-label {

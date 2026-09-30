@@ -34,6 +34,7 @@ import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleSta
 import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
+import { printInvoiceService, PRINT_INVOICE_SOURCE_LABELS, type PrintInvoice } from '@/services/printInvoices'
 
 
 const props = defineProps<{
@@ -231,6 +232,12 @@ const scanExpenseError = ref('')
 const scanningDocId = ref<number | null>(null)
 const scanDocError = ref('')
 const scanDocSuccess = ref('')
+
+// ── Vendor invoices assigned to this event (from the Rechnungseingang inbox) ──
+const eventInvoices = ref<PrintInvoice[]>([])
+const importedInvoiceIds = ref<number[]>([])
+const invoiceImportBusyId = ref<number | null>(null)
+const invoiceImportError = ref('')
 
 const paypalBarTotals = computed(() => {
   if (!paypalBarData.value) return { amount: 0, fees: 0, net: 0, count: 0 }
@@ -1272,6 +1279,45 @@ async function scanDocument(doc: EventDocument) {
   }
 }
 
+async function loadEventInvoices() {
+  if (!props.eventId) return
+  try {
+    eventInvoices.value = await printInvoiceService.getForEvent(props.eventId, 'assigned')
+  } catch {
+    // Non-critical: the invoice panel just stays empty if this fails.
+  }
+}
+
+function invoiceSourceLabel(inv: PrintInvoice): string {
+  return PRINT_INVOICE_SOURCE_LABELS[inv.source] ?? inv.source
+}
+
+// Read the invoice PDF's amount via the existing Gemini receipt-scan and add it
+// as a prefilled expense row (same flow as scanDocument, but for an inbox
+// invoice already filed to this event's Drive folder).
+async function importInvoiceAsExpense(inv: PrintInvoice) {
+  if (!inv.document) return
+  invoiceImportBusyId.value = inv.id
+  invoiceImportError.value = ''
+  try {
+    const result = await accountingService.scanExistingDocument(inv.document)
+    expenses.value.push({
+      accounting: accounting.value?.id || 0,
+      description: result.description || result.supplier || inv.file_name,
+      amount: result.amount != null ? result.amount.toFixed(2) : '0.00',
+      notes: '',
+      paid_from: 'other',
+      tax_sphere: result.tax_sphere ?? null,
+      vat_rate: result.vat_rate ?? null,
+    })
+    importedInvoiceIds.value.push(inv.id)
+  } catch (err: any) {
+    invoiceImportError.value = err.response?.data?.error || 'Übernahme fehlgeschlagen'
+  } finally {
+    invoiceImportBusyId.value = null
+  }
+}
+
 // ── Computed: Result ─────────────────────────────────────────────
 
 // True revenue = cash counted + expenses paid from registers (which reduced the count)
@@ -2239,6 +2285,7 @@ let stockPollInterval: ReturnType<typeof setInterval> | null = null
 onMounted(() => {
   loadData()
   loadDocuments()
+  loadEventInvoices()
   document.addEventListener('click', closeOverflow)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('focus', handleWindowFocus)
@@ -2831,6 +2878,26 @@ defineExpose({ toggleFinalStatus, refreshEventData })
       .grand-total
         span Gesamtausgaben:
         strong {{ formatCurrency(totalExpenses) }}
+
+      //- Rechnungen aus dem Postfach, die dieser Veranstaltung zugeordnet wurden
+      .inbox-invoices(v-if="eventInvoices.length")
+        .section-header
+          h3.section-title Rechnungen aus dem Postfach
+        p.inbox-invoices-hint Diese Rechnungen wurden im Rechnungseingang dieser Veranstaltung zugeordnet. „Als Ausgabe" liest den Betrag per KI aus und legt eine Ausgaben-Zeile an.
+        .inbox-invoice-row(v-for="inv in eventInvoices" :key="inv.id")
+          span.inbox-badge {{ invoiceSourceLabel(inv) }}
+          a.doc-link(v-if="inv.drive_url" :href="inv.drive_url" target="_blank") {{ inv.file_name }}
+          span.inbox-file(v-else) {{ inv.file_name }}
+          span.inbox-imported(v-if="importedInvoiceIds.includes(inv.id)") ✓ übernommen
+          button.btn-scan-doc(
+            v-else
+            @click="importInvoiceAsExpense(inv)"
+            :disabled="invoiceImportBusyId === inv.id || !inv.document"
+            title="Betrag per KI auslesen und als Ausgabe übernehmen"
+          )
+            span(v-if="invoiceImportBusyId === inv.id") 🤖…
+            span(v-else) 🧾 Als Ausgabe
+        .scan-error(v-if="invoiceImportError") ⚠️ {{ invoiceImportError }}
 
       //- Hochgeladene Belege
       .documents-tab.expenses-documents
@@ -6004,6 +6071,44 @@ h2 {
 .documents-tab .header-actions {
   display: flex;
   gap: 0.5rem;
+}
+.inbox-invoices {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 0.15rem solid #ddd;
+}
+.inbox-invoices-hint {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 0.25rem 0 1rem;
+}
+.inbox-invoice-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #333;
+  font-size: 0.9rem;
+}
+.inbox-badge {
+  background: black;
+  color: white;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.inbox-file {
+  overflow-wrap: anywhere;
+}
+.inbox-imported {
+  margin-left: auto;
+  font-weight: 600;
+  color: #2e7d32;
+}
+.inbox-invoice-row .btn-scan-doc {
+  margin-left: auto;
 }
 .btn-upload {
   padding: 0.625rem 1rem;

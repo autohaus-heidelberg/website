@@ -183,6 +183,11 @@ const router = createRouter({
           props: true
         },
         {
+          path: 'rechnungen',
+          name: 'admin-print-invoices',
+          component: () => import('../views/admin/accounting/PrintInvoiceInboxView.vue')
+        },
+        {
           path: 'newsletter',
           name: 'admin-newsletter',
           component: () => import('../views/admin/NewsletterAdmin.vue')
