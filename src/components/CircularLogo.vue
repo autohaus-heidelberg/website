@@ -39,9 +39,18 @@ function applyLayout() {
   logo3.value.style.top = `${(15 + props.diameter - fontSize3 * magicNumber) / 2}px`;
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (!logo.value || !logo2.value || !logo3.value) return;
   applyLayout();
+  // CircleType measures glyph widths to place the letters; with the fallback
+  // font (before Geologica loads) those widths are wrong and the ring comes out
+  // distorted. Wait for the real font before building the arcs.
+  try {
+    await document.fonts.load(`900 ${props.diameter / magicNumber}px Geologica`);
+  } catch {
+    await document.fonts.ready;
+  }
+  if (!logo.value || !logo2.value || !logo3.value) return;
   circles = [logo.value, logo2.value, logo3.value].map((el) => ({
     el,
     ct: new CircleType(el).radius(0),
