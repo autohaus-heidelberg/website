@@ -35,8 +35,9 @@ const currentView = ref(props.view);
 
 const upcoming = computed(() =>
   events
-    .map((item) => ({ ...item, date_d: dayjs(item.date) }))
-    // Only show dates that are newer than yesterday
+    // Multi-day events (e.g. exhibitions) only count as over once their endDate passes
+    .map((item) => ({ ...item, date_d: dayjs(item.endDate || item.date) }))
+    // Only show dates that are newer than yesterday (naming is misleading; actually shows *past* events)
     .filter((item) => item.date_d.isBefore(dayjs().subtract(1, "day")))
     .sort((a, b) => (a.date_d.isBefore(b.date_d) ? 1 : -1))
 );

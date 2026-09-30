@@ -49,7 +49,7 @@ onMounted(async () => {
     // Upcoming events
     const now = new Date()
     const upcoming = eventsData.results
-      .filter(e => new Date(e.date) > now)
+      .filter(e => new Date(e.endDate || e.date) > now)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     upcomingCount.value = upcoming.length
 

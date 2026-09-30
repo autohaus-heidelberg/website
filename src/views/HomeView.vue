@@ -13,11 +13,21 @@ import { useAuthStore } from "@/stores/auth";
 const authStore = useAuthStore();
 
 
+// Multi-day events (e.g. exhibitions) that already started but aren't over yet.
+const ongoing = computed(() =>
+  events
+    .filter((item) => item.endDate && dayjs(item.date).isBefore(dayjs()) && dayjs(item.endDate).isAfter(dayjs()))
+    .map((item) => ({ ...item, date_d: dayjs(item.endDate) }))
+    .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
+);
+
 const upcoming = computed(() =>
   events
     .map((item) => ({ ...item, date_d: dayjs(item.date) }))
     // Only show dates that are newer than yesterday
     .filter((item) => item.date_d.isAfter(dayjs().subtract(1, "day")))
+    // Already-started multi-day events are shown in the "Läuft aktuell" section instead
+    .filter((item) => !ongoing.value.some((o) => o.id === item.id))
     .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
 );
 
@@ -84,10 +94,15 @@ p Wir sind das Carousel im alten Autohaus.
 .page-content
   .dates
     h1 Termine
-    .empty(v-if="upcoming.length === 0")
+    .empty(v-if="upcoming.length === 0 && ongoing.length === 0")
       p Aktuell gibt es keine anstehenden Events.
     .event.mb-1(v-else, v-for="event in upComingHighlights", :key="event.id")
       EventPreview(:event="event")
+
+    template(v-if="ongoing.length > 0")
+      h1 Läuft aktuell
+      .event.mb-1(v-for="event in ongoing" :key="event.id")
+        EventPreview(:event="event")
 
     template(v-if="upComingSmall.length > 0")
       h1 Noch mehr

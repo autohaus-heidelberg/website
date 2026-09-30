@@ -1,6 +1,6 @@
 <template lang="pug">
 .event
-    h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }} Uhr
+    h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
     h1.accent.datediff(v-if="showDatediff") {{ dateDiff }}
     .cancelled-display(v-if="event.cancelled") ABGESAGT
     h1.accent.title {{ event.title }}
@@ -51,15 +51,34 @@ const artistImage = (artist: any) => {
 }
 
 const date = computed(() => {
-  const date = dayjs(props.event?.date).locale('de')
-  return date.format("dddd - DD/MM/YYYY - HH:mm")
+  const start = dayjs(props.event?.date).locale('de')
+  if (endDate.value) {
+    return `${start.format('DD.MM.YYYY')} – ${endDate.value.format('DD.MM.YYYY')}`
+  }
+  return start.format("dddd - DD/MM/YYYY - HH:mm")
+})
+
+const isMultiDay = computed(() => !!props.event.endDate)
+
+const endDate = computed(() => {
+  return props.event.endDate ? dayjs(props.event.endDate).locale('de') : null
+})
+
+// Already started but not (yet) past its endDate, e.g. a running exhibition.
+const isOngoing = computed(() => {
+  if (!endDate.value) return false
+  return dayjs().isAfter(dayjs(props.event?.date)) && dayjs().isBefore(endDate.value)
 })
 
 const showDatediff = computed(() => {
+  if (isOngoing.value) return true
   return dayjs(props.event?.date).diff(dayjs(), "day") < 7
 })
 
 const dateDiff = computed(() => {
+  if (isOngoing.value && endDate.value) {
+    return `Läuft noch bis ${endDate.value.format('DD.MM.YYYY')}`
+  }
   return dayjs(props.event?.date).locale('de').fromNow()
 })
 </script>
