@@ -5,6 +5,9 @@ export type Event = {
   // Unique id, this is used in the URL so URLencoded is better
   id: string;
   date: string;
+  // Optional: for multi-day/long-running events (e.g. exhibitions) that stay
+  // visible past their start date. Absent means a single-date event.
+  endDate?: string;
   title: string;
   // path to image
   img?: string;

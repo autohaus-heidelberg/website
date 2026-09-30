@@ -104,9 +104,9 @@ const filteredEvents = computed(() => {
   let list = events.value
 
   if (activeFilter.value === 'upcoming') {
-    list = list.filter(e => new Date(e.date) > now)
+    list = list.filter(e => new Date(e.endDate || e.date) > now)
   } else if (activeFilter.value === 'past') {
-    list = list.filter(e => new Date(e.date) <= now)
+    list = list.filter(e => new Date(e.endDate || e.date) <= now)
   }
 
   list = [...list].sort((a, b) => {

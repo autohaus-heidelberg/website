@@ -2,7 +2,7 @@
 
 <template lang="pug">
 router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
-    .event-preview.border
+    .event-preview.border(:class="{ 'has-range': endDate }")
         .title
             span
                 template(v-for="part in titleParts" :key="part.text")
@@ -11,11 +11,17 @@ router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
             .cancelled-label(v-if="event.cancelled") ABGESAGT
         .date()
             .date(:class="{ 'date-cancelled': event.cancelled }")
-                span {{ date.format("dd")  }}.
-                span {{ date.format('DD') }}
-                span {{ date.format('MMM') }}
-                span {{ date.format('YYYY') }}
-                span {{ time }}
+                template(v-if="endDate")
+                    span {{ date.format('DD.MM.') }}
+                    span –
+                    span {{ endDate.format('DD.MM.') }}
+                    span {{ endDate.format('YYYY') }}
+                template(v-else)
+                    span {{ date.format("dd")  }}.
+                    span {{ date.format('DD') }}
+                    span {{ date.format('MMM') }}
+                    span {{ date.format('YYYY') }}
+                    span {{ time }}
         .date-diff(ref="dateContainer")
             .side-date-content(ref="dateContent")
                 div {{ dateDiff }}
@@ -78,6 +84,9 @@ margin-bottom: 1rem;
     grid-area: title;
     /* text-align: justify; */
   	hyphens: auto;
+    /* Let a rare over-long word wrap so it never breaks the card border. Works
+       for any language; no lang attribute needed. */
+    overflow-wrap: break-word;
     height: 100%;
     width: 100%;
     font-size: 2rem;
@@ -85,6 +94,12 @@ margin-bottom: 1rem;
     font-weight: 900;
     position: relative;
     padding: 0.3rem;
+}
+
+/* The title's flex child must be allowed to shrink below its content size,
+   otherwise overflow-wrap can't take effect and long words still overflow. */
+.title > span {
+    min-width: 0;
 }
 
 .title-paren {
@@ -129,6 +144,13 @@ margin-bottom: 1rem;
   min-width: 300px;
   max-width: 500px;
   }
+
+/* Only multi-day (endDate) cards: a long single-word title would otherwise expand
+   the title track and push the date column past the border. minmax(0,...) pins the
+   columns to the 2:1 ratio. Concert cards keep the original content-based 2fr 1fr. */
+.event-preview.has-range {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
 
 @media screen and (max-width: 768px) {
   .event-preview {
@@ -276,6 +298,16 @@ const date = computed(() => {
     return date
 })
 
+const endDate = computed(() => {
+    return props.event.endDate ? dayjs(props.event.endDate).locale('de') : null
+})
+
+// Already started but not (yet) past its endDate, e.g. a running exhibition.
+const isOngoing = computed(() => {
+    if (!endDate.value) return false
+    return dayjs().isAfter(dayjs(props.event.date)) && dayjs().isBefore(endDate.value)
+})
+
 const time = computed(() => {
     return dayjs(props.event.date).format("HH:mm");
 })
@@ -286,6 +318,12 @@ const showDatediff = computed(() => {
 })
 
 const dateDiff = computed(() => {
+    if (isOngoing.value) {
+        // Single word like the other badges ("Heute", "Morgen!") - anything longer
+        // wraps unpredictably in the rotated .date-diff column and overflows the
+        // card's border at some breakpoints.
+        return 'Läuft'
+    }
     if (dayjs(props.event.date).isTomorrow() || dayjs(props.event.date).isToday()) {
         return dayjs(props.event.date).locale('de').calendar();
     }

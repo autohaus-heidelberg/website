@@ -33,6 +33,9 @@ export interface Event {
   user?: number
   user_username?: string
   date: string
+  // Optional: for multi-day/long-running events (e.g. exhibitions) that stay
+  // visible on the public site past their start date.
+  endDate?: string | null
   title: string
   image?: string
   image_url?: string

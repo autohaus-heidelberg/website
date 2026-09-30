@@ -55,6 +55,7 @@ watch(activeSection, (section) => {
 const form = ref<Partial<AppEvent>>({
   id: '',
   date: '',
+  endDate: '',
   title: '',
   descriptionShort: '',
   fee: '',
@@ -178,6 +179,20 @@ const timeOnly = computed({
   },
 })
 
+// Date-only (no time) since only the day the exhibition/event ends matters.
+const endDateOnly = computed({
+  get: () => (form.value.endDate ? form.value.endDate.slice(0, 10) : ''),
+  set: (val: string) => {
+    form.value.endDate = val ? `${val}T23:59` : ''
+  },
+})
+
+// Enddatum-Feld ist standardmäßig ausgeblendet (selten genutzt); Abwählen löscht den Wert wieder.
+const hasEndDate = ref(false)
+watch(hasEndDate, (checked) => {
+  if (!checked) form.value.endDate = ''
+})
+
 const presaleUrl = computed(() => {
   return `${window.location.origin}/presale/${presaleToken.value}`
 })
@@ -213,8 +228,10 @@ async function loadEvent() {
       ...event,
       // Convert ISO date to datetime-local format
       date: event.date.substring(0, 16),
+      endDate: event.endDate ? event.endDate.substring(0, 16) : '',
       artist_ids: event.artists.map(a => a.id!)
     }
+    hasEndDate.value = !!event.endDate
     timeIsDefault.value = false
     originalDate.value = event.date.substring(0, 16)
     formSnapshot.value = JSON.stringify(form.value)
@@ -340,6 +357,7 @@ async function createHelferpad() {
       // Prepare data for submission
       const { image, image_url, image_original, artists, ...formData } = form.value
       formData.date = new Date(form.value.date!).toISOString()
+      formData.endDate = form.value.endDate ? new Date(form.value.endDate).toISOString() : null
 
       await eventService.create(formData)
 
@@ -475,6 +493,7 @@ async function handleSubmit() {
 
     // Format date to ISO
     formData.date = new Date(form.value.date!).toISOString()
+    formData.endDate = form.value.endDate ? new Date(form.value.endDate).toISOString() : null
 
     if (isEditing.value) {
       // For editing, only send fields that can be updated (exclude image and image_url)
@@ -861,6 +880,16 @@ function closeDeployModal() {
                   type="time"
                   required
                 )
+              label.checkbox-label
+                input(type="checkbox" v-model="hasEndDate")
+                |  Mehrtägiges Event (z.B. Ausstellung)
+              input#endDate(
+                v-if="hasEndDate"
+                v-model="endDateOnly"
+                type="date"
+                :min="dateOnly"
+              )
+              .field-hint(v-if="hasEndDate") Enddatum – bleibt bis dahin auf der Website sichtbar
 
           .form-group
             label(for="title") Titel *
