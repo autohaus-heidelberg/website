@@ -82,7 +82,7 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
-const flyerBgStyle = ref<'streaks' | 'blur'>('streaks')
+const flyerBgStyle = ref<'solid' | 'streaks' | 'blur'>('solid')
 const flyerLinks = ref<{ name: string; url: string }[]>([])
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
@@ -1007,6 +1007,7 @@ function closeDeployModal() {
               .flyer-bg-style
                 label(for="flyer-bg-style") Hintergrund
                 select#flyer-bg-style(v-model="flyerBgStyle" :disabled="isGeneratingFlyers")
+                  option(value="solid") Schwarzer Hintergrund
                   option(value="streaks") Vertikale Schlieren
                   option(value="blur") Weicher Blur
               button.btn-shop-link(
