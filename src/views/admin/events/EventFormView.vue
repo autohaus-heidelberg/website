@@ -82,6 +82,7 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
+const flyerBgStyle = ref<'streaks' | 'blur'>('streaks')
 const flyerLinks = ref<{ name: string; url: string }[]>([])
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
@@ -406,7 +407,7 @@ async function generateFlyers() {
   flyerLinks.value = []
 
   try {
-    const result = await eventService.generateFlyers(form.value.id!)
+    const result = await eventService.generateFlyers(form.value.id!, flyerBgStyle.value)
     const count = result.flyers?.length ?? 0
     flyerLinks.value = (result.flyers ?? []).map(f => {
       const match = f.url.match(/\/d\/([^/]+)\//)
@@ -1003,6 +1004,11 @@ function closeDeployModal() {
             )
             .field-hint Website-Version: WEBP, max. 1000×1000px. Fürs Flyer-Ergebnis am besten JPG/PNG mit ≥1920px hochladen.
             .shop-link-actions(v-if="isEditing")
+              .flyer-bg-style
+                label(for="flyer-bg-style") Hintergrund
+                select#flyer-bg-style(v-model="flyerBgStyle" :disabled="isGeneratingFlyers")
+                  option(value="streaks") Vertikale Schlieren
+                  option(value="blur") Weicher Blur
               button.btn-shop-link(
                 type="button"
                 @click="generateFlyers"
