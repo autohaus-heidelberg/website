@@ -147,6 +147,14 @@ function eventTime(e: Event): string {
   return new Date(e.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
 }
 
+// Linker Rand der Kalender-Chips = Veröffentlichungsstatus (wie die Badges in der Listenansicht).
+function eventStatusColor(e: Event): string {
+  if (e.cancelled) return '#999'
+  if (publishedIds.value.has(e.id)) return '#16a34a'
+  if (isUrgent(e)) return '#dc2626'
+  return '#f59e0b'
+}
+
 // Im Monat begrenzt, in der Woche ist pro Tag viel Platz.
 const maxVisibleEntries = computed(() => (calendarMode.value === 'week' ? 20 : 4))
 function visibleEntries(day: CalendarDay): DayEntry[] {
@@ -659,6 +667,20 @@ onMounted(() => {
         button.mode-btn(:class="{ active: calendarMode === 'month' }" @click="calendarMode = 'month'") Monat
         button.mode-btn(:class="{ active: calendarMode === 'week' }" @click="calendarMode = 'week'") Woche
 
+    .calendar-legend
+      span.legend-item
+        span.legend-swatch(style="background: #16a34a")
+        | Live
+      span.legend-item
+        span.legend-swatch(style="background: #f59e0b")
+        | Entwurf
+      span.legend-item
+        span.legend-swatch(style="background: #dc2626")
+        | Bald, nicht live
+      span.legend-item
+        span.legend-swatch(style="background: #999")
+        | Abgesagt
+
     .loading(v-if="isLoading") Veranstaltungen werden geladen...
     .error(v-else-if="error") {{ error }}
     .calendar-grid(v-else :class="`mode-${calendarMode}`")
@@ -674,6 +696,7 @@ onMounted(() => {
             v-for="entry in visibleEntries(day)"
             :key="entry.event.id"
             :class="{ cancelled: entry.event.cancelled, multiday: entry.multiDay }"
+            :style="{ borderLeftColor: eventStatusColor(entry.event) }"
             :title="entry.event.title"
             @click="$router.push(`/admin/events/${entry.event.id}`)"
           )
@@ -1370,6 +1393,27 @@ a.fee:hover {
 
 .mode-btn:hover:not(.active) {
   background: #e0e0e0;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 0.15rem solid black;
 }
 
 .calendar-grid {
