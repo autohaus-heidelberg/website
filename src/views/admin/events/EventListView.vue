@@ -25,12 +25,18 @@ const calendarMode = ref<'month' | 'week'>('month')
 const calendarCursor = ref(new Date())
 const weekdayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
+interface DayEntry {
+  event: Event
+  multiDay: boolean
+  isStart: boolean
+}
+
 interface CalendarDay {
   date: Date
   key: string
   inCurrentMonth: boolean
   isToday: boolean
-  events: Event[]
+  entries: DayEntry[]
 }
 
 function dateKey(d: Date): string {
@@ -48,23 +54,30 @@ function startOfWeek(d: Date): Date {
   return date
 }
 
-// Events pro Tag; mehrtägige Events (endDate) erscheinen an jedem Tag der Spanne.
+// Events pro Tag; mehrtägige Events (endDate) erscheinen als Band an jedem Tag der Spanne.
 const eventsByDay = computed(() => {
-  const map = new Map<string, Event[]>()
+  const map = new Map<string, DayEntry[]>()
   for (const e of events.value) {
     const start = new Date(e.date)
     const end = e.endDate ? new Date(e.endDate) : start
-    const cur = new Date(start.getFullYear(), start.getMonth(), start.getDate())
-    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate())
-    while (cur <= last) {
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const lastDay = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    const multiDay = lastDay.getTime() > startDay.getTime()
+    const startKey = dateKey(startDay)
+    const cur = new Date(startDay)
+    while (cur <= lastDay) {
       const key = dateKey(cur)
       if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push(e)
+      map.get(key)!.push({ event: e, multiDay, isStart: key === startKey })
       cur.setDate(cur.getDate() + 1)
     }
   }
   for (const list of map.values()) {
-    list.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    // Mehrtägige Bänder zuerst, dann Einzeltermine nach Uhrzeit.
+    list.sort((a, b) => {
+      if (a.multiDay !== b.multiDay) return a.multiDay ? -1 : 1
+      return new Date(a.event.date).getTime() - new Date(b.event.date).getTime()
+    })
   }
   return map
 })
@@ -94,7 +107,7 @@ const calendarDays = computed<CalendarDay[]>(() => {
       key,
       inCurrentMonth: d.getMonth() === cursor.getMonth(),
       isToday: key === todayKey,
-      events: eventsByDay.value.get(key) || [],
+      entries: eventsByDay.value.get(key) || [],
     })
   }
   return days
@@ -132,6 +145,15 @@ function calendarToday() {
 
 function eventTime(e: Event): string {
   return new Date(e.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
+
+// Im Monat begrenzt, in der Woche ist pro Tag viel Platz.
+const maxVisibleEntries = computed(() => (calendarMode.value === 'week' ? 20 : 4))
+function visibleEntries(day: CalendarDay): DayEntry[] {
+  return day.entries.slice(0, maxVisibleEntries.value)
+}
+function hiddenCount(day: CalendarDay): number {
+  return Math.max(0, day.entries.length - maxVisibleEntries.value)
 }
 
 // ── Statistik ──
@@ -649,14 +671,15 @@ onMounted(() => {
         .day-number {{ day.date.getDate() }}
         .day-events
           .cal-event(
-            v-for="event in day.events"
-            :key="event.id"
-            :class="{ cancelled: event.cancelled }"
-            :title="event.title"
-            @click="$router.push(`/admin/events/${event.id}`)"
+            v-for="entry in visibleEntries(day)"
+            :key="entry.event.id"
+            :class="{ cancelled: entry.event.cancelled, multiday: entry.multiDay }"
+            :title="entry.event.title"
+            @click="$router.push(`/admin/events/${entry.event.id}`)"
           )
-            span.cal-event-time {{ eventTime(event) }}
-            span.cal-event-title {{ event.title }}
+            span.cal-event-time(v-if="!entry.multiDay") {{ eventTime(entry.event) }}
+            span.cal-event-title {{ entry.event.title }}
+          .cal-more(v-if="hiddenCount(day) > 0") +{{ hiddenCount(day) }} weitere
 
   //- ── Grants View ──
   template(v-if="activeView === 'grants'")
@@ -1292,9 +1315,12 @@ a.fee:hover {
   height: 2.5rem;
   border: 0.2rem solid black;
   background: white;
+  color: black;
   font-size: 1.4rem;
   font-weight: 900;
   line-height: 1;
+  letter-spacing: normal;
+  padding: 0;
   cursor: pointer;
 }
 
@@ -1303,7 +1329,9 @@ a.fee:hover {
   height: 2.5rem;
   border: 0.2rem solid black;
   background: white;
+  color: black;
   font-weight: 700;
+  letter-spacing: normal;
   cursor: pointer;
 }
 
@@ -1328,7 +1356,9 @@ a.fee:hover {
   height: 2.5rem;
   border: 0.2rem solid black;
   background: white;
+  color: black;
   font-weight: 700;
+  letter-spacing: normal;
   cursor: pointer;
   margin-left: -0.2rem;
 }
@@ -1426,9 +1456,27 @@ a.fee:hover {
   background: #333;
 }
 
+.cal-event.multiday {
+  background: #fdf3d0;
+  color: black;
+  border-left: 0.3rem solid #ffcc00;
+  font-weight: 700;
+}
+
+.cal-event.multiday:hover {
+  background: #f7e7a8;
+}
+
 .cal-event.cancelled {
   background: #999;
   text-decoration: line-through;
+}
+
+.cal-more {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #666;
+  padding: 0.1rem 0.2rem;
 }
 
 .cal-event-time {
@@ -1440,6 +1488,12 @@ a.fee:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* In der Wochenansicht ist Platz — Titel voll umbrechen statt abschneiden. */
+.calendar-grid.mode-week .cal-event-title {
+  white-space: normal;
+  overflow: visible;
 }
 .grants-section {
   display: flex;
