@@ -82,7 +82,7 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
-const flyerBgStyle = ref<'solid' | 'streaks' | 'blur'>('solid')
+const flyerBgStyle = ref<'solid' | 'streaks' | 'blur'>('blur')
 const flyerLinks = ref<{ name: string; url: string }[]>([])
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
@@ -1418,6 +1418,30 @@ input:disabled {
   opacity: 0.6;
 }
 
+select {
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 0.25rem solid black;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: black;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select:focus {
+  outline: none;
+  background: black;
+  color: white;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .field-hint {
   font-size: 0.85rem;
   color: black;
@@ -1457,6 +1481,33 @@ input:disabled {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.flyer-bg-style {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  label {
+    white-space: nowrap;
+  }
+
+  select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Custom caret (native arrow removed via appearance: none). */
+  &::after {
+    content: '\25BE';
+    position: absolute;
+    right: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 0.9rem;
+  }
 }
 
 .qr-links {
