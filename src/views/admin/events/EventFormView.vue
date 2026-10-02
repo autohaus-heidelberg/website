@@ -82,6 +82,12 @@ const isCreatingHelferpad = ref(false)
 const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
+const flyerBgStyle = ref<'solid' | 'streaks' | 'blur'>('blur')
+const flyerBgOptions: { value: 'solid' | 'streaks' | 'blur'; label: string }[] = [
+  { value: 'blur', label: 'Blur' },
+  { value: 'streaks', label: 'Schlieren' },
+  { value: 'solid', label: 'Schwarz' },
+]
 const flyerLinks = ref<{ name: string; url: string }[]>([])
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
@@ -406,7 +412,7 @@ async function generateFlyers() {
   flyerLinks.value = []
 
   try {
-    const result = await eventService.generateFlyers(form.value.id!)
+    const result = await eventService.generateFlyers(form.value.id!, flyerBgStyle.value)
     const count = result.flyers?.length ?? 0
     flyerLinks.value = (result.flyers ?? []).map(f => {
       const match = f.url.match(/\/d\/([^/]+)\//)
@@ -854,6 +860,7 @@ function closeDeployModal() {
     .form-container
       .form-section
         form.event-form(@submit.prevent="handleSubmit")
+          h3.form-divider.form-divider--first Eckdaten
           .form-row
             .form-group
               label(for="id") Event-ID *
@@ -925,6 +932,7 @@ function closeDeployModal() {
               )
               .field-hint Preis muss eine Zahl sein (z.B. 12 für 12€)
 
+          h3.form-divider Ticketing & Links
           .form-group
             label(for="shopLink") Ticket-Shop-Link
             input#shopLink(
@@ -971,10 +979,10 @@ function closeDeployModal() {
                 :disabled="isCreatingHelferpad"
               )
                 | {{ isCreatingHelferpad ? 'Speichern...' : 'Helferpad erstellen' }}
-              .field-hint Benötigt: Event-ID
-              .field-hint(v-if="!isEditing") Erstellt auch den Event in der Datenbank.
+              .field-hint Benötigt eine Event-ID.{{ isEditing ? '' : ' Erstellt dabei auch den Event in der Datenbank.' }}
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
+          h3.form-divider Line-up
           .form-group
             label Künstlerauswahl
             ArtistSelector(
@@ -991,6 +999,7 @@ function closeDeployModal() {
               :ak-price="form.feeAk"
             )
 
+          h3.form-divider Bild & Grafik
           .form-group
             label(for="image") Veranstaltungsbild
             .image-preview(v-if="imagePreview")
@@ -1002,14 +1011,24 @@ function closeDeployModal() {
               @change="handleImageChange"
             )
             .field-hint Website-Version: WEBP, max. 1000×1000px. Fürs Flyer-Ergebnis am besten JPG/PNG mit ≥1920px hochladen.
-            .shop-link-actions(v-if="isEditing")
-              button.btn-shop-link(
+            .generator-row(v-if="isEditing")
+              .radio-group
+                span.radio-group-label Flyer-Hintergrund
+                label.radio-option(v-for="opt in flyerBgOptions" :key="opt.value")
+                  input(
+                    type="radio"
+                    name="flyerBgStyle"
+                    :value="opt.value"
+                    v-model="flyerBgStyle"
+                    :disabled="isGeneratingFlyers"
+                  )
+                  span {{ opt.label }}
+              button.btn-generate(
                 type="button"
                 @click="generateFlyers"
                 :disabled="isGeneratingFlyers"
-              )
-                | {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Social-Media-Flyer erzeugen' }}
-              .field-hint Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
+              ) {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Flyer erzeugen' }}
+            .field-hint(v-if="isEditing") Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
             .success-message(v-if="flyerSuccess") {{ flyerSuccess }}
             .qr-links(v-if="flyerLinks.length")
               button.qr-download-link(
@@ -1019,18 +1038,21 @@ function closeDeployModal() {
                 @click="downloadFile(flyer.url, flyer.name)"
               ) ⬇ {{ flyer.name }}
 
-            .shop-link-actions(v-if="isEditing")
-              .qr-options
-                label.checkbox-label
-                  input(type="checkbox" v-model="qrWithLogo")
-                  | Mit Goldesel-Logo in der Mitte
-              button.btn-shop-link(
+            .generator-row(v-if="isEditing")
+              .radio-group
+                span.radio-group-label Logo
+                label.radio-option
+                  input(type="radio" name="qrWithLogo" :value="true" v-model="qrWithLogo" :disabled="isGeneratingQr")
+                  span Mit Goldesel
+                label.radio-option
+                  input(type="radio" name="qrWithLogo" :value="false" v-model="qrWithLogo" :disabled="isGeneratingQr")
+                  span Ohne
+              button.btn-generate(
                 type="button"
                 @click="generateQrCode"
                 :disabled="isGeneratingQr"
-              )
-                | {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
-              .field-hint Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
+              ) {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
+            .field-hint(v-if="isEditing") Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
             .success-message(v-if="qrSuccess") {{ qrSuccess }}
             .qr-links(v-if="qrLinks.length")
               button.qr-download-link(
@@ -1296,6 +1318,10 @@ function closeDeployModal() {
   border-right: 0.25rem solid black;
   padding-right: 2rem;
   overflow: hidden;
+  /* Admin form, unlike the public site, reads left-to-right; override the
+     global `body { text-align: center }` so labels/hints align with the
+     left-pinned buttons instead of centering independently. */
+  text-align: left;
 }
 
 .preview-section {
@@ -1319,14 +1345,10 @@ function closeDeployModal() {
 }
 
 .loading-indicator {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: black;
   margin-top: 0.5rem;
-}
-
-.preview-content {
-  /* EventDisplay component has its own styles */
 }
 
 .preview-empty {
@@ -1356,6 +1378,21 @@ h2 {
   gap: 1.5rem;
 }
 
+.form-divider {
+  margin: 1rem 0 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 0.25rem solid black;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: black;
+}
+
+.form-divider--first {
+  margin-top: 0;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1380,7 +1417,7 @@ h2 {
 
 label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: black;
 }
 
@@ -1407,6 +1444,30 @@ input:focus, textarea:focus {
 
 input:disabled {
   background: white;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+select {
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 0.25rem solid black;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: black;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select:focus {
+  outline: none;
+  background: black;
+  color: white;
+}
+
+select:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -1446,10 +1507,67 @@ input:disabled {
   gap: 0.5rem;
 }
 
-.qr-options {
+/* Generator control: radio options on their own line, action button below. */
+.generator-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.radio-group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.radio-group-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  input[type='radio'] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    cursor: pointer;
+    accent-color: black;
+  }
+}
+
+.btn-generate {
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
+  background: white;
+  color: black;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: black;
+    color: white;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
 .qr-links {
@@ -1460,13 +1578,15 @@ input:disabled {
 }
 
 .qr-download-link {
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.9rem;
   border: 0.15rem solid black;
   background: white;
   color: black;
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   white-space: nowrap;
   transition: background 0.2s, color 0.2s;
   &:hover {
@@ -1479,7 +1599,7 @@ input:disabled {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
 
   input[type='checkbox'] {
@@ -1490,13 +1610,15 @@ input:disabled {
 }
 
 .btn-shop-link {
-  padding: 0.75rem 1.5rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
   background: white;
   color: black;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   transition: background 0.2s, color 0.2s;
   align-self: flex-start;
 }
@@ -1513,7 +1635,7 @@ input:disabled {
 
 .success-message {
   color: black;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   padding: 0.75rem;
   background: #d4edda;
   border: 0.25rem solid black;
@@ -1522,7 +1644,7 @@ input:disabled {
 
 .error {
   color: black;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   padding: 0.875rem;
   background: white;
   border: 0.25rem solid black;
@@ -1537,15 +1659,16 @@ input:disabled {
 }
 
 .btn-primary, .btn-secondary, .btn-cancel {
-  padding: 0.875rem 1.75rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   transition: filter 0.2s;
-  letter-spacing: 0.2em;
 }
 
 .btn-primary {
@@ -1699,14 +1822,15 @@ input:disabled {
 }
 
 .btn-overflow {
-  padding: 0.875rem 1.25rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
   background: white;
   color: black;
-  font-weight: 900;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
-  line-height: 1;
+  line-height: 1.2;
+  letter-spacing: normal;
   transition: all 0.2s;
 }
 

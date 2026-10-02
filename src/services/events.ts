@@ -141,10 +141,12 @@ export const eventService = {
   /**
    * Generate social-media flyer formats from the event image and upload
    * them to the event's Google Drive folder.
+   * @param bgStyle  Background style: 'solid' (black canvas), 'streaks' (vertical colour streaks) or 'blur'.
    */
-  async generateFlyers(id: string): Promise<{ flyers: { name: string; url: string }[]; drive_folder_id: string }> {
+  async generateFlyers(id: string, bgStyle: 'solid' | 'streaks' | 'blur' = 'blur'): Promise<{ flyers: { name: string; url: string }[]; drive_folder_id: string }> {
     return api.post<{ flyers: { name: string; url: string }[]; drive_folder_id: string }>(
       `/api/events/${id}/generate-flyers/`,
+      { bg_style: bgStyle },
     )
   },
 
