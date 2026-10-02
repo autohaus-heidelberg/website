@@ -855,6 +855,7 @@ function closeDeployModal() {
     .form-container
       .form-section
         form.event-form(@submit.prevent="handleSubmit")
+          h3.form-divider.form-divider--first Eckdaten
           .form-row
             .form-group
               label(for="id") Event-ID *
@@ -926,6 +927,7 @@ function closeDeployModal() {
               )
               .field-hint Preis muss eine Zahl sein (z.B. 12 für 12€)
 
+          h3.form-divider Ticketing & Links
           .form-group
             label(for="shopLink") Ticket-Shop-Link
             input#shopLink(
@@ -976,6 +978,7 @@ function closeDeployModal() {
               .field-hint(v-if="!isEditing") Erstellt auch den Event in der Datenbank.
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
+          h3.form-divider Line-up
           .form-group
             label Künstlerauswahl
             ArtistSelector(
@@ -992,6 +995,7 @@ function closeDeployModal() {
               :ak-price="form.feeAk"
             )
 
+          h3.form-divider Bild & Grafik
           .form-group
             label(for="image") Veranstaltungsbild
             .image-preview(v-if="imagePreview")
@@ -1326,7 +1330,7 @@ function closeDeployModal() {
 }
 
 .loading-indicator {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: black;
   margin-top: 0.5rem;
@@ -1363,6 +1367,21 @@ h2 {
   gap: 1.5rem;
 }
 
+.form-divider {
+  margin: 1rem 0 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 0.25rem solid black;
+  font-size: 1.1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: black;
+}
+
+.form-divider--first {
+  margin-top: 0;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1387,7 +1406,7 @@ h2 {
 
 label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: black;
 }
 
@@ -1537,7 +1556,7 @@ select:disabled {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
 
   input[type='checkbox'] {
@@ -1548,12 +1567,12 @@ select:disabled {
 }
 
 .btn-shop-link {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   border: 0.25rem solid black;
   background: white;
   color: black;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   transition: background 0.2s, color 0.2s;
   align-self: flex-start;
@@ -1571,7 +1590,7 @@ select:disabled {
 
 .success-message {
   color: black;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   padding: 0.75rem;
   background: #d4edda;
   border: 0.25rem solid black;
@@ -1580,7 +1599,7 @@ select:disabled {
 
 .error {
   color: black;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   padding: 0.875rem;
   background: white;
   border: 0.25rem solid black;

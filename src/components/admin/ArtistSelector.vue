@@ -310,7 +310,7 @@ onMounted(() => {
   min-width: 250px;
   padding: 0.625rem 1rem;
   border: 0.25rem solid black;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 600;
   transition: background 0.2s, color 0.2s;
 }
@@ -326,6 +326,7 @@ onMounted(() => {
   background: black;
   color: white;
   border: 0.25rem solid black;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -436,6 +437,7 @@ h3 {
   background: white;
   color: black;
   border: 0.125rem solid black;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
