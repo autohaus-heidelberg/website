@@ -322,20 +322,22 @@ onMounted(() => {
 }
 
 .btn-quick-add {
-  padding: 0.625rem 1.25rem;
-  background: black;
-  color: white;
-  border: 0.25rem solid black;
-  font-size: 1rem;
+  padding: 0.4rem 0.9rem;
+  background: white;
+  color: black;
+  border: 0.15rem solid black;
+  font-size: 0.85rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  line-height: 1.2;
+  letter-spacing: normal;
   cursor: pointer;
-  transition: filter 0.2s;
+  transition: background 0.2s, color 0.2s;
   white-space: nowrap;
 }
 
 .btn-quick-add:hover {
-  filter: brightness(120%);
+  background: black;
+  color: white;
 }
 
 .available-section,
@@ -433,12 +435,14 @@ h3 {
 
 .btn-edit,
 .btn-remove {
-  padding: 0.375rem 0.75rem;
+  padding: 0.4rem 0.9rem;
   background: white;
   color: black;
-  border: 0.125rem solid black;
+  border: 0.15rem solid black;
   font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
   text-decoration: none;

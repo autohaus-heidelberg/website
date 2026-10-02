@@ -83,6 +83,11 @@ const helferpadSuccess = ref('')
 const isGeneratingFlyers = ref(false)
 const flyerSuccess = ref('')
 const flyerBgStyle = ref<'solid' | 'streaks' | 'blur'>('blur')
+const flyerBgOptions: { value: 'solid' | 'streaks' | 'blur'; label: string }[] = [
+  { value: 'blur', label: 'Blur' },
+  { value: 'streaks', label: 'Schlieren' },
+  { value: 'solid', label: 'Schwarz' },
+]
 const flyerLinks = ref<{ name: string; url: string }[]>([])
 const isGeneratingQr = ref(false)
 const qrSuccess = ref('')
@@ -974,8 +979,7 @@ function closeDeployModal() {
                 :disabled="isCreatingHelferpad"
               )
                 | {{ isCreatingHelferpad ? 'Speichern...' : 'Helferpad erstellen' }}
-              .field-hint Benötigt: Event-ID
-              .field-hint(v-if="!isEditing") Erstellt auch den Event in der Datenbank.
+              .field-hint Benötigt eine Event-ID.{{ isEditing ? '' : ' Erstellt dabei auch den Event in der Datenbank.' }}
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
           h3.form-divider Line-up
@@ -1007,20 +1011,24 @@ function closeDeployModal() {
               @change="handleImageChange"
             )
             .field-hint Website-Version: WEBP, max. 1000×1000px. Fürs Flyer-Ergebnis am besten JPG/PNG mit ≥1920px hochladen.
-            .shop-link-actions(v-if="isEditing")
-              .flyer-bg-style
-                label(for="flyer-bg-style") Hintergrund
-                select#flyer-bg-style(v-model="flyerBgStyle" :disabled="isGeneratingFlyers")
-                  option(value="solid") Schwarzer Hintergrund
-                  option(value="streaks") Vertikale Schlieren
-                  option(value="blur") Weicher Blur
-              button.btn-shop-link(
+            .generator-row(v-if="isEditing")
+              .radio-group
+                span.radio-group-label Flyer-Hintergrund
+                label.radio-option(v-for="opt in flyerBgOptions" :key="opt.value")
+                  input(
+                    type="radio"
+                    name="flyerBgStyle"
+                    :value="opt.value"
+                    v-model="flyerBgStyle"
+                    :disabled="isGeneratingFlyers"
+                  )
+                  span {{ opt.label }}
+              button.btn-generate(
                 type="button"
                 @click="generateFlyers"
                 :disabled="isGeneratingFlyers"
-              )
-                | {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Social-Media-Flyer erzeugen' }}
-              .field-hint Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
+              ) {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Flyer erzeugen' }}
+            .field-hint(v-if="isEditing") Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
             .success-message(v-if="flyerSuccess") {{ flyerSuccess }}
             .qr-links(v-if="flyerLinks.length")
               button.qr-download-link(
@@ -1030,18 +1038,21 @@ function closeDeployModal() {
                 @click="downloadFile(flyer.url, flyer.name)"
               ) ⬇ {{ flyer.name }}
 
-            .shop-link-actions(v-if="isEditing")
-              .qr-options
-                label.checkbox-label
-                  input(type="checkbox" v-model="qrWithLogo")
-                  | Mit Goldesel-Logo in der Mitte
-              button.btn-shop-link(
+            .generator-row(v-if="isEditing")
+              .radio-group
+                span.radio-group-label Logo
+                label.radio-option
+                  input(type="radio" name="qrWithLogo" :value="true" v-model="qrWithLogo" :disabled="isGeneratingQr")
+                  span Mit Goldesel
+                label.radio-option
+                  input(type="radio" name="qrWithLogo" :value="false" v-model="qrWithLogo" :disabled="isGeneratingQr")
+                  span Ohne
+              button.btn-generate(
                 type="button"
                 @click="generateQrCode"
                 :disabled="isGeneratingQr"
-              )
-                | {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
-              .field-hint Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
+              ) {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
+            .field-hint(v-if="isEditing") Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
             .success-message(v-if="qrSuccess") {{ qrSuccess }}
             .qr-links(v-if="qrLinks.length")
               button.qr-download-link(
@@ -1307,6 +1318,10 @@ function closeDeployModal() {
   border-right: 0.25rem solid black;
   padding-right: 2rem;
   overflow: hidden;
+  /* Admin form, unlike the public site, reads left-to-right; override the
+     global `body { text-align: center }` so labels/hints align with the
+     left-pinned buttons instead of centering independently. */
+  text-align: left;
 }
 
 .preview-section {
@@ -1334,10 +1349,6 @@ function closeDeployModal() {
   font-weight: 600;
   color: black;
   margin-top: 0.5rem;
-}
-
-.preview-content {
-  /* EventDisplay component has its own styles */
 }
 
 .preview-empty {
@@ -1496,36 +1507,66 @@ select:disabled {
   gap: 0.5rem;
 }
 
-.qr-options {
+/* Generator control: radio options on their own line, action button below. */
+.generator-row {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
-.flyer-bg-style {
-  position: relative;
+.radio-group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
 
-  label {
-    white-space: nowrap;
+.radio-group-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  input[type='radio'] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+    cursor: pointer;
+    accent-color: black;
+  }
+}
+
+.btn-generate {
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
+  background: white;
+  color: black;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: black;
+    color: white;
   }
 
-  select {
-    flex: 1;
-    min-width: 0;
-  }
-
-  /* Custom caret (native arrow removed via appearance: none). */
-  &::after {
-    content: '\25BE';
-    position: absolute;
-    right: 0.9rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    font-size: 0.9rem;
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 }
 
@@ -1537,13 +1578,15 @@ select:disabled {
 }
 
 .qr-download-link {
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.9rem;
   border: 0.15rem solid black;
   background: white;
   color: black;
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   white-space: nowrap;
   transition: background 0.2s, color 0.2s;
   &:hover {
@@ -1567,13 +1610,15 @@ select:disabled {
 }
 
 .btn-shop-link {
-  padding: 0.875rem 1.75rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
   background: white;
   color: black;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   transition: background 0.2s, color 0.2s;
   align-self: flex-start;
 }
@@ -1614,15 +1659,16 @@ select:disabled {
 }
 
 .btn-primary, .btn-secondary, .btn-cancel {
-  padding: 0.875rem 1.75rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
   transition: filter 0.2s;
-  letter-spacing: 0.2em;
 }
 
 .btn-primary {
@@ -1776,14 +1822,15 @@ select:disabled {
 }
 
 .btn-overflow {
-  padding: 0.875rem 1.25rem;
-  border: 0.25rem solid black;
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
   background: white;
   color: black;
-  font-weight: 900;
-  font-size: 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
-  line-height: 1;
+  line-height: 1.2;
+  letter-spacing: normal;
   transition: all 0.2s;
 }
 
