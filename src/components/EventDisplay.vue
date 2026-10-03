@@ -157,6 +157,14 @@ const dateDiff = computed(() => {
   margin: 0 !important;
 }
 
+/* Flex items default to min-width:auto, which uses the longest unbreakable
+   run (e.g. "AAAAaaaahhhh!!!") as a hard minimum and defeats break-word,
+   causing horizontal overflow. min-width:0 lets it shrink to the column. */
+.description {
+  min-width: 0;
+  width: 100%;
+}
+
 .event {
     display: flex;
     flex-direction: column;
