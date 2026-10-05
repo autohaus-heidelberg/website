@@ -169,7 +169,7 @@ describe('bandDealIssues', () => {
     },
   )
 
-  describe('amountMismatch', () => {
+  describe('amountMismatch (nur Festgage — Türanteile sind Snapshots)', () => {
     it('flags a guarantee expense whose amount differs from the deal', () => {
       const r = bandDealIssues({
         dealType: 'guarantee', hasExpense: true, hasSplit: false,
@@ -183,7 +183,9 @@ describe('bandDealIssues', () => {
         dealType: 'guarantee_plus_door', hasExpense: true, hasSplit: false,
         expenseAmount: 285, expectedAmount: 272.36, mismatchAcknowledged: false,
       })
-      expect(r.amountMismatch).toBe(true)
+      // Doordeal-Anteil: ausgezahlt ist ausgezahlt, kein Nachrechnen — sonst
+      // leitet sich die Gage aus einer Basis ab, die sie selbst enthält.
+      expect(r.amountMismatch).toBe(false)
     })
 
     it('flags a door_deal expense whose amount differs from the resolved door share', () => {
@@ -191,7 +193,7 @@ describe('bandDealIssues', () => {
         dealType: 'door_deal', hasExpense: true, hasSplit: false,
         expenseAmount: 285, expectedAmount: 272.36, mismatchAcknowledged: false,
       })
-      expect(r.amountMismatch).toBe(true)
+      expect(r.amountMismatch).toBe(false)
     })
 
     it('does not flag when the amounts match (within a cent)', () => {

@@ -31,7 +31,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
-import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice } from '@/utils/artistDeals'
+import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice, ENTRANCE_VAT_RATE } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
 import { printInvoiceService, PRINT_INVOICE_SOURCE_LABELS, type PrintInvoice } from '@/services/printInvoices'
@@ -1014,11 +1014,50 @@ interface BandDealRow {
   allGood: boolean
 }
 
-function dealLabelFor(row: Pick<BandDealRow, 'dealType' | 'guaranteeAmount' | 'doorDealPercentage' | 'resolvedAmount' | 'resolvedSource'>): string {
+// Eingefrorene Brutto-Türeinnahme des Gagen-Rechners (null = folgt der
+// Abrechnung). Sobald eine Gage gebucht ist, fließt sie über die
+// Kassen-Rückrechnung in die Abrechnungs-Basis zurück — der Rechner darf dem
+// nicht folgen, sonst leitet sich die nächste Gage aus einer Basis ab, die
+// bereits eine Gage enthält.
+const dealCalcFrozen = ref<string | null>(null)
+
+// Brutto-Türeinnahme (Einlass + VVK) wie sie in der Kasse liegt bzw. abgerechnet
+// wurde — Vorbelegung des Rechner-Felds.
+const dealCalcGrossDefault = computed(() => {
+  const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
+  const entrancePayouts = expensesFromSource('entrance_cash')
+  return revenues.value
+    .filter(r => entranceSources.includes(r.source))
+    .reduce((sum, r) => sum + revenueNet(r) + (r.source === 'entrance_cash' ? entrancePayouts : 0), 0)
+})
+
+const dealCalcGross = computed(() =>
+  dealCalcFrozen.value === null ? dealCalcGrossDefault.value : (parseFloat(dealCalcFrozen.value) || 0),
+)
+
+// Gagen rechnen vom Netto — die USt gehört dem Finanzamt, nicht der Band.
+// Abzugsfähige Kosten (GEMA/KSK) bleiben hier bewusst draußen: am Abend stehen
+// die noch nicht fest, und der Rechner soll eine Zeile Rechnung sein.
+const dealCalcVat = computed(() => dealCalcGross.value - dealCalcGross.value / (1 + ENTRANCE_VAT_RATE))
+
+const dealCalcBase = computed(() => dealCalcGross.value / (1 + ENTRANCE_VAT_RATE))
+
+function setDealCalcBase(e: globalThis.Event) {
+  dealCalcFrozen.value = (e.target as HTMLInputElement).value
+}
+
+function resetDealCalcBase() {
+  dealCalcFrozen.value = null
+}
+
+function dealLabelFor(
+  row: Pick<BandDealRow, 'dealType' | 'guaranteeAmount' | 'doorDealPercentage' | 'resolvedAmount' | 'resolvedSource'>,
+): string {
   if (row.dealType === 'guarantee') return `💶 Festgage ${formatCurrency(row.guaranteeAmount)}`
   if (row.dealType === 'door_deal') return `🚪 Doordeal ${row.doorDealPercentage}%`
+  const head = `🎤 Garantie ${formatCurrency(row.guaranteeAmount)} vs. Doordeal ${row.doorDealPercentage}%`
   const winner = row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'
-  return `🎤 Garantie ${formatCurrency(row.guaranteeAmount)} vs. Doordeal ${row.doorDealPercentage}% → ${winner} gewinnt (${formatCurrency(row.resolvedAmount)})`
+  return `${head} → ${winner} gewinnt (${formatCurrency(row.resolvedAmount)})`
 }
 
 function recordedLabelFor(currentAmount: number | null, splitShare: number | null): string {
@@ -1036,7 +1075,7 @@ const bandDealOverview = computed<BandDealRow[]>(() => {
     if (a.id == null) continue
     const d = deals[String(a.id)]
     if (!d) continue
-    const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, doorDealBase.value)
+    const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, dealCalcBase.value)
     const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
     const currentAmount = exp ? (parseFloat(exp.amount || '0') || 0) : null
     const splitIndex = doorDealSplits.value.findIndex(s => s.name.trim() === a.name.trim())
@@ -1080,10 +1119,13 @@ const bandNamesInExternalSplit = computed(() =>
 // Höhere). Bands landen NIE in door_deal_splits (das ist nur für externe
 // Mitveranstalter). Kassenbuch-Prinzip: der gebuchte Betrag ist ein Snapshot.
 function applyExpenseRow(row: BandDealRow) {
+  // Rechner-Basis festhalten, bevor die gebuchte Gage über die
+  // Kassen-Rückrechnung in sie zurückfließt.
+  if (dealCalcFrozen.value === null) dealCalcFrozen.value = dealCalcGrossDefault.value.toFixed(2)
   const calcNote = row.dealType === 'guarantee_plus_door'
-    ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * doorDealBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
+    ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * dealCalcBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
     : row.dealType === 'door_deal'
-      ? `Doordeal ${row.doorDealPercentage}% von ${formatCurrency(doorDealBase.value)} Netto-Türeinnahme.`
+      ? `Doordeal ${row.doorDealPercentage}% von ${formatCurrency(dealCalcBase.value)} Netto-Türeinnahme.`
       : ''
   expenses.value.push({
     accounting: accounting.value?.id || 0,
@@ -1138,14 +1180,8 @@ interface ComboDealStatus {
   guaranteeAmount: number
   doorDealPercentage: number
   applied: boolean
-  // Tatsächlich als Ausgabe gebuchter Betrag; kann vom aktuell korrekten
-  // resolvedAmount abweichen, wenn sich die Doordeal-Basis seit der
-  // Übernahme geändert hat (siehe bandDealOverview amountMismatch) — genau
-  // dieser Fall
-  // wurde bisher fälschlich als "✓ als Ausgabe erfasst" auf resolvedAmount
-  // angezeigt, obwohl der gebuchte Betrag ein anderer war.
+  /** Tatsächlich ausgezahlter Betrag — Snapshot, wird nicht nachgerechnet. */
   currentAmount: number | null
-  matches: boolean
 }
 
 const comboDealStatuses = computed<ComboDealStatus[]>(() => {
@@ -1157,7 +1193,7 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
     .filter(a => a.id != null && ['guarantee_plus_door', 'door_deal'].includes(deals[String(a.id)]?.deal_type))
     .map((a): ComboDealStatus => {
       const d = deals[String(a.id!)]
-      const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, doorDealBase.value)
+      const { resolvedAmount, resolvedSource, guaranteeAmount, doorDealPercentage } = resolveComboDeal(d, dealCalcBase.value)
       const exp = expenses.value.find(e => e.description.trim() === a.name.trim())
       const currentAmount = exp ? (parseFloat(exp.amount || '0') || 0) : null
       return {
@@ -1169,7 +1205,6 @@ const comboDealStatuses = computed<ComboDealStatus[]>(() => {
         doorDealPercentage,
         applied: !!exp,
         currentAmount,
-        matches: currentAmount != null && Math.abs(currentAmount - resolvedAmount) <= 0.01,
       }
     })
 })
@@ -1186,13 +1221,13 @@ const comboStatusByName = computed(() => {
 })
 
 function comboStatusHint(status: ComboDealStatus): string {
-  const doorShare = `${status.doorDealPercentage}% von ${formatCurrency(doorDealBase.value)} = ${formatCurrency(status.doorDealPercentage / 100 * doorDealBase.value)}`
-  // Reiner Doordeal (keine Garantie) vs. Kombi (Vergleich Garantie/Türanteil).
-  const calc = status.guaranteeAmount > 0
-    ? `${status.resolvedSource === 'doordeal' ? 'Doordeal gewinnt' : 'Garantie gewinnt'}: ${doorShare} vs. Garantie ${formatCurrency(status.guaranteeAmount)}`
-    : `Doordeal: ${doorShare}`
-  const mismatch = status.matches ? '' : ` — ⚠ korrekt wären ${formatCurrency(status.resolvedAmount)}`
-  return `🎤 ${calc}${mismatch}`
+  // Ausgezahlt ist ausgezahlt — hier steht die Rechnung vom Abend, kein
+  // Soll-Ist-Vergleich (der würde die Gage aus ihrer eigenen Basis ableiten).
+  const paid = status.currentAmount ?? status.resolvedAmount
+  const doorShare = `${status.doorDealPercentage}% von ${formatCurrency(dealCalcBase.value)}`
+  return status.guaranteeAmount > 0
+    ? `🎤 ${status.resolvedSource === 'doordeal' ? `Doordeal ${doorShare}` : `Garantie ${formatCurrency(status.guaranteeAmount)}`} → ${formatCurrency(paid)} ausgezahlt`
+    : `🎤 Doordeal ${doorShare} → ${formatCurrency(paid)} ausgezahlt`
 }
 
 // Wrapper ohne TS non-null-assertion (die bricht im pug-Template zur
@@ -1437,10 +1472,9 @@ const remainingAfterSplits = computed(() => {
 // Einnahmen aus Eintritt (Einlass + VVK), netto (USt rausgerechnet)
 const doorDealEntranceRevenue = computed(() => {
   const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
-  // Aus der Einlasskasse gezahlte Ausgaben (v.a. Gagen) mindern den gezählten
-  // entrance_cash-Bestand — für die tatsächliche Türeinnahme wieder aufaddieren
-  // (spiegelt tax_export.py `entrance_payouts` und adjustedRevenue). Ohne das
-  // ist die Doordeal-Basis um die aus der Kasse gezahlten Gagen zu niedrig.
+  // Aus der Einlasskasse gezahlte Ausgaben mindern den gezählten Bestand — für
+  // die tatsächliche Türeinnahme wieder aufaddieren (spiegelt tax_export.py
+  // `entrance_payouts` und adjustedRevenue).
   const entrancePayouts = expensesFromSource('entrance_cash')
   return revenues.value
     .filter(r => entranceSources.includes(r.source))
@@ -2306,10 +2340,39 @@ onUnmounted(() => {
 })
 
 defineExpose({ toggleFinalStatus, refreshEventData })
+
+// Zahlenfelder beim Reinklicken markieren, damit man direkt tippen kann statt
+// erst die 0,00 wegzulöschen. Per Delegation, damit es für alle Felder gilt.
+// Chrome setzt den Cursor beim Klick erst im mouseup, also NACH dem focus —
+// das hob die Markierung je nach Klickposition wieder auf. Deshalb wird das
+// mouseup des fokussierenden Klicks unterdrückt und im click nochmal markiert.
+// Beides nur beim ERSTEN Klick, sonst könnte man den Cursor nie mehr setzen.
+let pendingNumberSelect: HTMLInputElement | null = null
+
+function selectNumberOnFocus(e: FocusEvent) {
+  const el = e.target as HTMLInputElement | null
+  if (el?.tagName !== 'INPUT' || el.type !== 'number') return
+  el.select()
+  pendingNumberSelect = el
+}
+
+function keepNumberSelection(e: MouseEvent) {
+  if (e.target === pendingNumberSelect) e.preventDefault()
+}
+
+function selectNumberOnClick(e: MouseEvent) {
+  if (!pendingNumberSelect || e.target !== pendingNumberSelect) return
+  pendingNumberSelect.select()
+  pendingNumberSelect = null
+}
+
+function clearPendingNumberSelect() {
+  pendingNumberSelect = null
+}
 </script>
 
 <template lang="pug">
-.accounting-view
+.accounting-view(@focusin="selectNumberOnFocus" @mouseup="keepNumberSelection" @click="selectNumberOnClick" @focusout="clearPendingNumberSelect")
   .loading(v-if="isLoading") Abrechnung wird geladen...
   template(v-else-if="accounting")
     .accounting-header
@@ -2814,6 +2877,28 @@ defineExpose({ toggleFinalStatus, refreshEventData })
       .expenses-table(v-if="expenses.length || bandDealOverview.length" :class="{ 'door-deal-active': doorDealActive }")
         template(v-if="bandDealOverview.length")
           .expenses-subhead 🎤 Band-Deals
+          .deal-calc
+            .deal-calc-head
+              label.deal-calc-label(for="deal-calc-base") 🚪 Türeinnahme brutto — wie gezählt
+              .amount-wrap
+                input#deal-calc-base.amount-input(
+                  type="number" step="0.01" min="0"
+                  :value="dealCalcFrozen ?? dealCalcGrossDefault.toFixed(2)"
+                  @input="setDealCalcBase"
+                )
+                span €
+              button.btn-reset-calc(
+                v-if="dealCalcFrozen !== null"
+                @click="resetDealCalcBase"
+                title="Wert aus der Kassenzählung übernehmen"
+              ) ↺ aus Abrechnung
+            .deal-calc-line
+              span − 7 % Umsatzsteuer (Eintritt)
+              span −{{ formatCurrency(dealCalcVat) }}
+            .deal-calc-line.deal-calc-total
+              span = Grundlage für die Gagen
+              span.deal-calc-net {{ formatCurrency(dealCalcBase) }}
+            p.deal-calc-hint Rechner für den Abend: trag ein, was im Einlass liegt, bevor ausgezahlt wird. Prozentuale Gagen werden vom Netto gerechnet — die Umsatzsteuer gehört dem Finanzamt, nicht der Band. Dieser Wert fließt nicht in die Abrechnung ein.
           .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId")
             .band-deal-info
               span.band-deal-name {{ row.artistName }}
@@ -2839,7 +2924,7 @@ defineExpose({ toggleFinalStatus, refreshEventData })
             span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
             span Bezahlt aus
             span Sphäre
-            span.col-doordeal(v-if="doorDealActive" title="Vom Doordeal abziehen") 🚪
+            span.col-doordeal(v-if="doorDealActive" title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)") 🚪
             span
 
           .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
@@ -2867,7 +2952,7 @@ defineExpose({ toggleFinalStatus, refreshEventData })
               input(
                 type="checkbox"
                 v-model="exp.door_deal_deductible"
-                :title="'Von Doordeal-Basis abziehen'"
+                title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)"
               )
             button.btn-remove(@click="removeExpense(index)") ×
 
@@ -3744,6 +3829,105 @@ h2 {
   gap: 0.5rem;
   background: black;
   padding: 0 1rem 0 0;
+}
+
+.count-mode {
+  border: 0.25rem solid black;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+}
+
+.count-mode-label {
+  font-weight: 900;
+}
+
+.count-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.count-mode-hint {
+  flex-basis: 100%;
+  margin: 0;
+  color: #555;
+}
+
+.deal-calc {
+  padding: 0.75rem 1rem 1rem;
+  border-bottom: 1px solid #ddd;
+  background: #fafafa;
+  text-align: left;
+}
+
+.deal-calc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.deal-calc-label {
+  font-weight: 900;
+  font-size: 0.95rem;
+  flex: 1 1 auto;
+}
+
+.deal-calc .amount-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.deal-calc .amount-input {
+  width: 100px;
+  height: 2rem;
+  box-sizing: border-box;
+  text-align: right;
+}
+
+.btn-reset-calc {
+  background: white;
+  color: black;
+  letter-spacing: normal;
+  border: 2px solid black;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.deal-calc-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #555;
+  padding: 0.1rem 0;
+}
+
+.deal-calc-line.deal-calc-total {
+  border-top: 1px solid #ccc;
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: black;
+}
+
+.deal-calc-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  color: #555;
 }
 
 .external-data-bar {
@@ -4755,8 +4939,7 @@ h2 {
   min-width: 0;
 }
 
-.expense-header, .expense-row {
-  display: grid;
+.expense-header, .expense-row {  display: grid;
   grid-template-columns: 1fr 100px 140px 140px 36px;
   gap: 0.5rem;
   padding: 0.5rem 1rem;

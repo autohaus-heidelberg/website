@@ -77,6 +77,12 @@ export function showsDoorDeal(type?: ArtistDealType): boolean {
  * `expectedAmount` = resolveComboDeal().resolvedAmount (Festgage == Garantie,
  * Doordeal == %-Türanteil, Kombi == das Höhere). `mismatchAcknowledged` = die
  * Kassenwart:in hat den abweichenden gezahlten Betrag bewusst bestätigt.
+ *
+ * Der Abgleich läuft NUR bei Festgagen: ein Betrag mit Türanteil hängt an der
+ * Türeinnahme, die wiederum die bereits ausgezahlten Gagen enthält (die Kasse
+ * wird erst nach den Auszahlungen gezählt). Ein Nachrechnen würde die Gage
+ * also aus ihrer eigenen Grundlage ableiten und bei jedem Übernehmen weiter
+ * hochlaufen. Der ausgezahlte Betrag ist ein Snapshot — das Geld ist raus.
  */
 export interface BandDealState {
   dealType: ArtistDealType | string | null | undefined
@@ -90,7 +96,7 @@ export interface BandDealState {
 export interface BandDealIssues {
   /** Vorschlag: Deal-Betrag als Ausgabe übernehmen (gilt für alle Deal-Typen). */
   suggestExpense: boolean
-  /** Warnung/Wahl: Ausgabe vorhanden, Betrag weicht vom aktuell korrekten ab. */
+  /** Warnung/Wahl: Festgage gebucht, Betrag weicht vom Deal ab. */
   amountMismatch: boolean
   /** Warnung: Band steht in door_deal_splits — dort gehören nur externe Parteien hin. */
   orphanSplit: boolean
@@ -103,7 +109,7 @@ export function bandDealIssues(s: BandDealState): BandDealIssues {
     s.dealType === 'guarantee_plus_door'
 
   const amountMismatch =
-    hasDeal &&
+    s.dealType === 'guarantee' &&
     s.hasExpense &&
     !s.mismatchAcknowledged &&
     s.expenseAmount != null &&
