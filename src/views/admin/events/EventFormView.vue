@@ -646,6 +646,11 @@ function closeOverflow(e: MouseEvent) {
 onMounted(async () => {
   await loadEvent()
   if (!isEditing.value) {
+    // Aus dem Kalender heraus angelegt: Tag vorbelegen (Uhrzeit per Default-Regel).
+    const dateParam = route.query.date as string | undefined
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      dateOnly.value = dateParam
+    }
     formSnapshot.value = JSON.stringify(form.value)
   }
   window.addEventListener('beforeunload', handleBeforeUnload)

@@ -1,14 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { eventService, accountingService, grantService, pretixService, statisticsService, type Event, type Artist } from '@/services'
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 import type { AiTagsResponse } from '@/services/statistics'
 import { isPastEvent } from '@/utils/eventTime'
+import {
+  buildCalendarDays,
+  buildIcs,
+  dateKey,
+  groupEventsByDay,
+  parseDateKey,
+  shiftCursor,
+  shiftEventToDay,
+  type CalendarDay,
+  type CalendarMode,
+} from '@/utils/calendar'
 import publishedEvents from '@/events.json'
 
 const route = useRoute()
+const router = useRouter()
 const eventsData = ref<PaginatedResponse<Event> | null>(null)
 const accountings = ref<EventAccounting[]>([])
 const grants = ref<GrantApplication[]>([])
@@ -22,148 +34,294 @@ const activeView = ref<'events' | 'calendar' | 'grants' | 'statistics'>('events'
 const selectedYear = ref(new Date().getFullYear())
 
 // ── Kalender ──
-const calendarMode = ref<'month' | 'week'>('month')
+const calendarMode = ref<CalendarMode>('month')
 const calendarCursor = ref(new Date())
+const calendarSearch = ref('')
 const weekdayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
-interface DayEntry {
-  event: Event
-  multiDay: boolean
-  isStart: boolean
+const CALENDAR_MODES = [
+  { key: 'month' as const, label: 'Monat' },
+  { key: 'week' as const, label: 'Woche' },
+  { key: 'day' as const, label: 'Tag' },
+  { key: 'agenda' as const, label: 'Agenda' },
+  { key: 'year' as const, label: 'Jahr' },
+]
+
+const CALENDAR_STATUSES = [
+  { key: 'live' as const, label: 'Live', color: '#16a34a' },
+  { key: 'draft' as const, label: 'Entwurf', color: '#f59e0b' },
+  { key: 'urgent' as const, label: 'Bald, nicht live', color: '#dc2626' },
+  { key: 'cancelled' as const, label: 'Abgesagt', color: '#999' },
+]
+type CalendarStatus = (typeof CALENDAR_STATUSES)[number]['key']
+
+const calendarStatusOn = ref<Record<CalendarStatus, boolean>>({
+  live: true,
+  draft: true,
+  urgent: true,
+  cancelled: true,
+})
+
+function eventStatus(e: Event): CalendarStatus {
+  if (e.cancelled) return 'cancelled'
+  if (publishedIds.value.has(e.id)) return 'live'
+  return isUrgent(e) ? 'urgent' : 'draft'
 }
 
-interface CalendarDay {
-  date: Date
-  key: string
-  inCurrentMonth: boolean
-  isToday: boolean
-  entries: DayEntry[]
+// Linker Rand der Kalender-Chips = Veröffentlichungsstatus (wie die Badges in der Listenansicht).
+function eventStatusColor(e: Event): string {
+  const status = eventStatus(e)
+  return CALENDAR_STATUSES.find(s => s.key === status)!.color
 }
 
-function dateKey(d: Date): string {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+function toggleCalendarStatus(key: CalendarStatus) {
+  calendarStatusOn.value[key] = !calendarStatusOn.value[key]
 }
 
-// Montag als erster Wochentag.
-function startOfWeek(d: Date): Date {
-  const date = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-  const offset = (date.getDay() + 6) % 7
-  date.setDate(date.getDate() - offset)
-  return date
-}
+const calendarEvents = computed(() => {
+  const query = calendarSearch.value.trim().toLowerCase()
+  return events.value.filter(e => {
+    if (!calendarStatusOn.value[eventStatus(e)]) return false
+    if (!query) return true
+    return (
+      e.title.toLowerCase().includes(query) ||
+      e.id.toLowerCase().includes(query) ||
+      e.artists.some(a => a.name.toLowerCase().includes(query))
+    )
+  })
+})
 
-// Events pro Tag; mehrtägige Events (endDate) erscheinen als Band an jedem Tag der Spanne.
-const eventsByDay = computed(() => {
-  const map = new Map<string, DayEntry[]>()
-  for (const e of events.value) {
-    const start = new Date(e.date)
-    const end = e.endDate ? new Date(e.endDate) : start
-    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
-    const lastDay = new Date(end.getFullYear(), end.getMonth(), end.getDate())
-    const multiDay = lastDay.getTime() > startDay.getTime()
-    const startKey = dateKey(startDay)
-    const cur = new Date(startDay)
-    while (cur <= lastDay) {
-      const key = dateKey(cur)
-      if (!map.has(key)) map.set(key, [])
-      map.get(key)!.push({ event: e, multiDay, isStart: key === startKey })
-      cur.setDate(cur.getDate() + 1)
+const eventsByDay = computed(() => groupEventsByDay(calendarEvents.value))
+const calendarDays = computed(() => buildCalendarDays(calendarCursor.value, calendarMode.value, eventsByDay.value))
+
+/** Monats-/Wochenraster zeilenweise, damit die KW-Spalte pro Zeile passt. */
+const calendarWeeks = computed(() => {
+  const rows: { week: number; days: CalendarDay<Event>[] }[] = []
+  const days = calendarDays.value
+  for (let i = 0; i < days.length; i += 7) {
+    rows.push({ week: days[i].week, days: days.slice(i, i + 7) })
+  }
+  return rows
+})
+
+const yearMonths = computed(() => {
+  const year = calendarCursor.value.getFullYear()
+  return Array.from({ length: 12 }, (_, month) => {
+    const cursor = new Date(year, month, 1)
+    return {
+      key: `${year}-${month}`,
+      cursor,
+      label: cursor.toLocaleDateString('de-DE', { month: 'long' }),
+      days: buildCalendarDays(cursor, 'month', eventsByDay.value),
     }
-  }
-  for (const list of map.values()) {
-    // Mehrtägige Bänder zuerst, dann Einzeltermine nach Uhrzeit.
-    list.sort((a, b) => {
-      if (a.multiDay !== b.multiDay) return a.multiDay ? -1 : 1
-      return new Date(a.event.date).getTime() - new Date(b.event.date).getTime()
-    })
-  }
-  return map
+  })
 })
 
-const calendarDays = computed<CalendarDay[]>(() => {
-  const todayKey = dateKey(new Date())
-  const cursor = calendarCursor.value
-  let gridStart: Date
-  let dayCount: number
-  if (calendarMode.value === 'week') {
-    gridStart = startOfWeek(cursor)
-    dayCount = 7
-  } else {
-    const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1)
-    gridStart = startOfWeek(firstOfMonth)
-    const lastOfMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0)
-    const gridEnd = startOfWeek(lastOfMonth)
-    gridEnd.setDate(gridEnd.getDate() + 6)
-    dayCount = Math.round((gridEnd.getTime() - gridStart.getTime()) / 86400000) + 1
-  }
-  const days: CalendarDay[] = []
-  for (let i = 0; i < dayCount; i++) {
-    const d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i)
-    const key = dateKey(d)
-    days.push({
-      date: d,
-      key,
-      inCurrentMonth: d.getMonth() === cursor.getMonth(),
-      isToday: key === todayKey,
-      entries: eventsByDay.value.get(key) || [],
-    })
-  }
-  return days
-})
+const agendaDays = computed(() => calendarDays.value.filter(d => d.entries.length > 0))
+
+const dayEntries = computed(() => calendarDays.value[0]?.entries ?? [])
+
+function dayAriaLabel(day: CalendarDay<Event>): string {
+  const date = day.date.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+  if (!day.entries.length) return `${date}, keine Termine`
+  return `${date}: ${day.entries.map(e => e.event.title).join(', ')}`
+}
 
 const calendarTitle = computed(() => {
   const cursor = calendarCursor.value
+  if (calendarMode.value === 'year') return String(cursor.getFullYear())
   if (calendarMode.value === 'month') {
     return cursor.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
   }
-  const start = startOfWeek(cursor)
-  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6)
+  if (calendarMode.value === 'day') {
+    return cursor.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
+  }
+  const days = calendarDays.value
+  const start = days[0]?.date ?? cursor
+  const end = days[days.length - 1]?.date ?? cursor
   const startStr = start.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
   const endStr = end.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' })
-  return `${startStr} – ${endStr}`
+  const prefix = calendarMode.value === 'week' ? `KW ${days[0]?.week ?? ''} · ` : ''
+  return `${prefix}${startStr} – ${endStr}`
 })
 
 function calendarPrev() {
-  const c = new Date(calendarCursor.value)
-  if (calendarMode.value === 'month') c.setMonth(c.getMonth() - 1)
-  else c.setDate(c.getDate() - 7)
-  calendarCursor.value = c
+  calendarCursor.value = shiftCursor(calendarCursor.value, calendarMode.value, -1)
 }
 
 function calendarNext() {
-  const c = new Date(calendarCursor.value)
-  if (calendarMode.value === 'month') c.setMonth(c.getMonth() + 1)
-  else c.setDate(c.getDate() + 7)
-  calendarCursor.value = c
+  calendarCursor.value = shiftCursor(calendarCursor.value, calendarMode.value, 1)
 }
 
 function calendarToday() {
   calendarCursor.value = new Date()
 }
 
+const calendarJumpValue = computed({
+  get: () => dateKey(calendarCursor.value),
+  set: (val: string) => {
+    if (val) calendarCursor.value = parseDateKey(val)
+  },
+})
+
+function openDay(day: CalendarDay<Event> | Date) {
+  calendarCursor.value = day instanceof Date ? day : day.date
+  calendarMode.value = 'day'
+}
+
+function createEventOn(day: CalendarDay<Event> | Date) {
+  const d = day instanceof Date ? day : day.date
+  router.push({ path: '/admin/events/create', query: { date: dateKey(d) } })
+}
+
 function eventTime(e: Event): string {
   return new Date(e.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Linker Rand der Kalender-Chips = Veröffentlichungsstatus (wie die Badges in der Listenansicht).
-function eventStatusColor(e: Event): string {
-  if (e.cancelled) return '#999'
-  if (publishedIds.value.has(e.id)) return '#16a34a'
-  if (isUrgent(e)) return '#dc2626'
-  return '#f59e0b'
+function artistNames(e: Event): string {
+  return e.artists.map(a => a.name).join(', ')
 }
 
-// Im Monat begrenzt, in der Woche ist pro Tag viel Platz.
-const maxVisibleEntries = computed(() => (calendarMode.value === 'week' ? 20 : 4))
-function visibleEntries(day: CalendarDay): DayEntry[] {
+/** Offene Punkte, die im Kalender als kleine Marker am Chip hängen. */
+function eventWarnings(e: Event): { icon: string; label: string }[] {
+  if (e.cancelled || isPast(e)) return []
+  const warnings: { icon: string; label: string }[] = []
+  if (!e.image_url && !e.image) warnings.push({ icon: '🖼', label: 'Kein Flyer hinterlegt' })
+  if (e.fee && !e.shopLink) warnings.push({ icon: '🎟', label: 'Kein VVK-Shop' })
+  if (!e.helferpadLink) warnings.push({ icon: '🙋', label: 'Kein Helferpad' })
+  return warnings
+}
+
+function eventTooltip(e: Event): string {
+  const parts = [`${eventTime(e)} · ${e.title}`]
+  const artists = artistNames(e)
+  if (artists) parts.push(artists)
+  parts.push(CALENDAR_STATUSES.find(s => s.key === eventStatus(e))!.label)
+  if (vvkTickets.value[e.id] != null) parts.push(`${vvkTickets.value[e.id]} VVK verkauft`)
+  for (const w of eventWarnings(e)) parts.push(w.label)
+  return parts.join('\n')
+}
+
+// Im Monat begrenzt, sonst ist pro Tag genug Platz.
+const maxVisibleEntries = computed(() => (calendarMode.value === 'month' ? 4 : 50))
+function visibleEntries(day: CalendarDay<Event>): CalendarDay<Event>['entries'] {
   return day.entries.slice(0, maxVisibleEntries.value)
 }
-function hiddenCount(day: CalendarDay): number {
+function hiddenCount(day: CalendarDay<Event>): number {
   return Math.max(0, day.entries.length - maxVisibleEntries.value)
 }
+
+// ── Kalender: Drag & Drop ──
+const calendarDrag = ref<{ eventId: string; fromKey: string } | null>(null)
+const calendarDropTarget = ref<string | null>(null)
+
+function onEventDragStart(ev: DragEvent, eventId: string, fromKey: string) {
+  calendarDrag.value = { eventId, fromKey }
+  ev.dataTransfer?.setData('text/plain', eventId)
+  if (ev.dataTransfer) ev.dataTransfer.effectAllowed = 'move'
+}
+
+function onEventDragEnd() {
+  calendarDrag.value = null
+  calendarDropTarget.value = null
+}
+
+function onDayDragOver(day: CalendarDay<Event>) {
+  if (!calendarDrag.value) return
+  calendarDropTarget.value = day.key
+}
+
+async function onDayDrop(day: CalendarDay<Event>) {
+  const drag = calendarDrag.value
+  calendarDrag.value = null
+  calendarDropTarget.value = null
+  if (!drag || drag.fromKey === day.key) return
+
+  const event = events.value.find(e => e.id === drag.eventId)
+  if (!event) return
+
+  const shifted = shiftEventToDay(event, day.key, drag.fromKey)
+  const target = new Date(shifted.date).toLocaleString('de-DE', {
+    weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+  const liveWarning = publishedIds.value.has(event.id)
+    ? '\n\nACHTUNG: Die Veranstaltung ist bereits live — das Datum ändert sich erst nach dem nächsten Deploy auch öffentlich.'
+    : ''
+  if (!confirm(`"${event.title}" auf ${target} verschieben?${liveWarning}`)) return
+
+  const previous = { date: event.date, endDate: event.endDate }
+  event.date = shifted.date
+  event.endDate = shifted.endDate
+  try {
+    await eventService.update(event.id, { date: shifted.date, endDate: shifted.endDate })
+  } catch (e: any) {
+    event.date = previous.date
+    event.endDate = previous.endDate
+    alert('Verschieben fehlgeschlagen: ' + e.message)
+  }
+}
+
+// ── Kalender: Tastatur ──
+const calendarGridRef = ref<HTMLElement | null>(null)
+
+function focusDay(key: string) {
+  nextTick(() => {
+    calendarGridRef.value?.querySelector<HTMLElement>(`.calendar-day[data-day="${key}"]`)?.focus()
+  })
+}
+
+function onCalendarKeydown(ev: KeyboardEvent) {
+  const cell = (ev.target as HTMLElement).closest('.calendar-day') as HTMLElement | null
+  const key = cell?.dataset.day
+  const day = key ? calendarDays.value.find(d => d.key === key) : undefined
+  if (!day) return
+
+  const steps: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }
+  const step = steps[ev.key]
+  if (step !== undefined) {
+    ev.preventDefault()
+    const target = new Date(day.date)
+    target.setDate(target.getDate() + step)
+    // Ausserhalb des aktuellen Rasters den Cursor mitziehen, sonst nur fokussieren.
+    if (!calendarDays.value.some(d => d.key === dateKey(target))) calendarCursor.value = target
+    focusDay(dateKey(target))
+    return
+  }
+
+  if (ev.key === 'Enter' || ev.key === ' ') {
+    ev.preventDefault()
+    openDay(day)
+  } else if (ev.key === 'n' || ev.key === '+') {
+    ev.preventDefault()
+    createEventOn(day)
+  }
+}
+
+// ── Kalender: ICS-Export ──
+function exportIcs() {
+  const ics = buildIcs(calendarEvents.value, { baseUrl: window.location.origin })
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'carousel-veranstaltungen.ics'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+// Ansicht und Kalenderzustand in der URL halten, damit Monat/Modus teil- und reloadbar sind.
+watch([activeView, calendarMode, calendarCursor], () => {
+  const query: Record<string, any> = { ...route.query }
+  if (activeView.value === 'events') delete query.view
+  else query.view = activeView.value
+  if (activeView.value === 'calendar') {
+    query.calMode = calendarMode.value
+    query.calDate = dateKey(calendarCursor.value)
+  } else {
+    delete query.calMode
+    delete query.calDate
+  }
+  router.replace({ query })
+})
 
 // ── Statistik ──
 const aiTags = ref<AiTagsResponse | null>(null)
@@ -571,6 +729,14 @@ onMounted(() => {
   } else if (route.query.view === 'calendar') {
     activeView.value = 'calendar'
   }
+  const calModeParam = route.query.calMode as string | undefined
+  if (calModeParam && CALENDAR_MODES.some(m => m.key === calModeParam)) {
+    calendarMode.value = calModeParam as CalendarMode
+  }
+  const calDateParam = route.query.calDate as string | undefined
+  if (calDateParam && /^\d{4}-\d{2}-\d{2}$/.test(calDateParam)) {
+    calendarCursor.value = parseDateKey(calDateParam)
+  }
   const filterParam = route.query.filter as string | undefined
   if (filterParam && filters.some(f => f.key === filterParam)) {
     activeFilter.value = filterParam as typeof activeFilter.value
@@ -666,50 +832,166 @@ onMounted(() => {
   template(v-if="activeView === 'calendar'")
     .calendar-toolbar
       .calendar-nav
-        button.cal-nav-btn(@click="calendarPrev" title="Zurück") ‹
+        button.cal-nav-btn(@click="calendarPrev" title="Zurück" aria-label="Zurück") ‹
         button.cal-today-btn(@click="calendarToday") Heute
-        button.cal-nav-btn(@click="calendarNext" title="Weiter") ›
-      .calendar-title {{ calendarTitle }}
-      .calendar-mode
-        button.mode-btn(:class="{ active: calendarMode === 'month' }" @click="calendarMode = 'month'") Monat
-        button.mode-btn(:class="{ active: calendarMode === 'week' }" @click="calendarMode = 'week'") Woche
+        button.cal-nav-btn(@click="calendarNext" title="Weiter" aria-label="Weiter") ›
+        input.cal-jump(
+          type="date"
+          v-model="calendarJumpValue"
+          title="Zu Datum springen"
+          aria-label="Zu Datum springen"
+        )
+      .calendar-title(aria-live="polite") {{ calendarTitle }}
+      .calendar-mode(role="group" aria-label="Kalenderansicht")
+        button.mode-btn(
+          v-for="m in CALENDAR_MODES"
+          :key="m.key"
+          :class="{ active: calendarMode === m.key }"
+          :aria-pressed="calendarMode === m.key"
+          @click="calendarMode = m.key"
+        ) {{ m.label }}
 
-    .calendar-legend
-      span.legend-item
-        span.legend-swatch(style="background: #16a34a")
-        | Live
-      span.legend-item
-        span.legend-swatch(style="background: #f59e0b")
-        | Entwurf
-      span.legend-item
-        span.legend-swatch(style="background: #dc2626")
-        | Bald, nicht live
-      span.legend-item
-        span.legend-swatch(style="background: #999")
-        | Abgesagt
+    .calendar-filters
+      input.cal-search(
+        v-model="calendarSearch"
+        type="search"
+        placeholder="Im Kalender suchen..."
+        aria-label="Kalender durchsuchen"
+      )
+      button.legend-item(
+        v-for="s in CALENDAR_STATUSES"
+        :key="s.key"
+        :class="{ off: !calendarStatusOn[s.key] }"
+        :aria-pressed="calendarStatusOn[s.key]"
+        :title="calendarStatusOn[s.key] ? `${s.label} ausblenden` : `${s.label} einblenden`"
+        @click="toggleCalendarStatus(s.key)"
+      )
+        span.legend-swatch(:style="{ background: s.color }")
+        | {{ s.label }}
+      span.cal-count {{ calendarEvents.length }} Termine
+      button.cal-export-btn(@click="exportIcs" title="Gefilterte Termine als .ics-Datei exportieren") ⤓ ICS
 
     .loading(v-if="isLoading") Veranstaltungen werden geladen...
     .error(v-else-if="error") {{ error }}
-    .calendar-grid(v-else :class="`mode-${calendarMode}`")
-      .calendar-weekday(v-for="w in weekdayLabels" :key="w") {{ w }}
-      .calendar-day(
-        v-for="day in calendarDays"
-        :key="day.key"
-        :class="{ 'other-month': !day.inCurrentMonth, 'is-today': day.isToday }"
+
+    //- Monats- und Wochenraster
+    .calendar-grid(
+      v-else-if="calendarMode === 'month' || calendarMode === 'week'"
+      ref="calendarGridRef"
+      :class="`mode-${calendarMode}`"
+      role="grid"
+      :aria-label="`Kalender ${calendarTitle}`"
+      @keydown="onCalendarKeydown"
+    )
+      .calendar-corner KW
+      .calendar-weekday(v-for="w in weekdayLabels" :key="w" role="columnheader") {{ w }}
+      template(v-for="row in calendarWeeks" :key="row.days[0].key")
+        .calendar-weeknum(role="rowheader") {{ row.week }}
+        .calendar-day(
+          v-for="day in row.days"
+          :key="day.key"
+          :data-day="day.key"
+          role="gridcell"
+          tabindex="0"
+          :aria-label="dayAriaLabel(day)"
+          :class="{ 'other-month': !day.inCurrentMonth, 'is-today': day.isToday, 'is-weekend': day.isWeekend, 'drop-target': calendarDropTarget === day.key }"
+          @dblclick.self="createEventOn(day)"
+          @dragover.prevent="onDayDragOver(day)"
+          @drop.prevent="onDayDrop(day)"
+        )
+          .day-head
+            button.day-number(@click.stop="openDay(day)" title="Tagesansicht öffnen") {{ day.date.getDate() }}
+            button.day-add(
+              @click.stop="createEventOn(day)"
+              :aria-label="`Veranstaltung am ${day.key} anlegen`"
+              title="Veranstaltung an diesem Tag anlegen"
+            ) +
+          .day-events(@dblclick.self="createEventOn(day)")
+            .cal-event(
+              v-for="entry in visibleEntries(day)"
+              :key="entry.event.id"
+              draggable="true"
+              :class="{ cancelled: entry.event.cancelled, multiday: entry.multiDay, dragging: calendarDrag && calendarDrag.eventId === entry.event.id }"
+              :style="{ borderLeftColor: eventStatusColor(entry.event) }"
+              :title="eventTooltip(entry.event)"
+              @click.stop="$router.push(`/admin/events/${entry.event.id}`)"
+              @dragstart="onEventDragStart($event, entry.event.id, day.key)"
+              @dragend="onEventDragEnd"
+            )
+              span.cal-event-time(v-if="!entry.multiDay") {{ eventTime(entry.event) }}
+              span.cal-event-title {{ entry.event.title }}
+              span.cal-event-artists(v-if="calendarMode === 'week' && artistNames(entry.event)") {{ artistNames(entry.event) }}
+              span.cal-badges(v-if="vvkTickets[entry.event.id] != null || eventWarnings(entry.event).length")
+                span.cal-vvk(v-if="vvkTickets[entry.event.id] != null") 🎟 {{ vvkTickets[entry.event.id] }}
+                span.cal-warn(v-for="w in eventWarnings(entry.event)" :key="w.icon" :title="w.label") {{ w.icon }}
+            button.cal-more(v-if="hiddenCount(day) > 0" @click.stop="openDay(day)") +{{ hiddenCount(day) }} weitere
+
+    //- Tagesansicht
+    .day-view(v-else-if="calendarMode === 'day'")
+      .day-view-head
+        h3 {{ calendarTitle }}
+        button.btn-primary(@click="createEventOn(calendarCursor)") + Veranstaltung an diesem Tag
+      .empty(v-if="!dayEntries.length") Keine Termine an diesem Tag.
+      .day-entry(
+        v-for="entry in dayEntries"
+        :key="entry.event.id"
+        :class="{ cancelled: entry.event.cancelled }"
+        :style="{ borderLeftColor: eventStatusColor(entry.event) }"
+        @click="$router.push(`/admin/events/${entry.event.id}`)"
       )
-        .day-number {{ day.date.getDate() }}
-        .day-events
-          .cal-event(
-            v-for="entry in visibleEntries(day)"
+        .day-entry-time {{ entry.multiDay ? 'mehrtägig' : eventTime(entry.event) }}
+        .day-entry-body
+          .day-entry-title {{ entry.event.title }}
+          .day-entry-artists(v-if="artistNames(entry.event)") {{ artistNames(entry.event) }}
+          .day-entry-meta
+            span(v-if="entry.event.fee") VVK {{ entry.event.fee }} €
+            span(v-if="entry.event.feeAk") AK {{ entry.event.feeAk }} €
+            span(v-if="vvkTickets[entry.event.id] != null") {{ vvkTickets[entry.event.id] }} verkauft
+            span.cal-warn(v-for="w in eventWarnings(entry.event)" :key="w.icon") {{ w.icon }} {{ w.label }}
+        img.day-entry-thumb(v-if="entry.event.image_url" :src="entry.event.image_url" alt="")
+
+    //- Agenda (nächste drei Monate)
+    .agenda-view(v-else-if="calendarMode === 'agenda'")
+      .empty(v-if="!agendaDays.length") Keine Termine in den nächsten drei Monaten.
+      .agenda-day(v-for="day in agendaDays" :key="day.key")
+        button.agenda-date(:class="{ 'is-today': day.isToday }" @click="openDay(day)")
+          span.agenda-dow {{ day.date.toLocaleDateString('de-DE', { weekday: 'short' }) }}
+          span.agenda-dom {{ day.date.getDate() }}
+          span.agenda-mon {{ day.date.toLocaleDateString('de-DE', { month: 'short' }) }}
+        .agenda-entries
+          .agenda-entry(
+            v-for="entry in day.entries"
             :key="entry.event.id"
-            :class="{ cancelled: entry.event.cancelled, multiday: entry.multiDay }"
+            :class="{ cancelled: entry.event.cancelled }"
             :style="{ borderLeftColor: eventStatusColor(entry.event) }"
-            :title="entry.event.title"
             @click="$router.push(`/admin/events/${entry.event.id}`)"
           )
-            span.cal-event-time(v-if="!entry.multiDay") {{ eventTime(entry.event) }}
-            span.cal-event-title {{ entry.event.title }}
-          .cal-more(v-if="hiddenCount(day) > 0") +{{ hiddenCount(day) }} weitere
+            span.agenda-time {{ entry.multiDay ? 'mehrtägig' : eventTime(entry.event) }}
+            span.agenda-title {{ entry.event.title }}
+            span.agenda-artists(v-if="artistNames(entry.event)") {{ artistNames(entry.event) }}
+            span.cal-vvk(v-if="vvkTickets[entry.event.id] != null") 🎟 {{ vvkTickets[entry.event.id] }}
+            span.cal-warn(v-for="w in eventWarnings(entry.event)" :key="w.icon" :title="w.label") {{ w.icon }}
+
+    //- Jahresübersicht
+    .year-view(v-else)
+      .year-month(v-for="m in yearMonths" :key="m.key")
+        button.year-month-title(@click="calendarCursor = m.cursor; calendarMode = 'month'") {{ m.label }}
+        .year-grid
+          .year-weekday(v-for="w in weekdayLabels" :key="w") {{ w.slice(0, 1) }}
+          button.year-day(
+            v-for="day in m.days"
+            :key="day.key"
+            :class="{ 'other-month': !day.inCurrentMonth, 'is-today': day.isToday }"
+            :title="dayAriaLabel(day)"
+            @click="openDay(day)"
+          )
+            span.year-day-num {{ day.date.getDate() }}
+            span.year-dots
+              span.year-dot(
+                v-for="entry in day.entries.slice(0, 3)"
+                :key="entry.event.id"
+                :style="{ background: eventStatusColor(entry.event) }"
+              )
 
   //- ── Grants View ──
   template(v-if="activeView === 'grants'")
@@ -1371,6 +1653,15 @@ a.fee:hover {
   color: white;
 }
 
+.cal-jump {
+  height: 2.5rem;
+  border: 0.2rem solid black;
+  background: white;
+  padding: 0 0.5rem;
+  font-family: inherit;
+  font-weight: 700;
+}
+
 .calendar-title {
   font-size: 1.3rem;
   font-weight: 900;
@@ -1402,19 +1693,43 @@ a.fee:hover {
   background: #e0e0e0;
 }
 
-.calendar-legend {
+.calendar-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+.cal-search {
+  flex: 1 1 14rem;
+  max-width: 22rem;
+  height: 2.2rem;
+  border: 0.2rem solid black;
+  padding: 0 0.6rem;
+  font-family: inherit;
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  height: 2.2rem;
+  padding: 0 0.6rem;
+  border: 0.2rem solid black;
+  background: white;
+  color: black;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.legend-item.off {
+  opacity: 0.4;
+  text-decoration: line-through;
 }
 
 .legend-swatch {
@@ -1423,20 +1738,58 @@ a.fee:hover {
   border: 0.15rem solid black;
 }
 
+.cal-count {
+  margin-left: auto;
+  color: #666;
+}
+
+.cal-export-btn {
+  height: 2.2rem;
+  padding: 0 0.8rem;
+  border: 0.2rem solid black;
+  background: white;
+  color: black;
+  font-weight: 700;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.cal-export-btn:hover {
+  background: black;
+  color: white;
+}
+
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: 2.2rem repeat(7, 1fr);
   border-top: 0.2rem solid black;
   border-left: 0.2rem solid black;
 }
 
-.calendar-weekday {
+.calendar-weekday,
+.calendar-corner {
   padding: 0.5rem;
   background: black;
   color: white;
   font-weight: 700;
   font-size: 0.8rem;
   text-align: center;
+  border-right: 0.2rem solid black;
+  border-bottom: 0.2rem solid black;
+}
+
+.calendar-corner {
+  font-size: 0.65rem;
+}
+
+.calendar-weeknum {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  color: #666;
+  font-size: 0.7rem;
+  font-weight: 700;
   border-right: 0.2rem solid black;
   border-bottom: 0.2rem solid black;
 }
@@ -1453,6 +1806,16 @@ a.fee:hover {
   overflow: hidden;
 }
 
+.calendar-day:focus-visible {
+  outline: 0.2rem solid #0066ff;
+  outline-offset: -0.2rem;
+}
+
+.calendar-day.drop-target {
+  background: #d8ecff;
+  box-shadow: inset 0 0 0 0.2rem #0066ff;
+}
+
 .calendar-grid.mode-week .calendar-day {
   min-height: 22rem;
 }
@@ -1465,6 +1828,10 @@ a.fee:hover {
   color: #aaa;
 }
 
+.calendar-day.is-weekend:not(.other-month):not(.is-today) {
+  background: #fafafa;
+}
+
 .calendar-day.is-today {
   background: #fff8d6;
 }
@@ -1472,22 +1839,64 @@ a.fee:hover {
 .calendar-day.is-today .day-number {
   background: black;
   color: white;
-  width: 1.6rem;
-  height: 1.6rem;
-  display: inline-flex;
+}
+
+.day-head {
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
 }
 
 .day-number {
   font-weight: 700;
   font-size: 0.85rem;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: inherit;
+  letter-spacing: normal;
+  padding: 0;
+  cursor: pointer;
+}
+
+.day-number:hover {
+  background: #ffcc00;
+  color: black;
+}
+
+.day-add {
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 0.15rem solid black;
+  background: white;
+  color: black;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: normal;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.calendar-day:hover .day-add,
+.calendar-day:focus-within .day-add {
+  opacity: 1;
+}
+
+.day-add:hover {
+  background: black;
+  color: white;
 }
 
 .day-events {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  flex: 1;
 }
 
 .cal-event {
@@ -1505,6 +1914,10 @@ a.fee:hover {
 
 .cal-event:hover {
   background: #333;
+}
+
+.cal-event.dragging {
+  opacity: 0.4;
 }
 
 .cal-event.multiday {
@@ -1528,6 +1941,16 @@ a.fee:hover {
   font-weight: 700;
   color: #666;
   padding: 0.1rem 0.2rem;
+  border: none;
+  background: none;
+  text-align: left;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.cal-more:hover {
+  color: black;
+  text-decoration: underline;
 }
 
 .cal-event-time {
@@ -1541,11 +1964,288 @@ a.fee:hover {
   white-space: nowrap;
 }
 
+.cal-event-artists {
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.cal-badges {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  margin-top: 0.1rem;
+}
+
 /* In der Wochenansicht ist Platz — Titel voll umbrechen statt abschneiden. */
 .calendar-grid.mode-week .cal-event-title {
   white-space: normal;
   overflow: visible;
 }
+
+/* ── Kalender: Tagesansicht ── */
+.day-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.day-view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.day-view-head h3 {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.day-entry {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 0.2rem solid black;
+  border-left-width: 0.6rem;
+  padding: 0.75rem;
+  background: white;
+  cursor: pointer;
+}
+
+.day-entry:hover {
+  background: #f5f5f5;
+}
+
+.day-entry.cancelled .day-entry-title {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.day-entry-time {
+  font-weight: 900;
+  font-size: 1.1rem;
+  min-width: 5rem;
+}
+
+.day-entry-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.day-entry-title {
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+
+.day-entry-artists {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.day-entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #666;
+}
+
+.day-entry-thumb {
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border: 0.2rem solid black;
+}
+
+/* ── Kalender: Agenda ── */
+.agenda-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.agenda-day {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.agenda-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  flex: 0 0 3.5rem;
+  padding: 0.3rem 0;
+  border: 0.2rem solid black;
+  background: white;
+  color: black;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.agenda-date.is-today {
+  background: black;
+  color: white;
+}
+
+.agenda-date:hover {
+  background: #ffcc00;
+  color: black;
+}
+
+.agenda-dow,
+.agenda-mon {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.agenda-dom {
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.agenda-entries {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.agenda-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  border: 0.2rem solid black;
+  border-left-width: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: white;
+  cursor: pointer;
+}
+
+.agenda-entry:hover {
+  background: #f5f5f5;
+}
+
+.agenda-entry.cancelled .agenda-title {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.agenda-time {
+  font-weight: 900;
+  font-size: 0.8rem;
+  min-width: 4rem;
+}
+
+.agenda-title {
+  font-weight: 700;
+}
+
+.agenda-artists {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* ── Kalender: Jahresübersicht ── */
+.year-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 1rem;
+}
+
+.year-month {
+  border: 0.2rem solid black;
+  padding: 0.4rem;
+}
+
+.year-month-title {
+  display: block;
+  width: 100%;
+  border: none;
+  background: black;
+  color: white;
+  font-weight: 900;
+  font-size: 0.8rem;
+  letter-spacing: normal;
+  padding: 0.25rem;
+  margin-bottom: 0.3rem;
+  cursor: pointer;
+}
+
+.year-month-title:hover {
+  background: #ffcc00;
+  color: black;
+}
+
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.1rem;
+}
+
+.year-weekday {
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-align: center;
+  color: #666;
+}
+
+.year-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  aspect-ratio: 1;
+  border: none;
+  background: none;
+  color: black;
+  font-size: 0.6rem;
+  letter-spacing: normal;
+  padding: 0.1rem 0;
+  cursor: pointer;
+}
+
+.year-day:hover {
+  background: #ffcc00;
+}
+
+.year-day.other-month {
+  visibility: hidden;
+}
+
+.year-day.is-today .year-day-num {
+  background: black;
+  color: white;
+  border-radius: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.year-dots {
+  display: flex;
+  gap: 0.1rem;
+  min-height: 0.3rem;
+}
+
+.year-dot {
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 50%;
+}
+
 .grants-section {
   display: flex;
   flex-direction: column;
@@ -2014,6 +2714,11 @@ a.fee:hover {
   .calendar-nav,
   .calendar-mode {
     justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .calendar-grid {
+    grid-template-columns: 1.6rem repeat(7, 1fr);
   }
 
   .calendar-day {
@@ -2023,6 +2728,27 @@ a.fee:hover {
 
   .calendar-grid.mode-week .calendar-day {
     min-height: 10rem;
+  }
+
+  /* Zu wenig Platz in den Tageszellen — Anlegen läuft hier über die Tagesansicht. */
+  .day-add {
+    display: none;
+  }
+
+  .cal-search {
+    max-width: none;
+  }
+
+  .cal-count {
+    margin-left: 0;
+  }
+
+  .day-entry {
+    flex-wrap: wrap;
+  }
+
+  .year-view {
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
   }
 
   .cal-event {
