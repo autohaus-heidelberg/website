@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { eventService, artistService, accountingService, stockService, anfrageService, grantService } from '@/services'
 import { taxExportService } from '@/services/accounting'
+import { isPastEvent } from '@/utils/eventTime'
 import type { StockEntry, GrantSummary } from '@/types/accounting'
 
 const authStore = useAuthStore()
@@ -49,7 +50,7 @@ onMounted(async () => {
     // Upcoming events
     const now = new Date()
     const upcoming = eventsData.results
-      .filter(e => new Date(e.endDate || e.date) > now)
+      .filter(e => !isPastEvent(e, now))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     upcomingCount.value = upcoming.length
 

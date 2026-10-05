@@ -5,6 +5,7 @@ import { eventService, accountingService, grantService, pretixService, statistic
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 import type { AiTagsResponse } from '@/services/statistics'
+import { isPastEvent } from '@/utils/eventTime'
 import publishedEvents from '@/events.json'
 
 const route = useRoute()
@@ -244,13 +245,19 @@ function daysUntil(event: Event): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
+// Veranstaltungen gehen erst am Morgen danach in "Vergangen" über, damit sie
+// über die Nacht hinweg noch oben in der Kommend-Liste stehen.
+function isPast(event: Event): boolean {
+  return isPastEvent(event, now)
+}
+
 const filteredEvents = computed(() => {
   let list = events.value
 
   if (activeFilter.value === 'upcoming') {
-    list = list.filter(e => new Date(e.endDate || e.date) > now)
+    list = list.filter(e => !isPast(e))
   } else if (activeFilter.value === 'past') {
-    list = list.filter(e => new Date(e.endDate || e.date) <= now)
+    list = list.filter(e => isPast(e))
   }
 
   list = [...list].sort((a, b) => {
@@ -271,8 +278,8 @@ const filteredEvents = computed(() => {
 function filterCount(key: string) {
   const list = events.value
   if (key === 'all') return list.length
-  if (key === 'upcoming') return list.filter(e => new Date(e.date) > now).length
-  if (key === 'past') return list.filter(e => new Date(e.date) <= now).length
+  if (key === 'upcoming') return list.filter(e => !isPast(e)).length
+  if (key === 'past') return list.filter(e => isPast(e)).length
   return 0
 }
 
@@ -310,7 +317,7 @@ async function loadEvents() {
 async function loadVvkData() {
   if (!eventsData.value) return
   const now = new Date()
-  const upcomingWithShop = eventsData.value.results.filter(e => e.shopLink && new Date(e.date) > now)
+  const upcomingWithShop = eventsData.value.results.filter(e => e.shopLink && !isPastEvent(e, now))
   const results = await Promise.allSettled(
     upcomingWithShop.map(ev => pretixService.getTicketCount(ev.id).then(data => ({ id: ev.id, tickets: data.total_tickets })))
   )
@@ -614,7 +621,7 @@ onMounted(() => {
       .event-card(
         v-for="event in filteredEvents"
         :key="event.id"
-        :class="{ 'is-past': new Date(event.date) <= now }"
+        :class="{ 'is-past': isPast(event) }"
         @click="$router.push(`/admin/events/${event.id}`)"
       )
         .event-header

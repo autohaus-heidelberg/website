@@ -24,6 +24,7 @@
 import { computed, ref, watchEffect } from "vue";
 import { events, type Event } from "../events";
 import EventPreview from "../components/EventPreview.vue";
+import { isPastEvent } from "@/utils/eventTime";
 import dayjs from "dayjs";
 
 const props = withDefaults(defineProps<{ view?: "list" | "gallery" }>(), {
@@ -37,8 +38,8 @@ const upcoming = computed(() =>
   events
     // Multi-day events (e.g. exhibitions) only count as over once their endDate passes
     .map((item) => ({ ...item, date_d: dayjs(item.endDate || item.date) }))
-    // Only show dates that are newer than yesterday (naming is misleading; actually shows *past* events)
-    .filter((item) => item.date_d.isBefore(dayjs().subtract(1, "day")))
+    // Naming is misleading; this actually shows *past* events
+    .filter((item) => isPastEvent(item))
     .sort((a, b) => (a.date_d.isBefore(b.date_d) ? 1 : -1))
 );
 

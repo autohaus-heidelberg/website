@@ -8,6 +8,7 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import CircularLogo from "../components/CircularLogo.vue"
+import { isPastEvent } from "@/utils/eventTime";
 import { useAuthStore } from "@/stores/auth";
 
 const authStore = useAuthStore();
@@ -24,8 +25,7 @@ const ongoing = computed(() =>
 const upcoming = computed(() =>
   events
     .map((item) => ({ ...item, date_d: dayjs(item.date) }))
-    // Only show dates that are newer than yesterday
-    .filter((item) => item.date_d.isAfter(dayjs().subtract(1, "day")))
+    .filter((item) => !isPastEvent(item))
     // Already-started multi-day events are shown in the "Läuft aktuell" section instead
     .filter((item) => !ongoing.value.some((o) => o.id === item.id))
     .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
