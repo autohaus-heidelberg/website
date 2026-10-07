@@ -73,23 +73,25 @@ test('Rechner-Basis bleibt stehen, wenn Gagen gebucht werden', async ({ page }) 
   await expect(page.locator('.deal-calc-net')).toContainText('934,58')
 
   for (const name of BANDS) {
-    await expect(bandRow(page, name).locator('.band-deal-deal')).toContainText('467,29')
-    await bandRow(page, name).getByRole('button', { name: 'Als Ausgabe übernehmen' }).click()
+    await expect(bandRow(page, name).locator('.band-deal-amount')).toContainText('467,29')
+    await bandRow(page, name).getByRole('button', { name: '+ Als Gage buchen' }).click()
   }
 
   // Weder die Basis noch die gebuchten Beträge bewegen sich
   await expect(calcBase).toHaveValue('1000.00')
   for (const name of BANDS) {
-    await expect(bandRow(page, name).locator('.band-deal-recorded')).toContainText('467,29')
+    await expect(bandRow(page, name).locator('.band-deal-status')).toContainText('gebucht')
     await expect(bandRow(page, name).locator('.tag-warn')).toHaveCount(0)
   }
+  await expect(page.locator('.expense-row .amount-input').first()).toHaveValue('467.29')
 
   await page.waitForTimeout(2500)
   await page.reload()
   for (const name of BANDS) {
-    await expect(bandRow(page, name).locator('.band-deal-recorded')).toContainText('467,29', { timeout: 15_000 })
+    await expect(bandRow(page, name).locator('.band-deal-status')).toContainText('gebucht', { timeout: 15_000 })
     await expect(bandRow(page, name).locator('.tag-warn')).toHaveCount(0)
   }
+  await expect(page.locator('.expense-row .amount-input').first()).toHaveValue('467.29')
 })
 
 test('Rechner zieht die USt ab und lässt sich überschreiben', async ({ page }) => {
@@ -102,11 +104,13 @@ test('Rechner zieht die USt ab und lässt sich überschreiben', async ({ page })
   // 642 € brutto => 600 € netto => 50 % = 300 € (nicht 321 €)
   await calcBase.fill('642')
   await expect(page.locator('.deal-calc-net')).toContainText('600,00')
-  await expect(bandRow(page, BANDS[0]).locator('.band-deal-deal')).toContainText('300,00')
+  await expect(bandRow(page, BANDS[0]).locator('.band-deal-amount')).toContainText('300,00')
 
-  await page.getByRole('button', { name: '↺ aus Abrechnung' }).click()
-  await expect(calcBase).toHaveValue('1000.00')
-  await expect(bandRow(page, BANDS[0]).locator('.band-deal-deal')).toContainText('467,29')
+  // Zurücksetzen geht nur über einen Reload — der frühere Button dafür
+  // wurde bewusst entfernt.
+  await page.reload()
+  await expect(calcBase).toHaveValue('1000.00', { timeout: 15_000 })
+  await expect(bandRow(page, BANDS[0]).locator('.band-deal-amount')).toContainText('467,29')
 })
 
 test('Abrechnung rechnet Auszahlungen weiterhin zurück', async ({ page }) => {
