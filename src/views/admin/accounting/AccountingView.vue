@@ -4559,8 +4559,13 @@ h2 {
   background: #e8f5e9;
 }
 
+/* Auffälliger Verbrauch als linker Balken (wie die Status-Markierung im
+ * Kalender), nicht als Hintergrund: sonst überschreibt er das Grün der
+ * gezählten Zeile und die sieht aus wie eine noch ungezählte.
+ * Als inset-shadow statt border-left, damit der Zeileninhalt nicht
+ * gegenüber den übrigen Zeilen verspringt. */
 .inventory-row.inv-miscount {
-  background: #fff3cd;
+  box-shadow: inset 0.3rem 0 0 #e8710a;
 }
 
 .inventory-row.inv-conflict {
@@ -4602,17 +4607,17 @@ h2 {
    historical norm, so remaining stock was probably not counted. */
 .miscount-warning {
   font-size: 0.75rem;
-  color: #b8860b;
+  color: #e8710a;
   margin-left: 0.25rem;
   cursor: help;
 }
 
 .inventory-row-miscount {
-  background: #fff3cd;
-  border-left: 4px solid #f0ad4e;
+  background: #fff0e2;
+  border-left: 4px solid #e8710a;
   padding: 0.5em 1em;
   font-size: 0.9em;
-  color: #7a5c00;
+  color: #8a4500;
   display: flex;
   gap: 0.5em;
   align-items: flex-start;
@@ -4628,7 +4633,7 @@ h2 {
 }
 
 .inventory-row-miscount .miscount-text strong {
-  color: #7a5c00;
+  color: #8a4500;
 }
 
 /* Top banner shown when any drink has an unresolved conflict. */
@@ -4717,11 +4722,6 @@ h2 {
 }
 
 /* Mobile card variant */
-.inv-card.inv-conflict {
-  background: #ffebee;
-  border-color: #d32f2f;
-}
-
 .inv-card-conflict {
   background: #ffcdd2;
   color: #b71c1c;
@@ -4736,14 +4736,9 @@ h2 {
   color: #d32f2f;
 }
 
-.inv-card.inv-miscount {
-  background: #fff3cd;
-  border-color: #f0ad4e;
-}
-
 .inv-card-miscount {
-  background: #ffe8a1;
-  color: #7a5c00;
+  background: #ffe0c2;
+  color: #8a4500;
   font-size: 0.85em;
   padding: 0.4em 0.6em;
   border-radius: 4px;
@@ -4752,7 +4747,7 @@ h2 {
 }
 
 .inv-card-miscount strong {
-  color: #7a5c00;
+  color: #8a4500;
 }
 
 /* ── Mobile Inventory Cards ── */
@@ -4783,6 +4778,17 @@ h2 {
 .inv-card.inv-confirmed {
   background: #e8f5e9;
   border-color: #43a047;
+}
+
+/* Warn-Zustände müssen nach pending/confirmed stehen, sonst überschreiben
+ * deren border-color die Warnung. Reihenfolge = Dringlichkeit. */
+.inv-card.inv-miscount {
+  border-color: #e8710a;
+}
+
+.inv-card.inv-conflict {
+  background: #ffebee;
+  border-color: #d32f2f;
 }
 
 .inv-card-header {
