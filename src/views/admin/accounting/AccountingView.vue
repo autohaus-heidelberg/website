@@ -224,6 +224,10 @@ const uploadingFiles = ref<{ name: string }[]>([])
 const dragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
+const renamingDocId = ref<number | null>(null)
+const renameDraft = ref('')
+const renameBusy = ref(false)
+const renameError = ref('')
 
 // ── Expense receipt scan (AI) ────────
 const expenseScanInput = ref<HTMLInputElement | null>(null)
@@ -2220,6 +2224,38 @@ async function deleteDocument(doc: EventDocument) {
   }
 }
 
+function startRenameDocument(doc: EventDocument) {
+  renamingDocId.value = doc.id
+  renameDraft.value = doc.file_name
+  renameError.value = ''
+}
+
+function cancelRenameDocument() {
+  renamingDocId.value = null
+  renameDraft.value = ''
+  renameError.value = ''
+}
+
+async function saveRenameDocument(doc: EventDocument) {
+  const name = renameDraft.value.trim()
+  if (!name || name === doc.file_name) {
+    cancelRenameDocument()
+    return
+  }
+  renameBusy.value = true
+  renameError.value = ''
+  try {
+    const updated = await documentService.rename(props.eventId, doc.id, name)
+    const idx = documents.value.findIndex(d => d.id === doc.id)
+    if (idx !== -1) documents.value[idx] = updated
+    cancelRenameDocument()
+  } catch (err: any) {
+    renameError.value = err.response?.data?.error || 'Umbenennen fehlgeschlagen'
+  } finally {
+    renameBusy.value = false
+  }
+}
+
 function closeOverflow(e: MouseEvent) {
   if (!(e.target as HTMLElement).closest('.btn-overflow') && !(e.target as HTMLElement).closest('.overflow-dropdown')) {
     showOverflow.value = false
@@ -3129,8 +3165,19 @@ function clearPendingNumberSelect() {
             tbody
               tr(v-for="doc in documents" :key="doc.id")
                 td
-                  a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
-                  span(v-else) {{ doc.file_name }}
+                  .doc-rename(v-if="renamingDocId === doc.id")
+                    input.doc-rename-input(
+                      v-model="renameDraft"
+                      :disabled="renameBusy"
+                      @keydown.enter.prevent="saveRenameDocument(doc)"
+                      @keydown.esc.prevent="cancelRenameDocument()"
+                      autofocus
+                    )
+                    button.btn-rename-save(@click="saveRenameDocument(doc)" :disabled="renameBusy" title="Speichern") ✓
+                    button.btn-rename-cancel(@click="cancelRenameDocument()" :disabled="renameBusy" title="Abbrechen") ✕
+                  template(v-else)
+                    a.doc-link(v-if="doc.drive_url" :href="doc.drive_url" target="_blank") {{ doc.file_name }}
+                    span(v-else) {{ doc.file_name }}
                 td {{ new Date(doc.uploaded_at).toLocaleString('de-DE') }}
                 td {{ doc.uploaded_by_name }}
                 td.doc-actions
@@ -3141,8 +3188,14 @@ function clearPendingNumberSelect() {
                   )
                     span(v-if="scanningDocId === doc.id") 🤖…
                     span(v-else) 🧾 Als Ausgabe
+                  button.btn-rename(
+                    v-if="renamingDocId !== doc.id"
+                    @click="startRenameDocument(doc)"
+                    title="Beleg umbenennen"
+                  ) ✏️
                   button.btn-delete(@click="deleteDocument(doc)") ✕
 
+        .scan-error(v-if="renameError") ⚠️ {{ renameError }}
         .scan-error(v-if="scanDocError") ⚠️ {{ scanDocError }}
         .scan-success(v-if="scanDocSuccess") ✓ {{ scanDocSuccess }}
 
@@ -5547,6 +5600,60 @@ h2 {
 }
 
 .btn-scan-doc:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.btn-rename {
+  padding: 0.25rem 0.4rem;
+  background: white;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.btn-rename:hover {
+  background: black;
+}
+
+.doc-rename {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.doc-rename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 0.15rem solid black;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.btn-rename-save,
+.btn-rename-cancel {
+  padding: 0.25rem 0.5rem;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.btn-rename-save {
+  background: black;
+  color: white;
+}
+
+.btn-rename-cancel {
+  background: white;
+  color: black;
+}
+
+.btn-rename-save:disabled,
+.btn-rename-cancel:disabled {
   opacity: 0.6;
   cursor: default;
 }
