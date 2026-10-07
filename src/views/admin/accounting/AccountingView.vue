@@ -3772,26 +3772,6 @@ h2 {
   white-space: nowrap;
 }
 
-.btn-save {
-  padding: 0.4rem 1rem;
-  background: black;
-  color: white;
-  border: 0.2rem solid black;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 0.8rem;
-  transition: filter 0.2s;
-}
-
-.btn-save:hover {
-  filter: brightness(120%);
-}
-
-.btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .tab-grant {
   border-left: 0.15rem solid black;
   margin-left: auto;
@@ -3823,68 +3803,6 @@ h2 {
   border: 0.25rem solid black;
   z-index: 100;
   min-width: 12rem;
-}
-
-.status-badge {
-  font-size: 0.7rem;
-  padding: 0.2rem 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border: 0.125rem solid transparent;
-  white-space: nowrap;
-}
-
-.status-draft {
-  background: white;
-  color: #555;
-  border-color: #999;
-}
-
-.status-final {
-  background: #16a34a;
-  color: white;
-  border-color: #16a34a;
-}
-
-.status-badge.clickable {
-  display: inline-flex;
-  align-items: center;
-  appearance: none;
-  -webkit-appearance: none;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  position: relative;
-}
-
-.status-badge.clickable .badge-hover {
-  display: none;
-}
-
-.status-badge.clickable:hover:not(:disabled) .badge-default {
-  display: none;
-}
-
-.status-badge.clickable:hover:not(:disabled) .badge-hover {
-  display: inline;
-}
-
-.status-final.clickable:hover:not(:disabled) {
-  background: #b91c1c;
-  border-color: #b91c1c;
-  color: white;
-}
-
-.status-draft.clickable:hover:not(:disabled) {
-  background: #16a34a;
-  border-color: #16a34a;
-  color: white;
-}
-
-.status-badge.clickable:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .overflow-item {
@@ -3977,65 +3895,6 @@ h2 {
   font-size: 0.85rem;
   color: #666;
   margin: 0.5rem 1rem 0;
-}
-
-.section-header-row {
-  display: flex;
-  align-items: stretch;
-}
-
-.section-header-row .section-title {
-  flex: 1;
-}
-
-.btn-generate {
-  padding: 0.5rem 1rem;
-  background: black;
-  color: white;
-  border: none;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: filter 0.2s;
-}
-
-.btn-generate:hover {
-  filter: brightness(150%);
-}
-
-.pretix-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: black;
-  padding: 0 1rem 0 0;
-}
-
-.count-mode {
-  border: 0.25rem solid black;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1.25rem;
-}
-
-.count-mode-label {
-  font-weight: 900;
-}
-
-.count-mode-option {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  cursor: pointer;
-}
-
-.count-mode-hint {
-  flex-basis: 100%;
-  margin: 0;
-  color: #555;
 }
 
 .deal-calc {
@@ -4155,35 +4014,6 @@ h2 {
   gap: 0.15rem;
 }
 
-.btn-pretix {
-  background: white;
-  color: black;
-  border: 2px solid white;
-  padding: 0.25rem 0.75rem;
-  font-weight: 700;
-  font-size: 0.75rem;
-  cursor: pointer;
-}
-
-.btn-pretix:hover {
-  background: #e0e0e0;
-}
-
-.btn-pretix:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-apply {
-  background: #00c853;
-  color: white;
-  border-color: #00c853;
-}
-
-.btn-apply:hover {
-  background: #00a844;
-}
-
 .pretix-error {
   color: #ff5252;
   font-size: 0.75rem;
@@ -4259,15 +4089,6 @@ h2 {
   user-select: none;
 }
 .revenue-row.sub-row.expandable:hover {
-  background: #eaeaea;
-}
-
-.revenue-row.sub-toggle {
-  cursor: pointer;
-  font-weight: 600;
-  color: #333;
-}
-.revenue-row.sub-toggle:hover {
   background: #eaeaea;
 }
 
@@ -4537,18 +4358,6 @@ h2 {
   margin: 0.1rem 0;
 }
 
-.paypal-cat-summary {
-  font-size: 0.75rem;
-  color: #555;
-  margin-left: 0.5rem;
-}
-
-.paypal-txn-count {
-  font-size: 0.8rem;
-  color: #666;
-  margin-right: 0.75rem;
-}
-
 .paypal-cat-actions {
   border-bottom: 1px solid #eee;
 }
@@ -4627,12 +4436,6 @@ h2 {
   font-size: 0.75rem;
   font-weight: 400;
   color: #555;
-}
-
-.stock-warning {
-  font-size: 0.7rem;
-  color: #c55;
-  font-weight: 500;
 }
 
 .col-inv-info {
@@ -5118,20 +4921,8 @@ h2 {
   color: #333;
 }
 
-.inv-card-label {
-  font-weight: 700;
-  margin-right: 0.25rem;
-}
-
 .inv-card-after {
   margin-bottom: 0.5rem;
-}
-
-.inv-card-after > .inv-card-label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.8rem;
-  font-weight: 700;
 }
 
 .stepper-row {
@@ -5202,7 +4993,6 @@ h2 {
   min-width: 1.5rem;
   margin-left: 0.2rem;
 }
-
 
 /* ── Expenses Table ── */
 
@@ -5276,16 +5066,6 @@ h2 {
 
 .expense-row:last-child {
   border-bottom: none;
-}
-
-/* ── Toggle Label (für Doordeal-Section-Title) ── */
-.toggle-label-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-weight: 900;
-  font-size: 1rem;
 }
 
 /* ── Konfig-Tabellen (Doordeal + Gewinnverteilung) ── */
@@ -5383,12 +5163,7 @@ h2 {
   font-size: 0.9rem;
 }
 
-.col-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.col-price, .col-qty, .col-amount {
+.col-amount {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -5403,19 +5178,8 @@ h2 {
   display: block;
 }
 
-.col-desc, .col-from, .col-action, .col-pct, .col-sphere {
+.col-desc {
   font-size: 0.9rem;
-}
-
-.col-sphere .select-input {
-  font-size: 0.9rem;
-  padding: 0.375rem 0.5rem;
-}
-
-.col-pct {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
 }
 
 .amount-input, .qty-input {
@@ -5504,62 +5268,9 @@ h2 {
   color: white;
 }
 
-.input-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.input-inline .amount-input {
-  width: 120px;
-}
-
 .unit {
   font-weight: 900;
   font-size: 0.9rem;
-}
-
-/* ── Buttons ── */
-
-.btn-add {
-  padding: 0.625rem 1rem;
-  background: white;
-  color: black;
-  border: 0.25rem solid black;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.btn-add:hover {
-  background: black;
-  color: white;
-}
-
-.expense-scan {
-  margin-top: 0.75rem;
-}
-
-.btn-scan {
-  padding: 0.625rem 1rem;
-  background: white;
-  color: black;
-  border: 0.25rem dashed black;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.btn-scan:hover:not(:disabled) {
-  background: black;
-  color: white;
-}
-
-.btn-scan:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 .scan-error {
@@ -5685,31 +5396,6 @@ h2 {
   font-size: 0.95rem;
 }
 
-.group-detail {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.375rem 1rem;
-  font-size: 0.85rem;
-  color: #444;
-  gap: 1rem;
-}
-
-.vat-hint {
-  font-size: 0.75rem;
-  color: #888;
-  margin-left: auto;
-}
-
-.cashcount-summary {
-  margin-top: 1.5rem;
-  border: 0.25rem solid black;
-  padding: 1rem;
-}
-
-.cashcount-summary .section-title {
-  margin-bottom: 0.75rem;
-}
-
 .summary-list {
   display: flex;
   flex-direction: column;
@@ -5808,11 +5494,6 @@ h2 {
   border-top: 1px solid #ddd;
   padding-top: 0.375rem;
   margin-top: 0.25rem;
-}
-
-.summary-divider {
-  border-top: 1px dashed #ccc;
-  margin: 0.5rem 0;
 }
 
 /* ── Summary Table (Read-Only Ergebnis-Tabelle) ── */
@@ -5996,13 +5677,6 @@ h2 {
   margin: 0.25rem 0;
 }
 
-/* ── Result ── */
-
-.result-detail {
-  border: 0.25rem solid black;
-  margin-bottom: 1.5rem;
-}
-
 .detail-row {
   display: flex;
   justify-content: space-between;
@@ -6033,13 +5707,6 @@ h2 {
   border-bottom: none;
 }
 
-.result-summary {
-  border: 0.25rem solid black;
-  border-top: none;
-  margin-bottom: 2rem;
-  margin-top: 0;
-}
-
 .result-row {
   display: flex;
   justify-content: space-between;
@@ -6056,13 +5723,6 @@ h2 {
 
 .result-row.expandable:hover {
   background: #f5f5f5;
-}
-
-.result-row.detail {
-  padding: 0.4rem 1rem 0.4rem 2.5rem;
-  font-size: 0.85rem;
-  color: #444;
-  border-bottom: 1px solid #eee;
 }
 
 .result-row:last-child {
@@ -6086,174 +5746,7 @@ h2 {
   color: #dc2626;
 }
 
-.splits-summary {
-  border: 0.25rem solid black;
-  margin-top: 1.5rem;
-}
-
-.notes-section {
-  margin-top: 2rem;
-}
-
-/* Intermediate result row inside .result-summary (not bold black border). */
-.result-row.intermediate {
-  background: #f5f5f5;
-  font-weight: 700;
-  border-bottom: 1px solid black;
-}
-
-/* ── USt-Karte (zwei-Spalten) ─────────────────────────── */
-.vat-card {
-  border: 0.25rem solid black;
-  border-top: none;
-}
-
-.vat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-}
-
-.vat-col {
-  display: flex;
-  flex-direction: column;
-  padding: 0.75rem 1rem;
-}
-
-.vat-col + .vat-col {
-  border-left: 0.15rem solid black;
-}
-
-.vat-col-header {
-  font-weight: 900;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid #ddd;
-}
-
-.vat-col-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.3rem 0;
-  font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.vat-col-row .vat-empty {
-  font-size: 0.75rem;
-  color: #888;
-  font-style: italic;
-}
-
-.vat-col-total {
-  display: flex;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 0.5rem;
-  border-top: 0.2rem solid black;
-  font-weight: 700;
-  font-size: 0.95rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.vat-result {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.85rem 1rem;
-  border-top: 0.25rem solid black;
-  font-size: 1.05rem;
-  font-weight: 900;
-}
-
-.vat-result.liability {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.vat-result.refund {
-  background: #d4edda;
-  color: #155724;
-}
-
-.vat-result-label {
-  font-weight: 700;
-}
-
-.vat-result-value {
-  font-variant-numeric: tabular-nums;
-  font-weight: 900;
-}
-
-/* ── Endergebnis nach USt (prominenter Block) ─────────── */
-.final-result {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 2rem;
-  border: 0.3rem solid black;
-  background: white;
-  color: black;
-}
-
-.final-result-label {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.final-result-value {
-  font-size: 1.6rem;
-  font-weight: 900;
-  font-variant-numeric: tabular-nums;
-}
-
-.final-result-value.positive {
-  color: #2e7d32;
-}
-
-.final-result-value.negative {
-  color: #c00;
-}
-
-/* Total-Zeilen im Result-Tab: weiß mit dicker Top-Border statt schwarz,
-   damit nicht mit den schwarzen Section-Headern konkurriert. */
-.result-summary .result-row.result-total,
-.splits-summary .result-row.result-total {
-  background: white;
-  color: black;
-  border-top: 0.3rem solid black;
-  border-bottom: none;
-  font-size: 1.15rem;
-  font-weight: 900;
-  padding-top: 0.85rem;
-  padding-bottom: 0.85rem;
-}
-
-.result-summary .result-row.result-total .positive,
-.splits-summary .result-row.result-total .positive {
-  color: #2e7d32;
-}
-
-.result-summary .result-row.result-total .negative,
-.splits-summary .result-row.result-total .negative {
-  color: #c00;
-}
-
 @media (max-width: 700px) {
-  .vat-grid {
-    grid-template-columns: 1fr;
-  }
-  .vat-col + .vat-col {
-    border-left: none;
-    border-top: 0.15rem solid black;
-  }
-  .final-result {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
 
   .tab {
     padding: 0.4rem 0.75rem;
@@ -6294,7 +5787,7 @@ h2 {
     flex-wrap: wrap;
   }
 
-  .col-price, .col-qty, .col-amount {
+  .col-amount {
     text-align: left;
   }
 
@@ -6342,24 +5835,6 @@ h2 {
   color: white;
 }
 
-.event-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 0.25rem solid black;
-}
-
-.info-row {
-  display: flex;
-  gap: 1rem;
-}
-
-.info-row .label {
-  font-weight: 700;
-  min-width: 120px;
-}
-
 .grant-detail {
   display: flex;
   flex-direction: column;
@@ -6401,8 +5876,6 @@ h2 {
   gap: 0.5rem;
   margin-left: auto;
 }
-
-
 
 .input-group .unit {
   font-size: 0.85rem;
@@ -6474,55 +5947,6 @@ h2 {
 .btn-pdf:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.budget-section {
-  border: 0.25rem solid black;
-  margin-bottom: 1.5rem;
-}
-
-.budget-category {
-  border-bottom: 1px solid #ddd;
-}
-
-.budget-category:last-child {
-  border-bottom: none;
-}
-
-.budget-cat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  background: #f5f5f5;
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.budget-cat-total {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.6rem 1rem;
-  background: black;
-  color: white;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.budget-row {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.375rem 1rem;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-}
-
-.budget-row .text-input {
-  flex: 1;
-}
-
-.budget-row .amount-input {
-  width: 100px;
 }
 
 .btn-add-sm {
@@ -6627,20 +6051,6 @@ h2 {
 .inbox-invoice-row .btn-scan-doc {
   margin-left: auto;
 }
-.btn-upload {
-  padding: 0.625rem 1rem;
-  background: white;
-  color: black;
-  border: 0.25rem solid black;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-.btn-upload:hover {
-  background: black;
-  color: white;
-}
 .btn-secondary {
   background: transparent;
   border: 1px solid #666;
@@ -6726,8 +6136,7 @@ h2 {
 /* Tabellen-Header (Spalten-Beschriftungen). */
 .accounting-view .revenue-header,
 .accounting-view .inventory-header,
-.accounting-view .expense-header,
-.accounting-view .vat-col-header {
+.accounting-view .expense-header {
   font-size: var(--fs-sm);
   font-weight: 900;
 }
@@ -6736,21 +6145,17 @@ h2 {
 .accounting-view .revenue-row,
 .accounting-view .inventory-row,
 .accounting-view .expense-row,
-.accounting-view .split-row,
 .accounting-view .detail-row,
 .accounting-view .summary-line,
 .accounting-view .result-row,
 .accounting-view .group-total,
-.accounting-view .group-detail,
 .accounting-view .grand-total,
 .accounting-view .text-input,
 .accounting-view .amount-input,
 .accounting-view .qty-input,
 .accounting-view .select-input,
 .accounting-view .col-source,
-.accounting-view .col-name,
 .accounting-view .col-amount,
-.accounting-view .col-pct,
 .accounting-view .col-desc,
 .accounting-view .col-inv-name,
 .accounting-view .col-inv-amount {
@@ -6759,9 +6164,7 @@ h2 {
 
 /* Sub-Rows, Details, kleine Hinweise auf Reihen-Ebene. */
 .accounting-view .summary-line.summary-sub,
-.accounting-view .result-row.detail,
 .accounting-view .revenue-row.sub-row,
-.accounting-view .vat-col-row,
 .accounting-view .col-inv-num,
 .accounting-view .col-inv-info,
 .accounting-view .bev-info {
@@ -6771,12 +6174,6 @@ h2 {
 /* Total-/Summen-Zeilen — durch Größe + Border, nicht durch Schwarz. */
 .accounting-view .summary-line.summary-total,
 .accounting-view .summary-row.summary-total,
-.accounting-view .vat-col-total,
-.accounting-view .vat-result,
-.accounting-view .result-row.intermediate,
-.accounting-view .result-summary .result-row.result-total,
-.accounting-view .splits-summary .result-row.result-total,
-.accounting-view .final-result-label,
 .accounting-view .grant-summary .result-row.result-total,
 .accounting-view .grant-summary .result-row,
 .accounting-view .expense-row.expense-total,
@@ -6790,7 +6187,6 @@ h2 {
 .accounting-view .hint li,
 .accounting-view .auto-save-indicator,
 .accounting-view .entry-price-hint,
-.accounting-view .vat-empty,
 .accounting-view .external-data-summary,
 .accounting-view .external-data-status,
 .accounting-view .pretix-error,
@@ -6798,19 +6194,13 @@ h2 {
 .accounting-view .save-success,
 .accounting-view .stock-changed-warning,
 .accounting-view .inv-progress,
-.accounting-view .inv-card-info,
-.accounting-view .stock-warning {
+.accounting-view .inv-card-info {
   font-size: var(--fs-xs);
 }
 
 /* Sehr kleine deeply-nested Details (z.B. PayPal-Transaktionszeilen). */
 .accounting-view .revenue-row.sub-detail {
   font-size: var(--fs-xs);
-}
-
-/* Großer Akzent-Betrag im Endergebnis. */
-.accounting-view .final-result-value {
-  font-size: var(--fs-xl);
 }
 
 /* Mobile-Steppertasten dürfen größer bleiben — User-tap-target. */
