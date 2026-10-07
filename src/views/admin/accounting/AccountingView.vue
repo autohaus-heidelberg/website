@@ -603,6 +603,25 @@ function toggleSourceExpanded(source: string) {
 // Aus dem Split werden quantity_before / quantity_after berechnet.
 const inventoryCrates = ref<Record<string, { beforeCrates: number; beforeBottles: number; afterCrates: number; afterBottles: number }>>({})
 
+/** Merkt sich ob der letzte input-Event durch einen Spinner-Klick (mousedown)
+ *  ausgelöst wurde. So kann blur() gezielt nur nach Spinner-Clicks aufgerufen
+ *  werden, nicht beim normalen Tippen. */
+let _spinnerMousedown = false
+function onQtyMousedown() { _spinnerMousedown = true; setTimeout(() => { _spinnerMousedown = false }, 300) }
+function blurIfSpinner(e: InputEvent) { if (_spinnerMousedown) (e.currentTarget as HTMLInputElement | null)?.blur() }
+
+/** Scrollrad auf Inventur-Inputs: einen Schritt ändern, dann sofort blur()
+ *  damit das Rad nicht unkontrolliert weiterläuft. */
+function onQtyWheel(e: WheelEvent) {
+  e.preventDefault()
+  const input = e.currentTarget as HTMLInputElement
+  const delta = e.deltaY < 0 ? 1 : -1
+  const cur = parseFloat(input.value) || 0
+  input.value = String(Math.max(0, cur + delta))
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  input.blur()
+}
+
 /** Gibt `null` für Getränke ohne Split (Piccolo & Co.) — die arbeiten direkt
  *  auf `entry.quantity_after`. */
 function getOrInitSplit(beverage: BeverageItem, entry: InventoryEntry) {
@@ -817,6 +836,36 @@ const hideZeroStock = ref(true)
 // when the user edited it back to consumed_quantity = 0 (so the persisted
 // row gets a real save instead of being silently filtered out).
 const confirmedInventory = reactive(new Set<number>())
+
+/** Toggle: einmal drücken → alle Nachher-Felder auf 0 (zum Hochzählen vom
+ *  Nullpunkt); nochmal drücken → Vorher-Werte wiederherstellen. */
+const inventoryZeroed = ref(false)
+
+function toggleInventoryZero() {
+  if (!inventoryZeroed.value) {
+    // → auf 0 setzen
+    for (const entry of inventory.value) {
+      entry.quantity_after = '0'
+      entry.consumed_quantity = '0'
+    }
+    for (const key of Object.keys(inventoryCrates.value)) {
+      inventoryCrates.value[key].afterCrates = 0
+      inventoryCrates.value[key].afterBottles = 0
+    }
+    confirmedInventory.clear()
+    inventoryZeroed.value = true
+  } else {
+    // → Vorher-Werte wiederherstellen
+    for (const entry of inventory.value) {
+      entry.quantity_after = entry.quantity_before || '0'
+      entry.consumed_quantity = '0'
+    }
+    // Split-State neu initialisieren (einfach leeren → getOrInitSplit baut neu auf)
+    inventoryCrates.value = {}
+    confirmedInventory.clear()
+    inventoryZeroed.value = false
+  }
+}
 
 /** A row is visually "confirmed" (gelb) when the user has expressed an
  *  intent — currently meaning consumed_quantity > 0. Resetting consumed back
@@ -2707,9 +2756,18 @@ function clearPendingNumberSelect() {
     //- ── Inventory Tab ──
     .tab-content(v-if="activeTab === 'inventory'")
       .inventory-toolbar
-        label.hide-zero-toggle
-          input(type="checkbox" v-model="hideZeroStock")
-          span Leere ausblenden
+        button.inv-reset-btn(
+          type="button"
+          :class="{ active: hideZeroStock }"
+          :title="hideZeroStock ? 'Leere Zeilen einblenden' : 'Zeilen ohne Vorher-Bestand ausblenden'"
+          @click="hideZeroStock = !hideZeroStock"
+        ) Leere ausblenden
+        button.inv-reset-btn(
+          type="button"
+          :class="{ active: inventoryZeroed }"
+          :title="inventoryZeroed ? 'Vorher-Werte wiederherstellen' : 'Alle Nachher-Felder auf 0 setzen — zum Hochzählen vom Nullpunkt'"
+          @click="toggleInventoryZero()"
+        ) {{ inventoryZeroed ? 'Vorher wiederherstellen' : 'Alle auf 0' }}
 
       .conflict-banner(v-if="inventoryConflicts.size > 0")
         .conflict-banner-icon ⚠️
@@ -2783,7 +2841,9 @@ function clearPendingNumberSelect() {
                         step="1"
                         placeholder="0"
                         data-testid="inv-after-major"
-                        @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                        @wheel="onQtyWheel($event)"
+                        @mousedown="onQtyMousedown()"
+                        @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id); blurIfSpinner($event)"
                       )
                       span.input-label K
                     .crate-input
@@ -2793,8 +2853,10 @@ function clearPendingNumberSelect() {
                         step="1"
                         placeholder="0"
                         data-testid="inv-after-minor"
+                        @wheel="onQtyWheel($event)"
+                        @mousedown="onQtyMousedown()"
                         @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                        @input="onBottleInput(beverage, entry)"
+                        @input="onBottleInput(beverage, entry); blurIfSpinner($event)"
                         @change="onBottleChange(beverage, entry, 'after')"
                       )
                       span.input-label Fl
@@ -2818,7 +2880,9 @@ function clearPendingNumberSelect() {
                         step="1"
                         placeholder="0"
                         data-testid="inv-after-major"
-                        @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                        @wheel="onQtyWheel($event)"
+                        @mousedown="onQtyMousedown()"
+                        @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id); blurIfSpinner($event)"
                       )
                       span.input-label Fl
                     .crate-input
@@ -2850,8 +2914,10 @@ function clearPendingNumberSelect() {
                         step="1"
                         placeholder="0"
                         data-testid="inv-after-major"
+                        @wheel="onQtyWheel($event)"
+                        @mousedown="onQtyMousedown()"
                         @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                        @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
+                        @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id); blurIfSpinner($event)"
                       )
                       span.input-label Fl.
                     .crate-input
@@ -2919,6 +2985,7 @@ function clearPendingNumberSelect() {
                       type="number"
                       min="0"
                       step="1"
+                      @wheel.prevent
                       @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepCrate(beverage, entry, 'after', 1)") +
@@ -2929,6 +2996,7 @@ function clearPendingNumberSelect() {
                       v-model.number="getOrInitSplit(beverage, entry).afterBottles"
                       type="number"
                       step="1"
+                      @wheel.prevent
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @input="onBottleInput(beverage, entry)"
                       @change="onBottleChange(beverage, entry, 'after')"
@@ -2945,6 +3013,7 @@ function clearPendingNumberSelect() {
                       type="number"
                       min="0"
                       step="1"
+                      @wheel.prevent
                       @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                     )
                     button.stepper-btn(@click="stepCrate(beverage, entry, 'after', 1)") +
@@ -2967,6 +3036,7 @@ function clearPendingNumberSelect() {
                       type="number"
                       min="0"
                       step="1"
+                      @wheel.prevent
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
@@ -4380,18 +4450,26 @@ h2 {
   margin-bottom: 0.75rem;
 }
 
-.hide-zero-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  font-weight: 600;
+.inv-reset-btn {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: normal;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #bbb;
+  background: #f5f5f5;
   cursor: pointer;
 }
 
-.hide-zero-toggle input {
-  width: 1rem;
-  height: 1rem;
+.inv-reset-btn:hover {
+  background: #e8e8e8;
+  border-color: #888;
+}
+
+.inv-reset-btn.active {
+  background: black;
+  color: white;
+  border-color: black;
 }
 
 .negative-consumption {
@@ -4494,6 +4572,11 @@ h2 {
 /* "Vorher" zeigt nur Text statt Eingabefeldern — dort wuerde die feste Breite
  * die Werte unnoetig weit auseinanderziehen. */
 .readonly-before .crate-input {
+  width: auto;
+}
+
+.crate-input .qty-input {
+  min-width: 58px;
   width: auto;
 }
 
