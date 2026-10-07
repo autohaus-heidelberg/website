@@ -17,6 +17,7 @@
 import { test, expect } from '@playwright/test'
 import { loginPage } from './helpers/auth'
 import { getOrCreateAbrechnung } from './helpers/api'
+import { openInventur, invAfterMajor } from './helpers/inventory'
 
 const EVENT = 'cherazade'
 const COLA_NAME = 'Cola'
@@ -39,13 +40,11 @@ test.describe('Save network-error handling', () => {
     })
 
     await page.goto(`/admin/events/${EVENT}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-    await page.locator('button:has-text("Inventur")').click()
-    const colaRow = page.locator(`.inventory-row:has-text("${COLA_NAME}")`).first()
-    await colaRow.waitFor({ state: 'visible', timeout: 30_000 })
+    const colaRow = await openInventur(page, COLA_NAME)
 
     // Edit the "after" quantity to trigger the debounced auto-save (which will
     // fail with a network error because the PUT is aborted).
-    const afterInput = colaRow.locator('.col-inv-pair:not(.readonly-before) input.qty-input').first()
+    const afterInput = invAfterMajor(colaRow)
     const current = await afterInput.inputValue()
     await afterInput.fill(String((Number(current) || 0) + 1))
     await afterInput.blur()
