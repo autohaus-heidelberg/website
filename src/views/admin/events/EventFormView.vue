@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
+import type { LocationQueryRaw } from 'vue-router'
 import { eventService, artistService, pretixService, accountingService, documentService } from '@/services'
 import { API_BASE_URL } from '@/services/api'
 import type { Event as AppEvent, Artist, HelferpadEventData } from '@/services'
@@ -39,8 +40,57 @@ const isEditing = ref(!!props.id)
 const isPublished = computed(() => publishedEvents.some((e: any) => e.id === props.id))
 const accountingStatus = ref<'none' | 'draft' | 'final'>('none')
 const accountingViewRef = ref<InstanceType<typeof AccountingView> | null>(null)
-const activeSection = ref<'event' | 'accounting'>('event')
-const activeTab = ref('details')
+
+// `tab` in der URL trägt entweder 'accounting' oder den Sub-Tab der
+// Veranstaltung; die Abrechnung verwaltet ihren eigenen `abrTab` separat.
+const EVENT_SUB_TABS = ['details', 'vvk', 'checklist'] as const
+type EventSubTab = (typeof EVENT_SUB_TABS)[number]
+
+function readSectionFromRoute(): 'event' | 'accounting' {
+  // `abrTab` allein impliziert die Abrechnung, damit Deep-Links wie
+  // `?abrTab=expenses` ohne `tab=accounting` weiterhin landen.
+  if (route.query.tab === 'accounting' || route.query.abrTab) return 'accounting'
+  return 'event'
+}
+
+function readSubTabFromRoute(): EventSubTab {
+  const t = route.query.tab
+  if (typeof t === 'string' && (EVENT_SUB_TABS as readonly string[]).includes(t)) {
+    return t as EventSubTab
+  }
+  return 'details'
+}
+
+const activeSection = ref<'event' | 'accounting'>(readSectionFromRoute())
+const activeTab = ref<EventSubTab>(readSubTabFromRoute())
+// Vom AccountingView gemeldeter Sub-Tab — die URL schreibt nur diese View,
+// damit sich nicht zwei router.replace-Aufrufe gegenseitig abbrechen.
+const accountingTab = ref<string>((route.query.abrTab as string) || 'expenses')
+
+watch([activeSection, activeTab, accountingTab], ([section, tab, abrTab]) => {
+  const query: LocationQueryRaw = { ...route.query }
+  if (section === 'accounting') {
+    query.tab = 'accounting'
+    query.abrTab = abrTab
+  } else {
+    query.tab = tab
+    // Sonst würde ein Reload wegen readSectionFromRoute wieder in der
+    // Abrechnung landen.
+    delete query.abrTab
+  }
+  if (query.tab === route.query.tab && query.abrTab === route.query.abrTab) return
+  router.replace({ query }).catch(() => {})
+}, { immediate: true })
+
+// Browser-Back/Deep-Link: State der URL nachziehen.
+watch(() => route.query.tab, () => {
+  const section = readSectionFromRoute()
+  if (section !== activeSection.value) activeSection.value = section
+  if (section === 'event') {
+    const sub = readSubTabFromRoute()
+    if (sub !== activeTab.value) activeTab.value = sub
+  }
+})
 
 // AccountingView bleibt beim Tab-Wechsel gemountet (v-if einmal true + v-show),
 // bekommt Änderungen an den Band-Deals (Garantie/Doordeal) aus dem
@@ -662,19 +712,10 @@ onMounted(async () => {
     else accountingStatus.value = acc.status === 'final' ? 'final' : 'draft'
   }
 
-  // Check for tab query parameter and set active section/tab.
-  // `abrTab` (Sub-Tab innerhalb der Abrechnung) impliziert die
-  // Abrechnungs-Sektion — auch wenn `tab=accounting` weggelassen wurde,
-  // damit Deep-Links wie `?abrTab=expenses` direkt landen.
-  const tabParam = route.query.tab as string
-  const abrTabParam = route.query.abrTab as string | undefined
-  if (tabParam === 'accounting' || abrTabParam) {
-    activeSection.value = 'accounting'
-  } else if (tabParam && ['details', 'checklist', 'vvk'].includes(tabParam)) {
-    activeTab.value = tabParam
-    if (tabParam === 'vvk') {
-      loadPretixData()
-    }
+  // Section/Tab stehen bereits aus der URL fest (siehe readSubTabFromRoute) —
+  // hier nur noch die Daten nachladen, die ein Deep-Link auf den VVK-Tab braucht.
+  if (activeSection.value === 'event' && activeTab.value === 'vvk') {
+    loadPretixData()
   }
 
   document.addEventListener('click', closeOverflow)
@@ -1137,7 +1178,7 @@ function closeDeployModal() {
         p Klicke auf den Tab, um die aktuellen VVK-Daten zu laden.
 
   .tab-content(v-if="isEditing" v-show="activeSection === 'accounting'")
-    AccountingView(ref="accountingViewRef" :eventId="props.id" @status-changed="s => accountingStatus = s")
+    AccountingView(ref="accountingViewRef" :eventId="props.id" @status-changed="s => accountingStatus = s" @tab-changed="t => accountingTab = t")
 
   //- ── Undo Delete Snackbar ──
   transition(name="snackbar")

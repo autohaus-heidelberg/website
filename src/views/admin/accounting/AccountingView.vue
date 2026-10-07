@@ -43,6 +43,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'status-changed': [status: 'draft' | 'final']
+  'tab-changed': [tab: string]
 }>()
 const router = useRouter()
 const route = useRoute()
@@ -60,17 +61,12 @@ function readAbrTabFromRoute(): AbrTab {
   // 'documents' was merged into 'expenses' — keep old links working.
   if (q === 'documents') return 'expenses'
   if (typeof q === 'string' && (VALID_ABR_TABS as string[]).includes(q)) return q as AbrTab
-  return 'cashcount'
+  return 'expenses'
 }
 const activeTab = ref<AbrTab>(readAbrTabFromRoute())
-watch(activeTab, (val) => {
-  // Nur URL aktualisieren, wenn sich etwas geändert hat — sonst tritt
-  // Vue Router in eine Loop (Push triggert Watcher triggert Push).
-  if (route.query.abrTab === val) return
-  router.replace({
-    query: { ...route.query, abrTab: val === 'cashcount' ? undefined : val },
-  }).catch(() => {})
-})
+// Die URL schreibt ausschließlich die Elternview — zwei parallele
+// router.replace-Aufrufe würden sich gegenseitig abbrechen.
+watch(activeTab, (val) => emit('tab-changed', val), { immediate: true })
 // Falls von außen (z.B. Browser-Back) die URL den abrTab ändert, ziehen
 // wir den State nach. Filter auf abrTab-only, damit andere Query-Änderungen
 // (z.B. Speicher-Acknowledge) nichts in Gang setzen.
@@ -155,6 +151,55 @@ const paypalBarError = ref('')
 const sumupBarData = ref<SumUpBarSummary | null>(null)
 const sumupBarLoading = ref(false)
 const sumupBarError = ref('')
+
+// Abweichungen aus dem letzten Abruf, die NICHT automatisch übernommen wurden.
+// Die Kategorie-Korrekturen (Bar/Einlass) pro Transaktion werden nicht
+// gespeichert — ein erneuter Abruf würde sie sonst stillschweigend mit der
+// Backend-Heuristik überschreiben.
+interface ExternalDiff {
+  source: RevenueSource
+  label: string
+  storedTotal: number
+  storedFees: number
+  fetchedTotal: number
+  fetchedFees: number
+}
+const externalDiffs = ref<ExternalDiff[]>([])
+
+/** Übernimmt API-Werte nur in unberührte oder unveränderte Zeilen. Weicht ein
+ *  bereits erfasster Wert ab, wird er zum Vorschlag statt zur Überschreibung.
+ *  `force` schreibt immer — für Umkategorisieren, wo der Nutzer selbst handelt. */
+function applyRevenueFromExternal(source: RevenueSource, total: number, fees: number, force = false) {
+  const rev = getRevenue(source)
+  const storedTotal = parseFloat(rev.total || '0')
+  const storedFees = parseFloat(rev.fees || '0')
+  const untouched = storedTotal === 0 && storedFees === 0
+  const unchanged = Math.abs(storedTotal - total) < 0.005 && Math.abs(storedFees - fees) < 0.005
+  if (force || untouched || unchanged) {
+    rev.total = total.toFixed(2)
+    rev.fees = fees.toFixed(2)
+    rev.change_money = '0.00'
+    return
+  }
+  externalDiffs.value.push({
+    source,
+    label: REVENUE_SOURCE_LABELS[source],
+    storedTotal, storedFees,
+    fetchedTotal: total, fetchedFees: fees,
+  })
+}
+
+function applyExternalDiff(diff: ExternalDiff) {
+  const rev = getRevenue(diff.source)
+  rev.total = diff.fetchedTotal.toFixed(2)
+  rev.fees = diff.fetchedFees.toFixed(2)
+  rev.change_money = '0.00'
+  externalDiffs.value = externalDiffs.value.filter(d => d.source !== diff.source)
+}
+
+function dismissExternalDiff(diff: ExternalDiff) {
+  externalDiffs.value = externalDiffs.value.filter(d => d.source !== diff.source)
+}
 
 // ── Grant (Förderung) ────────────────────────────────────────────
 const grantRecord = ref<GrantApplication | null>(null)
@@ -362,6 +407,7 @@ async function fetchAndApplyAllExternal() {
   pretixError.value = ''
   paypalBarError.value = ''
   sumupBarError.value = ''
+  externalDiffs.value = []
 
   const results = await Promise.allSettled([
     pretixService.getOrderSummary(props.eventId),
@@ -414,10 +460,7 @@ function applyPretixData() {
   if (!pretixData.value) return
   const d = pretixData.value
   const totalFees = d.pretix_fee + Object.values(d.by_source).reduce((s, i) => s + i.fees, 0)
-  const rev = getRevenue('vvk_pretix')
-  rev.total = d.total_revenue.toFixed(2)
-  rev.fees = totalFees.toFixed(2)
-  rev.change_money = '0.00'
+  applyRevenueFromExternal('vvk_pretix', d.total_revenue, totalFees)
 }
 
 async function fetchPaypalBarData() {
@@ -433,19 +476,11 @@ async function fetchPaypalBarData() {
   }
 }
 
-function applyPaypalBarData() {
+function applyPaypalBarData(force = false) {
   if (!paypalBarData.value) return
   const ct = paypalBarCategoryTotals.value
-  // Apply bar transactions
-  const barRev = getRevenue('bar_paypal')
-  barRev.total = ct.bar.amount.toFixed(2)
-  barRev.fees = ct.bar.fees.toFixed(2)
-  barRev.change_money = '0.00'
-  // Apply entrance transactions
-  const entranceRev = getRevenue('entrance_paypal')
-  entranceRev.total = ct.entrance.amount.toFixed(2)
-  entranceRev.fees = ct.entrance.fees.toFixed(2)
-  entranceRev.change_money = '0.00'
+  applyRevenueFromExternal('bar_paypal', ct.bar.amount, ct.bar.fees, force)
+  applyRevenueFromExternal('entrance_paypal', ct.entrance.amount, ct.entrance.fees, force)
 }
 
 function removePaypalBarTransaction(idx: number) {
@@ -457,13 +492,13 @@ function togglePaypalCategory(idx: number) {
   if (!paypalBarData.value) return
   const txn = paypalBarData.value.transactions[idx]
   txn.category = txn.category === 'bar' ? 'entrance' : 'bar'
-  applyPaypalBarData()
+  applyPaypalBarData(true)
 }
 
 function setAllPaypalCategory(category: PayPalCategory) {
   if (!paypalBarData.value) return
   paypalBarData.value.transactions.forEach(t => { t.category = category })
-  applyPaypalBarData()
+  applyPaypalBarData(true)
 }
 
 async function fetchSumupBarData() {
@@ -479,19 +514,11 @@ async function fetchSumupBarData() {
   }
 }
 
-function applySumupBarData() {
+function applySumupBarData(force = false) {
   if (!sumupBarData.value) return
   const ct = sumupBarCategoryTotals.value
-  // Apply bar transactions
-  const barRev = getRevenue('bar_sumup')
-  barRev.total = ct.bar.amount.toFixed(2)
-  barRev.fees = ct.bar.fees.toFixed(2)
-  barRev.change_money = '0.00'
-  // Apply entrance transactions
-  const entranceRev = getRevenue('entrance_sumup')
-  entranceRev.total = ct.entrance.amount.toFixed(2)
-  entranceRev.fees = ct.entrance.fees.toFixed(2)
-  entranceRev.change_money = '0.00'
+  applyRevenueFromExternal('bar_sumup', ct.bar.amount, ct.bar.fees, force)
+  applyRevenueFromExternal('entrance_sumup', ct.entrance.amount, ct.entrance.fees, force)
 }
 
 function removeSumupBarTransaction(idx: number) {
@@ -503,13 +530,13 @@ function toggleSumupCategory(idx: number) {
   if (!sumupBarData.value) return
   const txn = sumupBarData.value.transactions[idx]
   txn.category = txn.category === 'bar' ? 'entrance' : 'bar'
-  applySumupBarData()
+  applySumupBarData(true)
 }
 
 function setAllSumupCategory(category: SumUpCategory) {
   if (!sumupBarData.value) return
   sumupBarData.value.transactions.forEach(t => { t.category = category })
-  applySumupBarData()
+  applySumupBarData(true)
 }
 
 // ── Computed: Revenue ────────────────────────────────────────────
@@ -991,6 +1018,24 @@ const totalExpenses = computed(() => {
   return expenses.value.reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0)
 })
 
+// Band-Deals werden immer mit grant_category 'kuenstlerhonorar' gebucht — das
+// trennt die Gagen von den übrigen Ausgaben, ohne ein eigenes Feld zu brauchen.
+const gageExpenses = computed(() =>
+  sortedExpenses.value.filter(e => e.grant_category === 'kuenstlerhonorar'),
+)
+
+const otherExpenses = computed(() =>
+  sortedExpenses.value.filter(e => e.grant_category !== 'kuenstlerhonorar'),
+)
+
+const totalGageExpenses = computed(() =>
+  gageExpenses.value.reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0),
+)
+
+const totalOtherExpenses = computed(() =>
+  otherExpenses.value.reduce((sum, e) => sum + parseFloat(e.amount || '0'), 0),
+)
+
 // Expenses paid from a cash register are already deducted from the cash count,
 // so we need to add them back to get the true revenue.
 function expensesFromSource(source: string): number {
@@ -1019,8 +1064,9 @@ function addExpense() {
   })
 }
 
-function removeExpense(index: number) {
-  expenses.value.splice(index, 1)
+function removeExpense(exp: ExpenseEntry) {
+  const index = expenses.value.indexOf(exp)
+  if (index !== -1) expenses.value.splice(index, 1)
 }
 
 // Gagen sind immer Zweckbetrieb (Kernaufgabe des Vereins) — beim manuellen
@@ -1083,40 +1129,61 @@ interface BandDealRow {
   allGood: boolean
 }
 
-// Eingefrorene Brutto-Türeinnahme des Gagen-Rechners (null = folgt der
+// Eingefrorene gezählte Bareinnahme des Gagen-Rechners (null = folgt der
 // Abrechnung). Sobald eine Gage gebucht ist, fließt sie über die
 // Kassen-Rückrechnung in die Abrechnungs-Basis zurück — der Rechner darf dem
 // nicht folgen, sonst leitet sich die nächste Gage aus einer Basis ab, die
 // bereits eine Gage enthält.
 const dealCalcFrozen = ref<string | null>(null)
 
-// Brutto-Türeinnahme (Einlass + VVK) wie sie in der Kasse liegt bzw. abgerechnet
-// wurde — Vorbelegung des Rechner-Felds.
-const dealCalcGrossDefault = computed(() => {
-  const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
-  const entrancePayouts = expensesFromSource('entrance_cash')
-  return revenues.value
-    .filter(r => entranceSources.includes(r.source))
-    .reduce((sum, r) => sum + revenueNet(r) + (r.source === 'entrance_cash' ? entrancePayouts : 0), 0)
+// Wechselgeld im Einlass — wird von der Gage-Basis abgezogen (gehört zurück
+// in die Kasse, nicht an die Band). Wird nicht gespeichert — reiner Abendhelfer.
+const dealCalcChange = ref<string>('')
+const dealCalcChangeAmount = computed(() => parseFloat(dealCalcChange.value) || 0)
+
+const DEAL_CALC_DIGITAL_SOURCES: RevenueSource[] = [
+  'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe',
+]
+
+// Bargeld im Einlass inkl. der daraus schon bezahlten Posten — Vorbelegung
+// des Rechner-Felds.
+const dealCalcCashDefault = computed(() => {
+  const entry = revenues.value.find(r => r.source === 'entrance_cash')
+  if (!entry) return 0
+  return revenueNet(entry) + expensesFromSource('entrance_cash')
 })
 
-const dealCalcGross = computed(() =>
-  dealCalcFrozen.value === null ? dealCalcGrossDefault.value : (parseFloat(dealCalcFrozen.value) || 0),
+const dealCalcCash = computed(() =>
+  dealCalcFrozen.value === null ? dealCalcCashDefault.value : (parseFloat(dealCalcFrozen.value) || 0),
+)
+
+// Digitale Eintrittseinnahmen (Pretix VVK + PayPal-/SumUp-Einlass) — liegen
+// nicht im Kassenbeutel, zählen aber zur Gagen-Grundlage.
+const dealCalcDigital = computed(() =>
+  revenues.value
+    .filter(r => DEAL_CALC_DIGITAL_SOURCES.includes(r.source))
+    .reduce((sum, r) => sum + parseFloat(r.total || '0'), 0),
+)
+
+const dealCalcDigitalFees = computed(() =>
+  revenues.value
+    .filter(r => DEAL_CALC_DIGITAL_SOURCES.includes(r.source))
+    .reduce((sum, r) => sum + parseFloat(r.fees || '0'), 0),
+)
+
+const dealCalcSubtotal = computed(() =>
+  dealCalcCash.value + dealCalcDigital.value - dealCalcDigitalFees.value - dealCalcChangeAmount.value,
 )
 
 // Gagen rechnen vom Netto — die USt gehört dem Finanzamt, nicht der Band.
-// Abzugsfähige Kosten (GEMA/KSK) bleiben hier bewusst draußen: am Abend stehen
-// die noch nicht fest, und der Rechner soll eine Zeile Rechnung sein.
-const dealCalcVat = computed(() => dealCalcGross.value - dealCalcGross.value / (1 + ENTRANCE_VAT_RATE))
+const dealCalcVat = computed(() =>
+  dealCalcSubtotal.value - dealCalcSubtotal.value / (1 + ENTRANCE_VAT_RATE),
+)
 
-const dealCalcBase = computed(() => dealCalcGross.value / (1 + ENTRANCE_VAT_RATE))
+const dealCalcBase = computed(() => dealCalcSubtotal.value / (1 + ENTRANCE_VAT_RATE))
 
 function setDealCalcBase(e: globalThis.Event) {
   dealCalcFrozen.value = (e.target as HTMLInputElement).value
-}
-
-function resetDealCalcBase() {
-  dealCalcFrozen.value = null
 }
 
 function dealLabelFor(
@@ -1129,9 +1196,21 @@ function dealLabelFor(
   return `${head} → ${winner} gewinnt (${formatCurrency(row.resolvedAmount)})`
 }
 
+// Kurzform für die Deal-Spalte — der Betrag steht in einer eigenen Spalte,
+// der Vergleich bei Kombi-Deals in einer zweiten Zeile darunter.
+function dealShortLabel(row: BandDealRow): string {
+  if (row.dealType === 'guarantee') return 'Festgage'
+  if (row.dealType === 'door_deal') return `Doordeal ${row.doorDealPercentage} %`
+  return `Garantie ${formatCurrency(row.guaranteeAmount)} vs. Doordeal ${row.doorDealPercentage} %`
+}
+
+function dealWinnerHint(row: BandDealRow): string {
+  if (row.dealType !== 'guarantee_plus_door') return ''
+  return row.resolvedSource === 'doordeal' ? '↳ Doordeal gewinnt' : '↳ Garantie gewinnt'
+}
+
 function recordedLabelFor(currentAmount: number | null, splitShare: number | null): string {
-  if (currentAmount != null) return `Ausgabe ${formatCurrency(currentAmount)}`
-  // Ein Split für eine Band ist im Modell A+B veraltet (Splits = nur externe Parteien).
+  if (currentAmount != null) return `Ausgabe ${formatCurrency(currentAmount)}`  // Ein Split für eine Band ist im Modell A+B veraltet (Splits = nur externe Parteien).
   if (splitShare != null) return `⚠ als externe Split-Zeile (${splitShare}%, veraltet)`
   return 'noch nicht erfasst'
 }
@@ -1190,7 +1269,7 @@ const bandNamesInExternalSplit = computed(() =>
 function applyExpenseRow(row: BandDealRow) {
   // Rechner-Basis festhalten, bevor die gebuchte Gage über die
   // Kassen-Rückrechnung in sie zurückfließt.
-  if (dealCalcFrozen.value === null) dealCalcFrozen.value = dealCalcGrossDefault.value.toFixed(2)
+  if (dealCalcFrozen.value === null) dealCalcFrozen.value = dealCalcCashDefault.value.toFixed(2)
   const calcNote = row.dealType === 'guarantee_plus_door'
     ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * dealCalcBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
     : row.dealType === 'door_deal'
@@ -2507,6 +2586,10 @@ function clearPendingNumberSelect() {
     .accounting-header
       .tabs
         button.tab(
+          :class="{ active: activeTab === 'expenses' }"
+          @click="activeTab = 'expenses'"
+        ) 🧾 Gagen & Ausgaben
+        button.tab(
           :class="{ active: activeTab === 'cashcount' }"
           @click="activeTab = 'cashcount'"
         ) 💰 Kassenzählung
@@ -2514,10 +2597,6 @@ function clearPendingNumberSelect() {
           :class="{ active: activeTab === 'inventory' }"
           @click="activeTab = 'inventory'"
         ) 📦 Inventur
-        button.tab(
-          :class="{ active: activeTab === 'expenses' }"
-          @click="activeTab = 'expenses'"
-        ) 🧾 Ausgaben & Belege
         button.tab(
           :class="{ active: activeTab === 'result' }"
           @click="activeTab = 'result'"
@@ -2574,6 +2653,17 @@ function clearPendingNumberSelect() {
           span.pretix-error(v-if="pretixError") Pretix: {{ pretixError }}
           span.pretix-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
           span.pretix-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
+        //- Abweichungen werden nicht automatisch übernommen, sonst gingen
+        //- manuelle Korrekturen (z.B. Bar→Einlass) beim Neuladen verloren.
+        .external-diffs(v-if="externalDiffs.length")
+          p.external-diffs-head ⚠️ Abweichung zu deinen erfassten Werten – nichts wurde überschrieben:
+          .external-diff-row(v-for="d in externalDiffs" :key="d.source")
+            span.external-diff-label {{ d.label }}
+            span.external-diff-vals
+              | erfasst {{ formatCurrency(d.storedTotal) }} ({{ formatCurrency(d.storedFees) }} Geb.)
+              | → laut API {{ formatCurrency(d.fetchedTotal) }} ({{ formatCurrency(d.fetchedFees) }} Geb.)
+            button.btn-add-sm.btn-add-primary(@click="applyExternalDiff(d)") Übernehmen
+            button.btn-add-sm.btn-add-ghost(@click="dismissExternalDiff(d)") Behalten
         .pretix-warnings(v-if="pretixData?.warnings?.length")
           .pretix-warning(v-for="w in pretixData.warnings" :key="w") ⚠️ {{ w }}
         .external-data-summary(v-if="externalDataLoaded && !pretixError && !paypalBarError && !sumupBarError")
@@ -3058,35 +3148,6 @@ function clearPendingNumberSelect() {
 
     //- ── Expenses & Receipts Tab ──
     .tab-content(v-if="activeTab === 'expenses'")
-      h3.section-title 🧾 Ausgaben & Belege
-
-      //- Beleg erfassen: manuell, per KI-Foto, als Datei-Upload oder per Drag & Drop
-      //- Der Drop-Bereich umfasst Buttons + Hinweiszeile, damit man überall in der Fläche ablegen kann.
-      .capture-wrapper(
-        @dragover.prevent="dragOver = true"
-        @dragleave="dragOver = false"
-        @drop.prevent="handleDrop"
-        :class="{ 'drag-over': dragOver }"
-      )
-        .capture-bar
-          button.capture-card(@click="addExpense") ✏️ Manuell
-          button.capture-card.capture-ai(@click="triggerExpenseScan" :disabled="scanningExpense")
-            | {{ scanningExpense ? '🤖 Wird gelesen…' : '📸 Foto scannen (KI)' }}
-          button.capture-card(@click="triggerFileUpload") 📎 Datei hochladen
-        p.dragdrop-hint {{ dragOver ? 'Loslassen zum Hochladen…' : '📥 Beleg-Datei oder Foto lässt sich auch per Drag & Drop hierher ziehen' }}
-      p.reminder-text 💡 Denk an: Honorare/Gagen · Hotel · GEMA · Werbung (Flyer/Poster) · Catering
-      p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
-
-      .upload-progress(v-if="uploadingFiles.length")
-        .upload-item(v-for="f in uploadingFiles" :key="f.name")
-          span {{ f.name }}
-          span.status ⏳ wird hochgeladen…
-
-      .upload-error(v-if="uploadError")
-        p ⚠️ {{ uploadError }}
-
-      //- Band-Deals Übersicht ist jetzt in die Ausgaben-Tabelle integriert
-      //- (siehe unten) — kein separater Block mehr.
 
       //- Versteckte Datei-Inputs für Scan & Upload
       input(
@@ -3105,53 +3166,94 @@ function clearPendingNumberSelect() {
         style="display: none"
       )
 
-      //- Ausgaben + Band-Deals in EINEM Rahmen: oben die Band-Deals (Status
-      //- + Übernahme aus den Event-Deals), darunter die erfassten Ausgaben.
-      .expenses-table(v-if="expenses.length || bandDealOverview.length" :class="{ 'door-deal-active': doorDealActive }")
-        template(v-if="bandDealOverview.length")
-          .expenses-subhead 🎤 Band-Deals
-          .deal-calc
-            .deal-calc-head
-              label.deal-calc-label(for="deal-calc-base") 🚪 Türeinnahme brutto — wie gezählt
-              .amount-wrap
-                input#deal-calc-base.amount-input(
-                  type="number" step="0.01" min="0"
-                  :value="dealCalcFrozen ?? dealCalcGrossDefault.toFixed(2)"
-                  @input="setDealCalcBase"
-                )
-                span €
-              button.btn-reset-calc(
-                v-if="dealCalcFrozen !== null"
-                @click="resetDealCalcBase"
-                title="Wert aus der Kassenzählung übernehmen"
-              ) ↺ aus Abrechnung
-            .deal-calc-line
-              span − 7 % Umsatzsteuer (Eintritt)
-              span −{{ formatCurrency(dealCalcVat) }}
-            .deal-calc-line.deal-calc-total
-              span = Grundlage für die Gagen
-              span.deal-calc-net {{ formatCurrency(dealCalcBase) }}
-            p.deal-calc-hint Rechner für den Abend: trag ein, was im Einlass liegt, bevor ausgezahlt wird. Prozentuale Gagen werden vom Netto gerechnet — die Umsatzsteuer gehört dem Finanzamt, nicht der Band. Dieser Wert fließt nicht in die Abrechnung ein.
-          .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId")
-            .band-deal-info
-              span.band-deal-name {{ row.artistName }}
-              span.band-deal-deal {{ row.dealLabel }}
-              span.band-deal-recorded → {{ row.recordedLabel }}
-            .band-deal-actions
-              span.band-deal-tag.tag-ok(v-if="row.allGood") ✓ übernommen
-              template(v-if="row.issues.suggestExpense && !row.issues.orphanSplit")
-                span.band-deal-tag.tag-suggest 💡 noch nicht als Ausgabe erfasst
-                button.btn-add-sm(@click="applyExpenseRow(row)") Als Ausgabe übernehmen
-              template(v-if="row.issues.amountMismatch")
-                span.band-deal-tag.tag-warn ⚠ gezahlt {{ formatCurrency(row.currentAmount || 0) }}, laut Deal {{ formatCurrency(row.resolvedAmount) }}
-                button.btn-add-sm(@click="keepPaidAmountRow(row)") {{ formatCurrency(row.currentAmount || 0) }} behalten
-                button.btn-add-sm(@click="applyResolvedAmountRow(row)") {{ formatCurrency(row.resolvedAmount) }} übernehmen
-              template(v-if="row.issues.orphanSplit")
-                span.band-deal-tag.tag-warn ⚠ steht als externer Split ({{ row.splitShare }}%) — Bands gehören in die Ausgaben, nicht in den externen Split
-                button.btn-add-sm(@click="convertSplitToExpenseRow(row)") {{ row.currentAmount != null ? 'Externen Split entfernen' : 'In Ausgabe umwandeln' }}
+      //- == Gagen ==
+      //- Eigener Abschnitt vor den übrigen Ausgaben: erst der Rechner für den
+      //- Abend, dann der Soll/Ist-Abgleich je Band, dann die gebuchten Gagen.
+      .section(v-if="bandDealOverview.length || gageExpenses.length")
+        .section-title-row
+          h3.section-title 🎤 Gagen
+        p.section-subtitle(v-if="bandDealOverview.length") Rechner für den Abend: trag ein, was im Einlass liegt, bevor ausgezahlt wird. Der Wert fließt nicht in die Abrechnung ein.
+        .deal-calc(v-if="bandDealOverview.length")
+          .deal-calc-head
+            label.deal-calc-label(for="deal-calc-base") Gezähltes Bargeld im Einlass
+            .amount-wrap
+              input#deal-calc-base.amount-input(
+                type="number" step="0.01" min="0"
+                :value="dealCalcFrozen ?? dealCalcCashDefault.toFixed(2)"
+                @input="setDealCalcBase"
+              )
+              span €
+          .deal-calc-line.deal-calc-change-row
+            label.deal-calc-label(for="deal-calc-change") − Wechselgeld zurücklegen
+            .amount-wrap
+              input#deal-calc-change.amount-input(
+                type="number" step="0.01" min="0"
+                v-model="dealCalcChange"
+                placeholder="0,00"
+              )
+              span €
+          .deal-calc-line.deal-calc-digital(v-if="dealCalcDigital > 0")
+            span + Digitale Einnahmen (Pretix/PayPal/SumUp)
+            span +{{ formatCurrency(dealCalcDigital) }}
+          .deal-calc-line.deal-calc-digital(v-if="dealCalcDigitalFees > 0")
+            span − Gebühren der digitalen Einnahmen
+            span −{{ formatCurrency(dealCalcDigitalFees) }}
+          //- Die Kassenzählung wird oft erst am Folgetag gemacht — die
+          //- digitalen Einnahmen müssen also auch hier abrufbar sein.
+          .deal-calc-fetch
+            button.btn-add-sm.btn-add-ghost(
+              @click="fetchAndApplyAllExternal"
+              :disabled="externalDataLoading"
+            ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ Digitale Einnahmen neu laden' : '⬇ Digitale Einnahmen laden' }}
+            span.deal-calc-fetch-hint(v-if="!externalDataLoading && !externalDataLoaded && dealCalcDigital === 0")
+              | Pretix, PayPal und SumUp noch nicht abgerufen
+            span.deal-calc-fetch-error(v-if="pretixError") Pretix: {{ pretixError }}
+            span.deal-calc-fetch-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
+            span.deal-calc-fetch-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
+          .external-diffs(v-if="externalDiffs.length")
+            p.external-diffs-head ⚠️ Abweichung zu deinen erfassten Werten – nichts wurde überschrieben:
+            .external-diff-row(v-for="d in externalDiffs" :key="d.source")
+              span.external-diff-label {{ d.label }}
+              span.external-diff-vals
+                | erfasst {{ formatCurrency(d.storedTotal) }} → laut API {{ formatCurrency(d.fetchedTotal) }}
+              button.btn-add-sm.btn-add-primary(@click="applyExternalDiff(d)") Übernehmen
+              button.btn-add-sm.btn-add-ghost(@click="dismissExternalDiff(d)") Behalten
+          .deal-calc-line.deal-calc-subtotal
+            span = Türeinnahme brutto
+            span {{ formatCurrency(dealCalcSubtotal) }}
+          .deal-calc-line
+            span − 7 % Umsatzsteuer (Eintritt)
+            span −{{ formatCurrency(dealCalcVat) }}
+          .deal-calc-line.deal-calc-total
+            span = Grundlage für die Gagen
+            span.deal-calc-net {{ formatCurrency(dealCalcBase) }}
 
-        template(v-if="expenses.length")
-          .expenses-subhead(v-if="bandDealOverview.length") 🧾 Erfasste Ausgaben
+        .band-deal-table
+          .band-deal-header
+            span Band
+            span Deal
+            span Betrag
+            span Status
+          .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId" :class="{ 'is-open': !row.allGood }")
+            .band-deal-name {{ row.artistName }}
+            .band-deal-deal
+              span {{ dealShortLabel(row) }}
+              span.band-deal-winner(v-if="dealWinnerHint(row)") {{ dealWinnerHint(row) }}
+            .band-deal-amount {{ formatCurrency(row.resolvedAmount) }}
+            .band-deal-status
+              template(v-if="row.allGood")
+                span.band-deal-tag.tag-ok ✓ gebucht
+              template(v-else-if="row.issues.orphanSplit")
+                span.band-deal-tag.tag-warn ⚠ externer Split ({{ row.splitShare }} %)
+                button.btn-add-sm.btn-add-primary(@click="convertSplitToExpenseRow(row)") {{ row.currentAmount != null ? 'Split entfernen' : 'In Gage umwandeln' }}
+              template(v-else-if="row.issues.amountMismatch")
+                span.band-deal-tag.tag-warn ⚠ gebucht {{ formatCurrency(row.currentAmount || 0) }}
+                button.btn-add-sm.btn-add-ghost(@click="keepPaidAmountRow(row)") behalten
+                button.btn-add-sm.btn-add-primary(@click="applyResolvedAmountRow(row)") auf {{ formatCurrency(row.resolvedAmount) }}
+              template(v-else-if="row.issues.suggestExpense")
+                button.btn-add-sm.btn-add-primary(@click="applyExpenseRow(row)") + Als Gage buchen
+
+        .expenses-table(v-if="gageExpenses.length" :class="{ 'door-deal-active': doorDealActive }")
           .expense-header
             span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
             span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
@@ -3160,7 +3262,7 @@ function clearPendingNumberSelect() {
             span.col-doordeal(v-if="doorDealActive" title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)") 🚪
             span
 
-          .expense-row(v-for="(exp, index) in sortedExpenses" :key="index")
+          .expense-row(v-for="exp in gageExpenses" :key="expenses.indexOf(exp)")
             input.text-input(
               v-model="exp.description"
               type="text"
@@ -3187,19 +3289,91 @@ function clearPendingNumberSelect() {
                 v-model="exp.door_deal_deductible"
                 title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)"
               )
-            button.btn-remove(@click="removeExpense(index)") ×
+            button.btn-remove(@click="removeExpense(exp)") ×
+        .band-deal-empty(v-else-if="bandDealOverview.length") Noch keine Gage gebucht – oben „+ Als Gage buchen“ klicken.
+        .group-total
+          span Gagen gesamt:
+          strong {{ formatCurrency(totalGageExpenses) }}
 
-        .band-deal-empty(v-else-if="bandDealOverview.length") Noch keine weiteren Ausgaben – oben manuell eintragen oder einen Beleg abfotografieren.
+      //- == Weitere Ausgaben ==
+      .section
+        .section-title-row
+          h3.section-title 🧾 Weitere Ausgaben
 
-      p.empty-hint(v-else) Noch keine Ausgabe erfasst – oben manuell eintragen oder einen Beleg abfotografieren.
+        //- Beleg erfassen: manuell, per KI-Foto, als Datei-Upload oder per Drag & Drop.
+        //- Der Drop-Bereich umfasst Buttons + Hinweiszeile, damit man überall in der Fläche ablegen kann.
+        .capture-wrapper(
+          @dragover.prevent="dragOver = true"
+          @dragleave="dragOver = false"
+          @drop.prevent="handleDrop"
+          :class="{ 'drag-over': dragOver }"
+        )
+          .capture-bar
+            button.capture-card(@click="addExpense") ✏️ Manuell
+            button.capture-card.capture-ai(@click="triggerExpenseScan" :disabled="scanningExpense")
+              | {{ scanningExpense ? '🤖 Wird gelesen…' : '📸 Foto scannen (KI)' }}
+            button.capture-card(@click="triggerFileUpload") 📎 Datei hochladen
+          p.dragdrop-hint {{ dragOver ? 'Loslassen zum Hochladen…' : '📥 Beleg-Datei oder Foto lässt sich auch per Drag & Drop hierher ziehen' }}
+        p.reminder-text 💡 Denk an: Hotel · GEMA · Werbung (Flyer/Poster) · Catering
+        p.scan-error(v-if="scanExpenseError") ⚠️ {{ scanExpenseError }}
+
+        .upload-progress(v-if="uploadingFiles.length")
+          .upload-item(v-for="f in uploadingFiles" :key="f.name")
+            span {{ f.name }}
+            span.status ⏳ wird hochgeladen…
+
+        .upload-error(v-if="uploadError")
+          p ⚠️ {{ uploadError }}
+
+        .expenses-table(v-if="otherExpenses.length" :class="{ 'door-deal-active': doorDealActive }")
+          .expense-header
+            span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
+            span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
+            span Bezahlt aus
+            span Sphäre
+            span.col-doordeal(v-if="doorDealActive" title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)") 🚪
+            span
+
+          .expense-row(v-for="exp in otherExpenses" :key="expenses.indexOf(exp)")
+            input.text-input(
+              v-model="exp.description"
+              type="text"
+              placeholder="z.B. Rewe, Hotel..."
+            )
+            .amount-wrap
+              input.amount-input(
+                v-model="exp.amount"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              )
+            select.select-input(v-model="exp.paid_from")
+              option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
+                | {{ label }}
+            select.select-input(v-model="exp.tax_sphere" :class="{ 'missing': !exp.tax_sphere }")
+              option(:value="null" disabled hidden) Sphäre wählen
+              option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
+                | {{ label }}
+            .col-doordeal(v-if="doorDealActive")
+              input(
+                type="checkbox"
+                v-model="exp.door_deal_deductible"
+                title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)"
+              )
+            button.btn-remove(@click="removeExpense(exp)") ×
+        p.empty-hint(v-else) Noch keine Ausgabe erfasst – oben manuell eintragen oder einen Beleg abfotografieren.
+        .group-total
+          span Weitere Ausgaben:
+          strong {{ formatCurrency(totalOtherExpenses) }}
 
       .grand-total
         span Gesamtausgaben:
         strong {{ formatCurrency(totalExpenses) }}
 
       //- Rechnungen aus dem Postfach, die dieser Veranstaltung zugeordnet wurden
-      .inbox-invoices(v-if="eventInvoices.length")
-        .section-header
+      .section.inbox-invoices(v-if="eventInvoices.length")
+        .section-title-row
           h3.section-title Rechnungen aus dem Postfach
         p.inbox-invoices-hint Diese Rechnungen wurden im Rechnungseingang dieser Veranstaltung zugeordnet. „Als Ausgabe" liest den Betrag per KI aus und legt eine Ausgaben-Zeile an.
         .inbox-invoice-row(v-for="inv in eventInvoices" :key="inv.id")
@@ -3218,8 +3392,8 @@ function clearPendingNumberSelect() {
         .scan-error(v-if="invoiceImportError") ⚠️ {{ invoiceImportError }}
 
       //- Hochgeladene Belege
-      .documents-tab.expenses-documents
-        .section-header
+      .section.documents-tab.expenses-documents
+        .section-title-row
           h3.section-title Belege
           .header-actions
             router-link.btn-secondary(:to="`/admin/events/${eventId}/documents`") Alle Dokumente →
@@ -3959,6 +4133,7 @@ h2 {
 
 .section-title-row .section-title {
   flex: 1;
+  margin: 0;
 }
 
 .section-subtitle {
@@ -3972,6 +4147,7 @@ h2 {
   border-bottom: 1px solid #ddd;
   background: #fafafa;
   text-align: left;
+  font-size: 0.9rem;
 }
 
 .deal-calc-head {
@@ -3979,12 +4155,13 @@ h2 {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: inherit;
 }
 
 .deal-calc-label {
   font-weight: 900;
-  font-size: 0.95rem;
+  font-size: inherit;
   flex: 1 1 auto;
 }
 
@@ -3993,6 +4170,16 @@ h2 {
   align-items: center;
   gap: 0.25rem;
   flex: 0 0 auto;
+  font-size: inherit;
+  font-weight: 900;
+  color: black;
+}
+
+/* Feste Breite, damit die €-Zeichen beider Eingabezeilen — und damit die
+   Eingabefelder selbst — bündig unter den Beträgen der Textzeilen stehen. */
+.deal-calc .amount-wrap > span {
+  width: 0.9rem;
+  flex: 0 0 auto;
 }
 
 .deal-calc .amount-input {
@@ -4000,23 +4187,14 @@ h2 {
   height: 2rem;
   box-sizing: border-box;
   text-align: right;
-}
-
-.btn-reset-calc {
-  background: white;
-  color: black;
-  letter-spacing: normal;
-  border: 2px solid black;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.8rem;
-  cursor: pointer;
+  font-size: inherit;
 }
 
 .deal-calc-line {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  font-size: 0.85rem;
+  font-size: inherit;
   color: #555;
   padding: 0.1rem 0;
 }
@@ -4025,7 +4203,7 @@ h2 {
   border-top: 1px solid #ccc;
   margin-top: 0.25rem;
   padding-top: 0.35rem;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 900;
   color: black;
 }
@@ -4037,6 +4215,99 @@ h2 {
   line-height: 1.4;
   text-align: left;
   color: #555;
+}
+
+.deal-calc-line.deal-calc-digital {
+  color: #777;
+}
+
+.deal-calc-fetch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.35rem 0 0.15rem;
+}
+
+.deal-calc-fetch .btn-add-sm {
+  letter-spacing: normal;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.deal-calc-fetch-hint {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.deal-calc-fetch-error {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.external-diffs {
+  border: 2px solid #f59e0b;
+  background: #fffbeb;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  text-align: left;
+}
+
+.external-diffs-head {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #92400e;
+}
+
+.external-diff-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+}
+
+.external-diff-label {
+  font-weight: 700;
+  min-width: 9rem;
+}
+
+.external-diff-vals {
+  flex: 1 1 14rem;
+  color: #555;
+}
+
+.external-diff-row .btn-add-sm {
+  letter-spacing: normal;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.deal-calc-line.deal-calc-subtotal {
+  border-top: 1px solid #ddd;
+  margin-top: 0.2rem;
+  padding-top: 0.3rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.deal-calc-line.deal-calc-change-row {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem 0.75rem;
+  padding: 0.25rem 0 0.4rem;
+}
+
+.deal-calc-change-row .deal-calc-label {
+  font-weight: 900;
+  font-size: inherit;
+  flex: 1 1 auto;
 }
 
 .external-data-bar {
@@ -4342,42 +4613,69 @@ h2 {
   color: #888;
   margin: 0 0 0.75rem;
 }
+.band-deal-table {
+  border: 0.25rem solid black;
+  background: white;
+  margin: 0 0 0.75rem;
+}
+.band-deal-header,
 .band-deal-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 110px minmax(200px, 1.3fr);
+  gap: 0.5rem 0.75rem;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding: 0.6rem 1rem;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.band-deal-header {
+  font-weight: 900;
+  font-size: 0.8rem;
+  border-bottom: 0.25rem solid black;
+}
+/* Kopf folgt der Ausrichtung seiner Spalte. */
+.band-deal-header > span:nth-child(3),
+.band-deal-header > span:nth-child(4) {
+  text-align: right;
+}
+.band-deal-row {
   border-bottom: 1px solid #ddd;
   background: white;
 }
 .band-deal-row:last-child {
   border-bottom: none;
 }
-.band-deal-info {
-  display: flex;
-  flex-flow: row wrap;
-  align-items: baseline;
-  gap: 0.1rem 0.6rem;
-  min-width: 0;
-  font-size: 0.9rem;
+/* Offene Posten hervorheben, damit man nachts sieht, wo noch etwas fehlt. */
+.band-deal-row.is-open {
+  background: #fffbeb;
 }
 .band-deal-name {
   font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .band-deal-deal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
   color: #333;
 }
-.band-deal-recorded {
-  font-size: 0.85rem;
+.band-deal-winner {
+  font-size: 0.8rem;
   color: #666;
 }
-.band-deal-actions {
+.band-deal-amount {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.band-deal-status {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: flex-end;
+  gap: 0.4rem;
 }
 .band-deal-tag {
   font-size: 0.85rem;
@@ -6047,6 +6345,24 @@ h2 {
   filter: brightness(120%);
 }
 
+.band-deal-status .btn-add-sm {
+  white-space: nowrap;
+  /* Die globale Sperrschrift bläht die Buttons hier auf das Doppelte auf. */
+  letter-spacing: normal;
+  padding: 0.3rem 0.6rem;
+}
+
+/* Bei einer Betragsabweichung stehen zwei Aktionen nebeneinander — nur die
+   empfohlene ist gefüllt, damit die Wahl eindeutig bleibt. */
+.btn-add-sm.btn-add-ghost {
+  background: white;
+  color: black;
+}
+.btn-add-sm.btn-add-ghost:hover {
+  background: #eee;
+  filter: none;
+}
+
 .btn-remove-sm {
   padding: 0.15rem 0.4rem;
   background: black;
@@ -6089,22 +6405,34 @@ h2 {
 }
 .expenses-documents {
   margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 0.15rem solid #ddd;
 }
 .documents-tab .header-actions {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
+  padding-right: 1rem;
+  background: black;
+}
+/* Liegt in der schwarzen Titelleiste — braucht deshalb invertierte Farben. */
+.documents-tab .header-actions .btn-secondary {
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.documents-tab .header-actions .btn-secondary:hover {
+  background: white;
+  color: black;
 }
 .inbox-invoices {
   margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 0.15rem solid #ddd;
 }
 .inbox-invoices-hint {
   font-size: 0.85rem;
   color: #555;
-  margin: 0.25rem 0 1rem;
+  margin: 0.5rem 1rem 1rem;
 }
 .inbox-invoice-row {
   display: flex;
