@@ -655,6 +655,10 @@ export const documentService = {
     return api.post<EventDocument>(`/api/events/${eventId}/documents/`, formData)
   },
 
+  async rename(eventId: string, docId: number, fileName: string): Promise<EventDocument> {
+    return api.patch<EventDocument>(`/api/events/${eventId}/documents/${docId}/`, { file_name: fileName })
+  },
+
   async remove(eventId: string, docId: number): Promise<void> {
     return api.delete(`/api/events/${eventId}/documents/${docId}/`)
   },
