@@ -2702,7 +2702,12 @@ function clearPendingNumberSelect() {
             .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
 
           template(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id")
-            .inventory-row(v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage) }")
+            .inventory-row(
+              v-show="inventoryItemVisible(entry)"
+              data-testid="inv-row"
+              :data-drink="beverage.name"
+              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage) }"
+            )
               .col-inv-name
                 router-link.bev-name.bev-name-link(
                   v-if="authStore.isInventoryManager && beverage.id"
@@ -2725,7 +2730,7 @@ function clearPendingNumberSelect() {
 
                 //- Crate mode (units_per_crate > 1)
                 template(v-if="(beverage.units_per_crate || 1) > 1")
-                  .col-inv-pair.readonly-before
+                  .col-inv-pair.readonly-before(data-testid="inv-before")
                     .crate-input
                       span.qty-display {{ getOrInitSplit(beverage, entry)?.beforeCrates }}
                       span.input-label K
@@ -2741,6 +2746,7 @@ function clearPendingNumberSelect() {
                         min="0"
                         step="1"
                         placeholder="0"
+                        data-testid="inv-after-major"
                         @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                       )
                       span.input-label K
@@ -2750,6 +2756,7 @@ function clearPendingNumberSelect() {
                         type="number"
                         step="1"
                         placeholder="0"
+                        data-testid="inv-after-minor"
                         @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                         @input="onBottleInput(beverage, entry)"
                         @change="onBottleChange(beverage, entry, 'after')"
@@ -2759,14 +2766,14 @@ function clearPendingNumberSelect() {
                 //- Portion mode: Einzelflasche, die portionsweise ausgeschenkt wird
                 //- → ganze Flaschen + Viertel-Segmente statt freiem Dezimalfeld.
                 template(v-else-if="splitMode(beverage)")
-                  .col-inv-pair.bottle-mode.readonly-before
+                  .col-inv-pair.readonly-before(data-testid="inv-before")
                     .crate-input
                       span.qty-display {{ getOrInitSplit(beverage, entry)?.beforeCrates }}
                       span.input-label Fl
                     .crate-input(v-if="quarterGlyph(getOrInitSplit(beverage, entry)?.beforeBottles)")
                       span.qty-display {{ quarterGlyph(getOrInitSplit(beverage, entry)?.beforeBottles) }}
                   span.compare-sep →
-                  .col-inv-pair.bottle-mode
+                  .col-inv-pair
                     .crate-input
                       input.qty-input(
                         v-model.number="getOrInitSplit(beverage, entry).afterCrates"
@@ -2774,6 +2781,7 @@ function clearPendingNumberSelect() {
                         min="0"
                         step="1"
                         placeholder="0"
+                        data-testid="inv-after-major"
                         @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
                       )
                       span.input-label Fl
@@ -2792,27 +2800,31 @@ function clearPendingNumberSelect() {
                 //- Nebeneinheit. Die leere zweite Position hält das Feld auf
                 //- derselben Höhe wie bei Kisten- und Portionsgetränken.
                 template(v-else)
-                  .col-inv-pair.bottle-mode.readonly-before
+                  .col-inv-pair.readonly-before(data-testid="inv-before")
                     .crate-input
                       span.qty-display {{ formatQty(entry.quantity_before || '0') }}
                       span.input-label Fl.
                   span.compare-sep →
-                  .col-inv-pair.bottle-mode
+                  .col-inv-pair
                     .crate-input
                       input.qty-input(
                         v-model="entry.quantity_after"
                         type="number"
                         min="0"
                         step="1"
+                        placeholder="0"
+                        data-testid="inv-after-major"
                         @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                         @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
-                        placeholder="0"
                       )
                       span.input-label Fl.
                     .crate-input
 
-              .col-inv-num {{ formatBottleQty(entry.quantity_before, beverage) }}
-              .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatBottleQty(inventoryConsumption(entry), beverage) }}
+              .col-inv-num(data-testid="inv-total") {{ formatBottleQty(entry.quantity_before, beverage) }}
+              .col-inv-num(
+                data-testid="inv-consumed"
+                :class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }"
+              ) {{ formatBottleQty(inventoryConsumption(entry), beverage) }}
                 span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
                 span.miscount-warning(v-if="consumptionAnomaly(entry, beverage)" :title="`Ungewöhnlich hoher Verbrauch – üblich Ø ${consumptionAnomaly(entry, beverage)?.mean}, max ${consumptionAnomaly(entry, beverage)?.max}. Restbestand vergessen?`") ⚠
               .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}

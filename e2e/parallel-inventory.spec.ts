@@ -9,6 +9,7 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test'
 import { loginPage } from './helpers/auth'
 import { getOrCreateAbrechnung, deleteAbrechnung, getStock, saveInventory } from './helpers/api'
+import { openInventur, invRow, invAfterMajor, invAfterMinor, invBefore, invTotal } from './helpers/inventory'
 
 // Use two real events from the database. Both must be chronologically AFTER
 // every Cola purchase so quantity_before is positive (Cola has stock at the
@@ -69,38 +70,30 @@ test.describe('Parallel-tab FIFO inventory', () => {
     await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
     await tabB.goto(`/admin/events/${EVENT_B}?tab=accounting`, { waitUntil: 'domcontentloaded' })
 
-    // Click on the "Inventur" sub-tab in each
-    await tabA.locator('button:has-text("Inventur")').click()
-    await tabB.locator('button:has-text("Inventur")').click()
-
-    // Wait for Cola row to be visible (hideZeroStock hides 0-stock entries)
-    await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
-    await tabB.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+    // Click on the "Inventur" sub-tab in each and wait for the Cola row
+    // (hideZeroStock hides 0-stock entries).
+    await openInventur(tabA, DRINK_NAME)
+    await openInventur(tabB, DRINK_NAME)
 
     // Get initial stock for Cola
     const initialStock = await getStock(DRINK_ID)
     expect(initialStock).toBeGreaterThan(0)
 
     // Tab A: record Cola "Vorher" value
-    const tabAColaBefore = await tabA.locator(
-      `.inventory-row:has-text("${DRINK_NAME}") .col-inv-num`
-    ).first().textContent()
+    const tabAColaBefore = await invTotal(invRow(tabA, DRINK_NAME)).textContent()
 
     // Tab B: modify a DIFFERENT drink (e.g., Sprudel id=138)
     // Use the stepper to change Sprudel quantity
-    const sprudelRow = tabB.locator('.inventory-row:has-text("Sprudel")')
+    const sprudelRow = invRow(tabB, 'Sprudel')
     // Skip if not visible
     if (await sprudelRow.isVisible()) {
-      const afterInput = sprudelRow.locator('input.qty-input').first()
-      await afterInput.fill('0')
+      await invAfterMajor(sprudelRow).fill('0')
       // Wait for auto-save
       await tabB.waitForTimeout(3000)
     }
 
     // Tab A: Cola "Vorher" should NOT have changed
-    const tabAColaAfter = await tabA.locator(
-      `.inventory-row:has-text("${DRINK_NAME}") .col-inv-num`
-    ).first().textContent()
+    const tabAColaAfter = await invTotal(invRow(tabA, DRINK_NAME)).textContent()
 
     expect(tabAColaAfter).toBe(tabAColaBefore)
   })
@@ -152,12 +145,8 @@ test.describe('Parallel-tab FIFO inventory', () => {
 
     // Open Tab B (the later event) and read its initial Vorher.
     await tabB.goto(`/admin/events/${EVENT_B}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-    await tabB.locator('button:has-text("Inventur")').click()
-    await tabB.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
-
-    const tabBRow = tabB.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
-    const vorherSelector = '.col-inv-pair.readonly-before .qty-display, .col-inv-pair.readonly-before .col-inv-num'
-    const tabBVorherBefore = (await tabBRow.locator(vorherSelector).first().textContent())?.trim()
+    const tabBRow = await openInventur(tabB, DRINK_NAME)
+    const tabBVorherBefore = (await invBefore(tabBRow).textContent())?.trim()
 
     // Tab A (earlier event) consumes 1 crate via API.
     const abrA = await getOrCreateAbrechnung(EVENT_A)
@@ -175,7 +164,7 @@ test.describe('Parallel-tab FIFO inventory', () => {
     await tabB.waitForTimeout(2000)
 
     // Tab B's Vorher should now be smaller (24 less in bottles).
-    const tabBVorherAfter = (await tabBRow.locator(vorherSelector).first().textContent())?.trim()
+    const tabBVorherAfter = (await invBefore(tabBRow).textContent())?.trim()
     expect(tabBVorherAfter).not.toBe(tabBVorherBefore)
 
     // Cleanup: pull Tab B's abr id
@@ -248,14 +237,12 @@ test.describe('Parallel-tab FIFO inventory', () => {
     try {
       await loginPage(tabA)
       await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabA.locator('button:has-text("Inventur")').click()
-      await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const colaRowA = await openInventur(tabA, DRINK_NAME)
 
       // Step 1: Tab A reduces "Nachher" by 6 bottles via the bottle stepper input.
-      // For Cola (upc=24) the row has crate + bottle inputs; the bottles input
-      // is the second .qty-input under the editable col-inv-pair.
-      const colaRowA = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
-      const afterBottlesInput = colaRowA.locator('.col-inv-pair:not(.readonly-before) input.qty-input').nth(1)
+      // For Cola (upc=24) the row has a crate and a bottle field; we want the
+      // bottle one.
+      const afterBottlesInput = invAfterMinor(colaRowA)
       const currentBottles = Number(await afterBottlesInput.inputValue())
       await afterBottlesInput.fill(String(currentBottles - 6))
       // Wait for first auto-save to complete (2s debounce + network)
@@ -317,12 +304,10 @@ test.describe('Parallel-tab FIFO inventory', () => {
     try {
       await loginPage(tabA)
       await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabA.locator('button:has-text("Inventur")').click()
-      await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const tabARow = await openInventur(tabA, DRINK_NAME)
 
       // Read Tab A's chronological Vorher BEFORE Tab B edits anything.
-      const tabARow = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
-      const tabAVorherBefore = await tabARow.locator('.col-inv-pair.readonly-before .qty-display, .col-inv-pair.readonly-before .col-inv-num').first().textContent()
+      const tabAVorherBefore = await invBefore(tabARow).textContent()
 
       // Tab B (later event) consumes via API, reducing global stock.
       const abrB = await getOrCreateAbrechnung(EVENT_B)
@@ -341,7 +326,7 @@ test.describe('Parallel-tab FIFO inventory', () => {
       await tabA.waitForTimeout(2000)
 
       // Tab A's chronological Vorher MUST be unchanged.
-      const tabAVorherAfter = await tabARow.locator('.col-inv-pair.readonly-before .qty-display, .col-inv-pair.readonly-before .col-inv-num').first().textContent()
+      const tabAVorherAfter = await invBefore(tabARow).textContent()
       expect(tabAVorherAfter?.trim()).toBe(tabAVorherBefore?.trim())
 
       const abrA = await getOrCreateAbrechnung(EVENT_A)
@@ -362,11 +347,9 @@ test.describe('Parallel-tab FIFO inventory', () => {
     try {
       await loginPage(tabA)
       await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabA.locator('button:has-text("Inventur")').click()
-      await tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const colaRowA = await openInventur(tabA, DRINK_NAME)
 
-      const colaRowA = tabA.locator(`.inventory-row:has-text("${DRINK_NAME}")`).first()
-      const afterBottlesInput = colaRowA.locator('.col-inv-pair:not(.readonly-before) input.qty-input').nth(1)
+      const afterBottlesInput = invAfterMinor(colaRowA)
       const startBottles = Number(await afterBottlesInput.inputValue())
 
       // Step 1: reduce after by 1 → consumed = 1, row should be inv-confirmed
@@ -410,20 +393,17 @@ test.describe('Parallel-tab FIFO inventory', () => {
     try {
       await loginPage(tabA)
       await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabA.locator('button:has-text("Inventur")').click()
-      await tabA.locator(`.inventory-row:has-text("${SEKT_NAME}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
-
-      const sektRow = tabA.locator(`.inventory-row:has-text("${SEKT_NAME}")`).first()
+      const sektRow = await openInventur(tabA, SEKT_NAME)
 
       // Read Tab A's chronological "Vorher" from the UI (not the global stock,
       // which differs in chronological-display mode).
-      const vorherText = await sektRow.locator('.col-inv-pair.readonly-before .qty-display').first().textContent()
+      const vorherText = await invBefore(sektRow).textContent()
       const tabAVorher = parseFloat(vorherText?.trim() ?? '0')
       test.skip(tabAVorher < 4, `Tab A's chronological Vorher must be ≥4, got ${tabAVorher}`)
 
       // Tab A: type Nachher = Vorher - 1 → consumed=1.  Trigger save via
       // auto-save (blur + wait for debounce) instead of a save button.
-      const afterInput = sektRow.locator('.col-inv-pair.bottle-mode:not(.readonly-before) input.qty-input').first()
+      const afterInput = invAfterMajor(sektRow)
       const firstNachher = String(tabAVorher - 1)
       await afterInput.fill(firstNachher)
       const wait200 = tabA.waitForResponse(
@@ -462,7 +442,7 @@ test.describe('Parallel-tab FIFO inventory', () => {
       // CRITICAL: the input field must still show the user-typed value.
       // Re-locate the input fresh — the row may have re-rendered after the
       // 400 error displayed.
-      const afterInputAfter = sektRow.locator('.col-inv-pair.bottle-mode:not(.readonly-before) input.qty-input').first()
+      const afterInputAfter = invAfterMajor(sektRow)
       const afterValue = await afterInputAfter.inputValue({ timeout: 5_000 })
       expect(afterValue).toBe(conflictNachher)
 

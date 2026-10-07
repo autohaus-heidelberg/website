@@ -17,6 +17,7 @@
  */
 import { test, expect } from '@playwright/test'
 import { loginPage } from './helpers/auth'
+import { openInventur, invAfterMajor } from './helpers/inventory'
 import {
   getOrCreateAbrechnung,
   deleteAbrechnung,
@@ -200,16 +201,13 @@ test.describe('Multi-round parallel consumption', () => {
 
       // Navigate both to their events, open Inventur
       await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabA.locator('button:has-text("Inventur")').click()
-      await tabA.locator(`.inventory-row:has-text("${COLA.name}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const colaRowA = await openInventur(tabA, COLA.name)
 
       await tabB.goto(`/admin/events/${EVENT_B}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabB.locator('button:has-text("Inventur")').click()
-      await tabB.locator(`.inventory-row:has-text("${COLA.name}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const colaRowB = await openInventur(tabB, COLA.name)
 
       // === Round 1: Tab A reduces Cola by 1 crate via UI ===
-      const colaRowA = tabA.locator(`.inventory-row:has-text("${COLA.name}")`)
-      const afterInputA = colaRowA.locator('input.qty-input').first()
+      const afterInputA = invAfterMajor(colaRowA)
       const initialCratesA = await afterInputA.inputValue()
       await afterInputA.fill(String(Number(initialCratesA) - 1))
       await tabA.waitForTimeout(3500)
@@ -218,8 +216,7 @@ test.describe('Multi-round parallel consumption', () => {
       expect(stock).toBe(initialStock - COLA.upc)
 
       // === Round 2: Tab B reduces Cola by 1 crate via UI ===
-      const colaRowB = tabB.locator(`.inventory-row:has-text("${COLA.name}")`)
-      const afterInputB = colaRowB.locator('input.qty-input').first()
+      const afterInputB = invAfterMajor(colaRowB)
       const initialCratesB = await afterInputB.inputValue()
       await afterInputB.fill(String(Number(initialCratesB) - 1))
       await tabB.waitForTimeout(3500)
@@ -252,17 +249,13 @@ test.describe('Multi-round parallel consumption', () => {
       await loginPage(tabB)
 
       await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabA.locator('button:has-text("Inventur")').click()
-      await tabA.locator(`.inventory-row:has-text("${COLA.name}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const colaRowA = await openInventur(tabA, COLA.name)
 
       await tabB.goto(`/admin/events/${EVENT_B}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      await tabB.locator('button:has-text("Inventur")').click()
-      await tabB.locator(`.inventory-row:has-text("${COLA.name}")`).first().waitFor({ state: 'visible', timeout: 30_000 })
+      const colaRowB = await openInventur(tabB, COLA.name)
 
-      const colaRowA = tabA.locator(`.inventory-row:has-text("${COLA.name}")`)
-      const afterCratesA = colaRowA.locator('.col-inv-pair:not(.readonly-before) input.qty-input').first()
-      const colaRowB = tabB.locator(`.inventory-row:has-text("${COLA.name}")`)
-      const afterCratesB = colaRowB.locator('.col-inv-pair:not(.readonly-before) input.qty-input').first()
+      const afterCratesA = invAfterMajor(colaRowA)
+      const afterCratesB = invAfterMajor(colaRowB)
 
       const cratesA = await afterCratesA.inputValue()
       const cratesB = await afterCratesB.inputValue()
