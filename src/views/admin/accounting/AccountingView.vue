@@ -30,7 +30,7 @@ import {
 } from '@/types/accounting'
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
-import { bottleStep, stepBottleInCrate, applyBottleStep, normalizeCrateBottleState } from '@/utils/inventoryStep'
+import { splitMode, splitQuantity, joinQuantity, stepMinor, normalizeSplit } from '@/utils/inventoryStep'
 import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice, ENTRANCE_VAT_RATE } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
 import { useAuthStore } from '@/stores/auth'
@@ -592,25 +592,27 @@ function toggleSourceExpanded(source: string) {
 
 // ── Computed: Inventory ──────────────────────────────────────────
 
-// ── Kisten/Flaschen-Hilfs-State für Inventur-UI ─────────────────
-// Speichert die aufgeteilte Eingabe (Kisten + Einzelflaschen),
-// berechnet daraus den Gesamtwert für quantity_before / quantity_after.
+// ── Split-State (Haupt-/Nebeneinheit) für die Inventur-UI ───────
+// Kistengetränk  → major = Kisten,   minor = Flaschen
+// Portionsdrink  → major = Flaschen, minor = Viertel
+// Piccolo & Co.  → kein Split, ein einzelnes Ganzzahlfeld
+// Aus dem Split werden quantity_before / quantity_after berechnet.
 const inventoryCrates = ref<Record<string, { beforeCrates: number; beforeBottles: number; afterCrates: number; afterBottles: number }>>({})
 
-function crateKey(bevId: number, field: 'before' | 'after'): string {
-  return `${bevId}_${field}`
-}
-
-function getOrInitCrateState(bevId: number, unitsPerCrate: number, entry: InventoryEntry) {
-  const key = String(bevId)
+/** Gibt `null` für Getränke ohne Split (Piccolo & Co.) — die arbeiten direkt
+ *  auf `entry.quantity_after`. */
+function getOrInitSplit(beverage: BeverageItem, entry: InventoryEntry) {
+  const mode = splitMode(beverage)
+  if (!mode) return null
+  const key = String(beverage.id)
   if (!inventoryCrates.value[key]) {
-    const totalBefore = parseFloat(entry.quantity_before || '0')
-    const totalAfter = parseFloat(entry.quantity_after || '0')
+    const before = splitQuantity(parseFloat(entry.quantity_before || '0'), mode)
+    const after = splitQuantity(parseFloat(entry.quantity_after || '0'), mode)
     inventoryCrates.value[key] = {
-      beforeCrates: Math.floor(totalBefore / unitsPerCrate),
-      beforeBottles: Math.round((totalBefore % unitsPerCrate) * 100) / 100,
-      afterCrates: Math.floor(totalAfter / unitsPerCrate),
-      afterBottles: Math.round((totalAfter % unitsPerCrate) * 100) / 100,
+      beforeCrates: before.major,
+      beforeBottles: before.minor,
+      afterCrates: after.major,
+      afterBottles: after.minor,
     }
   }
   return inventoryCrates.value[key]
@@ -626,7 +628,7 @@ function getOrInitCrateState(bevId: number, unitsPerCrate: number, entry: Invent
 function recomputeConsumed(entry: InventoryEntry) {
   const before = parseFloat(entry.quantity_before || '0')
   const after = parseFloat(entry.quantity_after || '0')
-  const consumed = Math.max(0, before - after)
+  const consumed = Math.max(0, Math.round((before - after) * 10000) / 10000)
   entry.consumed_quantity = String(consumed)
   inventoryConflicts.delete(entry.beverage_item)
   // If the user dialed consumption back to 0, the row is no longer "confirmed"
@@ -638,15 +640,16 @@ function recomputeConsumed(entry: InventoryEntry) {
 }
 
 function updateEntryFromCrates(entry: InventoryEntry, beverage: BeverageItem) {
+  const mode = splitMode(beverage)
+  if (!mode) return
   const state = inventoryCrates.value[String(beverage.id)]
   if (!state) return
-  const upc = beverage.units_per_crate || 1
-  entry.quantity_before = String(state.beforeCrates * upc + state.beforeBottles)
-  entry.quantity_after = String(state.afterCrates * upc + state.afterBottles)
+  entry.quantity_before = String(joinQuantity({ major: state.beforeCrates, minor: state.beforeBottles }, mode))
+  entry.quantity_after = String(joinQuantity({ major: state.afterCrates, minor: state.afterBottles }, mode))
   recomputeConsumed(entry)
 }
 
-/** Wenn der User direkt im Flaschen-Input arbeitet (native Spin-Buttons
+/** Wenn der User direkt im Nebeneinheiten-Input arbeitet (native Spin-Buttons
  *  am rechten Rand, oder Tippen einer großen Zahl), normalisiert sich
  *  das Modell sonst nicht: `afterBottles=20` bei einer 20er-Kiste
  *  bleibt einfach stehen.
@@ -658,18 +661,18 @@ function normalizeBottleOverflow(
   beverage: BeverageItem,
   field: 'after' | 'before',
 ) {
-  const upc = beverage.units_per_crate || 1
-  if (upc < 1) return
+  const mode = splitMode(beverage)
+  if (!mode) return
   const state = inventoryCrates.value[String(beverage.id)]
   if (!state) return
   const crateKey = field === 'after' ? 'afterCrates' : 'beforeCrates'
   const bottleKey = field === 'after' ? 'afterBottles' : 'beforeBottles'
-  const next = normalizeCrateBottleState(
-    { crates: state[crateKey], bottles: state[bottleKey] as number },
-    upc,
+  const next = normalizeSplit(
+    { major: state[crateKey], minor: state[bottleKey] as number },
+    mode.minorPerMajor,
   )
-  state[crateKey] = next.crates
-  state[bottleKey] = next.bottles
+  state[crateKey] = next.major
+  state[bottleKey] = next.minor
 }
 
 /** Wrapper für @input auf dem Flaschen-Input. Aktualisiert die
@@ -710,7 +713,7 @@ const inventoryBySupplier = computed(() => {
     // rather than mutating `inventory.value` from inside a computed (which
     // triggers re-evaluation cascades and leaves rows with no snapshot data).
     if (!entry) continue
-    getOrInitCrateState(bev.id!, bev.units_per_crate || 1, entry)
+    getOrInitSplit(bev, entry)
     groups[group].push({ beverage: bev, entry })
   }
   // Reihenfolge der Gruppen war bisher Zufall (Einfüge-Reihenfolge = wo das
@@ -819,7 +822,8 @@ function isInventoryConfirmed(entry: InventoryEntry): boolean {
 }
 
 function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
-  const state = getOrInitCrateState(beverage.id!, beverage.units_per_crate || 1, entry)
+  const state = getOrInitSplit(beverage, entry)
+  if (!state) return
   const key = field === 'after' ? 'afterCrates' : 'beforeCrates'
   state[key] = Math.max(0, state[key] + delta)
   updateEntryFromCrates(entry, beverage)
@@ -827,38 +831,50 @@ function stepCrate(beverage: BeverageItem, entry: InventoryEntry, field: 'after'
 }
 
 function stepBottle(beverage: BeverageItem, entry: InventoryEntry, field: 'after' | 'before', delta: number) {
-  const upc = beverage.units_per_crate || 1
-  if (upc > 1) {
-    // Kistenmodus: "Flaschenzähler durchläuft" — siehe stepBottleInCrate.
-    // Beispiel (upc=20): "−" auf 0 Fl. → 1 Kiste weniger und 19 Fl.,
-    // "+" auf 19 Fl. → eine Kiste mehr und 0 Fl. So pflegt man den
-    // Verbrauch flüssig, ohne ständig zwischen den Steppern zu wechseln.
-    const state = getOrInitCrateState(beverage.id!, upc, entry)
+  const mode = splitMode(beverage)
+  const state = mode ? getOrInitSplit(beverage, entry) : null
+  if (mode && state) {
+    // Der Nebeneinheiten-Zähler "läuft durch" — siehe stepMinor.
+    // Kiste (upc=20): "−" auf 0 Fl. → 1 Kiste weniger und 19 Fl.
+    // Portionsflasche: "−" auf 0 Viertel → 1 Flasche weniger und drei Viertel.
     const crateKey = field === 'after' ? 'afterCrates' : 'beforeCrates'
     const bottleKey = field === 'after' ? 'afterBottles' : 'beforeBottles'
-    const next = stepBottleInCrate(
-      { crates: state[crateKey], bottles: state[bottleKey] },
+    const next = stepMinor(
+      { major: state[crateKey], minor: state[bottleKey] },
       delta,
-      upc,
+      mode.minorPerMajor,
     )
-    state[crateKey] = next.crates
-    state[bottleKey] = next.bottles
+    state[crateKey] = next.major
+    state[bottleKey] = next.minor
     updateEntryFromCrates(entry, beverage)
   } else {
-    // Flaschenmodus (upc=1): siehe applyBottleStep / bottleStep in
-    // utils/inventoryStep.ts. Schrittweite ergibt sich aus
-    // portions_per_bottle: Piccolo & Co. → ganze Flaschen; Spirituosen mit
-    // z.B. 35 Portionen → 1/35-Schritte. WICHTIG: wir snappen den
-    // aktuellen Wert nicht aufs Step-Grid, weil der Server-Bestand selten
-    // exakt darauf liegt — sonst würde der erste Klick paradoxerweise
-    // HOCH-snappen (z.B. 5,29 → 5,2857 bei Vodka).
+    // Ganzflaschen-Drink (Piccolo & Co.) — nur ein Feld, also schlicht
+    // ±1 Flasche, bei 0 geklemmt.
     const field2 = field === 'after' ? 'quantity_after' : 'quantity_before'
     const current = parseFloat(entry[field2] || '0')
-    const next = applyBottleStep(current, delta, beverage)
-    entry[field2] = String(next)
+    entry[field2] = String(Math.max(0, current + delta))
     recomputeConsumed(entry)
   }
   if (field === 'after') confirmedInventory.add(beverage.id!)
+}
+
+/** Viertel-Segmente bei Portionsgetränken. Ein Klick auf das bereits aktive
+ *  Segment leert die angebrochene Flasche wieder — deshalb braucht es keinen
+ *  eigenen "leer"-Button. Hier passiert auch der Snap für krumme Altbestände:
+ *  ein geerbtes 19,1 (= 0,4 Viertel) wird erst durch den Klick aufs Raster
+ *  gezogen. */
+function setQuarter(beverage: BeverageItem, entry: InventoryEntry, quarter: number) {
+  const state = getOrInitSplit(beverage, entry)
+  if (!state) return
+  state.afterBottles = state.afterBottles === quarter ? 0 : quarter
+  updateEntryFromCrates(entry, beverage)
+  confirmedInventory.add(beverage.id!)
+}
+
+/** Liegt der Wert off-grid (krummer Altbestand), ist bewusst KEIN Segment aktiv. */
+function isQuarterActive(beverage: BeverageItem, entry: InventoryEntry, quarter: number): boolean {
+  const state = getOrInitSplit(beverage, entry)
+  return !!state && state.afterBottles === quarter
 }
 
 /** Pfeiltasten ↑/↓ im Flaschen-Input (Kistenmodus) sollen denselben
@@ -1630,6 +1646,34 @@ function formatCurrency(value: number): string {
 function formatQty(val: number | string): string {
   const n = typeof val === 'string' ? parseFloat(val) : val
   return isNaN(n) ? '0' : n.toLocaleString('de-DE')
+}
+
+const QUARTER_GLYPHS: Record<number, string> = { 1: '¼', 2: '½', 3: '¾' }
+
+/** Der Viertel-Rest einer angebrochenen Flasche als Glyph — das Gegenstück zur
+ *  Flaschen-Spalte im Kistenmodus. Krumme Altbestände (kein ganzes Viertel)
+ *  werden als Flaschen-Nachkommastelle gezeigt. */
+function quarterGlyph(minor: number | undefined): string {
+  if (!minor) return ''
+  return QUARTER_GLYPHS[minor] ?? `+${formatQty(Math.round(minor * 25) / 100)}`
+}
+
+/** Menge eines Portionsgetränks lesbar als "19 ¾" statt "19,75". Alle anderen
+ *  Getränke — und krumme Altbestände, die auf keinem Viertel liegen — fallen
+ *  auf `formatQty` zurück. Negative Werte (Verbrauch < 0 bei zu hoch gezähltem
+ *  Restbestand) laufen über den Betrag, sonst liefert der Floor-Split "-1 ½"
+ *  für -0,5. */
+function formatBottleQty(val: number | string | undefined, beverage: BeverageItem): string {
+  const mode = splitMode(beverage)
+  if (!mode || mode.minorSize === 1) return formatQty(val ?? '0')
+  const n = typeof val === 'string' ? parseFloat(val) : (val ?? 0)
+  if (isNaN(n)) return '0'
+  const sign = n < 0 ? '−' : ''
+  const { major, minor } = splitQuantity(Math.abs(n), mode)
+  const glyph = QUARTER_GLYPHS[minor]
+  if (minor === 0) return sign + formatQty(major)
+  if (!glyph) return formatQty(n)
+  return major > 0 ? `${sign}${formatQty(major)} ${glyph}` : sign + glyph
 }
 
 /** Flaschengröße als " 0,5l" (mit führendem Leerzeichen) oder '' — direkt an
@@ -2648,9 +2692,11 @@ function clearPendingNumberSelect() {
         .inventory-table.desktop-only
           .inventory-header
             .col-inv-name.sortable(@click="cycleInventoryNameSort") {{ inventoryNameHeader }}
-            .col-inv-info Kiste
-            .col-inv-pair.sortable(@click="invSort.toggle('before')") Vorher{{ invSort.indicator('before') }}
-            .col-inv-pair.sortable(@click="invSort.toggle('after')") Nachher{{ invSort.indicator('after') }}
+            .col-inv-info Gebinde
+            .col-inv-compare
+              span.sortable(@click="invSort.toggle('before')") Vorher{{ invSort.indicator('before') }}
+              span.compare-sep →
+              span.sortable(@click="invSort.toggle('after')") Nachher{{ invSort.indicator('after') }}
             .col-inv-num Gesamt
             .col-inv-num.sortable(@click="invSort.toggle('consumed')") Verbraucht{{ invSort.indicator('consumed') }}
             .col-inv-amount.sortable(@click="invSort.toggle('value')") Wert{{ invSort.indicator('value') }}
@@ -2669,57 +2715,104 @@ function clearPendingNumberSelect() {
               .col-inv-info(v-if="(beverage.units_per_crate || 1) > 1") {{ beverage.units_per_crate }}St.
               .col-inv-info(v-else) Fl.
 
-              //- Crate mode (units_per_crate > 1)
-              template(v-if="(beverage.units_per_crate || 1) > 1")
-                .col-inv-pair.readonly-before
-                  .crate-input
-                    span.qty-display {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}
-                    span.input-label K
-                  .crate-input
-                    span.qty-display {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}
-                    span.input-label Fl
-                .col-inv-pair
-                  .crate-input
-                    input.qty-input(
-                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates"
-                      type="number"
-                      min="0"
-                      step="1"
-                      placeholder="0"
-                      @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
-                    )
-                    span.input-label K
-                  .crate-input
-                    input.qty-input(
-                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
-                      type="number"
-                      step="1"
-                      placeholder="0"
-                      @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                      @input="onBottleInput(beverage, entry)"
-                      @change="onBottleChange(beverage, entry, 'after')"
-                    )
-                    span.input-label Fl
+              //- Vorher und Nachher stehen in EINER Spalte, getrennt durch einen
+              //- Pfeil — den Vergleich braucht man beim Zählen staendig.
+              //- Alle drei Zählmodi folgen dabei derselben Struktur: eine
+              //- `.crate-input`-Einheit für die Hauptmenge, daneben die
+              //- Nebeneinheit (zweites Feld im Kistenmodus, Viertel-Segmente bei
+              //- Portionsgetränken, nichts bei Ganzflaschen).
+              .col-inv-compare
 
-              //- Bottle mode (units_per_crate = 1)
-              template(v-else)
-                .col-inv-pair.bottle-mode.readonly-before
-                  span.qty-display {{ formatQty(entry.quantity_before || '0') }}
-                  span.input-label Fl.
-                .col-inv-pair.bottle-mode
-                  input.qty-input(
-                    v-model="entry.quantity_after"
-                    type="number"
-                    min="0"
-                    :step="bottleStep(beverage)"
-                    @keydown="onBottleKeydown($event, beverage, entry, 'after')"
-                    @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
-                    placeholder="0"
-                  )
-                  span.input-label Fl.
+                //- Crate mode (units_per_crate > 1)
+                template(v-if="(beverage.units_per_crate || 1) > 1")
+                  .col-inv-pair.readonly-before
+                    .crate-input
+                      span.qty-display {{ getOrInitSplit(beverage, entry)?.beforeCrates }}
+                      span.input-label K
+                    .crate-input
+                      span.qty-display {{ formatQty(getOrInitSplit(beverage, entry)?.beforeBottles) }}
+                      span.input-label Fl
+                  span.compare-sep →
+                  .col-inv-pair
+                    .crate-input
+                      input.qty-input(
+                        v-model.number="getOrInitSplit(beverage, entry).afterCrates"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="0"
+                        @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                      )
+                      span.input-label K
+                    .crate-input
+                      input.qty-input(
+                        v-model.number="getOrInitSplit(beverage, entry).afterBottles"
+                        type="number"
+                        step="1"
+                        placeholder="0"
+                        @keydown="onBottleKeydown($event, beverage, entry, 'after')"
+                        @input="onBottleInput(beverage, entry)"
+                        @change="onBottleChange(beverage, entry, 'after')"
+                      )
+                      span.input-label Fl
 
-              .col-inv-num {{ formatQty(entry.quantity_before) }}
-              .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatQty(inventoryConsumption(entry)) }}
+                //- Portion mode: Einzelflasche, die portionsweise ausgeschenkt wird
+                //- → ganze Flaschen + Viertel-Segmente statt freiem Dezimalfeld.
+                template(v-else-if="splitMode(beverage)")
+                  .col-inv-pair.bottle-mode.readonly-before
+                    .crate-input
+                      span.qty-display {{ getOrInitSplit(beverage, entry)?.beforeCrates }}
+                      span.input-label Fl
+                    .crate-input(v-if="quarterGlyph(getOrInitSplit(beverage, entry)?.beforeBottles)")
+                      span.qty-display {{ quarterGlyph(getOrInitSplit(beverage, entry)?.beforeBottles) }}
+                  span.compare-sep →
+                  .col-inv-pair.bottle-mode
+                    .crate-input
+                      input.qty-input(
+                        v-model.number="getOrInitSplit(beverage, entry).afterCrates"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="0"
+                        @input="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                      )
+                      span.input-label Fl
+                    .crate-input
+                      .quarter-seg
+                        button.quarter-btn(
+                          v-for="q in [1, 2, 3]"
+                          :key="q"
+                          type="button"
+                          :class="{ active: isQuarterActive(beverage, entry, q) }"
+                          :title="`Angebrochene Flasche ${['', 'ein Viertel', 'halb', 'drei Viertel'][q]} voll – nochmal klicken zum Leeren`"
+                          @click="setQuarter(beverage, entry, q)"
+                        ) {{ ['', '¼', '½', '¾'][q] }}
+
+                //- Whole-bottle mode (Piccolo & Co.) — einziges Getränk ohne
+                //- Nebeneinheit. Die leere zweite Position hält das Feld auf
+                //- derselben Höhe wie bei Kisten- und Portionsgetränken.
+                template(v-else)
+                  .col-inv-pair.bottle-mode.readonly-before
+                    .crate-input
+                      span.qty-display {{ formatQty(entry.quantity_before || '0') }}
+                      span.input-label Fl.
+                  span.compare-sep →
+                  .col-inv-pair.bottle-mode
+                    .crate-input
+                      input.qty-input(
+                        v-model="entry.quantity_after"
+                        type="number"
+                        min="0"
+                        step="1"
+                        @keydown="onBottleKeydown($event, beverage, entry, 'after')"
+                        @input="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
+                        placeholder="0"
+                      )
+                      span.input-label Fl.
+                    .crate-input
+
+              .col-inv-num {{ formatBottleQty(entry.quantity_before, beverage) }}
+              .col-inv-num(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") {{ formatBottleQty(inventoryConsumption(entry), beverage) }}
                 span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
                 span.miscount-warning(v-if="consumptionAnomaly(entry, beverage)" :title="`Ungewöhnlich hoher Verbrauch – üblich Ø ${consumptionAnomaly(entry, beverage)?.mean}, max ${consumptionAnomaly(entry, beverage)?.max}. Restbestand vergessen?`") ⚠
               .col-inv-amount {{ formatCurrency(inventoryValue(entry, beverage)) }}
@@ -2755,11 +2848,11 @@ function clearPendingNumberSelect() {
               span.inv-info-item
                 span.inv-info-label V:
                 template(v-if="(beverage.units_per_crate || 1) > 1")
-                  | {{ getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeCrates }}K {{ formatQty(getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).beforeBottles) }}Fl
+                  | {{ getOrInitSplit(beverage, entry)?.beforeCrates }}K {{ formatQty(getOrInitSplit(beverage, entry)?.beforeBottles) }}Fl
                 template(v-else)
-                  | {{ formatQty(entry.quantity_before) }}Fl
+                  | {{ formatBottleQty(entry.quantity_before, beverage) }}Fl
               span.inv-info-sep ·
-              span.inv-info-item(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ formatQty(inventoryConsumption(entry)) }}
+              span.inv-info-item(:class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }") Δ {{ formatBottleQty(inventoryConsumption(entry), beverage) }}
                 span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
               span.inv-info-sep ·
               span.inv-info-item
@@ -2774,7 +2867,7 @@ function clearPendingNumberSelect() {
                   .stepper-group
                     button.stepper-btn(@click="stepCrate(beverage, entry, 'after', -1)") −
                     input.stepper-value(
-                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterCrates"
+                      v-model.number="getOrInitSplit(beverage, entry).afterCrates"
                       type="number"
                       min="0"
                       step="1"
@@ -2785,7 +2878,7 @@ function clearPendingNumberSelect() {
                   .stepper-group
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', -1)") −
                     input.stepper-value(
-                      v-model.number="getOrInitCrateState(beverage.id, beverage.units_per_crate || 1, entry).afterBottles"
+                      v-model.number="getOrInitSplit(beverage, entry).afterBottles"
                       type="number"
                       step="1"
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
@@ -2794,6 +2887,28 @@ function clearPendingNumberSelect() {
                     )
                     button.stepper-btn(@click="stepBottle(beverage, entry, 'after', 1)") +
                     span.stepper-unit Fl
+              //- Portion stepper: ganze Flaschen + Viertel-Segmente
+              template(v-else-if="splitMode(beverage)")
+                .stepper-row
+                  .stepper-group
+                    button.stepper-btn(@click="stepCrate(beverage, entry, 'after', -1)") −
+                    input.stepper-value(
+                      v-model.number="getOrInitSplit(beverage, entry).afterCrates"
+                      type="number"
+                      min="0"
+                      step="1"
+                      @change="updateEntryFromCrates(entry, beverage); confirmedInventory.add(beverage.id)"
+                    )
+                    button.stepper-btn(@click="stepCrate(beverage, entry, 'after', 1)") +
+                    span.stepper-unit Fl.
+                .quarter-seg.quarter-seg-mobile
+                  button.quarter-btn(
+                    v-for="q in [1, 2, 3]"
+                    :key="q"
+                    type="button"
+                    :class="{ active: isQuarterActive(beverage, entry, q) }"
+                    @click="setQuarter(beverage, entry, q)"
+                  ) {{ ['', '¼', '½', '¾'][q] }}
               //- Bottle stepper
               template(v-else)
                 .stepper-row
@@ -2803,7 +2918,7 @@ function clearPendingNumberSelect() {
                       v-model.number="entry.quantity_after"
                       type="number"
                       min="0"
-                      :step="bottleStep(beverage)"
+                      step="1"
                       @keydown="onBottleKeydown($event, beverage, entry, 'after')"
                       @change="recomputeConsumed(entry); confirmedInventory.add(beverage.id)"
                     )
@@ -4430,7 +4545,9 @@ h2 {
 
 .inventory-header, .inventory-row {
   display: grid;
-  grid-template-columns: 2fr 45px 1.2fr 1.2fr 0.6fr 0.8fr 1fr;
+  /* Vorher und Nachher teilen sich eine Spalte — beim Zaehlen vergleicht man
+   * die beiden staendig, deshalb stehen sie direkt nebeneinander. */
+  grid-template-columns: 2fr 45px 2.2fr 0.6fr 0.8fr 1fr;
   gap: 0.4rem;
   padding: 0.5rem 0.75rem;
   align-items: center;
@@ -4465,11 +4582,51 @@ h2 {
   justify-content: center;
 }
 
+/* Gemeinsame Spalte fuer "Vorher -> Nachher". Beide Haelften teilen sich die
+ * Zelle und ruecken an den Pfeil heran: dadurch sitzt der Pfeil in jeder Zeile
+ * an derselben Stelle und die Eingabefelder fluchten, obwohl der Vorher-Text
+ * unterschiedlich breit ist. */
+.col-inv-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.col-inv-compare > .col-inv-pair {
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.col-inv-compare > .readonly-before {
+  justify-content: flex-end;
+}
+
+.compare-sep {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.inventory-header .col-inv-compare .sortable {
+  white-space: nowrap;
+}
+
+/* Jede Zaehlposition ist gleich breit — dadurch fluchten die Felder auch bei
+ * Getraenken ohne Nebeneinheit (Piccolo), deren zweite Position leer bleibt. */
 .crate-input {
   display: flex;
   align-items: center;
   gap: 0.1rem;
-  max-width: 80px;
+  width: 80px;
+  flex-shrink: 0;
+}
+
+/* "Vorher" zeigt nur Text statt Eingabefeldern — dort wuerde die feste Breite
+ * die Werte unnoetig weit auseinanderziehen. */
+.readonly-before .crate-input {
+  width: auto;
 }
 
 .crate-input .qty-input {
@@ -4496,16 +4653,68 @@ h2 {
   min-width: 1rem;
 }
 
-.bottle-mode {
+/* Viertel-Segmente fuer Portionsgetraenke: die angebrochene Flasche wird
+ * geklickt statt als Dezimalzahl getippt. Klick auf das aktive Segment leert
+ * wieder — deshalb braucht es keinen eigenen "leer"-Button. */
+.quarter-seg {
   display: flex;
-  align-items: center;
-  gap: 0.2rem;
-  justify-content: center;
+  flex-shrink: 0;
 }
 
-.bottle-mode .qty-input {
-  min-width: 64px;
-  width: auto;
+/* In der Tabelle fuellen die Segmente ihre Zaehlposition aus; auf den
+ * Mobile-Cards spannen sie ueber die volle Kartenbreite. */
+.crate-input .quarter-seg {
+  flex: 1;
+}
+
+.crate-input .quarter-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.quarter-btn {
+  all: unset;
+  min-width: 1.4rem;
+  height: 1.55rem;
+  border: 0.12rem solid black;
+  margin-left: -0.12rem;
+  background: white;
+  color: black;
+  font-size: 0.8rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s, color 0.1s;
+}
+
+.quarter-btn:first-child {
+  margin-left: 0;
+}
+
+.quarter-btn:hover {
+  background: #eee;
+}
+
+.quarter-btn.active {
+  background: black;
+  color: white;
+}
+
+.quarter-seg-mobile {
+  margin-top: 0.4rem;
+}
+
+.quarter-seg-mobile .quarter-btn {
+  flex: 1;
+  min-width: 0;
+  height: 2.4rem;
+  border-width: 2px;
+  margin-left: -2px;
+  font-size: 1rem;
 }
 
 .sortable {
