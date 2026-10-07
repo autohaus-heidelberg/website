@@ -3263,11 +3263,13 @@ function clearPendingNumberSelect() {
             span
 
           .expense-row(v-for="exp in gageExpenses" :key="expenses.indexOf(exp)")
+            span.field-label Beschreibung
             input.text-input(
               v-model="exp.description"
               type="text"
               placeholder="z.B. Rewe, Hotel..."
             )
+            span.field-label Betrag
             .amount-wrap
               input.amount-input(
                 v-model="exp.amount"
@@ -3276,13 +3278,16 @@ function clearPendingNumberSelect() {
                 min="0"
                 placeholder="0.00"
               )
+            span.field-label Bezahlt aus
             select.select-input(v-model="exp.paid_from")
               option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
                 | {{ label }}
+            span.field-label Sphäre
             select.select-input(v-model="exp.tax_sphere" :class="{ 'missing': !exp.tax_sphere }")
               option(:value="null" disabled hidden) Sphäre wählen
               option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
                 | {{ label }}
+            span.field-label(v-if="doorDealActive") 🚪 Abziehen
             .col-doordeal(v-if="doorDealActive")
               input(
                 type="checkbox"
@@ -3335,11 +3340,13 @@ function clearPendingNumberSelect() {
             span
 
           .expense-row(v-for="exp in otherExpenses" :key="expenses.indexOf(exp)")
+            span.field-label Beschreibung
             input.text-input(
               v-model="exp.description"
               type="text"
               placeholder="z.B. Rewe, Hotel..."
             )
+            span.field-label Betrag
             .amount-wrap
               input.amount-input(
                 v-model="exp.amount"
@@ -3348,13 +3355,16 @@ function clearPendingNumberSelect() {
                 min="0"
                 placeholder="0.00"
               )
+            span.field-label Bezahlt aus
             select.select-input(v-model="exp.paid_from")
               option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
                 | {{ label }}
+            span.field-label Sphäre
             select.select-input(v-model="exp.tax_sphere" :class="{ 'missing': !exp.tax_sphere }")
               option(:value="null" disabled hidden) Sphäre wählen
               option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
                 | {{ label }}
+            span.field-label(v-if="doorDealActive") 🚪 Abziehen
             .col-doordeal(v-if="doorDealActive")
               input(
                 type="checkbox"
@@ -5397,6 +5407,11 @@ h2 {
   align-items: center;
 }
 
+/* Beschriftung nur mobil — am Desktop trägt sie die Kopfzeile. */
+.expense-row > .field-label {
+  display: none;
+}
+
 .door-deal-active .expense-header,
 .door-deal-active .expense-row {
   grid-template-columns: 1fr 100px 140px 140px 36px 36px;
@@ -6159,9 +6174,65 @@ h2 {
     display: none;
   }
 
-  .expense-row {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
+  /* Ohne Kopfzeile braucht jedes Feld eine eigene Beschriftung; der
+     Löschen-Button gehört in die erste Zeile statt über die volle Breite. */
+  .expense-row,
+  .door-deal-active .expense-row {
+    grid-template-columns: 5.5rem 1fr 2rem;
+    gap: 0.4rem 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .expense-row > .field-label {
+    display: block;
+    grid-column: 1;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+  }
+
+  .expense-row > .text-input,
+  .expense-row > .amount-wrap,
+  .expense-row > .select-input,
+  .expense-row > .col-doordeal {
+    grid-column: 2;
+  }
+
+  .expense-row > .btn-remove {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  /* Band-Deals als Karte: Name + Betrag in die Kopfzeile, Deal und
+     Aktion darunter über die volle Breite. */
+  .band-deal-header {
+    display: none;
+  }
+
+  .band-deal-row {
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 0.5rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .band-deal-amount {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .band-deal-deal,
+  .band-deal-status {
+    grid-column: 1 / -1;
+  }
+
+  .band-deal-status {
+    justify-content: flex-start;
+    margin-top: 0.4rem;
+  }
+
+  .external-diff-label {
+    min-width: 0;
   }
 
   .tabs {
