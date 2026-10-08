@@ -3175,7 +3175,7 @@ function clearPendingNumberSelect() {
         p.section-subtitle(v-if="bandDealOverview.length") Rechner für den Abend: trag ein, was im Einlass liegt, bevor ausgezahlt wird. Der Wert fließt nicht in die Abrechnung ein.
         .deal-calc(v-if="bandDealOverview.length")
           .deal-calc-head
-            label.deal-calc-label(for="deal-calc-base") Gezähltes Bargeld im Einlass
+            label.deal-calc-label(for="deal-calc-base") Gezähltes Bargeld in der Einlasskasse
             .amount-wrap
               input#deal-calc-base.amount-input(
                 type="number" step="0.01" min="0"
@@ -3184,7 +3184,7 @@ function clearPendingNumberSelect() {
               )
               span €
           .deal-calc-line.deal-calc-change-row
-            label.deal-calc-label(for="deal-calc-change") − Wechselgeld zurücklegen
+            label.deal-calc-label(for="deal-calc-change") − Wechselgeld zurückbehalten
             .amount-wrap
               input#deal-calc-change.amount-input(
                 type="number" step="0.01" min="0"
@@ -3193,10 +3193,10 @@ function clearPendingNumberSelect() {
               )
               span €
           .deal-calc-line.deal-calc-digital(v-if="dealCalcDigital > 0")
-            span + Digitale Einnahmen (Pretix/PayPal/SumUp)
+            span + VVK & digitale Zahlungen
             span +{{ formatCurrency(dealCalcDigital) }}
           .deal-calc-line.deal-calc-digital(v-if="dealCalcDigitalFees > 0")
-            span − Gebühren der digitalen Einnahmen
+            span − Gebühren für VVK & digitale Zahlungen
             span −{{ formatCurrency(dealCalcDigitalFees) }}
           //- Die Kassenzählung wird oft erst am Folgetag gemacht — die
           //- digitalen Einnahmen müssen also auch hier abrufbar sein.
@@ -3204,7 +3204,7 @@ function clearPendingNumberSelect() {
             button.btn-add-sm.btn-add-ghost(
               @click="fetchAndApplyAllExternal"
               :disabled="externalDataLoading"
-            ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ Digitale Einnahmen neu laden' : '⬇ Digitale Einnahmen laden' }}
+            ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ VVK & digitale Zahlungen neu laden' : '⬇ VVK & digitale Zahlungen laden' }}
             span.deal-calc-fetch-hint(v-if="!externalDataLoading && !externalDataLoaded && dealCalcDigital === 0")
               | Pretix, PayPal und SumUp noch nicht abgerufen
             span.deal-calc-fetch-error(v-if="pretixError") Pretix: {{ pretixError }}
