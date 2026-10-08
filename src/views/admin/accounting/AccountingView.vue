@@ -3201,7 +3201,8 @@ function clearPendingNumberSelect() {
           //- Die Kassenzählung wird oft erst am Folgetag gemacht — die
           //- digitalen Einnahmen müssen also auch hier abrufbar sein.
           .deal-calc-fetch
-            button.btn-add-sm.btn-add-ghost(
+            button.btn-fetch-digital(
+              type="button"
               @click="fetchAndApplyAllExternal"
               :disabled="externalDataLoading"
             ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ VVK & digitale Zahlungen neu laden' : '⬇ VVK & digitale Zahlungen laden' }}
@@ -4239,11 +4240,28 @@ h2 {
   padding: 0.35rem 0 0.15rem;
 }
 
-.deal-calc-fetch .btn-add-sm {
+/* Gleicher Look wie die Link-Buttons in den Veranstaltungsdetails. */
+.btn-fetch-digital {
+  padding: 0.4rem 0.9rem;
+  border: 0.15rem solid black;
+  background: white;
+  color: black;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
   letter-spacing: normal;
-  padding: 0.25rem 0.6rem;
-  font-size: 0.8rem;
-  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-fetch-digital:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-fetch-digital:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .deal-calc-fetch-hint {
