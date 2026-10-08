@@ -9,6 +9,7 @@ const searchQuery = ref('')
 const filterType = ref<string>('all')
 const filterRead = ref<string>('all')
 const filterAnswered = ref<string>('all')
+const filterUser = ref<string | null>(null)
 const expandedId = ref<number | null>(null)
 const replyingTo = ref<number | null>(null)
 const replySubject = ref('')
@@ -23,6 +24,14 @@ const replyGenerateError = ref('')
 // while the card is still open)
 const markedReadWhileOpen = ref<number[]>([])
 
+const readByUsers = computed(() => {
+  const users = new Set<string>()
+  for (const a of anfragen.value) {
+    if (a.readByUsername) users.add(a.readByUsername)
+  }
+  return [...users].sort()
+})
+
 const filteredAnfragen = computed(() => {
   let list = [...anfragen.value]
 
@@ -33,6 +42,10 @@ const filteredAnfragen = computed(() => {
 
   if (filterType.value !== 'all') {
     list = list.filter(a => a.type === filterType.value)
+  }
+
+  if (filterUser.value !== null) {
+    list = list.filter(a => a.readByUsername === filterUser.value)
   }
 
   if (filterRead.value === 'unread') {
@@ -281,6 +294,10 @@ function chipCount(readFilter: string, answeredFilter: string): number {
   }).length
 }
 
+function userChipCount(username: string): number {
+  return anfragen.value.filter(a => a.readByUsername === username).length
+}
+
 onMounted(() => {
   loadData()
 })
@@ -303,21 +320,29 @@ onMounted(() => {
   .toolbar
     .filter-chips
       button.chip(
-        :class="{ active: filterRead === 'all' && filterAnswered === 'all' }"
-        @click="filterRead = 'all'; filterAnswered = 'all'"
+        :class="{ active: filterRead === 'all' && filterAnswered === 'all' && filterUser === null }"
+        @click="filterRead = 'all'; filterAnswered = 'all'; filterUser = null"
       ) Alle ({{ chipCount('all', 'all') }})
       button.chip(
         :class="{ active: filterRead === 'unread' }"
-        @click="filterRead = 'unread'; filterAnswered = 'all'"
+        @click="filterRead = 'unread'; filterAnswered = 'all'; filterUser = null"
       ) Ungelesen ({{ chipCount('unread', 'all') }})
       button.chip(
         :class="{ active: filterAnswered === 'open' }"
-        @click="filterAnswered = 'open'; filterRead = 'all'"
+        @click="filterAnswered = 'open'; filterRead = 'all'; filterUser = null"
       ) Offen ({{ chipCount('all', 'open') }})
       button.chip.chip-answered(
         :class="{ active: filterAnswered === 'answered' }"
-        @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'; filterRead = 'all'"
+        @click="filterAnswered = filterAnswered === 'answered' ? 'all' : 'answered'; filterRead = 'all'; filterUser = null"
       ) ✓ Beantwortet ({{ chipCount('all', 'answered') }})
+      template(v-if="readByUsers.length")
+        span.chip-separator |
+        button.chip.chip-user(
+          v-for="user in readByUsers"
+          :key="user"
+          :class="{ active: filterUser === user }"
+          @click="filterUser = filterUser === user ? null : user; filterRead = 'all'; filterAnswered = 'all'"
+        ) 👁 {{ user }} ({{ userChipCount(user) }})
     .filter-type
       select(v-model="filterType")
         option(value="all") Alle Typen
@@ -974,6 +999,23 @@ h2 {
   background: black;
   color: white;
   border-color: black;
+}
+
+.chip-separator {
+  color: #ccc;
+  font-weight: 300;
+  align-self: center;
+  padding: 0 0.25rem;
+  user-select: none;
+}
+
+.chip-user {
+  font-size: 0.8rem;
+}
+
+.chip-user.active {
+  background: #222;
+  color: white;
 }
 
 .read-meta {
