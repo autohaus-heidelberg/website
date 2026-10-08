@@ -2295,6 +2295,28 @@ function removeBudgetItem(category: 'kuenstler' | 'sachkosten' | 'sonstiges', in
   else budgetSonstiges.value.splice(index, 1)
 }
 
+// Füllt budgetKuenstler aus den artist_deals vor. Bei Garantie/Kombi wird die
+// Garantie als Untergrenze eingetragen. Bei reinem Doordeal wird ein Eintrag
+// mit Betrag 0 angelegt (unbekannt zum Antragszeitpunkt).
+function prefillBudgetFromDeals() {
+  const deals = event.value?.artist_deals || {}
+  const artists = event.value?.artists || []
+  const items: { name: string; amount: string }[] = []
+  for (const a of artists) {
+    if (a.id == null) continue
+    const d = deals[String(a.id)]
+    if (!d) continue
+    const guarantee = parseFloat(d.guarantee_amount || '0') || 0
+    // Für den Antrag nehmen wir die Garantie als Planwert. Bei reinem Doordeal
+    // ist zum Antragszeitpunkt kein Betrag bekannt → 0 als Platzhalter.
+    const amount = (d.deal_type === 'guarantee' || d.deal_type === 'guarantee_plus_door')
+      ? guarantee
+      : 0
+    items.push({ name: a.name, amount: amount.toFixed(2) })
+  }
+  budgetKuenstler.value = items
+}
+
 // ── Document Methods ─────────────────────────────────────────────
 
 async function loadDocuments() {
@@ -3720,7 +3742,13 @@ function clearPendingNumberSelect() {
           .grant-detail
             .detail-row.detail-cat-header
               span Künstlerhonorare / Anfahrt / Übernachtung
-              button.btn-add-sm(@click="addBudgetItem('kuenstler')") +
+              .btn-group
+                button.btn-prefill(
+                  v-if="event?.artist_deals && Object.keys(event.artist_deals).length > 0"
+                  @click="prefillBudgetFromDeals"
+                  title="Gagen aus den eingetragenen Deals vorausfüllen"
+                ) ↙ Aus Deals
+                button.btn-add-sm(@click="addBudgetItem('kuenstler')") +
             .detail-row.input-row(v-for="(item, idx) in budgetKuenstler" :key="'k' + idx")
               input.text-input(v-model="item.name" type="text" placeholder="z.B. Band XY Gage")
               .input-group
@@ -6417,6 +6445,28 @@ h2 {
 .btn-pdf:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-group {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.btn-prefill {
+  padding: 0.15rem 0.5rem;
+  background: white;
+  color: black;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: normal;
+  line-height: 1;
+}
+
+.btn-prefill:hover {
+  background: #eee;
 }
 
 .btn-add-sm {
