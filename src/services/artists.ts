@@ -2,6 +2,10 @@ import { api } from './api'
 import { type Artist } from './events'
 import type { PaginatedResponse } from '@/types/api'
 
+export interface ArtistWithEventCount extends Artist {
+  event_count: number
+}
+
 export const artistService = {
   /**
    * Get all artists (paginated)
@@ -43,5 +47,20 @@ export const artistService = {
    */
   async uploadImage(id: number, file: File): Promise<Artist> {
     return api.uploadFile<Artist>(`/api/artists/${id}/`, file, 'image')
+  },
+
+  /**
+   * Get groups of artists with the same name (potential duplicates).
+   * Returns an array of groups; each group is an array of ArtistWithEventCount.
+   */
+  async getDuplicates(): Promise<ArtistWithEventCount[][]> {
+    return api.get<ArtistWithEventCount[][]>('/api/artists/duplicates/')
+  },
+
+  /**
+   * Merge sourceId into targetId.  Source will be deleted.
+   */
+  async merge(sourceId: number, targetId: number): Promise<{ message: string; target: Artist }> {
+    return api.post(`/api/artists/${sourceId}/merge/`, { target_id: targetId })
   },
 }

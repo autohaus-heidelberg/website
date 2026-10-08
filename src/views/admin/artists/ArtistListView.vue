@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { artistService, type Artist } from '@/services'
+import { useRoute, useRouter } from 'vue-router'
+import { artistService, type ArtistWithEventCount } from '@/services/artists'
+import type { Artist } from '@/services/events'
 import type { PaginatedResponse } from '@/types/api'
 import SupportBandsPanel from './SupportBandsPanel.vue'
 
+const route = useRoute()
 const router = useRouter()
-const activeTab = ref<'artists' | 'support'>('artists')
+const activeTab = ref<'artists' | 'support' | 'duplicates'>('artists')
 const artistsData = ref<PaginatedResponse<Artist> | null>(null)
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
+
+// Duplicates tab state
+const dupGroups = ref<ArtistWithEventCount[][]>([])
+const dupLoading = ref(false)
+const dupError = ref('')
+const merging = ref<number | null>(null)  // sourceId being merged right now
 
 const artists = computed(() => artistsData.value?.results || [])
 
@@ -52,7 +60,60 @@ async function deleteArtist(artist: Artist) {
   }
 }
 
+async function loadDuplicates() {
+  dupLoading.value = true
+  dupError.value = ''
+  try {
+    dupGroups.value = await artistService.getDuplicates()
+  } catch (e: any) {
+    dupError.value = e.message || 'Fehler beim Laden'
+  } finally {
+    dupLoading.value = false
+  }
+}
+
+async function mergeInto(sourceId: number, targetId: number, sourceName: string, targetName: string) {
+  if (!confirm(`"${sourceName}" in "${targetName}" zusammenführen?\n\nDie Quelldaten (${sourceName}) werden dabei gelöscht, alle Event-Verknüpfungen auf "${targetName}" umgehängt.`)) return
+  merging.value = sourceId
+  try {
+    await artistService.merge(sourceId, targetId)
+    await loadDuplicates()
+    await loadArtists()
+  } catch (e: any) {
+    alert('Fehler beim Mergen: ' + e.message)
+  } finally {
+    merging.value = null
+  }
+}
+
+async function deleteOneFromGroup(artist: ArtistWithEventCount) {
+  if (!confirm(`Künstler "${artist.name}" (ID ${artist.id}) löschen?`)) return
+  try {
+    await artistService.delete(artist.id!)
+    await loadDuplicates()
+    await loadArtists()
+  } catch (e: any) {
+    alert('Fehler beim Löschen: ' + e.message)
+  }
+}
+
+function switchTab(tab: 'artists' | 'support' | 'duplicates') {
+  activeTab.value = tab
+  const query: Record<string, string> = { ...route.query as Record<string, string> }
+  if (tab === 'artists') delete query.tab
+  else query.tab = tab
+  router.replace({ query })
+  if (tab === 'duplicates' && dupGroups.value.length === 0 && !dupLoading.value) {
+    loadDuplicates()
+  }
+}
+
 onMounted(() => {
+  const tab = route.query.tab as string | undefined
+  if (tab === 'support' || tab === 'duplicates') {
+    activeTab.value = tab
+    if (tab === 'duplicates') loadDuplicates()
+  }
   loadArtists()
 })
 </script>
@@ -63,8 +124,9 @@ onMounted(() => {
     h2 Künstler
 
   .tabs
-    button.tab(:class="{ active: activeTab === 'artists' }" @click="activeTab = 'artists'") 🎤 Künstler
-    button.tab(:class="{ active: activeTab === 'support' }" @click="activeTab = 'support'") 🎸 Support-Pool
+    button.tab(:class="{ active: activeTab === 'artists' }" @click="switchTab('artists')") 🎤 Künstler
+    button.tab(:class="{ active: activeTab === 'support' }" @click="switchTab('support')") 🎸 Support-Pool
+    button.tab(:class="{ active: activeTab === 'duplicates' }" @click="switchTab('duplicates')") 🔍 Duplikate
 
   template(v-if="activeTab === 'artists'")
     .toolbar
@@ -100,7 +162,45 @@ onMounted(() => {
 
     .empty(v-else) Keine Künstler gefunden
 
-  SupportBandsPanel(v-else)
+  SupportBandsPanel(v-else-if="activeTab === 'support'")
+
+  //- ── DUPLIKATE TAB ──────────────────────────────────────────────
+  template(v-else-if="activeTab === 'duplicates'")
+    .dup-toolbar
+      p.dup-hint Künstler mit identischem Namen (Groß-/Kleinschreibung ignoriert). Wähle pro Gruppe, welcher Eintrag übrig bleibt – alle Events werden umgehängt.
+      button.btn-reload(@click="loadDuplicates" :disabled="dupLoading") ↺ Neu laden
+
+    .loading(v-if="dupLoading") Suche Duplikate…
+    .error(v-else-if="dupError") {{ dupError }}
+    .dup-empty(v-else-if="dupGroups.length === 0")
+      span ✅ Keine Duplikate gefunden.
+    .dup-groups(v-else)
+      .dup-group(v-for="(group, gi) in dupGroups" :key="gi")
+        .dup-group-header
+          strong {{ group[0].name }}
+          span.dup-count {{ group.length }} Einträge
+        .dup-rows
+          .dup-row(v-for="artist in group" :key="artist.id")
+            .dup-info
+              span.dup-id \#{{ artist.id }}
+              span.dup-events {{ artist.event_count }} Event(s)
+              span.dup-flags(v-if="artist.image_url || artist.soundcloud || artist.bandcamp || artist.link || artist.youtube")
+                span(v-if="artist.image_url") 🖼
+                span(v-if="artist.soundcloud || artist.bandcamp || artist.link || artist.youtube") 🔗
+              span.dup-desc(v-if="artist.description" :title="artist.description") {{ artist.description.slice(0, 60) }}{{ artist.description.length > 60 ? '…' : '' }}
+            .dup-actions
+              //- Merge-buttons: alle anderen Einträge der Gruppe als Ziel anbieten
+              template(v-for="target in group" :key="target.id")
+                button.btn-merge(
+                  v-if="target.id !== artist.id"
+                  :disabled="merging !== null"
+                  @click="mergeInto(artist.id, target.id, artist.name + ' #' + artist.id, target.name + ' #' + target.id)"
+                ) → in \#{{ target.id }}
+              button.btn-del-dup(
+                :disabled="merging !== null || artist.event_count > 0"
+                :title="artist.event_count > 0 ? 'Hat Events – erst mergen' : 'Löschen'"
+                @click="deleteOneFromGroup(artist)"
+              ) 🗑
 </template>
 
 <style scoped>
@@ -356,4 +456,146 @@ h2 {
     text-align: center;
   }
 }
+
+/* ── Duplikate Tab ─────────────────────────────────────────── */
+.dup-toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.dup-hint {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #444;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.btn-reload {
+  padding: 0.5rem 1rem;
+  border: 0.25rem solid black;
+  background: white;
+  color: black;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: normal;
+}
+.btn-reload:hover:not(:disabled) { background: #eee; }
+.btn-reload:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dup-empty {
+  padding: 3rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2a7a2a;
+}
+
+.dup-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dup-group {
+  border: 0.25rem solid black;
+}
+
+.dup-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: black;
+  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+
+.dup-count {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+.dup-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.dup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 1rem;
+  border-bottom: 0.15rem solid #eee;
+  flex-wrap: wrap;
+}
+.dup-row:last-child { border-bottom: none; }
+
+.dup-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  flex: 1;
+  font-size: 0.9rem;
+}
+
+.dup-id { font-weight: 700; color: #888; }
+
+.dup-events {
+  background: #f0f0f0;
+  border: 0.15rem solid #ccc;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.dup-flags { font-size: 1rem; }
+
+.dup-desc {
+  color: #555;
+  font-size: 0.8rem;
+  font-style: italic;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dup-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.btn-merge {
+  padding: 0.3rem 0.7rem;
+  border: 0.2rem solid black;
+  background: white;
+  color: black;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: normal;
+}
+.btn-merge:hover:not(:disabled) { background: black; color: white; }
+.btn-merge:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-del-dup {
+  padding: 0.3rem 0.6rem;
+  border: 0.2rem solid #c00;
+  background: white;
+  color: #c00;
+  font-size: 0.85rem;
+  cursor: pointer;
+  letter-spacing: normal;
+}
+.btn-del-dup:hover:not(:disabled) { background: #c00; color: white; }
+.btn-del-dup:disabled { opacity: 0.35; cursor: not-allowed; }
 </style>
