@@ -66,6 +66,20 @@
         ]
     },
     {
+        "id": "mm-211026",
+        "date": "2026-10-21T18:00:00+00:00",
+        "endDate": null,
+        "title": "Kino",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<p><span style=\"color: #f1c40f;\">&nbsp;Original mit englischen Untertiteln.&nbsp;</span></p>\n<p>Im Juni musste unser erstes Double Feature leider hitzebedingt noch ausfallen, aber hier kommt nun die versprochene und sicherlich sehnlichst erwartete Wiederholung: Mit zweimal einer knackigen Stunde vom Feinsten tauschen wir die Open Air-Leinwand wieder gegen die gem&uuml;tlichen Sofas im Carousel ein.</p>\n<p>Der erste Film ist das japanische Pendant zum 80er Jahre Actionfilm. Ein bisschen \"Hard Boiled\", ein bisschen \"Die Hard\", mit einem Sprenkler Nunsploitation. Der zweite Film ist ein Horrorfilm eines unserer Lieblingsregisseure, der seinem bahnbrechenden Fr&uuml;hwerk in nichts nachsteht.</p>\n<p>Ein wilder Stilmix, der auf den ersten Blick nichts miteinander zu tun hat. Bei beiden Filmen handelt es sich jedoch um Direct-to-Video Filme. Wo es sich normalerweise um schnelle Geldmacher alternder Actionstars handelt, pr&auml;sentieren wir zwei Low-Budget Perlen, bei denen jeder Pfennig zweimal ausgequetscht wurde, um Unterhaltung ohne L&auml;ngen zu liefern.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://karlstorkino.de/programm/midnight-madness-carousel-ueberraschungsfilm-10/",
+        "img": "/img/0fbef4f3-55df-4940-85ec-18b583966ec3.webp",
+        "cancelled": false,
+        "artists": []
+    },
+    {
         "id": "prize-snuckouts",
         "date": "2026-10-20T17:00:00+00:00",
         "endDate": null,
