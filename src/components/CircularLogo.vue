@@ -1,8 +1,8 @@
 <template lang="pug">
 .circular-logo(:style="{ width: `${diameter}px`, height: `${diameter}px` }")
-    h1#logo2(ref="logo2") Carousel Carousel Carousel
-    h1#logo3(ref="logo3") Carousel Carousel Carousel
-    h1#logo(ref="logo") Carousel Carousel Carousel
+    h1#logo2(ref="logo2" style="opacity:0") Carousel Carousel Carousel
+    h1#logo3(ref="logo3" style="opacity:0") Carousel Carousel Carousel
+    h1#logo(ref="logo" style="opacity:0") Carousel Carousel Carousel
 </template>
 <script lang="ts" setup>
 import { onMounted, ref, watch } from "vue";
@@ -32,30 +32,58 @@ function applyLayout() {
   logo3.value.style.top = `${(15 + props.diameter - fontSize3 * magicNumber) / 2}px`;
 }
 
-onMounted(async () => {
+async function initCircles() {
   if (!logo.value || !logo2.value || !logo3.value) return;
+  // Destroy any previous CircleType instances before re-init
+  circles.forEach(({ ct }) => ct.destroy?.());
+  circles = [];
   applyLayout();
-  // CircleType measures glyph widths to place the letters; with the fallback
-  // font (before Geologica loads) those widths are wrong and the ring comes out
-  // distorted. Wait for the real font before building the arcs.
-  try {
-    await document.fonts.load(`900 ${props.diameter / magicNumber}px Geologica`);
-  } catch {
-    await document.fonts.ready;
-  }
-  if (!logo.value || !logo2.value || !logo3.value) return;
   circles = [logo.value, logo2.value, logo3.value].map((el) => ({
     el,
     ct: new CircleType(el).radius(0),
   }));
+  // Reveal after CircleType has built the rings with the correct font+size.
+  [logo.value, logo2.value, logo3.value].forEach((el) => {
+    el.style.opacity = '1';
+  });
+}
+
+onMounted(async () => {
+  if (!logo.value || !logo2.value || !logo3.value) return;
+
+  // Wait for BOTH: (1) font ready, (2) diameter has a real value (not the
+  // 100px placeholder that HomeView starts with before ResizeObserver fires).
+  // We need both simultaneously — font loaded with wrong diameter is just as
+  // bad as correct diameter with fallback font.
+  await Promise.all([
+    // Font signal
+    Promise.race([
+      document.fonts.ready,
+      new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+    ]),
+    // Diameter signal: resolve immediately if already real, else wait up to
+    // 500ms for ResizeObserver to fire with the actual container size.
+    new Promise<void>((resolve) => {
+      if (props.diameter > 100) { resolve(); return; }
+      const timer = setTimeout(resolve, 500);
+      const stop = watch(() => props.diameter, (v) => { if (v > 100) { clearTimeout(timer); stop(); resolve(); } });
+    }),
+  ]);
+
+  await initCircles();
 });
 
 // Recompute in place on resize instead of remounting, which avoids the flash.
-watch(() => props.diameter, () => {
-  applyLayout();
-  circles.forEach(({ ct }) => {
-    ct.refresh();
-  });
+watch(() => props.diameter, async () => {
+  if (circles.length === 0) {
+    // CircleType not yet initialised (font was still loading) — do a full init
+    await initCircles();
+  } else {
+    applyLayout();
+    circles.forEach(({ ct }) => {
+      ct.refresh();
+    });
+  }
 });
 
 </script>
@@ -74,6 +102,7 @@ watch(() => props.diameter, () => {
   margin: 0;
   white-space: nowrap;
   font-weight: 900;
+  transition: opacity 0.15s ease;
 }
 
 #logo {

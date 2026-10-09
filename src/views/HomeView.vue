@@ -51,15 +51,19 @@ const zoom = ref(17);
 const logoContainer = ref<HTMLElement | null>(null);
 
 onMounted(() => {
-  // NOTE: if there is no timeout, the font will appear larger, I don't know why
-  // 50 works on what I could test, slower rendering might still make weird circles
-  setTimeout(setLogoHeight, 50)
+  // Use ResizeObserver to set the height as soon as the container has a real
+  // layout size — more reliable than a fixed setTimeout.
+  const ro = new ResizeObserver(() => {
+    setLogoHeight();
+  });
+  if (logoContainer.value) ro.observe(logoContainer.value);
   window.addEventListener("resize", setLogoHeight);
+  onUnmounted(() => {
+    ro.disconnect();
+    window.removeEventListener("resize", setLogoHeight);
+  });
 });
 
-onUnmounted(() => {
-  window.removeEventListener("resize", setLogoHeight);
-})
 
 const logoHeight = ref(100);
 

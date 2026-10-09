@@ -41,14 +41,26 @@ html {
 
 /* Fonts */
 
+/* Weight-900 face (Black) — preloaded in index.html, WOFF2 first for speed */
 @font-face {
     font-family: "Geologica";
-    font-weight: 400;
+    font-weight: 900;
     font-style: normal;
-    src: url('/fonts/geologica/Geologica-VariableFont_CRSV,SHRP,slnt,wght.ttf') ;
+    font-display: swap;
+    src: url('/fonts/geologica/static/Geologica-Black.woff2') format('woff2'),
+         url('/fonts/geologica/static/Geologica-Black.ttf') format('truetype');
+}
+
+/* Variable font for all other weights */
+@font-face {
+    font-family: "Geologica";
     font-weight: 125 950;
+    font-style: normal;
+    font-display: swap;
+    src: url('/fonts/geologica/Geologica-VariableFont_CRSV,SHRP,slnt,wght.woff2') format('woff2'),
+         url('/fonts/geologica/Geologica-VariableFont_CRSV,SHRP,slnt,wght.ttf') format('truetype');
     font-stretch: 75% 125%;
-  }
+}
 
 
 
