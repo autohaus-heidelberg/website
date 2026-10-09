@@ -69,11 +69,12 @@ const logoHeight = ref(100);
 
 function setLogoHeight() {
   if (!logoContainer.value) return;
-  // Use body's actual available width (clientWidth minus its own padding)
-  // so the logo never overflows on narrow viewports like iOS Safari.
+  // Use body's actual available width minus padding.
+  // Extra 20px margin so CircleType's outer ring letters don't get clipped
+  // on narrow viewports (letters extend slightly beyond the calculated radius).
   const bodyStyle = getComputedStyle(document.body);
   const bodyPadding = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight);
-  const availableWidth = document.documentElement.clientWidth - bodyPadding;
+  const availableWidth = document.documentElement.clientWidth - bodyPadding - 20;
   const diameter = Math.min(availableWidth, 600);
   logoHeight.value = diameter;
   logoContainer.value.style.height = `${diameter}px`;
