@@ -64,11 +64,23 @@ onMounted(async () => {
   // We need both simultaneously — font loaded with wrong diameter is just as
   // bad as correct diameter with fallback font.
   await Promise.all([
-    // Font signal
-    Promise.race([
-      document.fonts.ready,
-      new Promise<void>((resolve) => setTimeout(resolve, 3000)),
-    ]),
+    // Font signal: fonts.load() is more reliable than fonts.ready on WebKit/iOS —
+    // fonts.ready can resolve before glyph metrics are actually applied to elements.
+    // Poll until the font is confirmed loaded or 3s timeout.
+    (async () => {
+      const fontSpec = `900 40px Geologica`;
+      for (let i = 0; i < 10; i++) {
+        try {
+          const loaded = await Promise.race([
+            document.fonts.load(fontSpec),
+            new Promise<FontFace[]>((resolve) => setTimeout(() => resolve([]), 300)),
+          ]);
+          if (loaded.length > 0) return;
+        } catch { /* ignore */ }
+        await new Promise<void>((r) => setTimeout(r, 100));
+      }
+      // Hard cap: give up after ~3s regardless
+    })(),
     // Diameter signal: resolve immediately if already real, else wait up to
     // 500ms for ResizeObserver to fire with the actual container size.
     new Promise<void>((resolve) => {
