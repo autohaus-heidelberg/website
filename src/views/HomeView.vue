@@ -69,8 +69,12 @@ const logoHeight = ref(100);
 
 function setLogoHeight() {
   if (!logoContainer.value) return;
-  const containerWidth = logoContainer.value.getBoundingClientRect().width;
-  const diameter = Math.min(containerWidth, 600);
+  // Use body's actual available width (clientWidth minus its own padding)
+  // so the logo never overflows on narrow viewports like iOS Safari.
+  const bodyStyle = getComputedStyle(document.body);
+  const bodyPadding = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight);
+  const availableWidth = document.documentElement.clientWidth - bodyPadding;
+  const diameter = Math.min(availableWidth, 600);
   logoHeight.value = diameter;
   logoContainer.value.style.height = `${diameter}px`;
 }

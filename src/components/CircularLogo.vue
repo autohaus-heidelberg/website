@@ -26,10 +26,18 @@ function applyLayout() {
   const fontSize3 = fontSize2 / 1.5;
 
   logo.value.style.fontSize = `${fontSize}px`;
+
+  // Center ring2 and ring3 around the vertical midpoint of ring1.
+  // Ring1 starts at top:15px (CSS), its midpoint is at 15 + (fontSize*magicNumber)/2.
+  // To center a smaller ring around that midpoint: top = midpoint - (fontSizeN*magicNumber)/2
+  const ring1Top = 15;
+  const ring1Mid = ring1Top + (fontSize * magicNumber) / 2;
+
   logo2.value.style.fontSize = `${fontSize2}px`;
-  logo2.value.style.top = `${(15 + props.diameter - fontSize2 * magicNumber) / 2}px`;
+  logo2.value.style.top = `${ring1Mid - (fontSize2 * magicNumber) / 2}px`;
+
   logo3.value.style.fontSize = `${fontSize3}px`;
-  logo3.value.style.top = `${(15 + props.diameter - fontSize3 * magicNumber) / 2}px`;
+  logo3.value.style.top = `${ring1Mid - (fontSize3 * magicNumber) / 2}px`;
 }
 
 async function initCircles() {
