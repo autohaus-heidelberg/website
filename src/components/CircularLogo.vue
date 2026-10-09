@@ -35,7 +35,7 @@ function applyLayout() {
 async function initCircles() {
   if (!logo.value || !logo2.value || !logo3.value) return;
   // Destroy any previous CircleType instances before re-init
-  circles.forEach(({ ct }) => ct.destroy?.());
+  circles.forEach(({ ct }) => (ct as unknown as { destroy?: () => void }).destroy?.());
   circles = [];
   applyLayout();
   circles = [logo.value, logo2.value, logo3.value].map((el) => ({
