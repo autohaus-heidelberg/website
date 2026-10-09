@@ -69,10 +69,10 @@ const logoHeight = ref(100);
 
 function setLogoHeight() {
   if (!logoContainer.value) return;
-  const diameter = Math.min(window.innerWidth - 40, 600);
+  const containerWidth = logoContainer.value.getBoundingClientRect().width;
+  const diameter = Math.min(containerWidth, 600);
   logoHeight.value = diameter;
   logoContainer.value.style.height = `${diameter}px`;
-
 }
 
 </script>
