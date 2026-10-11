@@ -393,6 +393,20 @@ const sortedExpenses = computed(() => {
 // ── Combined External Data Fetch ─────────────────────────────────
 const externalDataLoading = ref(false)
 const externalDataLoaded = ref(false)
+const externalDataFetchedAt = ref<Date | null>(null)
+
+const externalDataFetchedAtLabel = computed(() => {
+  const d = externalDataFetchedAt.value
+  if (!d) return null
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1)
+  const isYesterday = d.toDateString() === yesterday.toDateString()
+  const time = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  if (isToday) return `heute ${time} Uhr`
+  if (isYesterday) return `gestern ${time} Uhr`
+  return `${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })} ${time} Uhr`
+})
 
 // ── Result tab expand toggles ────────────────────────────────────
 const resultExpandRevenue = ref(false)
@@ -441,6 +455,16 @@ async function fetchAndApplyAllExternal() {
 
   externalDataLoaded.value = true
   externalDataLoading.value = false
+  externalDataFetchedAt.value = new Date()
+
+  // Zeitstempel persistieren
+  if (accounting.value?.id) {
+    try {
+      await accountingService.patch(accounting.value.id, {
+        external_data_fetched_at: externalDataFetchedAt.value.toISOString(),
+      })
+    } catch { /* non-critical */ }
+  }
 }
 
 async function fetchPretixData() {
@@ -1905,6 +1929,12 @@ async function loadData() {
       doorDealSplits.value = (Array.isArray(acc.door_deal_splits) ? acc.door_deal_splits : [])
         .filter(s => s.name.trim() !== '')
 
+      // Zeitstempel des letzten externen Datenabrufs aus dem Backend übernehmen
+      if (acc.external_data_fetched_at) {
+        externalDataFetchedAt.value = new Date(acc.external_data_fetched_at)
+        externalDataLoaded.value = true
+      }
+
       // Consumption baseline for Inventur miscount warnings (optional).
       try {
         consumptionStats.value = await accountingService.getConsumptionStats(acc.id)
@@ -2670,8 +2700,9 @@ function clearPendingNumberSelect() {
           @click="fetchAndApplyAllExternal"
           :disabled="externalDataLoading"
         ) {{ externalDataLoading ? 'Laden...' : externalDataLoaded ? '↻ Externe Daten neu laden' : '⬇ Externe Daten laden (Pretix + PayPal + SumUp)' }}
-        .external-data-status(v-if="externalDataLoaded && !externalDataLoading")
-          span.success(v-if="!pretixError && !paypalBarError && !sumupBarError") ✓ Daten übernommen
+        .external-data-status(v-if="(externalDataLoaded || externalDataFetchedAtLabel) && !externalDataLoading")
+          span.success(v-if="externalDataLoaded && !pretixError && !paypalBarError && !sumupBarError") ✓ Daten übernommen
+          span.fetch-timestamp(v-if="externalDataFetchedAtLabel && !pretixError && !paypalBarError && !sumupBarError")  · abgerufen {{ externalDataFetchedAtLabel }}
           span.pretix-error(v-if="pretixError") Pretix: {{ pretixError }}
           span.pretix-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
           span.pretix-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
@@ -3230,6 +3261,7 @@ function clearPendingNumberSelect() {
             ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ VVK & digitale Zahlungen neu laden' : '⬇ VVK & digitale Zahlungen laden' }}
             span.deal-calc-fetch-hint(v-if="!externalDataLoading && !externalDataLoaded && dealCalcDigital === 0")
               | Pretix, PayPal und SumUp noch nicht abgerufen
+            span.deal-calc-fetch-hint(v-if="externalDataFetchedAtLabel && !externalDataLoading")  abgerufen {{ externalDataFetchedAtLabel }}
             span.deal-calc-fetch-error(v-if="pretixError") Pretix: {{ pretixError }}
             span.deal-calc-fetch-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
             span.deal-calc-fetch-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
@@ -4400,6 +4432,11 @@ h2 {
   color: #00a844;
   font-weight: 700;
   font-size: 0.8rem;
+}
+
+.external-data-status .fetch-timestamp {
+  font-size: 0.8rem;
+  color: #888;
 }
 
 .external-data-summary {

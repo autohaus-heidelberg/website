@@ -185,6 +185,7 @@ export interface EventAccounting {
   updated_at?: string
   door_deal_enabled?: boolean
   door_deal_splits?: { name: string; share: number }[]
+  external_data_fetched_at?: string | null
   revenues?: RevenueEntry[]
   inventory_entries?: InventoryEntry[]
   expenses?: ExpenseEntry[]
