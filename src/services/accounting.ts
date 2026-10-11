@@ -134,10 +134,6 @@ export const accountingService = {
     return api.put<EventAccounting>(`/api/abrechnungen/${id}/`, data)
   },
 
-  async patch(id: number, data: Partial<EventAccounting>): Promise<EventAccounting> {
-    return api.patch<EventAccounting>(`/api/abrechnungen/${id}/`, data)
-  },
-
   async markExternalFetched(id: number): Promise<{ external_data_fetched_at: string }> {
     return api.post(`/api/abrechnungen/${id}/mark-external-fetched/`, {})
   },
