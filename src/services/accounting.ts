@@ -138,6 +138,10 @@ export const accountingService = {
     return api.patch<EventAccounting>(`/api/abrechnungen/${id}/`, data)
   },
 
+  async markExternalFetched(id: number): Promise<{ external_data_fetched_at: string }> {
+    return api.post(`/api/abrechnungen/${id}/mark-external-fetched/`, {})
+  },
+
   async delete(id: number): Promise<void> {
     await api.delete(`/api/abrechnungen/${id}/`)
   },

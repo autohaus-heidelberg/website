@@ -457,12 +457,10 @@ async function fetchAndApplyAllExternal() {
   externalDataLoading.value = false
   externalDataFetchedAt.value = new Date()
 
-  // Zeitstempel persistieren
+  // Zeitstempel persistieren (eigener Endpunkt, berührt `updated` nicht)
   if (accounting.value?.id) {
     try {
-      await accountingService.patch(accounting.value.id, {
-        external_data_fetched_at: externalDataFetchedAt.value.toISOString(),
-      })
+      await accountingService.markExternalFetched(accounting.value.id)
     } catch { /* non-critical */ }
   }
 }
