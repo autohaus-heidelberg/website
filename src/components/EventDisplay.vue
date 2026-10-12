@@ -192,6 +192,17 @@ function copyLink() {
     max-width: min(55%, 460px);
 }
 
+@media (max-width: 500px) {
+    .event-img-wrapper {
+        float: none;
+        max-width: 100%;
+        margin: 0 0 1rem;
+    }
+    .event-header {
+        overflow: visible;
+    }
+}
+
 .event-img {
     display: block;
     max-width: 100%;
@@ -238,6 +249,14 @@ function copyLink() {
     margin: 0 1.5rem 1rem 0;
     max-width: min(45%, 280px);
     height: auto;
+}
+
+@media (max-width: 500px) {
+    .artist-img {
+        float: none;
+        max-width: 100%;
+        margin: 0 0 1rem;
+    }
 }
 
 .artist-text {
