@@ -1,27 +1,42 @@
 <template lang="pug">
 .event
     h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
-    h1.accent.datediff(v-if="showDatediff") {{ dateDiff }}
+    p.datediff.accent(v-if="showDatediff") {{ dateDiff }}
     .cancelled-display(v-if="event.cancelled") ABGESAGT
-    h1.accent.title {{ event.title }}
     .event-img-wrapper(v-if="imageUrl")
         img.event-img(:src="imageUrl" crossorigin="anonymous")
         .cancelled-stamp(v-if="event.cancelled") ABGESAGT
+    h1.accent.title {{ event.title }}
+    .event-meta
+        .price-badge(v-if="event.fee && event.feeAk") VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}&nbsp;·&nbsp;AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
+        .price-badge(v-else-if="event.fee") Eintritt {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
+        .get-ticket(v-if="event.shopLink")
+            a(:href="event.shopLink")
+                button() Tickets kaufen
+    .share-bar
+        button.share-btn(@click="shareNative" v-if="canShare") ↗ Teilen
+        a.share-btn.whatsapp(:href="whatsappUrl" target="_blank" rel="noopener") WhatsApp
+        button.share-btn(@click="copyLink") {{ copyLabel }}
     p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
-    h3(v-if="event.fee && event.feeAk") Eintritt: VVK: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} / AK: {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
-    h3(v-else-if="event.fee") Eintritt: {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
-    .get-ticket(v-if="event.shopLink")
-        a(:href="event.shopLink")
-            button() Tickets kaufen
-    .artist(v-for="artist in event.artists")
-        h2.accent {{ artist.name }}
-        img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)" crossorigin="anonymous")
-        a(v-if="artist.link" :href="artist.link") Band website
-        p {{ artist.description }}
-        .video-container(v-if="artist.youtube")
-            iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
-        .bandcamp-container(v-if="artist.bandcamp")
-            iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="350px" height="470px" seamless)
+    template(v-if="event.artists && event.artists.length")
+        hr.artist-divider
+        .artist(v-for="(artist, index) in event.artists")
+            hr.artist-divider(v-if="index > 0")
+            h2.accent {{ artist.name }}
+            img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)" crossorigin="anonymous")
+            a.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") ↗ Band-Website
+            p {{ artist.description }}
+            .bandcamp-container(v-if="artist.bandcamp")
+                p.media-label 🎵 Klingt so:
+                iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="100%" height="175" seamless)
+            template(v-if="artist.youtube")
+                p.media-label 🎬 Video
+                .video-container
+                    iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
+    .share-bar.share-bar-bottom
+        button.share-btn(@click="shareNative" v-if="canShare") ↗ Teilen
+        a.share-btn.whatsapp(:href="whatsappUrl" target="_blank" rel="noopener") WhatsApp
+        button.share-btn(@click="copyLink") {{ copyLabel }}
 </template>
 
 
@@ -31,7 +46,7 @@ import duration from 'dayjs/plugin/duration'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/de'
 import dayjs from "dayjs"
-import { computed } from "vue"
+import { computed, ref } from "vue"
 
 const props = defineProps<{ event: Event }>()
 
@@ -81,6 +96,29 @@ const dateDiff = computed(() => {
   }
   return dayjs(props.event?.date).locale('de').fromNow()
 })
+
+// Share
+const pageUrl = computed(() => window.location.href)
+const shareText = computed(() => `${props.event.title} – ${date.value}`)
+
+const canShare = computed(() => typeof navigator.share === 'function')
+
+function shareNative() {
+  navigator.share({ title: props.event.title, text: shareText.value, url: pageUrl.value })
+    .catch(() => {/* user cancelled – ignore */})
+}
+
+const whatsappUrl = computed(() =>
+  `https://wa.me/?text=${encodeURIComponent(shareText.value + '\n' + pageUrl.value)}`
+)
+
+const copyLabel = ref('🔗 Link kopieren')
+function copyLink() {
+  navigator.clipboard.writeText(pageUrl.value).then(() => {
+    copyLabel.value = '✓ Kopiert!'
+    setTimeout(() => { copyLabel.value = '🔗 Link kopieren' }, 2000)
+  })
+}
 </script>
 
 
@@ -90,7 +128,8 @@ const dateDiff = computed(() => {
   position: relative;
   padding-bottom: 56.25%; /* 16:9 */
   height: 0;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 .video-container iframe {
   position: absolute;
@@ -100,8 +139,41 @@ const dateDiff = computed(() => {
   height: 100%;
 }
 
+.bandcamp-container {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bandcamp-container iframe {
+  width: 100% !important;
+  max-width: 780px;
+  height: 175px;
+  display: block;
+}
+
+.media-label {
+  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem;
+  color: black;
+  align-self: flex-start;
+}
+
 .artist {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.artist h2 {
+    margin: 0 0 1.25rem;
+    align-self: center;
 }
 
 .event-img-wrapper {
@@ -147,14 +219,19 @@ const dateDiff = computed(() => {
 }
 
 .artist-img {
-    margin: auto;
     max-width: min(500px, 90vw);
     max-height: min(500px, 90vw);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    align-self: center;
 }
 
 .description :deep(p) {
-  margin: 0 !important;
+  margin: 0 0 0.9em !important;
+  white-space: normal;
+}
+
+.description :deep(p:last-child) {
+  margin-bottom: 0 !important;
 }
 
 /* Flex items default to min-width:auto, which uses the longest unbreakable
@@ -163,6 +240,57 @@ const dateDiff = computed(() => {
 .description {
   min-width: 0;
   width: 100%;
+  text-align: left;
+  line-height: 1.65;
+  white-space: normal;
+}
+
+.artist p {
+  text-align: left;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  min-width: 0;
+  width: 100%;
+}
+
+.share-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  justify-content: center;
+}
+
+.share-btn {
+  background: white;
+  color: black;
+  border: 0.2rem solid black;
+  padding: 0.5em 1.2em;
+  font-family: inherit;
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  font-weight: 600;
+  letter-spacing: normal;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.share-btn:hover {
+  background: black;
+  color: white;
+}
+
+.share-btn.whatsapp {
+  border-color: #25d366;
+  color: #25d366;
+}
+
+.share-btn.whatsapp:hover {
+  background: #25d366;
+  color: white;
 }
 
 .event {
@@ -179,13 +307,64 @@ const dateDiff = computed(() => {
 }
 
 .datediff {
-    font-size: clamp(1.1rem, 5vw, 1.75rem);
-    margin: 0.5rem 0 1rem;
+    font-size: clamp(1rem, 3vw, 1.4rem);
+    margin: 0.25rem 0 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
 }
 
 .title {
     font-size: clamp(1.5rem, 7vw, 3.5rem);
-    margin: 1rem 0 2rem;
+    margin: 1.25rem 0 1rem;
+}
+
+.event-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0 1.5rem;
+}
+
+.price-badge {
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border: 0.18rem solid black;
+    padding: 0.35em 1em;
+    display: inline-block;
+}
+
+.artist-divider {
+    width: 100%;
+    border: none;
+    border-top: 0.35rem solid black;
+    margin: 3rem 0 2rem;
+}
+
+.band-website-btn {
+    display: inline-block;
+    border: 0.2rem solid black;
+    padding: 0.4em 1.1em;
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: black;
+    text-decoration: none;
+    margin-bottom: 1.25rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.band-website-btn:hover {
+    background: black;
+    color: white;
+}
+
+.share-bar-bottom {
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 0.2rem solid black;
+    width: 100%;
 }
 
 </style>
