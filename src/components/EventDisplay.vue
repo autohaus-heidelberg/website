@@ -1,36 +1,43 @@
 <template lang="pug">
 .event
-    h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
-    p.datediff.accent(v-if="showDatediff") {{ dateDiff }}
-    .cancelled-display(v-if="event.cancelled") ABGESAGT
     .event-img-wrapper(v-if="imageUrl")
         img.event-img(:src="imageUrl" crossorigin="anonymous")
         .cancelled-stamp(v-if="event.cancelled") ABGESAGT
-    h1.accent.title {{ event.title }}
-    .event-meta
-        .price-badge(v-if="event.fee && event.feeAk") VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}&nbsp;·&nbsp;AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
-        .price-badge(v-else-if="event.fee") Eintritt {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
-        .get-ticket(v-if="event.shopLink")
-            a(:href="event.shopLink")
-                button() Tickets kaufen
-    .share-bar
-        button.share-btn(@click="shareNative" v-if="canShare") ↗ Teilen
-        a.share-btn.whatsapp(:href="whatsappUrl" target="_blank" rel="noopener") WhatsApp
-        button.share-btn(@click="copyLink") {{ copyLabel }}
+    .event-header
+        h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
+        p.datediff.accent(v-if="showDatediff") {{ dateDiff }}
+        .cancelled-display(v-if="event.cancelled") ABGESAGT
+        h1.accent.title {{ event.title }}
+        .event-meta
+            a.ticket-btn(v-if="event.shopLink && event.fee && event.feeAk" :href="event.shopLink" target="_blank" rel="noopener")
+                span.ticket-price VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} &nbsp;·&nbsp; AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
+                span.ticket-cta Tickets kaufen
+            a.ticket-btn(v-else-if="event.shopLink && event.fee" :href="event.shopLink" target="_blank" rel="noopener")
+                span.ticket-price Eintritt {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
+                span.ticket-cta Tickets kaufen
+            a.ticket-btn(v-else-if="event.shopLink" :href="event.shopLink" target="_blank" rel="noopener")
+                span.ticket-cta Tickets kaufen
+            .price-badge(v-else-if="event.fee && event.feeAk") VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} &nbsp;·&nbsp; AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
+            .price-badge(v-else-if="event.fee") Eintritt {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
+        .share-bar
+            button.share-btn(@click="shareNative" v-if="canShare") ↗ Teilen
+            a.share-btn.whatsapp(:href="whatsappUrl" target="_blank" rel="noopener") WhatsApp
+            button.share-btn(@click="copyLink") {{ copyLabel }}
     p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     template(v-if="event.artists && event.artists.length")
         hr.artist-divider
         .artist(v-for="(artist, index) in event.artists")
             hr.artist-divider(v-if="index > 0")
-            h2.accent {{ artist.name }}
             img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)" crossorigin="anonymous")
+            .artist-text
+                h2.accent {{ artist.name }}
+                p {{ artist.description }}
             a.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") ↗ Band-Website
-            p {{ artist.description }}
             .bandcamp-container(v-if="artist.bandcamp")
-                p.media-label 🎵 Klingt so:
+                p.media-label Klingt so:
                 iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="100%" height="175" seamless)
             template(v-if="artist.youtube")
-                p.media-label 🎬 Video
+                p.media-label Video
                 .video-container
                     iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
     .share-bar.share-bar-bottom
@@ -159,16 +166,14 @@ function copyLink() {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 0 0 0.5rem;
+  margin: 1.5rem 0 0.5rem;
   color: black;
-  align-self: flex-start;
+  clear: both;
 }
 
 .artist {
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    clear: both;
 }
 
 .artist h2 {
@@ -176,17 +181,27 @@ function copyLink() {
     align-self: center;
 }
 
+.event-header {
+    overflow: hidden;
+}
+
 .event-img-wrapper {
     position: relative;
-    display: inline-block;
+    float: right;
+    margin: 0 0 1rem 1.5rem;
+    max-width: min(55%, 460px);
 }
 
 .event-img {
     display: block;
-    max-width: min(500px, 90vw);
-    max-height: min(500px, 90vw);
-    width: auto;
+    max-width: 100%;
     height: auto;
+}
+
+.event::after {
+    content: '';
+    display: table;
+    clear: both;
 }
 
 .date-cancelled {
@@ -219,10 +234,26 @@ function copyLink() {
 }
 
 .artist-img {
-    max-width: min(500px, 90vw);
-    max-height: min(500px, 90vw);
-    margin-bottom: 1.5rem;
-    align-self: center;
+    float: left;
+    margin: 0 1.5rem 1rem 0;
+    max-width: min(45%, 280px);
+    height: auto;
+}
+
+.artist-text {
+    overflow: hidden;
+}
+
+.artist-text h2 {
+    margin: 0 0 0.75rem;
+    text-align: left;
+}
+
+.artist-text p {
+    text-align: left;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
 }
 
 .description :deep(p) {
@@ -258,8 +289,8 @@ function copyLink() {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin: 1.5rem 0;
-  justify-content: center;
+  margin: 1rem 0;
+  justify-content: flex-start;
 }
 
 .share-btn {
@@ -284,55 +315,92 @@ function copyLink() {
 }
 
 .share-btn.whatsapp {
-  border-color: #25d366;
-  color: #25d366;
+  border-color: black;
+  color: black;
 }
 
 .share-btn.whatsapp:hover {
-  background: #25d366;
+  background: black;
   color: white;
 }
 
 .event {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    display: block;
     max-width: 75ch;
     margin: auto;
 }
 
 .date {
     font-size: clamp(1.1rem, 5vw, 1.75rem);
-    margin: 1rem 0 0.5rem;
+    margin: 0 0 0.25rem;
+    text-align: left;
 }
 
 .datediff {
-    font-size: clamp(1rem, 3vw, 1.4rem);
-    margin: 0.25rem 0 0.75rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    margin: 0 0 0.5rem;
     font-weight: 600;
     letter-spacing: 0.05em;
+    text-align: left;
 }
 
 .title {
     font-size: clamp(1.5rem, 7vw, 3.5rem);
-    margin: 1.25rem 0 1rem;
+    margin: 0.5rem 0 1rem;
+    text-align: left;
 }
 
 .event-meta {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-start;
     gap: 0.75rem;
-    margin: 0.5rem 0 1.5rem;
+    margin: 0.5rem 0 1rem;
+    width: 100%;
 }
 
 .price-badge {
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-size: 1em;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    border: 0.18rem solid black;
-    padding: 0.35em 1em;
+    letter-spacing: 0.4em;
+    background: black;
+    color: white;
+    padding: 0.7em 1em;
     display: inline-block;
+}
+
+.ticket-btn {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    background: black;
+    color: white;
+    text-decoration: none;
+    padding: 0.35em 1.1em;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: filter 0.15s;
+    line-height: 1.3;
+}
+
+.ticket-btn:hover {
+    filter: brightness(120%);
+    color: white;
+}
+
+.ticket-price {
+    font-size: 0.8em;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    opacity: 0.85;
+}
+
+.ticket-cta {
+    font-size: 1em;
+    font-weight: 700;
+    letter-spacing: 0.4em;
 }
 
 .artist-divider {
@@ -352,6 +420,7 @@ function copyLink() {
     color: black;
     text-decoration: none;
     margin-bottom: 1.25rem;
+    clear: both;
     transition: background 0.15s, color 0.15s;
 }
 
