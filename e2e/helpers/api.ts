@@ -86,13 +86,19 @@ export async function deleteAbrechnung(id: number) {
 }
 
 /**
- * Save inventory entries on an Abrechnung. The new chronological backend
- * accepts only `consumed_quantity`; `quantity_before` / `quantity_after`
- * are computed server-side and ignored on input.
+ * Save inventory entries on an Abrechnung.
+ *
+ * `counted_after` is the physically counted remaining stock and what the UI
+ * sends; consumption is derived from it server-side. `consumed_quantity` is
+ * still accepted as a legacy delta, which is what most of these tests use
+ * because they assert on consumption directly.
+ * `quantity_before` / `quantity_after` are computed server-side and ignored
+ * on input.
  */
 export async function saveInventory(abrechnungId: number, entries: Array<{
   beverage_item: number
-  consumed_quantity: string | number
+  consumed_quantity?: string | number
+  counted_after?: string | number
 }>) {
   return apiPut(`/api/abrechnungen/${abrechnungId}/`, {
     inventory_entries: entries,

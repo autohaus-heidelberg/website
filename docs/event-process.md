@@ -54,7 +54,7 @@ Beim Anlegen wird automatisch eine **Checkliste** aus den hinterlegten Vorlagen 
 ### 3.1 Bestandslogik
 
 Der aktuelle Bestand pro Getränk ergibt sich aus der **letzten finalisierten Abrechnung**:
-- `quantity_after` der letzten Abrechnung = aktueller Bestand
+- Der gezählte Restbestand (`counted_after`) der letzten Abrechnung = aktueller Bestand
 
 ### 3.2 Einkauf (Purchase) anlegen
 
@@ -95,7 +95,7 @@ Der Verbrauch wird **bei jedem Speichern** (Auto-Save alle 2s) automatisch per F
 - Mehrere parallele Abrechnungen ohne Inventursperre
 - Sofortige Korrektur bei Tippfehlern (Restore bei höherem Nachher-Wert)
 
-**Parallelitätsschutz:** Bei gleichzeitiger Bearbeitung in mehreren Tabs wird die „Absicht" (= `quantity_before − quantity_after` wie der Client sie sieht) verwendet, nicht der absolute Wert. So geht kein Verbrauch verloren, auch wenn der lokale Bestand veraltet ist.
+**Parallelitätsschutz:** Bei gleichzeitiger Bearbeitung in mehreren Tabs wird der **gezählte Restbestand** gespeichert, nicht der Verbrauch. Der Verbrauch wird daraus abgeleitet. So bleibt die Zahl, die jemand abends von der Palette abgelesen hat, unverändert stehen — auch wenn später noch die Inventur eines früheren Events nachgetragen wird. In dem Fall korrigiert sich der Verbrauch automatisch.
 
 ---
 

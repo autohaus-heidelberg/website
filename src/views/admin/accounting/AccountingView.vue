@@ -802,6 +802,12 @@ function inventoryConsumption(entry: InventoryEntry): number {
   return Math.round(val * 100) / 100
 }
 
+/** More on the shelf than there should be. Usually a purchase that was never
+ *  entered; the server clamps consumption at 0 for these. */
+function isOvercount(entry: InventoryEntry): boolean {
+  return confirmedInventory.has(entry.beverage_item) && inventoryConsumption(entry) < 0
+}
+
 function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const consumedCrates = inventoryConsumption(entry) / upc
@@ -2063,18 +2069,19 @@ async function saveAll(silent = false) {
       inventory_entries: inventory.value
         .filter(inv => inv.id || confirmedInventory.has(inv.beverage_item) || parseFloat(inv.consumed_quantity || '0') > 0)
         .map(inv => {
-          // consumed_quantity is the user's intent, kept stable against
-          // parallel-tab corrections to quantity_before. The backend computes
-          // chronological quantity_before / quantity_after for display.
+          // Send what was counted, not what we think was used. The server
+          // derives consumption from it across the whole chronological chain,
+          // so entering a missed earlier Inventur later corrects this event's
+          // consumption instead of moving the number we wrote down.
           // Normalize to 2 decimals before sending so a stepper-typed
           // "3.333" doesn't round-trip differently than the server's
           // quantized snapshot.
-          const consumed = parseFloat(inv.consumed_quantity ?? '0')
+          const counted = parseFloat(inv.quantity_after ?? '0')
           return {
             id: inv.id,
             accounting: inv.accounting,
             beverage_item: inv.beverage_item,
-            consumed_quantity: (isNaN(consumed) ? 0 : consumed).toFixed(2),
+            counted_after: (isNaN(counted) ? 0 : counted).toFixed(2),
           }
         }),
       expenses: expenses.value
@@ -2103,23 +2110,26 @@ async function saveAll(silent = false) {
 
     // Sync from backend response.
     //
-    // Design decision: do NOT overwrite the user's typed values
-    // (quantity_before, quantity_after) from the server response. The user
-    // owns those inputs while the form is open; rewriting them would cause
-    // visible "jumps" on parallel-tab edits.
+    // Design decision: do NOT overwrite the counted value (quantity_after) the
+    // user typed. That is the measurement and they own it while the form is
+    // open; rewriting it would cause visible "jumps" on parallel-tab edits.
     //
     // We do sync:
     //   - server-assigned IDs for newly-created entries (so subsequent saves
     //     update instead of recreate)
-    //   - consumed_quantity (server may have rounded it, e.g. 0.5 → 0.50);
-    //     used as the persisted intent on next render but NOT re-derived
-    //     from after-before.
+    //   - quantity_before, which the server recomputes chronologically and may
+    //     have shifted if someone settled an earlier event
+    //   - consumed_quantity, which is derived from the two and therefore
+    //     follows rather than leads
     if (saved.inventory_entries) {
       for (const serverEntry of saved.inventory_entries) {
         const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
         if (!local) continue
         if (serverEntry.id && !local.id) {
           local.id = serverEntry.id
+        }
+        if (serverEntry.quantity_before !== undefined) {
+          local.quantity_before = normalizeQty(serverEntry.quantity_before)
         }
         if (serverEntry.consumed_quantity !== undefined) {
           local.consumed_quantity = normalizeQty(serverEntry.consumed_quantity)
@@ -2510,11 +2520,9 @@ watch(
 // consumption of all earlier events), so this gives a correct Vorher even
 // when later events have been edited in parallel.
 //
-// We update only `quantity_before` for entries the user has not actively
-// confirmed (consumed_quantity == 0). For entries the user has touched
-// (consumed > 0), we leave their typed values alone — re-deriving Nachher
-// would surprise the user mid-edit. Vorher stays in display sync via the
-// next save cycle.
+// The counted Nachher is a measurement and is never overwritten; what moves is
+// the derived consumption. Rows nobody has counted yet keep their Nachher
+// pre-filled with Vorher.
 //
 // Does NOT trigger an automatic save — that prevents a regression where
 // 400-conflict loops could cascade through refresh→save→400→refresh→…
@@ -2530,23 +2538,22 @@ async function refreshStockAndCorrect() {
       const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
       if (!local) continue
       const serverBefore = normalizeQty(serverEntry.quantity_before ?? '0')
-      const ownConsumed = parseFloat(local.consumed_quantity || '0')
 
       if (qtyEquals(serverBefore, local.quantity_before)) continue
 
       const bev = beverages.value.find(b => b.id === serverEntry.beverage_item)
-      if (ownConsumed === 0) {
-        // No user intent — safe to fully refresh both Vorher and Nachher.
-        local.quantity_before = serverBefore
+      const counted = confirmedInventory.has(serverEntry.beverage_item)
+
+      local.quantity_before = serverBefore
+      if (!counted) {
+        // Nothing counted here yet — keep the field pre-filled with Vorher.
         local.quantity_after = serverBefore
-        delete inventoryCrates.value[String(serverEntry.beverage_item)]
-      } else {
-        // User has typed a Nachher; keep their input. Update only Vorher and
-        // re-derive Nachher = Vorher - consumed so display stays consistent.
-        local.quantity_before = serverBefore
-        local.quantity_after = normalizeQty(Math.max(0, parseFloat(serverBefore) - ownConsumed))
-        delete inventoryCrates.value[String(serverEntry.beverage_item)]
       }
+      // A counted Nachher stays exactly as counted; only the inference moves.
+      local.consumed_quantity = normalizeQty(
+        Math.max(0, parseFloat(serverBefore) - parseFloat(local.quantity_after || '0'))
+      )
+      delete inventoryCrates.value[String(serverEntry.beverage_item)]
       if (bev) changedItems.push(bev.name)
     }
     if (changedItems.length > 0) {
@@ -2936,7 +2943,7 @@ function clearPendingNumberSelect() {
               v-show="inventoryItemVisible(entry)"
               data-testid="inv-row"
               :data-drink="beverage.name"
-              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage) }"
+              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }"
             )
               .col-inv-name
                 router-link.bev-name.bev-name-link(
@@ -3062,6 +3069,7 @@ function clearPendingNumberSelect() {
               .col-inv-num(
                 data-testid="inv-consumed"
                 :class="{ 'negative-consumption': inventoryConsumption(entry) < 0 }"
+                :title="isOvercount(entry) ? 'Mehr gezählt als erwartet — fehlt ein Einkauf?' : ''"
               ) {{ formatBottleQty(inventoryConsumption(entry), beverage) }}
                 span.consumption-warning(v-if="inventoryConsumption(entry) < 0") ⚠
                 span.miscount-warning(v-if="consumptionAnomaly(entry, beverage)" :title="`Ungewöhnlich hoher Verbrauch – üblich Ø ${consumptionAnomaly(entry, beverage)?.mean}, max ${consumptionAnomaly(entry, beverage)?.max}. Restbestand vergessen?`") ⚠
@@ -3079,7 +3087,7 @@ function clearPendingNumberSelect() {
 
         //- Mobile cards
         .inventory-cards.mobile-only
-          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage) }")
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }")
             .inv-card-header
               .inv-card-name
                 router-link.inv-card-name-link(
@@ -5112,6 +5120,12 @@ h2 {
   box-shadow: inset 0.3rem 0 0 #e8710a;
 }
 
+/* Mehr gezählt als erwartet — meist ein nicht erfasster Einkauf. Gleiche
+ * Mechanik wie inv-miscount, nur in Violett zur Unterscheidung. */
+.inventory-row.inv-overcount {
+  box-shadow: inset 0.3rem 0 0 #7b1fa2;
+}
+
 .inventory-row.inv-conflict {
   background: #ffebee;
   outline: 2px solid #d32f2f;
@@ -5328,6 +5342,10 @@ h2 {
  * deren border-color die Warnung. Reihenfolge = Dringlichkeit. */
 .inv-card.inv-miscount {
   border-color: #e8710a;
+}
+
+.inv-card.inv-overcount {
+  border-color: #7b1fa2;
 }
 
 .inv-card.inv-conflict {
