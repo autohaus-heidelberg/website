@@ -111,8 +111,11 @@ class InventoryEntry(models.Model):
         BeverageItem, on_delete=models.PROTECT,
         related_name='inventory_entries'
     )
-    quantity_before = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    quantity_after = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Der physisch gezählte Restbestand — die Messung, und das einzige
+    # geschriebene Feld. NULL = nicht gezählt.
+    counted_after = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    # Abgeleitet, aber materialisiert: rund 14 Auswertungen aggregieren das
+    # Feld per SQL Sum().
     consumed_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     # Price snapshots — frozen at time of creation
     snapshot_purchase_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -121,16 +124,20 @@ class InventoryEntry(models.Model):
 
     class Meta:
         unique_together = ['accounting', 'beverage_item']
-
-    @property
-    def consumption(self):
-        return self.quantity_before - self.quantity_after
 ```
 
-> **Hinweis:** `quantity_before` wird vom Backend automatisch auf `effective_before`
-> (= aktueller FIFO-Stock + consumed_quantity) gesetzt. Der Client sendet seinen
-> lokalen Wert, der für die Intent-Berechnung verwendet wird. Die Response enthält
-> immer den korrekten Server-Wert.
+> **Historie:** Früher lagen `quantity_before` und `quantity_after` als Spalten
+> hier. Migration 0044 ersetzte beide durch `consumed_quantity`, weil der vom
+> Client geschickte, global gerechnete `quantity_before` parallele Bearbeitung
+> zerstörte. Das behob zwar den Fehler, verankerte aber die falsche Größe: wurde
+> ein früheres Event nachträglich abgerechnet, verschob sich der *gezählte*
+> Nachher-Wert statt des *abgeleiteten* Verbrauchs. Seit `counted_after`
+> (Migration 0061) ist die Messung verankert und der Verbrauch folgt.
+>
+> `quantity_before` und `quantity_after` gibt es weiterhin in der API-Response,
+> dort aber ausschließlich berechnet:
+> `quantity_before` chronologisch aus Einkäufen und früherem Verbrauch,
+> `quantity_after` = `counted_after` sofern gezählt.
 
 ### 1.5 `ExpenseEntry` – Ausgaben
 
@@ -438,9 +445,9 @@ Getränkebestände werden über `PurchaseItem.remaining_quantity` verwaltet.
 Der Verbrauch wird **live bei jedem Speichern** (nicht erst beim Finalisieren) per
 **FIFO** (älteste Lots zuerst) von den Einkaufs-Positionen abgezogen.
 
-Jedes `AbrechnungsItem` trackt seinen eigenen Verbrauch in `consumed_quantity`,
-sodass Korrekturen (z.B. Nachher-Wert erhöhen) den Verbrauch automatisch
-zurückbuchen können.
+Jedes `AbrechnungsItem` hält den gezählten Restbestand in `counted_after`; der
+daraus abgeleitete `consumed_quantity` steuert den FIFO-Abzug. Korrekturen
+(z.B. Nachher-Wert erhöhen) buchen den Verbrauch automatisch zurück.
 
 ### Kein Inventursperre mehr
 
@@ -451,30 +458,48 @@ zurückbuchen können.
 
 ### Intent-basierter Verbrauch (Parallelitätsschutz)
 
-Wenn mehrere Tabs dieselben Getränke gleichzeitig bearbeiten:
+> **Überholt seit `counted_after` (Migration 0061).** Der Abschnitt beschreibt
+> den Stand, in dem der Client `quantity_before` mitschickte und das Backend
+> daraus eine Absicht ableitete. Beides gibt es nicht mehr.
 
-1. Der Client sendet `quantity_before` (seinen lokalen Stand) und `quantity_after`
-2. Das Backend berechnet die **Absicht**: `intended = quantity_before − quantity_after`
-3. Reicht der Bestand aus (`intended ≤ effective_before`): Verbrauch wird normal gebucht
-4. Reicht der Bestand **nicht** aus (`intended > effective_before`): **HTTP 400** mit
-   Konflikt-Details — nichts wird gespeichert, der User erhält eine Fehlermeldung
+Heute gilt stattdessen:
 
-**Formel pro Item bei jedem Save:**
+1. Der Client sendet **nur** `counted_after` — den physisch gezählten Restbestand.
+2. Das Backend leitet den Verbrauch über die gesamte chronologische Kette ab:
+
 ```
-effective_before = current_stock + consumed_quantity (des Items)
-intended = client_before − quantity_after     (wenn client_before > 0)
-desired  = min(intended, effective_before)
-actual_after = effective_before − desired
-delta = desired − old_consumed
-  → delta > 0: consume_fifo(delta)
-  → delta < 0: restore_fifo(|delta|)
+consumed(N) = max(0, before(N) − counted_after(N))
+before(N)   = Σ Einkäufe(≤ Datum_N) − Σ consumed(i < N)
 ```
+
+   Das teleskopiert zu „gezählter Restbestand des letzten gezählten Events davor
+   plus alles, was seitdem gekauft wurde".
+
+3. Wird eine **frühere** Inventur nachgetragen, sinkt `before` aller späteren
+   Events, deren `counted_after` unverändert bleibt und deren `consumed` sich
+   entsprechend korrigiert. Genau dafür existiert das Feld.
+4. Mehr gezählt als erwartet (`counted_after > before`): `consumed` wird auf 0
+   geklemmt, der gezählte Wert ungeklemmt gespeichert und die Zeile in der UI
+   markiert — meist ein nicht erfasster Einkauf.
+5. Reicht der Bestand für die bearbeitete Abrechnung nicht, kommt **HTTP 400**
+   mit Konflikt-Details. Abrechnungen, die nur über die Kaskade mitgezogen
+   werden, lösen **nie** einen 400 aus: dort sitzt niemand davor, und ein harter
+   Fehler würde das Speichern eines fremden Events blockieren.
+
+Ein `consumed_quantity`-Delta wird aus Kompatibilitätsgründen weiter akzeptiert
+und unverändert gespeichert (`counted_after` bleibt dann NULL). Es wird bewusst
+**nicht** in einen Zählwert umgedeutet: das Delta entstand gegen den Vorher-Wert,
+den der Client gerade sah, und als Messung eingefroren bräche es, sobald ein
+früheres Event danach abgerechnet wird.
 
 ### Wieder-Öffnen / Korrektur
 
 - Da FIFO live funktioniert, gibt es kein separates „Wieder-Öffnen".
-- Jede Änderung am `quantity_after` wird sofort in FIFO-Lots reflektiert.
-- **LIFO-Regel für Restore:** Beim Zurückbuchen werden die neuesten Lots zuerst aufgefüllt.
+- Jede Änderung am gezählten Nachher-Wert wird sofort in FIFO-Lots reflektiert.
+- Die Lots werden dabei nicht per Delta fortgeschrieben, sondern für die
+  betroffenen Getränke neu verteilt (`rebuild_fifo_for_drinks`) — eine
+  Korrektur kann mehrere Abrechnungen gleichzeitig verschieben, womit Deltas
+  ihren Sinn verlieren.
 
 ### Löschen einer Abrechnung
 

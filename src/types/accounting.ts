@@ -116,7 +116,10 @@ export interface InventoryEntry {
   // `consumed_quantity` and the chronological context.
   quantity_before?: string
   quantity_after?: string
-  // Writable: the source of truth for inventory mutations.
+  /** Physically counted remaining stock — the measurement, and what the server
+   *  stores. Consumption is derived from it. */
+  counted_after?: string | null
+  /** Derived server-side; still accepted on write by legacy callers. */
   consumed_quantity?: string
   snapshot_purchase_price?: string
   snapshot_selling_price?: string | null

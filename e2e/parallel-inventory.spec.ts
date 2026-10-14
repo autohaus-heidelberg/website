@@ -222,13 +222,18 @@ test.describe('Parallel-tab FIFO inventory', () => {
     expect(newStock).toBeCloseTo(stock - 0.5)
   })
 
-  test('User intent (consumed_quantity) survives parallel-tab Vorher updates', async ({ browser }) => {
-    // Henne-Ei regression test:
-    // 1. Tab A enters consumed=6 via UI
-    // 2. Tab B consumes 12 in parallel (via API)
-    // 3. Tab A's auto-save fires → server returns updated Vorher
-    // 4. Tab A's local consumed_quantity must REMAIN 6 (not be re-derived
-    //    from a now-stale before/after pair).
+  test('Counted Nachher survives an earlier event being settled; consumption follows', async ({ browser }) => {
+    // Inverts the invariant that migration 0044 established.
+    //
+    // 0044 stored the consumption delta and let the counted Nachher drift when
+    // an earlier event moved. That pinned the wrong quantity: the Nachher is
+    // what somebody physically counted off the shelf, the consumption is only
+    // inferred from it. So now the count is pinned and the inference moves.
+    //
+    // 1. Tab A opens EVENT_B — the LATER event — and counts a Nachher.
+    // 2. EVENT_A (earlier) is settled in parallel via the API.
+    // 3. Tab A refreshes: its Vorher drops by that consumption …
+    // 4. … its counted Nachher is untouched, and consumption absorbs the shift.
     const initialStock = await getStock(DRINK_ID)
     test.skip(initialStock < 48, `Need ≥48 ${DRINK_NAME}, have ${initialStock}`)
 
@@ -236,47 +241,57 @@ test.describe('Parallel-tab FIFO inventory', () => {
     const tabA = await ctx.newPage()
     try {
       await loginPage(tabA)
-      await tabA.goto(`/admin/events/${EVENT_A}?tab=accounting`, { waitUntil: 'domcontentloaded' })
-      const colaRowA = await openInventur(tabA, DRINK_NAME)
+      // NOTE: this tab deliberately shows the LATER event.
+      await tabA.goto(`/admin/events/${EVENT_B}?tab=accounting`, { waitUntil: 'domcontentloaded' })
+      const colaRow = await openInventur(tabA, DRINK_NAME)
 
-      // Step 1: Tab A reduces "Nachher" by 6 bottles via the bottle stepper input.
-      // For Cola (upc=24) the row has a crate and a bottle field; we want the
-      // bottle one.
-      const afterBottlesInput = invAfterMinor(colaRowA)
-      const currentBottles = Number(await afterBottlesInput.inputValue())
-      await afterBottlesInput.fill(String(currentBottles - 6))
-      // Wait for first auto-save to complete (2s debounce + network)
+      // Step 1: count 6 bottles fewer than the pre-filled Vorher.
+      const afterBottlesInput = invAfterMinor(colaRow)
+      const startBottles = Number(await afterBottlesInput.inputValue())
+      await afterBottlesInput.fill(String(startBottles - 6))
       await tabA.waitForResponse(
         r => r.url().includes('/api/abrechnungen/') && r.request().method() === 'PUT' && r.status() === 200,
         { timeout: 10_000 }
       )
 
-      // Step 2: parallel API call — Tab B consumes 12 from EVENT_B
-      const abrB = await getOrCreateAbrechnung(EVENT_B)
-      abrIdB = abrB.id
-      const rB = await saveInventory(abrB.id, [{
+      const beforeText = (await invTotal(colaRow).textContent())?.trim()
+      const countedBottles = Number(await afterBottlesInput.inputValue())
+      const countedCrates = Number(await invAfterMajor(colaRow).inputValue())
+
+      // Step 2: settle the EARLIER event with 12 bottles consumed.
+      const abrA = await getOrCreateAbrechnung(EVENT_A)
+      abrIdA = abrA.id
+      const rA = await saveInventory(abrA.id, [{
         beverage_item: DRINK_ID,
         consumed_quantity: 12,
       }])
-      expect(rB.status).toBe(200)
+      expect(rA.status).toBe(200)
 
-      // Step 3: trigger Tab A re-fresh. visibilitychange refreshes stock and
-      // updates local Vorher (via refreshStockAndCorrect).
+      // Step 3: trigger the focus refresh.
       await tabA.evaluate(() => {
         Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true })
         document.dispatchEvent(new Event('visibilitychange'))
       })
       await tabA.waitForTimeout(2000)
 
-      // Step 4: re-fetch Tab A's abrechnung and verify consumed=6 persisted
-      const abrA = await getOrCreateAbrechnung(EVENT_A)
-      abrIdA = abrA.id
-      const colaEntry = abrA.inventory_entries.find((e: any) => e.beverage_item === DRINK_ID)
+      // Vorher must have dropped — the earlier event ate into it.
+      const beforeAfterRefresh = (await invTotal(colaRow).textContent())?.trim()
+      expect(beforeAfterRefresh).not.toBe(beforeText)
+
+      // Step 4: the measurement is untouched …
+      expect(Number(await afterBottlesInput.inputValue())).toBe(countedBottles)
+      expect(Number(await invAfterMajor(colaRow).inputValue())).toBe(countedCrates)
+
+      // … and the server's derived consumption dropped by the 12 the earlier
+      // event took, instead of the count being rewritten.
+      const abrB = await getOrCreateAbrechnung(EVENT_B)
+      abrIdB = abrB.id
+      const colaEntry = abrB.inventory_entries.find((e: any) => e.beverage_item === DRINK_ID)
       expect(colaEntry).toBeDefined()
-      expect(Number(colaEntry.consumed_quantity)).toBe(6)
-      // Stock dropped by 6 (Tab A) + 12 (Tab B) = 18
+      expect(Number(colaEntry.consumed_quantity)).toBe(0)
+      // Stock reflects both settlements: 12 (earlier) + 0 (later, clamped).
       const finalStock = await getStock(DRINK_ID)
-      expect(finalStock).toBe(initialStock - 18)
+      expect(finalStock).toBe(initialStock - 12)
     } finally {
       await ctx.close()
     }
