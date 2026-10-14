@@ -659,16 +659,11 @@ let _spinnerMousedown = false
 function onQtyMousedown() { _spinnerMousedown = true; setTimeout(() => { _spinnerMousedown = false }, 300) }
 function blurIfSpinner(e: InputEvent) { if (_spinnerMousedown) (e.currentTarget as HTMLInputElement | null)?.blur() }
 
-/** Scrollrad auf Inventur-Inputs: einen Schritt ändern, dann sofort blur()
- *  damit das Rad nicht unkontrolliert weiterläuft. */
+/** Scrollrad auf Inventur-Inputs: Wert NICHT ändern, nur verhindern dass
+ *  der Browser den Wert über das Scrollrad verstellt. Tastatur ↑/↓ bleibt
+ *  weiterhin nutzbar. */
 function onQtyWheel(e: WheelEvent) {
   e.preventDefault()
-  const input = e.currentTarget as HTMLInputElement
-  const delta = e.deltaY < 0 ? 1 : -1
-  const cur = parseFloat(input.value) || 0
-  input.value = String(Math.max(0, cur + delta))
-  input.dispatchEvent(new Event('input', { bubbles: true }))
-  input.blur()
 }
 
 /** Gibt `null` für Getränke ohne Split (Piccolo & Co.) — die arbeiten direkt
