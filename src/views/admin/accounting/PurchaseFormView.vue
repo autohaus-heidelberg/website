@@ -24,9 +24,19 @@ const form = ref<Partial<Purchase>>({
   items: [],
 })
 
+interface PurchaseWarning {
+  abrechnung_id: number
+  event_title: string
+  event_date: string
+  drink: string
+  consumed_before: string
+  consumed_after: string
+}
+
 const beverages = ref<BeverageItem[]>([])
 const isLoading = ref(false)
 const error = ref('')
+const backdatingWarnings = ref<PurchaseWarning[]>([])
 
 // "Bestandskorrektur"-Modus: erlaubt bei Kistengetränken zusätzlich Einzelflaschen-
 // Eingaben (z.B. "5 Kisten + 3 Flaschen"). Im normalen Einkauf gesperrt, da
@@ -443,6 +453,7 @@ async function handleSubmit() {
   }
   isLoading.value = true
   error.value = ''
+  backdatingWarnings.value = []
 
   // Normalize empty decimal fields to null
   const payload = { ...form.value }
@@ -451,12 +462,17 @@ async function handleSubmit() {
   if (!payload.vat_amount) payload.vat_amount = null as any
 
   try {
+    let result: any
     if (isEditing) {
-      await purchaseService.update(Number(props.id), payload)
+      result = await purchaseService.update(Number(props.id), payload)
     } else {
-      await purchaseService.create(payload)
+      result = await purchaseService.create(payload)
     }
-    router.push('/admin/lager?tab=einkaufe')
+    if (result?.warnings?.length) {
+      backdatingWarnings.value = result.warnings
+    } else {
+      router.push('/admin/lager?tab=einkaufe')
+    }
   } catch (e: any) {
     error.value = e.response?.data?.error || e.message || 'Fehler beim Speichern'
   } finally {
@@ -611,6 +627,37 @@ onMounted(() => {
     .form-actions
       button.btn-save(type="submit" :disabled="isLoading")
         | {{ isLoading ? 'Speichern...' : 'Speichern' }}
+
+  .backdating-overlay(v-if="backdatingWarnings.length")
+    .backdating-dialog
+      h3 ⚠ Einkauf verändert Inventurwerte
+      p
+        | Das Datum dieses Einkaufs liegt vor bestehenden Inventuren. Dadurch hat sich
+        | der berechnete Verbrauch folgender Events geändert:
+      table.warnings-table
+        thead
+          tr
+            th Event
+            th Getränk
+            th vorher
+            th jetzt
+        tbody
+          tr(v-for="w in backdatingWarnings" :key="w.abrechnung_id + w.drink")
+            td {{ w.event_title }} ({{ w.event_date }})
+            td {{ w.drink }}
+            td {{ w.consumed_before }}
+            td(:class="parseFloat(w.consumed_after) > parseFloat(w.consumed_before) ? 'warn-higher' : 'warn-lower'") {{ w.consumed_after }}
+      p.warn-hint
+        | Das Lager ist korrekt — die Gesamtmenge stimmt. Nur der berechnete Verbrauch
+        | der betroffenen Events hat sich verschoben.
+      p.warn-action
+        | Was tun? Wenn das Datum falsch ist, gehe zurück und korrigiere es direkt in
+        | diesem Einkauf — alle Werte werden dann automatisch neu berechnet.
+        | Wenn kein Einkauf mehr verbraucht wurde, kannst du ihn auch löschen und neu anlegen.
+        | Wenn das Datum stimmt (die Ware war tatsächlich schon vorher da), ist die
+        | Änderung korrekt und du kannst einfach fortfahren.
+      .dialog-actions
+        button.btn-save(type="button" @click="router.push('/admin/lager?tab=einkaufe')") Verstanden
 </template>
 
 <style scoped>
@@ -986,6 +1033,80 @@ select.unmatched {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.backdating-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.backdating-dialog {
+  background: white;
+  border: 0.5rem solid black;
+  padding: 2rem;
+  width: min(90vw, 640px);
+  box-sizing: border-box;
+}
+
+.backdating-dialog h3 {
+  margin: 0 0 1rem;
+  font-weight: 900;
+  font-size: 1.25rem;
+}
+
+.backdating-dialog p {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.warnings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.warnings-table th,
+.warnings-table td {
+  border: 0.15rem solid black;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.warnings-table th {
+  font-weight: 900;
+  background: black;
+  color: white;
+}
+
+.warn-higher {
+  color: #c62828;
+  font-weight: 700;
+}
+
+.warn-lower {
+  color: #1565c0;
+  font-weight: 700;
+}
+
+.warn-hint {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.warn-action {
+  font-size: 0.85rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background: #fff9e6;
+  border-left: 4px solid #f9a825;
 }
 
 .btn-cancel-dialog {
