@@ -4163,7 +4163,6 @@ h2 {
 
 .tab-grant {
   border-left: 0.15rem solid black;
-  margin-left: auto;
 }
 
 .btn-overflow {
