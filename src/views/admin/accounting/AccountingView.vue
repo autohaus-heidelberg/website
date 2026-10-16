@@ -808,6 +808,13 @@ function isOvercount(entry: InventoryEntry): boolean {
   return confirmedInventory.has(entry.beverage_item) && inventoryConsumption(entry) < 0
 }
 
+/** Human-readable date for a counting-conflict message (dd.mm.yyyy). */
+function conflictDate(iso: string): string {
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 function inventoryValue(entry: InventoryEntry, beverage: BeverageItem): number {
   const upc = beverage.units_per_crate || 1
   const consumedCrates = inventoryConsumption(entry) / upc
@@ -3080,6 +3087,13 @@ function clearPendingNumberSelect() {
               span.conflict-text
                 | {{ beverage.name }}: Du möchtest #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}] verbrauchen, aber aktuell sind nur noch #[strong {{ inventoryConflicts.get(beverage.id)?.available }}] verfügbar. Bitte „Nachher" um mindestens #[strong {{ ((inventoryConflicts.get(beverage.id)?.requested ?? 0) - (inventoryConflicts.get(beverage.id)?.available ?? 0)) }}] erhöhen.
 
+            .inventory-row-countconflict(v-if="entry.later_conflict && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
+              span.countconflict-icon ⚠️
+              span.countconflict-text(v-if="entry.later_conflict.direction === 'later_counted_more'")
+                | {{ beverage.name }}: Das spätere Event #[strong „{{ entry.later_conflict.other_event_title }}" ({{ conflictDate(entry.later_conflict.other_event_date) }})] hat #[strong {{ entry.later_conflict.other_counted }}] gezählt – mehr als deine #[strong {{ entry.later_conflict.this_counted }}] hier. Da dazwischen nichts gekauft wurde, kann der Bestand nicht gestiegen sein. Bitte mit der für „{{ entry.later_conflict.other_event_title }}" zuständigen Person klären.
+              span.countconflict-text(v-else)
+                | {{ beverage.name }}: Das frühere Event #[strong „{{ entry.later_conflict.other_event_title }}" ({{ conflictDate(entry.later_conflict.other_event_date) }})] hat #[strong {{ entry.later_conflict.other_counted }}] gezählt – weniger als deine #[strong {{ entry.later_conflict.this_counted }}] hier. Da dazwischen nichts gekauft wurde, kann der Bestand nicht gestiegen sein. Bitte mit der für „{{ entry.later_conflict.other_event_title }}" zuständigen Person klären.
+
             .inventory-row-miscount(v-if="consumptionAnomaly(entry, beverage) && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
               span.miscount-icon 💡
               span.miscount-text
@@ -3099,6 +3113,12 @@ function clearPendingNumberSelect() {
             .inv-card-conflict(v-if="inventoryConflicts.has(beverage.id)")
               span ⚠️
               | {{ beverage.name }}: angefordert #[strong {{ inventoryConflicts.get(beverage.id)?.requested }}], verfügbar #[strong {{ inventoryConflicts.get(beverage.id)?.available }}]. Nachher erhöhen.
+            .inv-card-countconflict(v-if="entry.later_conflict && !inventoryConflicts.has(beverage.id)")
+              span ⚠️
+              template(v-if="entry.later_conflict.direction === 'later_counted_more'")
+                | Konflikt mit späterem Event #[strong „{{ entry.later_conflict.other_event_title }}" ({{ conflictDate(entry.later_conflict.other_event_date) }})]: dort #[strong {{ entry.later_conflict.other_counted }}] gezählt, hier #[strong {{ entry.later_conflict.this_counted }}]. Bestand kann ohne Einkauf nicht steigen – bitte mit der zuständigen Person klären.
+              template(v-else)
+                | Konflikt mit früherem Event #[strong „{{ entry.later_conflict.other_event_title }}" ({{ conflictDate(entry.later_conflict.other_event_date) }})]: dort #[strong {{ entry.later_conflict.other_counted }}] gezählt, hier #[strong {{ entry.later_conflict.this_counted }}]. Bestand kann ohne Einkauf nicht steigen – bitte mit der zuständigen Person klären.
             .inv-card-miscount(v-if="consumptionAnomaly(entry, beverage) && !inventoryConflicts.has(beverage.id)")
               span 💡
               | #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Restbestand vergessen?
@@ -5161,6 +5181,34 @@ h2 {
   color: #d32f2f;
 }
 
+/* Per-row counting contradiction with a neighbouring event — a later event
+   counted more than this earlier one (or vice-versa) with nothing bought in
+   between, so one of the two counts must be wrong. Not a blocking error, but a
+   data conflict the user must resolve with the other event's responsible. */
+.inventory-row-countconflict {
+  background: #fde7f0;
+  border-left: 4px solid #c2185b;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  color: #880e4f;
+  display: flex;
+  gap: 0.5em;
+  align-items: flex-start;
+}
+
+.inventory-row-countconflict .countconflict-icon {
+  flex-shrink: 0;
+  font-size: 1.1em;
+}
+
+.inventory-row-countconflict .countconflict-text {
+  line-height: 1.4;
+}
+
+.inventory-row-countconflict .countconflict-text strong {
+  color: #c2185b;
+}
+
 /* Per-row miscount hint — the entered consumption is far above this drink's
    historical norm, so remaining stock was probably not counted. */
 .miscount-warning {
@@ -5292,6 +5340,20 @@ h2 {
 
 .inv-card-conflict strong {
   color: #d32f2f;
+}
+
+.inv-card-countconflict {
+  background: #f8bbd0;
+  color: #880e4f;
+  font-size: 0.85em;
+  padding: 0.4em 0.6em;
+  border-radius: 4px;
+  margin: 0.4em 0;
+  line-height: 1.3;
+}
+
+.inv-card-countconflict strong {
+  color: #c2185b;
 }
 
 .inv-card-miscount {

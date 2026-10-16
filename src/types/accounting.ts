@@ -126,6 +126,26 @@ export interface InventoryEntry {
   snapshot_deposit?: string
   recorded_by?: number
   recorded_at?: string
+  /** A physically-impossible counting contradiction with a neighbouring
+   *  event: a later event counted more remaining stock than an earlier one
+   *  with nothing bought in between (so one of the two counts is wrong).
+   *  Server-computed, display-only; null when there is no conflict. */
+  later_conflict?: LaterConflict | null
+}
+
+/** Describes a counting contradiction between this inventory entry and the
+ *  chronologically adjacent event (see backend `find_counting_conflicts`). */
+export interface LaterConflict {
+  /** `later_counted_more`: a later event counted more than this earlier one.
+   *  `earlier_counted_less`: an earlier event counted less than this later one. */
+  direction: 'later_counted_more' | 'earlier_counted_less'
+  /** The other (conflicting) event. */
+  other_event_title: string
+  other_event_date: string
+  /** The count on this entry's event. */
+  this_counted: string
+  /** The count on the other event. */
+  other_counted: string
 }
 
 /** Historical consumption statistics per drink, used to warn about likely
