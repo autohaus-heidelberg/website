@@ -2156,6 +2156,14 @@ async function saveAll(silent = false) {
     //     safe to overwrite them — and we must, otherwise the pink conflict /
     //     blue pending hint stays stale until a full page reload even after the
     //     edit that resolved it has been saved.
+    //
+    // All of these are *server-driven* writes, not user intent. Mutating the
+    // reactive `inventory` here would otherwise trip the deep auto-save watcher
+    // and schedule another save — and because `later_conflict` is a fresh
+    // object on every response, that save loops forever (saved → watcher →
+    // save → …). Suppress auto-save across the whole sync; the `finally` block
+    // re-enables it after Vue has flushed these watcher notifications.
+    suppressAutoSave = true
     if (saved.inventory_entries) {
       for (const serverEntry of saved.inventory_entries) {
         const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
@@ -2299,6 +2307,11 @@ async function saveAll(silent = false) {
     }
   } finally {
     isSaving.value = false
+    // Re-enable auto-save only after Vue flushes the watcher notifications
+    // queued by the server-hint sync above (same deferral the initial load
+    // uses). Without this, mirroring back the server-recomputed hints would
+    // schedule another save and loop endlessly.
+    setTimeout(() => { suppressAutoSave = false }, 0)
   }
 }
 
