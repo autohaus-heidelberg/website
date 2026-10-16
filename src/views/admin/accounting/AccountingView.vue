@@ -414,6 +414,7 @@ const resultExpandInventory = ref(false)
 const resultExpandExpenses = ref(false)
 const resultExpandVat = ref(false)
 const resultExpandDoorDeal = ref(false)
+const resultExpandCashExpenses = ref(false)
 
 async function fetchAndApplyAllExternal() {
   if (!props.eventId) return
@@ -3611,18 +3612,18 @@ function clearPendingNumberSelect() {
       //- ═══ A) Ergebnis-Tabelle (Read-Only) ══════════════════════
       .section
         .section-title-row
-          h3.section-title 🧮 Ergebnis
+          h3.section-title Ergebnis
         .summary-table
 
           //- Einnahmen (zeigen tatsächliche Einnahmen = gezählt + aus Kasse bezahlt)
           .summary-row.summary-expandable(@click="resultExpandRevenue = !resultExpandRevenue")
-            span.summary-label {{ resultExpandRevenue ? '▼' : '▶' }} 💰 Einnahmen
+            span.summary-label {{ resultExpandRevenue ? '▼' : '▶' }} Einnahmen
             span.summary-value {{ formatCurrency(adjustedRevenue) }}
           template(v-if="resultExpandRevenue")
             template(v-for="group in REVENUE_GROUPS" :key="group.label")
               .summary-row.summary-detail.summary-group-subtotal(v-if="groupRevenue(group.sources) !== 0")
                 span.summary-label
-                  | {{ group.sources[0].startsWith('bar_') ? '🍺 Bar' : '🚪 Einlass' }}
+                  | {{ group.sources[0].startsWith('bar_') ? 'Bar' : 'Einlass' }}
                   span.summary-inline-hint(v-if="group.sources[0].startsWith('bar_') && authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)") (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
                 span.summary-value {{ formatCurrency(groupRevenue(group.sources)) }}
               .summary-row.summary-detail.summary-detail-nested(v-for="rev in revenues.filter(r => group.sources.includes(r.source))" :key="rev.source" v-show="revenueNet(rev) !== 0")
@@ -3635,16 +3636,31 @@ function clearPendingNumberSelect() {
               .summary-row.summary-detail.summary-subtotal-minor
                 span.summary-label = Gezählte Einnahmen
                 span.summary-value {{ formatCurrency(totalRevenue) }}
-              .summary-row.summary-detail
-                span.summary-label + Aus Kassen bezahlte Ausgaben
+              .summary-row.summary-detail.summary-expandable(@click.stop="resultExpandCashExpenses = !resultExpandCashExpenses")
+                span.summary-label {{ resultExpandCashExpenses ? '▼' : '▶' }} + Aus Kassen bezahlte Ausgaben
                 span.summary-value {{ formatCurrency(expensesPaidFromRegister) }}
+              template(v-if="resultExpandCashExpenses")
+                template(v-if="expensesFromSource('entrance_cash') > 0")
+                  .summary-row.summary-detail.summary-detail-nested.summary-subtotal-minor
+                    span.summary-label Einlasskasse
+                    span.summary-value {{ formatCurrency(expensesFromSource('entrance_cash')) }}
+                  .summary-row.summary-detail.summary-detail-nested(v-for="exp in expenses.filter(e => e.paid_from === 'entrance_cash' && parseFloat(e.amount || '0') !== 0)" :key="'ce-' + (exp.id || exp.description)")
+                    span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
+                    span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+                template(v-if="expensesFromSource('bar_cash') > 0")
+                  .summary-row.summary-detail.summary-detail-nested.summary-subtotal-minor
+                    span.summary-label Bar-Kasse
+                    span.summary-value {{ formatCurrency(expensesFromSource('bar_cash')) }}
+                  .summary-row.summary-detail.summary-detail-nested(v-for="exp in expenses.filter(e => e.paid_from === 'bar_cash' && parseFloat(e.amount || '0') !== 0)" :key="'cb-' + (exp.id || exp.description)")
+                    span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
+                    span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
               .summary-row.summary-detail.summary-subtotal-minor
                 span.summary-label = Tatsächliche Einnahmen
                 span.summary-value {{ formatCurrency(adjustedRevenue) }}
 
           //- Wareneinsatz
           .summary-row.summary-expandable(@click="resultExpandInventory = !resultExpandInventory")
-            span.summary-label {{ resultExpandInventory ? '▼' : '▶' }} 📦 − Wareneinsatz
+            span.summary-label {{ resultExpandInventory ? '▼' : '▶' }} − Wareneinsatz
             span.summary-value −{{ formatCurrency(totalInventoryValue) }}
           template(v-if="resultExpandInventory")
             .summary-row.summary-detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
@@ -3653,7 +3669,7 @@ function clearPendingNumberSelect() {
 
           //- Ausgaben
           .summary-row.summary-expandable(@click="resultExpandExpenses = !resultExpandExpenses")
-            span.summary-label {{ resultExpandExpenses ? '▼' : '▶' }} 🧾 − Ausgaben
+            span.summary-label {{ resultExpandExpenses ? '▼' : '▶' }} − Ausgaben
             span.summary-value −{{ formatCurrency(totalExpenses) }}
           template(v-if="resultExpandExpenses")
             .summary-row.summary-detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
@@ -3674,7 +3690,7 @@ function clearPendingNumberSelect() {
           //- USt (nur wenn relevant)
           template(v-if="vatOutput !== 0 || vatInput !== 0")
             .summary-row.summary-expandable(@click="resultExpandVat = !resultExpandVat")
-              span.summary-label {{ resultExpandVat ? '▼' : '▶' }} 🧮 − USt-Zahllast
+              span.summary-label {{ resultExpandVat ? '▼' : '▶' }} − USt-Zahllast
               span.summary-value −{{ formatCurrency(vatLiability) }}
             template(v-if="resultExpandVat")
               .summary-row.summary-detail(v-if="vat7Entrance !== 0")
@@ -3702,7 +3718,7 @@ function clearPendingNumberSelect() {
           //- zur Erklärung des Carousel-Anteils in der Aufklapp-Ansicht sichtbar.
           template(v-if="doorDealActive")
             .summary-row.summary-expandable(@click="resultExpandDoorDeal = !resultExpandDoorDeal")
-              span.summary-label {{ resultExpandDoorDeal ? '▼' : '▶' }} 🚪 − Doordeal-Verteilung
+              span.summary-label {{ resultExpandDoorDeal ? '▼' : '▶' }} − Doordeal-Verteilung
               span.summary-value −{{ formatCurrency(doorDealArtistAmount) }}
             template(v-if="resultExpandDoorDeal")
               .summary-row.summary-sub-detail
@@ -3723,10 +3739,10 @@ function clearPendingNumberSelect() {
               //- haben — ohne das würde "verbleibt im Topf" unten so tun, als wäre
               //- dieses Geld noch da (siehe Team-Absprache).
               .summary-row.summary-sub-detail(v-if="comboDoorDealShareAmount > 0")
-                span.summary-label 🎤 Garantie+Doordeal-Bands (bereits ausgezahlt)
+                span.summary-label Garantie+Doordeal-Bands (bereits ausgezahlt)
                 span.summary-value −{{ formatCurrency(comboDoorDealShareAmount) }}
               .summary-row.summary-sub-remaining
-                span.summary-label 🏠 Carousel-Anteil (verbleibt im Topf)
+                span.summary-label Carousel-Anteil (verbleibt im Topf)
                 .summary-value-group
                   span.summary-pct {{ doorDealVenueDisplayPct.toFixed(0) }}%
                   span.summary-value(:class="doorDealVenueAmount < 0 ? 'negative' : ''") {{ formatCurrency(doorDealVenueAmount) }}
@@ -3739,14 +3755,14 @@ function clearPendingNumberSelect() {
           //- Gewinnverteilung-Auszahlung (treasurer + Splits konfiguriert)
           template(v-if="authStore.isTreasurer && splits.length")
             .summary-row.summary-subblock-header
-              span.summary-label 🤝 Gewinnverteilung
+              span.summary-label Gewinnverteilung
             .summary-row.summary-sub-detail(v-for="split in splits" :key="'r' + split.participant_name")
               span.summary-label {{ split.participant_name || '(kein Name)' }}
               .summary-value-group
                 span.summary-pct {{ Math.round(parseFloat(split.share_percentage)) }}%
                 span.summary-value {{ formatCurrency(splitAmount(split)) }}
             .summary-row.summary-sub-remaining
-              span.summary-label 🏠 Carousel e.V. (verbleibt)
+              span.summary-label Carousel e.V. (verbleibt)
               .summary-value-group
                 span.summary-pct {{ (100 - totalSplitPercentage).toFixed(0) }}%
                 span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
@@ -3758,7 +3774,7 @@ function clearPendingNumberSelect() {
       //- 🎤 Band-Deals im Ausgaben-Tab), nie über diese Liste.
       .section
         .section-title-row
-          h3.section-title 🤝 Externer Türeinnahmen-Split (Mitveranstalter)
+          h3.section-title Externer Türeinnahmen-Split (Mitveranstalter)
         p.section-subtitle Nur für externe Parteien (z.B. Mitveranstalter), mit denen die Türeinnahmen geteilt werden. Band-Gagen — auch reine Doordeals — gehören in die Ausgaben (siehe 🎤 Band-Deals im Ausgaben-Tab), nicht hierher.
         .config-warning(v-if="bandNamesInExternalSplit.length") ⚠️ {{ bandNamesInExternalSplit.join(', ') }} ist eine Band mit Deal — bitte im Ausgaben-Tab (🎤 Band-Deals) „In Ausgabe umwandeln" statt hier als externen Split zu führen.
         template(v-if="doorDealSplits.length")
@@ -3776,7 +3792,7 @@ function clearPendingNumberSelect() {
             .config-row-add
               button.btn-add-sm(@click="doorDealSplits.push({ name: '', share: 0 })") + hinzufügen
             .config-warning(v-if="duplicateDoorDealNames.size") ⚠️ Doppelter Name: {{ Array.from(duplicateDoorDealNames).join(', ') }} — wird sonst doppelt abgezogen.
-            .config-hint(v-if="doorDealVenueShare >= 0") Rest ({{ doorDealVenueShare.toFixed(0) }}%) verbleibt automatisch bei 🏠 Carousel e.V.
+            .config-hint(v-if="doorDealVenueShare >= 0") Rest ({{ doorDealVenueShare.toFixed(0) }}%) verbleibt automatisch bei Carousel e.V.
             .config-warning(v-else) ⚠️ Türanteile summieren sich auf {{ (100 - doorDealVenueShare).toFixed(0) }}% — mehr als die verfügbaren 100% der Türeinnahmen.
             .config-deductions(v-if="expenses.filter(e => e.description && e.grant_category !== 'kuenstlerhonorar').length")
               .config-deductions-header Vom Doordeal abzugsfähige Ausgaben
@@ -3795,7 +3811,7 @@ function clearPendingNumberSelect() {
       //- Nur für Treasurer sichtbar — Backend liefert splits=[] für andere
       .section(v-if="authStore.isTreasurer")
         .section-title-row
-          h3.section-title 🤝 Gewinnverteilung
+          h3.section-title Gewinnverteilung
         .config-table
           .config-header
             span Empfänger
@@ -3810,12 +3826,12 @@ function clearPendingNumberSelect() {
           .config-row-add
             button.btn-add-sm(@click="addSplit") + hinzufügen
           .config-warning(v-if="duplicateSplitNames.size") ⚠️ Doppelter Name: {{ Array.from(duplicateSplitNames).join(', ') }} — wird sonst doppelt ausgezahlt.
-          .config-hint Rest ({{ (100 - totalSplitPercentage).toFixed(0) }}%) verbleibt automatisch bei 🏠 Carousel e.V.
+          .config-hint Rest ({{ (100 - totalSplitPercentage).toFixed(0) }}%) verbleibt automatisch bei Carousel e.V.
 
       //- ═══ D) Notizen ═══════════════════════════════════════════
       .section
         .section-title-row
-          h3.section-title 📝 Notizen
+          h3.section-title Notizen
         textarea.notes-input(
           v-model="accounting.notes"
           placeholder="Notizen zu dieser Abrechnung..."
