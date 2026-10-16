@@ -2151,6 +2151,11 @@ async function saveAll(silent = false) {
     //     have shifted if someone settled an earlier event
     //   - consumed_quantity, which is derived from the two and therefore
     //     follows rather than leads
+    //   - later_conflict / pending_earlier_event, which are read-only hints the
+    //     server recomputes on every save. The user never types these, so it is
+    //     safe to overwrite them — and we must, otherwise the pink conflict /
+    //     blue pending hint stays stale until a full page reload even after the
+    //     edit that resolved it has been saved.
     if (saved.inventory_entries) {
       for (const serverEntry of saved.inventory_entries) {
         const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
@@ -2164,6 +2169,10 @@ async function saveAll(silent = false) {
         if (serverEntry.consumed_quantity !== undefined) {
           local.consumed_quantity = normalizeQty(serverEntry.consumed_quantity)
         }
+        // Read-only server hints: always mirror the fresh value (incl. null,
+        // which clears a hint the latest edit just resolved).
+        local.later_conflict = serverEntry.later_conflict ?? null
+        local.pending_earlier_event = serverEntry.pending_earlier_event ?? null
       }
     }
 
