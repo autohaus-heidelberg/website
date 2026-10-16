@@ -877,6 +877,11 @@ const MIN_ANOMALY_HISTORY = 3
  *  category baseline when the drink itself has too little history (e.g. a new
  *  Sekt). Null when unremarkable. */
 function consumptionAnomaly(entry: InventoryEntry, beverage?: BeverageItem): { mean: number; max: number; consumed: number } | null {
+  // The directly-preceding event has not been counted yet, so this event's
+  // consumption carries its share and is expected to be high. Warning here
+  // would be a false positive — the real consumer is that earlier event, which
+  // gets the warning once it is counted (see pending_earlier_event hint).
+  if (entry.pending_earlier_event) return null
   let stat = consumptionStats.value.drinks[entry.beverage_item]
   if ((!stat || stat.count < MIN_ANOMALY_HISTORY) && beverage?.category) {
     stat = consumptionStats.value.categories[beverage.category]
@@ -3099,6 +3104,11 @@ function clearPendingNumberSelect() {
               span.miscount-text
                 | {{ beverage.name }}: #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich sind Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Wurde evtl. Restbestand nicht gezählt?
 
+            .inventory-row-pending(v-if="entry.pending_earlier_event && inventoryConsumption(entry) > 0 && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
+              span.pending-icon ℹ️
+              span.pending-text
+                | {{ beverage.name }}: Dieser Verbrauch enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], das seine Inventur noch nicht eingetragen hat. Der Wert wird sich korrigieren, sobald das nachgeholt ist – ein ungewöhnlich hoher Verbrauch ist hier also erst einmal normal.
+
         //- Mobile cards
         .inventory-cards.mobile-only
           .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }")
@@ -3122,6 +3132,9 @@ function clearPendingNumberSelect() {
             .inv-card-miscount(v-if="consumptionAnomaly(entry, beverage) && !inventoryConflicts.has(beverage.id)")
               span 💡
               | #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Restbestand vergessen?
+            .inv-card-pending(v-if="entry.pending_earlier_event && inventoryConsumption(entry) > 0 && !inventoryConflicts.has(beverage.id)")
+              span ℹ️
+              | Enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], dessen Inventur noch fehlt. Korrigiert sich nach dem Nachtragen.
             .inv-card-info
               span.inv-info-item
                 span.inv-info-label V:
@@ -5242,6 +5255,33 @@ h2 {
   color: #8a4500;
 }
 
+/* Informational (not a problem): the preceding event's inventory is still
+   missing, so this consumption is expectedly inflated. Neutral blue to set it
+   apart from the orange miscount warning and the pink counting conflict. */
+.inventory-row-pending {
+  background: #e7f1fb;
+  border-left: 4px solid #1565c0;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  color: #0d3c6e;
+  display: flex;
+  gap: 0.5em;
+  align-items: flex-start;
+}
+
+.inventory-row-pending .pending-icon {
+  flex-shrink: 0;
+  font-size: 1.1em;
+}
+
+.inventory-row-pending .pending-text {
+  line-height: 1.4;
+}
+
+.inventory-row-pending .pending-text strong {
+  color: #0d3c6e;
+}
+
 /* Top banner shown when any drink has an unresolved conflict. */
 .conflict-banner {
   background: #fff3e0;
@@ -5368,6 +5408,20 @@ h2 {
 
 .inv-card-miscount strong {
   color: #8a4500;
+}
+
+.inv-card-pending {
+  background: #d7e8fa;
+  color: #0d3c6e;
+  font-size: 0.85em;
+  padding: 0.4em 0.6em;
+  border-radius: 4px;
+  margin: 0.4em 0;
+  line-height: 1.3;
+}
+
+.inv-card-pending strong {
+  color: #1565c0;
 }
 
 /* ── Mobile Inventory Cards ── */

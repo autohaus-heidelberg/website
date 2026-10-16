@@ -131,6 +131,21 @@ export interface InventoryEntry {
    *  with nothing bought in between (so one of the two counts is wrong).
    *  Server-computed, display-only; null when there is no conflict. */
   later_conflict?: LaterConflict | null
+  /** The directly-preceding event has not been counted yet, so this event's
+   *  derived consumption is inflated (it carries the earlier event's share).
+   *  A high value here is therefore expected, not a forgotten Restbestand —
+   *  the frontend suppresses the anomaly warning and points at that event
+   *  instead. Server-computed, display-only; null when the preceding event is
+   *  counted (or there is none). */
+  pending_earlier_event?: PendingEarlierEvent | null
+}
+
+/** The chronologically-preceding event whose inventory is still missing,
+ *  inflating this event's consumption (see backend
+ *  `find_pending_earlier_events`). */
+export interface PendingEarlierEvent {
+  event_title: string
+  event_date: string
 }
 
 /** Describes a counting contradiction between this inventory entry and the
