@@ -2151,6 +2151,19 @@ async function saveAll(silent = false) {
     //     have shifted if someone settled an earlier event
     //   - consumed_quantity, which is derived from the two and therefore
     //     follows rather than leads
+    //   - later_conflict / pending_earlier_event, which are read-only hints the
+    //     server recomputes on every save. The user never types these, so it is
+    //     safe to overwrite them — and we must, otherwise the pink conflict /
+    //     blue pending hint stays stale until a full page reload even after the
+    //     edit that resolved it has been saved.
+    //
+    // All of these are *server-driven* writes, not user intent. Mutating the
+    // reactive `inventory` here would otherwise trip the deep auto-save watcher
+    // and schedule another save — and because `later_conflict` is a fresh
+    // object on every response, that save loops forever (saved → watcher →
+    // save → …). Suppress auto-save across the whole sync; the `finally` block
+    // re-enables it after Vue has flushed these watcher notifications.
+    suppressAutoSave = true
     if (saved.inventory_entries) {
       for (const serverEntry of saved.inventory_entries) {
         const local = inventory.value.find(e => e.beverage_item === serverEntry.beverage_item)
@@ -2164,6 +2177,10 @@ async function saveAll(silent = false) {
         if (serverEntry.consumed_quantity !== undefined) {
           local.consumed_quantity = normalizeQty(serverEntry.consumed_quantity)
         }
+        // Read-only server hints: always mirror the fresh value (incl. null,
+        // which clears a hint the latest edit just resolved).
+        local.later_conflict = serverEntry.later_conflict ?? null
+        local.pending_earlier_event = serverEntry.pending_earlier_event ?? null
       }
     }
 
@@ -2290,6 +2307,11 @@ async function saveAll(silent = false) {
     }
   } finally {
     isSaving.value = false
+    // Re-enable auto-save only after Vue flushes the watcher notifications
+    // queued by the server-hint sync above (same deferral the initial load
+    // uses). Without this, mirroring back the server-recomputed hints would
+    // schedule another save and loop endlessly.
+    setTimeout(() => { suppressAutoSave = false }, 0)
   }
 }
 
