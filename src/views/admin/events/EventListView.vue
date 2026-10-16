@@ -308,8 +308,9 @@ function exportIcs() {
   URL.revokeObjectURL(url)
 }
 
-// Ansicht und Kalenderzustand in der URL halten, damit Monat/Modus teil- und reloadbar sind.
-watch([activeView, calendarMode, calendarCursor], () => {
+// Ansicht, Kalenderzustand und Filter-Chip in der URL halten, damit der
+// Browser-Zurück-Button den exakt gleichen Zustand wiederherstellt.
+watch([activeView, calendarMode, calendarCursor, activeFilter], () => {
   const query: Record<string, any> = { ...route.query }
   if (activeView.value === 'events') delete query.view
   else query.view = activeView.value
@@ -320,6 +321,8 @@ watch([activeView, calendarMode, calendarCursor], () => {
     delete query.calMode
     delete query.calDate
   }
+  if (activeFilter.value === 'upcoming') delete query.filter
+  else query.filter = activeFilter.value
   router.replace({ query })
 })
 
