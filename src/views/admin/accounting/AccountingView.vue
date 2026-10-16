@@ -871,6 +871,22 @@ const missingSellingPriceBeverages = computed(() => {
 // trustworthy enough to warn about outliers.
 const MIN_ANOMALY_HISTORY = 3
 
+/** Raw outlier check: does the entered consumption for this row exceed the
+ *  drink's (or its category's) historical anomaly threshold? Ignores the
+ *  pending-earlier-event context on purpose — callers decide how to interpret
+ *  it (red "forgotten Restbestand" warning vs. blue "expected inflation"
+ *  hint). Returns the matching stat when it does, else null. */
+function anomalyStat(entry: InventoryEntry, beverage?: BeverageItem): { mean: number; max: number; consumed: number } | null {
+  let stat = consumptionStats.value.drinks[entry.beverage_item]
+  if ((!stat || stat.count < MIN_ANOMALY_HISTORY) && beverage?.category) {
+    stat = consumptionStats.value.categories[beverage.category]
+  }
+  if (!stat || stat.count < MIN_ANOMALY_HISTORY) return null
+  const consumed = inventoryConsumption(entry)
+  if (consumed <= stat.threshold) return null
+  return { mean: stat.mean, max: stat.max, consumed }
+}
+
 /** Returns anomaly info when the entered consumption for a row is unusually
  *  high compared to the drink's history — the typical signature of a forgotten
  *  Restbestand (remaining stock booked as consumed). Falls back to the drink's
@@ -880,16 +896,18 @@ function consumptionAnomaly(entry: InventoryEntry, beverage?: BeverageItem): { m
   // The directly-preceding event has not been counted yet, so this event's
   // consumption carries its share and is expected to be high. Warning here
   // would be a false positive — the real consumer is that earlier event, which
-  // gets the warning once it is counted (see pending_earlier_event hint).
+  // gets the warning once it is counted (see pendingInflationHint).
   if (entry.pending_earlier_event) return null
-  let stat = consumptionStats.value.drinks[entry.beverage_item]
-  if ((!stat || stat.count < MIN_ANOMALY_HISTORY) && beverage?.category) {
-    stat = consumptionStats.value.categories[beverage.category]
-  }
-  if (!stat || stat.count < MIN_ANOMALY_HISTORY) return null
-  const consumed = inventoryConsumption(entry)
-  if (consumed <= stat.threshold) return null
-  return { mean: stat.mean, max: stat.max, consumed }
+  return anomalyStat(entry, beverage)
+}
+
+/** Blue informational hint: this row's consumption is BOTH inflated by an
+ *  un-counted preceding event AND actually above the anomaly threshold. Only
+ *  then is the "high value is expected here" message meaningful — a small,
+ *  unremarkable consumption needs no reassurance. Null otherwise. */
+function pendingInflationHint(entry: InventoryEntry, beverage?: BeverageItem): boolean {
+  if (!entry.pending_earlier_event) return false
+  return anomalyStat(entry, beverage) !== null
 }
 
 // ── Mobile Inventory Helpers ─────────────────────────────────────
@@ -3104,7 +3122,7 @@ function clearPendingNumberSelect() {
               span.miscount-text
                 | {{ beverage.name }}: #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich sind Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Wurde evtl. Restbestand nicht gezählt?
 
-            .inventory-row-pending(v-if="entry.pending_earlier_event && inventoryConsumption(entry) > 0 && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
+            .inventory-row-pending(v-if="pendingInflationHint(entry, beverage) && !inventoryConflicts.has(beverage.id)" v-show="inventoryItemVisible(entry)")
               span.pending-icon ℹ️
               span.pending-text
                 | {{ beverage.name }}: Dieser Verbrauch enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], das seine Inventur noch nicht eingetragen hat. Der Wert wird sich korrigieren, sobald das nachgeholt ist – ein ungewöhnlich hoher Verbrauch ist hier also erst einmal normal.
@@ -3132,7 +3150,7 @@ function clearPendingNumberSelect() {
             .inv-card-miscount(v-if="consumptionAnomaly(entry, beverage) && !inventoryConflicts.has(beverage.id)")
               span 💡
               | #[strong {{ formatQty(consumptionAnomaly(entry, beverage)?.consumed) }}] verbraucht – üblich Ø #[strong {{ consumptionAnomaly(entry, beverage)?.mean }}] (max #[strong {{ consumptionAnomaly(entry, beverage)?.max }}]). Restbestand vergessen?
-            .inv-card-pending(v-if="entry.pending_earlier_event && inventoryConsumption(entry) > 0 && !inventoryConflicts.has(beverage.id)")
+            .inv-card-pending(v-if="pendingInflationHint(entry, beverage) && !inventoryConflicts.has(beverage.id)")
               span ℹ️
               | Enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], dessen Inventur noch fehlt. Korrigiert sich nach dem Nachtragen.
             .inv-card-info
