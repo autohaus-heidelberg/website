@@ -19,7 +19,7 @@
         .stat-card(v-if="data.fee")
           .stat-value {{ data.fee }} €
           .stat-label VVK-Preis
-      a.shop-link(v-if="data.shop_link" :href="data.shop_link" target="_blank") Zum Ticketshop →
+      a.btn.shop-link(v-if="data.shop_link" :href="data.shop_link" target="_blank") Zum Ticketshop →
     .presale-footer
       p.branding Carousel Heidelberg — Presale Info
 </template>
@@ -145,19 +145,8 @@ onMounted(async () => {
   display: block;
   text-align: center;
   padding: 0.875rem 1.75rem;
-  border: 0.25rem solid black;
-  background: black;
-  color: white;
-  text-decoration: none;
   font-size: 1rem;
-  font-weight: 600;
   letter-spacing: 0.1em;
-  transition: background 0.2s, color 0.2s;
-}
-
-.shop-link:hover {
-  background: white;
-  color: black;
 }
 
 .presale-footer {

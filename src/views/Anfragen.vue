@@ -371,7 +371,6 @@ h3 {
 
 .hint-info a {
   color: #0055cc;
-  text-decoration: underline;
   font-weight: 700;
 }
 
@@ -410,24 +409,10 @@ textarea {
 
 .btn-submit {
   padding: 0.75rem 2rem;
-  border: 0.3rem solid black;
-  background: black;
-  color: white;
   font-weight: 900;
   font-size: 1.1rem;
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform 0.1s;
-}
-
-.btn-submit:hover:not(:disabled) {
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 4px 0 black;
-}
-
-.btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .form-error {
@@ -455,16 +440,8 @@ textarea {
 
 .btn-back {
   padding: 0.5rem 1.5rem;
-  border: 0.2rem solid black;
-  background: white;
-  color: black;
   font-weight: 700;
   cursor: pointer;
-}
-
-.btn-back:hover {
-  background: black;
-  color: white;
 }
 
 /* Honeypot: hidden from humans */

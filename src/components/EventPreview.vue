@@ -1,7 +1,7 @@
 
 
 <template lang="pug">
-router-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
+router-link.plain-link(:to="{name: 'event', params: { id: encodeURI(event.id) }}")
     .event-preview.border(:class="{ 'has-range': endDate }")
         .title
             span

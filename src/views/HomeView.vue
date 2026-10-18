@@ -84,7 +84,7 @@ function setLogoHeight() {
 
 <template lang="pug">
 //- h1 Autohaus Heidelberg
-router-link.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin-dashboard' }") Admin
+router-link.btn.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin-dashboard' }") Admin
 .l-center
   .logo-container(ref="logoContainer")
     //- .video
@@ -116,7 +116,7 @@ p Wir sind das Carousel im alten Autohaus.
     template(v-if="upComingSmall.length > 0")
       h1 Noch mehr
       .events-small-container()
-        router-link.events-small(v-for="ev in upComingSmall" :key="ev.id" :to="{name: 'event', params: { id: encodeURI(ev.id) }}")
+        router-link.events-small.plain-link(v-for="ev in upComingSmall" :key="ev.id" :to="{name: 'event', params: { id: encodeURI(ev.id) }}")
           .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
           span {{ev.title}}
 
@@ -186,8 +186,6 @@ p Wir sind das Carousel im alten Autohaus.
   text-align: center;
   padding: 0.5rem 1rem;
   font-weight: bold;
-  background-color: var(--text-color);
-  color: var(--background-color);
   position: relative;
   z-index: 10;
   max-width: 100%;

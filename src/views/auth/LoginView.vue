@@ -188,11 +188,6 @@ input:disabled {
   text-align: center;
   margin-top: 1.5rem;
   color: #000000;
-  text-decoration: none;
   font-size: 0.95rem;
-}
-
-.back-link:hover {
-  text-decoration: underline;
 }
 </style>

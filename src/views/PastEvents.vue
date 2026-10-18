@@ -10,7 +10,7 @@
       EventPreview(:event="event")
 
   .gallery(v-else)
-    router-link.flyer(
+    router-link.flyer.plain-link(
       v-for="event in dedupedFlyers"
       :key="event.id"
       :to="{ name: 'event', params: { id: encodeURI(event.id) } }"
@@ -91,14 +91,8 @@ watchEffect(async () => {
   margin-top: 1rem;
 }
 
-.toggle-btn {
-  background-color: var(--background-color);
-  color: var(--link-color);
-  box-shadow: inset 0 0 0 1px var(--link-color);
-}
-
 .toggle-btn.active {
-  background-color: var(--link-color);
+  background-color: var(--text-color);
   color: var(--background-color);
 }
 
