@@ -1,0 +1,133 @@
+/* Rapidmail newsletter popup (injected by popup.js from index.html)
+   Rapidmail scopes its styles to #rmOrganism; prefixing with `html` gives us
+   one extra element of specificity so these overrides win regardless of load order. */
+
+html #rmOrganism .rmPopup__container .rmPopup__backdrop {
+    background: var(--text-color);
+    opacity: 0.7;
+}
+
+html #rmOrganism .rmPopup__container .rmPopup.rmPopup--modal {
+    border: 0.5rem solid var(--text-color);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+html #rmOrganism .rmBase,
+html #rmOrganism .rmSubscription {
+    background: var(--background-color);
+    color: var(--text-color);
+    font-family: "Geologica", sans-serif;
+    font-weight: 600;
+}
+
+/* Close button */
+html #rmOrganism .rmPopup__container .rmPopup .rmPopup__close {
+    background: var(--background-color);
+    color: var(--text-color);
+    border: var(--btn-border) solid var(--text-color);
+    border-radius: 0;
+    box-shadow: none;
+    font-family: "Geologica", sans-serif;
+    font-weight: 900;
+    letter-spacing: 0;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+html #rmOrganism .rmPopup__container .rmPopup .rmPopup__close:hover {
+    background: var(--text-color);
+    color: var(--background-color);
+    transform: none;
+}
+
+/* Text */
+html #rmOrganism .rmSubscription .rmBase__comp--heading {
+    color: var(--text-color);
+    font-weight: 900;
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+    line-height: 1.2;
+}
+
+html #rmOrganism .rmSubscription .rmBase__comp--text {
+    font-size: 1rem;
+}
+
+html #rmOrganism .rmSubscription .rmBase__compLabel {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* Inputs */
+html #rmOrganism .rmBase__el .comp__input {
+    height: 3em;
+    background: var(--background-color);
+    color: var(--text-color);
+    border: var(--btn-border) solid var(--text-color);
+    border-radius: 0;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+html #rmOrganism .rmBase__el .comp__input:hover {
+    box-shadow: none;
+}
+
+html #rmOrganism .rmBase__el .comp__input:focus {
+    background: var(--background-color);
+    color: var(--text-color);
+    outline: none;
+    box-shadow: calc(-1 * var(--btn-shadow)) var(--btn-shadow) 0 0 var(--text-color);
+}
+
+html #rmOrganism .rmBase__compError {
+    color: var(--background-color);
+    background-color: var(--text-color);
+}
+
+/* Submit: same look as public .btn */
+html #rmOrganism .rmSubscription .rmBase__comp--cta {
+    background: var(--background-color);
+    color: var(--text-color);
+    border: var(--btn-border) solid var(--text-color);
+    border-radius: 0;
+    box-shadow: calc(-1 * var(--btn-shadow)) var(--btn-shadow) 0 0 var(--text-color);
+    font-family: "Geologica", sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.75rem 2rem;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+html #rmOrganism .rmSubscription .rmBase__comp--cta:hover {
+    transform: translate(0.1rem, -0.1rem);
+    box-shadow: calc(-1 * var(--btn-shadow) - 0.1rem) calc(var(--btn-shadow) + 0.1rem) 0 0 var(--text-color);
+}
+
+html #rmOrganism .rmSubscription .rmBase__comp--cta:active {
+    transform: translate(calc(-1 * var(--btn-shadow)), var(--btn-shadow));
+    box-shadow: 0 0 0 0 var(--text-color);
+}
+
+/* Captcha widget: square black frame */
+html #rmOrganism .rmBase__comp--captcha .cf-button {
+    border: var(--btn-border) solid var(--text-color);
+    border-radius: 0;
+}
+
+/* Privacy notice (no icons per design guide) */
+html #rmOrganism .rmBase__comp--privacy .privacy__visual {
+    display: none;
+}
+
+html #rmOrganism .rmBase__comp--privacy .privacy__text {
+    color: var(--text-color);
+    font-size: 0.75rem;
+}
+
+html #rmOrganism .rmBase__comp--privacy .privacy__text a {
+    text-decoration-thickness: 0.15em;
+    text-underline-offset: 0.2em;
+}

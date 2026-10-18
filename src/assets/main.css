@@ -75,7 +75,7 @@ body {
     font-size:  clamp(1rem, 1.5vw, 2rem);
     font-weight: 600;
     padding-bottom: 5rem;
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 h1,h2,h3,h4,h5,h6,p,blockquote,dl,img,figure {
@@ -300,4 +300,61 @@ h2 {
 /* Mobile Menu Body Scroll Lock */
 body.menu-open {
     overflow: hidden;
+}
+
+/* Public site: buttons & links
+   Scoped via :where() so component classes can override without specificity fights.
+   The .public class is set on <html> by App.vue for all non-admin routes. */
+
+:root {
+    --btn-border: 0.2rem;
+    --btn-shadow: 0.35rem;
+}
+
+:where(.public) button,
+:where(.public) .btn {
+    display: inline-block;
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.3;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    border: var(--btn-border) solid var(--text-color);
+    box-shadow: calc(-1 * var(--btn-shadow)) var(--btn-shadow) 0 0 var(--text-color);
+    text-decoration: none;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+:where(.public) button:hover,
+:where(.public) .btn:hover {
+    filter: none;
+    color: var(--text-color);
+    transform: translate(0.1rem, -0.1rem);
+    box-shadow: calc(-1 * var(--btn-shadow) - 0.1rem) calc(var(--btn-shadow) + 0.1rem) 0 0 var(--text-color);
+}
+
+:where(.public) button:active,
+:where(.public) .btn:active {
+    transform: translate(calc(-1 * var(--btn-shadow)), var(--btn-shadow));
+    box-shadow: 0 0 0 0 var(--text-color);
+}
+
+:where(.public) button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+:where(.public) a {
+    text-decoration: underline;
+    text-decoration-thickness: 0.15em;
+    text-underline-offset: 0.2em;
+}
+
+/* Links that wrap a button or a whole card get no underline */
+:where(.public) a:has(> button),
+:where(.public) .plain-link {
+    text-decoration: none;
 }

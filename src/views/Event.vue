@@ -1,7 +1,7 @@
 <template lang="pug">
 .admin-controls(v-if="authStore.hasWebsiteGroup && event")
-  router-link.btn-admin(:to="`/admin/events/${event.id}?tab=checklist`") Checkliste
-  router-link.btn-admin(:to="`/admin/events/${event.id}`") Bearbeiten
+  router-link.btn.btn-admin(:to="`/admin/events/${event.id}?tab=checklist`") Checkliste
+  router-link.btn.btn-admin(:to="`/admin/events/${event.id}`") Bearbeiten
 
 EventDisplay(v-if="event" :event="event")
 .error(v-else)
@@ -40,16 +40,9 @@ const event = computed(() => {
   flex: 1 1 auto;
   text-align: center;
   padding: 0.875rem 1.75rem;
-  border: 0.25rem solid black;
-  background: white;
-  color: black;
-  text-decoration: none;
-  display: inline-block;
   font-size: 1rem;
-  font-weight: 600;
   letter-spacing: 0.2em;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
 }
 
 @media screen and (max-width: 480px) {
@@ -62,11 +55,6 @@ const event = computed(() => {
     padding: 0.75rem 1rem;
     letter-spacing: 0.1em;
   }
-}
-
-.btn-admin:hover {
-  background: black;
-  color: white;
 }
 
 .error {

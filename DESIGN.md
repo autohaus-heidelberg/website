@@ -41,16 +41,20 @@ No colors, gradients, or shades of gray are used in the design.
 
 ## Components
 
-### Buttons
-- Background: Black (--link-color)
-- Text: White (--background-color)
-- Letter spacing: 0.4em
-- Min width: 280px
-- Padding: 0.7em
+### Buttons (public site)
+- Use `button` or `.btn` (for links styled as buttons); defined in `src/assets/main.css`
+- Background: White, Text: Black
+- Border: 0.2rem solid black (`--btn-border`)
+- Shadow: solid black box of same size, offset to bottom left (`--btn-shadow`, 0.35rem), no blur, no gradient
 - No border radius
-- No border
-- Hover: brightness(120%)
-- Active: scale(0.99)
+- Hover: lifts slightly (shadow grows)
+- Active: presses into the shadow (shadow disappears)
+- Selected state (e.g. toggles): inverted, black background with white text
+
+### Links (public site)
+- Black text, thick underline (0.15em, offset 0.2em)
+- Links wrapping a button get no underline automatically
+- Card/block links: add `.plain-link` to remove the underline
 
 ### Cards/Containers
 - Bold borders: 0.5rem solid black
@@ -77,7 +81,7 @@ No colors, gradients, or shades of gray are used in the design.
 - Bold, minimal, high-contrast
 - No decorative elements
 - No rounded corners
-- No shadows
+- No shadows (exception: hard offset shadow on public buttons)
 - No gradients
 - No icons or symbols (text only)
 - Geometric, slightly rotated elements for visual interest

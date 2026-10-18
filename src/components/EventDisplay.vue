@@ -9,30 +9,29 @@
         .cancelled-display(v-if="event.cancelled") ABGESAGT
         h1.accent.title {{ event.title }}
         .event-meta
-            a.ticket-btn(v-if="event.shopLink && event.fee && event.feeAk" :href="event.shopLink" target="_blank" rel="noopener")
+            a.btn.ticket-btn(v-if="event.shopLink && event.fee && event.feeAk" :href="event.shopLink" target="_blank" rel="noopener")
                 span.ticket-price VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} &nbsp;·&nbsp; AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
                 span.ticket-cta Tickets kaufen
-            a.ticket-btn(v-else-if="event.shopLink && event.fee" :href="event.shopLink" target="_blank" rel="noopener")
+            a.btn.ticket-btn(v-else-if="event.shopLink && event.fee" :href="event.shopLink" target="_blank" rel="noopener")
                 span.ticket-price Eintritt {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
                 span.ticket-cta Tickets kaufen
-            a.ticket-btn(v-else-if="event.shopLink" :href="event.shopLink" target="_blank" rel="noopener")
+            a.btn.ticket-btn(v-else-if="event.shopLink" :href="event.shopLink" target="_blank" rel="noopener")
                 span.ticket-cta Tickets kaufen
             .price-badge(v-else-if="event.fee && event.feeAk") VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} &nbsp;·&nbsp; AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
             .price-badge(v-else-if="event.fee") Eintritt {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }}
         .share-bar
-            button.share-btn(@click="shareNative" v-if="canShare") ↗ Teilen
-            a.share-btn.whatsapp(:href="whatsappUrl" target="_blank" rel="noopener") WhatsApp
-            button.share-btn(@click="copyLink") {{ copyLabel }}
+            button.btn.share-btn(@click="shareNative" v-if="canShare") Teilen
+            button.btn.share-btn(@click="copyLink") {{ copyLabel }}
     p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     template(v-if="event.artists && event.artists.length")
-        hr.artist-divider
-        .artist(v-for="(artist, index) in event.artists")
-            hr.artist-divider(v-if="index > 0")
+        .artist(v-for="artist in event.artists")
+            //- Name appears above the image on mobile, beside it on desktop
+            h2.accent.artist-name-mobile {{ artist.name }}
             img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)" crossorigin="anonymous")
             .artist-text
-                h2.accent {{ artist.name }}
+                h2.accent.artist-name-desktop {{ artist.name }}
                 p {{ artist.description }}
-            a.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") ↗ Band-Website
+            a.btn.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") Band-Website
             .bandcamp-container(v-if="artist.bandcamp")
                 p.media-label Klingt so:
                 iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="100%" height="175" seamless)
@@ -40,10 +39,6 @@
                 p.media-label Video
                 .video-container
                     iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
-    .share-bar.share-bar-bottom
-        button.share-btn(@click="shareNative" v-if="canShare") ↗ Teilen
-        a.share-btn.whatsapp(:href="whatsappUrl" target="_blank" rel="noopener") WhatsApp
-        button.share-btn(@click="copyLink") {{ copyLabel }}
 </template>
 
 
@@ -115,15 +110,11 @@ function shareNative() {
     .catch(() => {/* user cancelled – ignore */})
 }
 
-const whatsappUrl = computed(() =>
-  `https://wa.me/?text=${encodeURIComponent(shareText.value + '\n' + pageUrl.value)}`
-)
-
-const copyLabel = ref('🔗 Link kopieren')
+const copyLabel = ref('Link kopieren')
 function copyLink() {
   navigator.clipboard.writeText(pageUrl.value).then(() => {
-    copyLabel.value = '✓ Kopiert!'
-    setTimeout(() => { copyLabel.value = '🔗 Link kopieren' }, 2000)
+    copyLabel.value = 'Kopiert!'
+    setTimeout(() => { copyLabel.value = 'Link kopieren' }, 2000)
   })
 }
 </script>
@@ -176,6 +167,10 @@ function copyLink() {
     clear: both;
 }
 
+.artist + .artist {
+    margin-top: 3rem;
+}
+
 .artist h2 {
     margin: 0 0 1.25rem;
     align-self: center;
@@ -205,6 +200,7 @@ function copyLink() {
 
 .event-img {
     display: block;
+    margin: 0;
     max-width: 100%;
     height: auto;
 }
@@ -251,11 +247,23 @@ function copyLink() {
     height: auto;
 }
 
+.artist-name-mobile {
+    display: none;
+}
+
 @media (max-width: 500px) {
     .artist-img {
         float: none;
         max-width: 100%;
         margin: 0 0 1rem;
+    }
+    .artist .artist-name-mobile {
+        display: block;
+        margin: 0 0 0.75rem;
+        text-align: left;
+    }
+    .artist-name-desktop {
+        display: none;
     }
 }
 
@@ -313,34 +321,12 @@ function copyLink() {
 }
 
 .share-btn {
-  background: white;
-  color: black;
-  border: 0.2rem solid black;
   padding: 0.5em 1.2em;
-  font-family: inherit;
   font-size: clamp(0.85rem, 1.5vw, 1rem);
-  font-weight: 600;
   letter-spacing: normal;
   cursor: pointer;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
-  transition: background 0.15s, color 0.15s;
-}
-
-.share-btn:hover {
-  background: black;
-  color: white;
-}
-
-.share-btn.whatsapp {
-  border-color: black;
-  color: black;
-}
-
-.share-btn.whatsapp:hover {
-  background: black;
-  color: white;
 }
 
 .event {
@@ -394,19 +380,9 @@ function copyLink() {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    background: black;
-    color: white;
-    text-decoration: none;
     padding: 0.35em 1.1em;
     font-size: 0.85em;
     cursor: pointer;
-    transition: filter 0.15s;
-    line-height: 1.3;
-}
-
-.ticket-btn:hover {
-    filter: brightness(120%);
-    color: white;
 }
 
 .ticket-price {
@@ -422,30 +398,12 @@ function copyLink() {
     letter-spacing: 0.4em;
 }
 
-.artist-divider {
-    width: 100%;
-    border: none;
-    border-top: 0.35rem solid black;
-    margin: 3rem 0 2rem;
-}
-
 .band-website-btn {
-    display: inline-block;
-    border: 0.2rem solid black;
     padding: 0.4em 1.1em;
     font-size: clamp(0.85rem, 1.5vw, 1rem);
-    font-weight: 600;
     letter-spacing: 0.05em;
-    color: black;
-    text-decoration: none;
     margin-bottom: 1.25rem;
     clear: both;
-    transition: background 0.15s, color 0.15s;
-}
-
-.band-website-btn:hover {
-    background: black;
-    color: white;
 }
 
 .share-bar-bottom {
