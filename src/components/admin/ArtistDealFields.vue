@@ -294,24 +294,41 @@ const comboTicketHint = computed(() => {
   margin: 0 0 1rem;
 }
 
-/* ── Mobile: 3-Spalten-Grid quetscht Select/Inputs sonst unlesbar zusammen ── */
-@media (max-width: 768px) {
+/* ── Schmaler Container: 3-Spalten-Grid quetscht die Betragsfelder sonst
+   unlesbar zusammen. Container-Query statt Media-Query, da die Breite vom
+   umgebenden Formular abhängt, nicht vom Viewport. ── */
+.artist-deals {
+  container-type: inline-size;
+}
+
+.amount-input {
+  min-width: 6rem;
+}
+
+@container (max-width: 42rem) {
   .artist-deal-header {
     display: none;
   }
 
   .artist-deal-row {
+    grid-template-columns: minmax(7rem, 1fr) 12rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Beträge/Notiz in eigene Zeile unter Band + Deal-Modell */
+  .artist-deal-row > .artist-deal-values {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 26rem) {
+  .artist-deal-row {
     grid-template-columns: 1fr;
     gap: 0.6rem;
-    padding: 0.75rem 1rem;
   }
 
   .artist-deal-name {
     padding-top: 0;
-  }
-
-  .artist-deal-values .input-group {
-    flex: 1 1 auto;
   }
 }
 </style>
