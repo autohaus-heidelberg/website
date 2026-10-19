@@ -1191,9 +1191,19 @@ interface BandDealRow {
 const dealCalcFrozen = ref<string | null>(null)
 
 // Wechselgeld im Einlass — wird von der Gage-Basis abgezogen (gehört zurück
-// in die Kasse, nicht an die Band). Wird nicht gespeichert — reiner Abendhelfer.
-const dealCalcChange = ref<string>('')
-const dealCalcChangeAmount = computed(() => parseFloat(dealCalcChange.value) || 0)
+// in die Kasse, nicht an die Band). Reiner Abendhelfer, wird aber mit der
+// Abrechnung gespeichert, damit der Rechner nach dem Neuladen gleich aussieht.
+// v-model auf type="number" castet Eingaben zu number — daher string | number.
+const dealCalcChange = ref<string | number>('')
+const dealCalcChangeAmount = computed(() => Number(dealCalcChange.value) || 0)
+
+// Rechner-Eingabe → Backend-Wert (Dezimal mit 2 Stellen, leer = null).
+function dealCalcToPayload(value: string | number | null): string | null {
+  const str = String(value ?? '').trim()
+  if (str === '') return null
+  const n = parseFloat(str)
+  return isNaN(n) ? null : n.toFixed(2)
+}
 
 const DEAL_CALC_DIGITAL_SOURCES: RevenueSource[] = [
   'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe',
@@ -1959,6 +1969,10 @@ async function loadData() {
       doorDealSplits.value = (Array.isArray(acc.door_deal_splits) ? acc.door_deal_splits : [])
         .filter(s => s.name.trim() !== '')
 
+      // Gagen-Rechner wiederherstellen (null = folgt der Abrechnung)
+      dealCalcFrozen.value = acc.deal_calc_cash ?? null
+      dealCalcChange.value = acc.deal_calc_change ?? ''
+
       // Zeitstempel des letzten externen Datenabrufs aus dem Backend übernehmen
       if (acc.external_data_fetched_at) {
         externalDataFetchedAt.value = new Date(acc.external_data_fetched_at)
@@ -2095,6 +2109,8 @@ async function saveAll(silent = false) {
       notes: accounting.value.notes,
       door_deal_enabled: doorDealActive.value,
       door_deal_splits: doorDealSplits.value,
+      deal_calc_cash: dealCalcToPayload(dealCalcFrozen.value),
+      deal_calc_change: dealCalcToPayload(dealCalcChange.value),
       revenues: revenues.value
         .filter(rev => rev.id || parseFloat(rev.total || '0') !== 0 || parseFloat(rev.change_money || '0') !== 0 || parseFloat(rev.fees || '0') !== 0),
       inventory_entries: inventory.value
@@ -2278,7 +2294,7 @@ async function saveAll(silent = false) {
         autoSaveTimer = null
       }
       autoSaveDirty.value = false
-    } else if (!e.response) {
+    } else if (!e.response && e.isAxiosError) {
       // No HTTP response (timeout / connection reset / edge 5xx). The write may
       // or may not have committed — never keep auto-saving blindly, or a
       // parallel editor's changes can be silently overwritten (2026-09 incident).
@@ -2558,7 +2574,7 @@ watch(
 // Everything else (notes, door deal, grant fields) just triggers a save.
 // scheduleAutoSave() itself ignores writes during the initial load.
 watch(
-  [() => accounting.value?.notes, doorDealSplits,
+  [() => accounting.value?.notes, doorDealSplits, dealCalcFrozen, dealCalcChange,
    sachbericht, grantNotes, budgetKuenstler, budgetSachkosten, budgetSonstiges,
    budgetRevEintritt, budgetRevGetraenke, budgetRevEigenmittel, budgetRevDrittmittel,
    budgetRevSonstige, approvedAmount, zuwendungsbescheidDate, auszahlungAmount, rentFlatAmount],

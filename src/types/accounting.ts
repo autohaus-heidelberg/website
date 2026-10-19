@@ -223,6 +223,9 @@ export interface EventAccounting {
   updated_at?: string
   door_deal_enabled?: boolean
   door_deal_splits?: { name: string; share: number }[]
+  // Gagen-Rechner: null = folgt der Abrechnung / kein Wechselgeld
+  deal_calc_cash?: string | null
+  deal_calc_change?: string | null
   external_data_fetched_at?: string | null
   revenues?: RevenueEntry[]
   inventory_entries?: InventoryEntry[]
