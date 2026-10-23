@@ -33,6 +33,39 @@
         ]
     },
     {
+        "id": "2026-11-9",
+        "date": "2026-11-09T18:00:00+00:00",
+        "endDate": null,
+        "title": "Ulla Suspekt und Rocket 2",
+        "fee": "",
+        "feeAk": "",
+        "descriptionShort": "<p>Ulla Suspekt geht mit ihrem neuen Album \"Antrag abgelehnt\" auf Tour und macht im Carousel halt!</p>\n<p>Wer sich fragt, um welchen Antrag es sich hier eigentlich handelt, der wird am Abend die Antwort schwarz auf wei&szlig; pr&auml;sentiert bekommen - das Ergebnis jedenfalls steht von Beginn an fest: ABGELEHNT! Ohne eine gut funktionierende B&uuml;rokratie w&auml;ren wir schlie&szlig;lich nicht dort wo wir jetzt sind. So oder so &auml;hnlich beschreibt das auch die Produzentin, Bassistin und Songwritering Ulla Suspekt (N&uuml;rnberg / Wien) in ihren Songs, in denen&nbsp;es ums Pleitesein, ums Schwarzfahren, um &Auml;rger mit der Polizei, um toxische M&auml;nnlichkeit geht und um die sp&auml;te Erkenntnis, dass Heulen auch sch&ouml;n sein kann.</p>\n<p>Support kommt von der Carousel internen Racketenschmiede rocket2. Der Antrag zur Besiedelung des Universums scheint jedenfalls durchgegangen zu sein.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/2026-11-9/",
+        "img": "/img/46c9ab56-31d0-4e6e-9cfc-24b6c24e50e3.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Ulla Suspekt",
+                "link": "",
+                "description": "Wave, NDW, electronic Punk aus N\u00fcrnberg",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/track=1179782339/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/artwork=small/transparent=true/",
+                "image": "/img/fcf1a3c0-af61-47d1-b3bc-079c82b1cfa0.webp"
+            },
+            {
+                "name": "Rocket 2",
+                "link": "",
+                "description": "Post-punk Krach wie Triebwerkl\u00e4rm - noch nie waren Aliens so illegal - eine erde zu zerst\u00f6ren war noch nicht genug, Weltraum Kolonialismus der Extraklasse - und what the fuck ist eigentlich mit Rocket 1 passiert?",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/5943038b-ee6d-47fd-937f-a3aaf7ce5cbf.jpeg"
+            }
+        ]
+    },
+    {
         "id": "geisterbahn",
         "date": "2026-10-31T19:00:00+00:00",
         "endDate": null,
