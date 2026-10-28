@@ -57,6 +57,29 @@ function onFieldInput(e: Event, artistId: number | undefined, field: 'guarantee_
   emit('update:modelValue', { ...props.modelValue, [key]: { ...current, [field]: value } })
 }
 
+let pendingSelect: HTMLInputElement | null = null
+
+function selectOnFocus(e: FocusEvent) {
+  const el = e.target as HTMLInputElement | null
+  if (el?.tagName !== 'INPUT' || el.type !== 'number') return
+  el.select()
+  pendingSelect = el
+}
+
+function keepSelection(e: MouseEvent) {
+  if (e.target === pendingSelect) e.preventDefault()
+}
+
+function selectOnClick(e: MouseEvent) {
+  if (!pendingSelect || e.target !== pendingSelect) return
+  pendingSelect.select()
+  pendingSelect = null
+}
+
+function clearPending() {
+  pendingSelect = null
+}
+
 function formatCurrency(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
 }
@@ -125,7 +148,7 @@ const comboTicketHint = computed(() => {
 </script>
 
 <template lang="pug">
-.artist-deals(v-if="artists.length")
+.artist-deals(v-if="artists.length" @focusin="selectOnFocus" @mouseup="keepSelection" @click="selectOnClick" @focusout="clearPending")
   .config-table
     .config-header.artist-deal-header
       span Band
@@ -142,14 +165,14 @@ const comboTicketHint = computed(() => {
         option(value="door_deal") Doordeal (%)
         option(value="guarantee_plus_door") Garantie + Doordeal
       .artist-deal-values(v-if="deal(artist.id)")
-        .input-group(v-if="showsGuarantee(deal(artist.id)?.deal_type)")
+        .input-group(v-if="showsGuarantee(deal(artist.id)?.deal_type)" data-unit="€")
           input.amount-input(
             type="number" step="0.01" min="0" placeholder="0,00"
             :value="deal(artist.id)?.guarantee_amount || ''"
             @input="onFieldInput($event, artist.id, 'guarantee_amount')"
           )
           span.unit €
-        .input-group(v-if="showsDoorDeal(deal(artist.id)?.deal_type)")
+        .input-group(v-if="showsDoorDeal(deal(artist.id)?.deal_type)" data-unit="%")
           input.amount-input(
             type="number" step="1" min="0" max="100" placeholder="0"
             :value="deal(artist.id)?.door_deal_percentage || ''"
@@ -231,12 +254,29 @@ const comboTicketHint = computed(() => {
   box-sizing: border-box;
 }
 
+/* Spinner-Pfeile ausblenden (type=number) — auf Touch nicht bedienbar */
+.amount-input::-webkit-inner-spin-button,
+.amount-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.amount-input[type=number] {
+  -moz-appearance: textfield;
+}
+
 .amount-input:focus,
 .text-input:focus,
 .select-input:focus {
   outline: none;
   background: black;
   color: white;
+}
+
+/* Bei Fokus auch das ::after-Einheitenzeichen aufhellen */
+@container (max-width: 26rem) {
+  .artist-deal-values .input-group:focus-within[data-unit]::after {
+    color: white;
+  }
 }
 
 .unit {
@@ -329,6 +369,34 @@ const comboTicketHint = computed(() => {
 
   .artist-deal-name {
     padding-top: 0;
+  }
+
+  .artist-deal-values .input-group {
+    position: relative;
+    width: 100%;
+  }
+
+  .artist-deal-values .input-group .amount-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    padding-right: 1.8rem;
+  }
+
+  .artist-deal-values .input-group .unit {
+    display: none;
+  }
+
+  .artist-deal-values .input-group[data-unit]::after {
+    content: attr(data-unit);
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    font-weight: 600;
+    pointer-events: none;
+    color: #666;
   }
 }
 </style>
