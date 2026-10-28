@@ -1199,7 +1199,7 @@ const dealCalcChangeAmount = computed(() => Number(dealCalcChange.value) || 0)
 
 // Rechner-Eingabe → Backend-Wert (Dezimal mit 2 Stellen, leer = null).
 function dealCalcToPayload(value: string | number | null): string | null {
-  const str = String(value ?? '').trim()
+  const str = String(value ?? '').trim().replace(',', '.')
   if (str === '') return null
   const n = parseFloat(str)
   return isNaN(n) ? null : n.toFixed(2)
@@ -1247,7 +1247,8 @@ const dealCalcVat = computed(() =>
 const dealCalcBase = computed(() => dealCalcSubtotal.value / (1 + ENTRANCE_VAT_RATE))
 
 function setDealCalcBase(e: globalThis.Event) {
-  dealCalcFrozen.value = (e.target as HTMLInputElement).value
+  const val = (e.target as HTMLInputElement).value
+  dealCalcFrozen.value = val === '' ? null : val
 }
 
 function dealLabelFor(
@@ -3327,6 +3328,12 @@ function clearPendingNumberSelect() {
                 @input="setDealCalcBase"
               )
               span €
+          .deal-calc-fetch(v-if="dealCalcFrozen !== null && dealCalcCashDefault !== 0")
+            button.btn-fetch-digital(
+              type="button"
+              @click="dealCalcFrozen = null"
+            ) Wert aus Kassenzählung übernehmen
+          span.deal-calc-source-hint(v-if="dealCalcFrozen === null && dealCalcCashDefault !== 0") aus Kassenzählung vorausgefüllt
           .deal-calc-line.deal-calc-change-row
             label.deal-calc-label(for="deal-calc-change") − Wechselgeld zurückbehalten
             .amount-wrap
@@ -4335,10 +4342,22 @@ h2 {
   font-size: inherit;
 }
 
+.deal-calc-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
 .deal-calc-label {
   font-weight: 900;
   font-size: inherit;
-  flex: 1 1 auto;
+}
+
+.deal-calc-source-hint {
+  font-weight: 400;
+  font-size: 0.8em;
+  opacity: 0.6;
+  padding: 0 0.1rem;
 }
 
 .deal-calc .amount-wrap {
