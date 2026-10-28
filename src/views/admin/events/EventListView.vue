@@ -687,18 +687,6 @@ async function loadAiTags(force = false, retryUnknown = false, readonly = false)
     const res = await statisticsService.getAiTags(force, retryUnknown, readonly)
     aiTags.value = res
     aiPending.value = res.artist_countries_pending
-    if (res.artist_countries_quota_exhausted) {
-      // Quota resets at midnight Pacific time = 09:00 CET (winter) / 10:00 CEST (summer)
-      const now = new Date()
-      const resetHour = now.getMonth() >= 2 && now.getMonth() <= 9 ? 10 : 9  // CEST vs CET
-      const resetToday = new Date(now)
-      resetToday.setHours(resetHour, 0, 0, 0)
-      const resetTomorrow = new Date(resetToday)
-      resetTomorrow.setDate(resetTomorrow.getDate() + 1)
-      const resetAt = now < resetToday ? resetToday : resetTomorrow
-      const resetStr = resetAt.toLocaleString('de-DE', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
-      aiError.value = `Tageslimit für die KI-Künstler-Recherche erreicht (max. 4 Suchen/Tag). Nächster Reset: ${resetStr} Uhr — dann einfach nochmal klicken.`
-    }
   } catch (e: any) {
     aiError.value = e.message || 'KI-Schätzung fehlgeschlagen'
   } finally {
