@@ -272,13 +272,6 @@ const comboTicketHint = computed(() => {
   color: white;
 }
 
-/* Bei Fokus auch das ::after-Einheitenzeichen aufhellen */
-@container (max-width: 26rem) {
-  .artist-deal-values .input-group:focus-within[data-unit]::after {
-    color: white;
-  }
-}
-
 .unit {
   font-weight: 900;
   font-size: 0.9rem;
@@ -313,9 +306,33 @@ const comboTicketHint = computed(() => {
 }
 
 .artist-deal-values .input-group {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+}
+
+.artist-deal-values .input-group .amount-input {
+  padding-right: 1.8rem;
+}
+
+.artist-deal-values .input-group .unit {
+  display: none;
+}
+
+.artist-deal-values .input-group[data-unit]::after {
+  content: attr(data-unit);
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  font-weight: 600;
+  pointer-events: none;
+  color: #666;
+}
+
+.artist-deal-values .input-group:focus-within[data-unit]::after {
+  color: white;
 }
 
 .artist-deal-notes {
@@ -372,7 +389,6 @@ const comboTicketHint = computed(() => {
   }
 
   .artist-deal-values .input-group {
-    position: relative;
     width: 100%;
   }
 
@@ -380,23 +396,6 @@ const comboTicketHint = computed(() => {
     flex: 1 1 auto;
     min-width: 0;
     width: 100%;
-    padding-right: 1.8rem;
-  }
-
-  .artist-deal-values .input-group .unit {
-    display: none;
-  }
-
-  .artist-deal-values .input-group[data-unit]::after {
-    content: attr(data-unit);
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.9rem;
-    font-weight: 600;
-    pointer-events: none;
-    color: #666;
   }
 }
 </style>
