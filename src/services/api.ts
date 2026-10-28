@@ -25,7 +25,11 @@ function extractErrorMessage(data: unknown): string | null {
       parts.push(`${field}: ${value}`)
     }
   }
-  return parts.length ? parts.join(' | ') : null
+  if (!parts.length) return null
+  // If there's only a single field error, drop the field-name prefix — the
+  // message itself is usually self-explanatory enough without it.
+  if (parts.length === 1) return parts[0].replace(/^[^:]+: /, '')
+  return parts.join(' | ')
 }
 
 class ApiClient {

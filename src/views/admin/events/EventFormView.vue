@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import type { LocationQueryRaw } from 'vue-router'
 import { eventService, artistService, pretixService, accountingService, documentService } from '@/services'
@@ -119,6 +119,7 @@ const form = ref<Partial<AppEvent>>({
 
 const isLoading = ref(false)
 const error = ref('')
+const fieldErrors = ref<Record<string, string>>({})
 const saveSuccess = ref('')
 const showOverflow = ref(false)
 const overflowDropdownStyle = ref<Record<string, string>>({ top: '0px', left: '0px' })
@@ -542,6 +543,7 @@ async function handleSubmit() {
 
   isLoading.value = true
   error.value = ''
+  fieldErrors.value = {}
 
   try {
     // Prepare data for submission
@@ -582,7 +584,24 @@ async function handleSubmit() {
       router.push('/admin/events')
     }
   } catch (e: any) {
+    // Extract field-level errors (e.g. shopLink) to show inline under the field
+    const data = e.response?.data
+    if (data && typeof data === 'object' && !data.error && !data.detail) {
+      const fields: Record<string, string> = {}
+      for (const [field, value] of Object.entries(data)) {
+        if (Array.isArray(value)) fields[field] = value.join(', ')
+        else if (typeof value === 'string') fields[field] = value
+      }
+      if (Object.keys(fields).length) {
+        fieldErrors.value = fields
+        await nextTick()
+        document.querySelector('.field-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
+    }
     error.value = e.message || 'Veranstaltung konnte nicht gespeichert werden'
+    await nextTick()
+    document.querySelector('.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   } finally {
     isLoading.value = false
   }
@@ -995,6 +1014,7 @@ function closeDeployModal() {
                 | {{ isCreatingShopLink ? 'Wird erstellt...' : 'Pretix-Shop-Link erstellen' }}
               .field-hint Benötigt: Event-ID, Titel, Datum und Preis (muss eine Zahl sein). Erstellt keinen Event in der Datenbank.
             .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
+            .field-error(v-if="fieldErrors.shopLink") {{ fieldErrors.shopLink }}
 
           .form-group(v-if="isEditing && form.shopLink")
             label Presale-Link (für Booking-Agenturen)
@@ -1694,6 +1714,18 @@ select:disabled {
   padding: 0.875rem;
   background: white;
   border: 0.25rem solid black;
+}
+
+.field-error {
+  font-size: 0.85rem;
+  padding: 0.5rem 0.75rem;
+  background: #e74c3c;
+  color: white;
+  margin-top: 0.4rem;
+}
+
+.field-error::before {
+  content: '⚠ ';
 }
 
 .form-actions {
