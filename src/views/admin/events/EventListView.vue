@@ -684,9 +684,22 @@ async function loadAiTags(force = false, retryUnknown = false, readonly = false)
   aiError.value = ''
   aiPending.value = 0
   try {
-    const res = await statisticsService.getAiTags(force, retryUnknown, readonly)
+    // First call — may return with pending > 0 if the artist list is large.
+    // Keep polling until all are classified (each call processes one chunk).
+    let res = await statisticsService.getAiTags(force, retryUnknown, readonly)
     aiTags.value = res
     aiPending.value = res.artist_countries_pending
+
+    // Auto-poll for remaining chunks (force/retryUnknown only needed on first call)
+    while (res.artist_countries_pending > 0) {
+      res = await statisticsService.getAiTags(false, false, false)
+      // Merge new countries into existing result
+      if (aiTags.value) {
+        aiTags.value.artist_countries = { ...aiTags.value.artist_countries, ...res.artist_countries }
+        aiTags.value.artist_countries_pending = res.artist_countries_pending
+      }
+      aiPending.value = res.artist_countries_pending
+    }
   } catch (e: any) {
     aiError.value = e.message || 'KI-Schätzung fehlgeschlagen'
   } finally {
