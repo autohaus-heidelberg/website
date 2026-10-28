@@ -22,3 +22,15 @@ export function eventExpiry(event: DatedEvent): Date {
 export function isPastEvent(event: DatedEvent, now: Date = new Date()): boolean {
   return now >= eventExpiry(event)
 }
+
+/**
+ * Ein mehrtaegiges Event, das bereits begonnen hat aber noch nicht beendet ist.
+ * Solche Events sind "kommend" im Sinne von isPastEvent, aber ihr Startdatum
+ * liegt in der Vergangenheit – sie sollen daher in Kommend-Listen ans Ende
+ * sortiert werden und nicht als "naechstes Event" gelten.
+ */
+export function isOngoing(event: DatedEvent, now: Date = new Date()): boolean {
+  if (!event.endDate) return false
+  const started = now >= new Date(event.date)
+  return started && !isPastEvent(event, now)
+}

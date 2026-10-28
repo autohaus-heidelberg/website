@@ -5,7 +5,7 @@ import { eventService, accountingService, grantService, pretixService, statistic
 import type { EventAccounting, GrantApplication } from '@/types/accounting'
 import type { PaginatedResponse } from '@/types/api'
 import type { AiTagsResponse } from '@/services/statistics'
-import { isPastEvent } from '@/utils/eventTime'
+import { isPastEvent, isOngoing } from '@/utils/eventTime'
 import {
   buildCalendarDays,
   buildIcs,
@@ -422,6 +422,13 @@ const filteredEvents = computed(() => {
   }
 
   list = [...list].sort((a, b) => {
+    // Laufende mehrtägige Events (bereits gestartet, noch nicht beendet)
+    // sollen in der Kommend-Liste ans Ende – nach allen noch nicht gestarteten.
+    if (activeFilter.value === 'upcoming') {
+      const aOngoing = isOngoing(a, now)
+      const bOngoing = isOngoing(b, now)
+      if (aOngoing !== bOngoing) return aOngoing ? 1 : -1
+    }
     const diff = new Date(a.date).getTime() - new Date(b.date).getTime()
     return sortOrder.value === 'asc' ? diff : -diff
   })

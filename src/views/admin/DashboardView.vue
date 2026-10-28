@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { eventService, artistService, accountingService, stockService, anfrageService, grantService } from '@/services'
 import { taxExportService } from '@/services/accounting'
-import { isPastEvent } from '@/utils/eventTime'
+import { isPastEvent, isOngoing } from '@/utils/eventTime'
 import type { StockEntry, GrantSummary } from '@/types/accounting'
 
 const authStore = useAuthStore()
@@ -54,6 +54,10 @@ onMounted(async () => {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     upcomingCount.value = upcoming.length
 
+    // "Nächstes Event" = erstes Event das noch nicht begonnen hat (laufende
+    // mehrtägige Events – Ausstellungen etc. – zählen hier nicht).
+    const nextUpcoming = upcoming.find(e => !isOngoing(e, now))
+
     // Helper: is the item on the menu?
     const allStock = stockData as StockEntry[]
     const isOnMenu = (e: StockEntry) => e.is_active
@@ -88,8 +92,8 @@ onMounted(async () => {
     // Out of stock but on menu
     outOfStockOnMenu.value = allStock.filter(e => e.quantity === 0 && isOnMenu(e)).length
 
-    if (upcoming.length > 0) {
-      nextEvent.value = { id: upcoming[0].id, title: upcoming[0].title, date: upcoming[0].date }
+    if (nextUpcoming) {
+      nextEvent.value = { id: nextUpcoming.id, title: nextUpcoming.title, date: nextUpcoming.date }
     }
 
     // Stock summary
