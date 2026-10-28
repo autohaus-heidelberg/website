@@ -563,43 +563,58 @@ onMounted(() => {
             | {{ beverageLabel(bev) }}
         button.btn-new-bev(v-if="!item.beverage_item" type="button" @click="openNewBeverage(idx)") + Anlegen
       //- Crate mode: crates input always; Flaschen nur im Bestandskorrektur-Modus
-      template(v-if="!isSingleBottleRow(idx)")
-        input.col-crates(
-          v-model.number="itemCrates[idx]"
-          type="number"
-          min="0"
-          @input="recalcItem(item, idx)"
-        )
-        input.col-loose(
-          v-if="inventoryCorrectionMode"
-          v-model.number="itemLoose[idx]"
-          type="number"
-          min="0"
-          step="1"
-          @input="recalcItem(item, idx)"
-        )
+      .item-row-numbers(v-if="!isSingleBottleRow(idx)")
+        .field(data-label="Kisten")
+          input.col-crates(
+            v-model.number="itemCrates[idx]"
+            type="number"
+            min="0"
+            @input="recalcItem(item, idx)"
+          )
+        .field(v-if="inventoryCorrectionMode" data-label="Flaschen")
+          input.col-loose(
+            v-model.number="itemLoose[idx]"
+            type="number"
+            min="0"
+            step="1"
+            @input="recalcItem(item, idx)"
+          )
         span.col-loose.disabled-cell(v-else) —
+        .field.field-full(data-label="Einheiten")
+          span.col-qty {{ formatQty(item.quantity) }}
+        .field.field-full(data-label="Preis/Kiste (€)")
+          input.col-price(
+            v-model="item.unit_price"
+            type="number"
+            step="0.01"
+            min="0"
+            @input="recalcItem(item, idx)"
+          )
       //- Single bottle mode: no crates, just bottles
-      template(v-else)
+      .item-row-numbers(v-else)
         span.col-crates.disabled-cell —
-        input.col-loose(
-          v-model.number="itemLoose[idx]"
-          type="number"
-          min="0"
-          step="1"
-          @input="recalcItem(item, idx)"
-        )
-      span.col-qty {{ formatQty(item.quantity) }}
-      input.col-price(
-        v-model="item.unit_price"
-        type="number"
-        step="0.01"
-        min="0"
-        @input="recalcItem(item, idx)"
-      )
-      span.col-total(:class="{ 'total-error': rowHasError(idx, item) }") {{ formatItemTotal(item) }}
-        span.row-error-icon(v-if="rowHasError(idx, item)") ⚠
-      button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
+        .field.field-full(data-label="Flaschen")
+          input.col-loose(
+            v-model.number="itemLoose[idx]"
+            type="number"
+            min="0"
+            step="1"
+            @input="recalcItem(item, idx)"
+          )
+        .field.field-full(data-label="Einheiten")
+          span.col-qty {{ formatQty(item.quantity) }}
+        .field.field-full(data-label="Preis/Flasche (€)")
+          input.col-price(
+            v-model="item.unit_price"
+            type="number"
+            step="0.01"
+            min="0"
+            @input="recalcItem(item, idx)"
+          )
+      .item-row-footer
+        span.col-total(:class="{ 'total-error': rowHasError(idx, item) }") {{ formatItemTotal(item) }}
+          span.row-error-icon(v-if="rowHasError(idx, item)") ⚠
+        button.col-action.btn-remove(type="button" @click="removeItem(idx)") ×
 
     button.btn-add(type="button" @click="addItem") + Position hinzufügen
 
@@ -862,6 +877,14 @@ h2 {
   margin-bottom: 0.5rem;
 }
 
+/* Die neuen Wrapper-Divs verhalten sich auf Desktop wie nicht-existente Container
+   (display:contents), sodass ihre Kinder direkt als Grid-Kinder zählen. */
+.item-row-numbers,
+.item-row-footer,
+.field {
+  display: contents;
+}
+
 .items-header span {
   font-weight: 900;
   font-size: 0.75rem;
@@ -875,6 +898,139 @@ h2 {
   border: 0.25rem solid black;
   font-size: 0.875rem;
   font-weight: 600;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Alle direkten Grid-Items dürfen nicht über ihre Spalte hinauslaufen */
+.item-row > *,
+.item-row .col-crates,
+.item-row .col-loose,
+.item-row .col-qty,
+.item-row .col-price,
+.item-row .col-total {
+  min-width: 0;
+}
+
+/* ── Mobile layout: Positions als Cards statt 7-Spalten-Tabelle ── */
+@media (max-width: 600px) {
+  .items-header {
+    display: none;
+  }
+
+  .item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 0.25rem solid black;
+    margin-bottom: 0.75rem;
+    background: #fafafa;
+  }
+
+  .item-row.row-error {
+    background: #fef2f2;
+  }
+
+  /* Wrapper wieder als echte Block-Container statt display:contents */
+  .item-row-numbers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .item-row-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 0.15rem solid #ddd;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  /* .field-Wrapper: echte Block-Elemente auf Mobile */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  /* Einheiten und Preis: volle Breite über 2 Spalten */
+  .field.field-full {
+    grid-column: 1 / -1;
+  }
+
+  /* Labels via data-label */
+  .field[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #555;
+  }
+
+  /* Getränk-Zeile: Dropdown + Anlegen-Button nebeneinander */
+  .col-bev {
+    width: 100%;
+  }
+
+  .col-bev select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Gesamt-Summe groß anzeigen */
+  .col-total {
+    font-size: 1.1rem;
+    font-weight: 900;
+  }
+
+  .col-total::before {
+    content: 'Gesamt: ';
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #555;
+  }
+
+  .col-action.btn-remove {
+    font-size: 1.5rem;
+    padding: 0.25rem 0.75rem;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .item-row input,
+  .item-row select {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    font-size: 1rem;
+  }
+
+  .disabled-cell {
+    display: none;
+  }
+
+  .scan-area {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .btn-scan {
+    width: 100%;
+    text-align: center;
+    font-size: 1rem;
+    padding: 0.875rem;
+    box-sizing: border-box;
+  }
+
+  .scan-hint {
+    text-align: center;
+  }
 }
 
 .item-row.row-error {
@@ -912,6 +1068,13 @@ h2 {
   cursor: pointer;
   font-weight: 900;
   padding: 0.25rem;
+  letter-spacing: normal;
+  line-height: 1;
+  width: 40px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 select.unmatched {
@@ -923,6 +1086,7 @@ select.unmatched {
   display: flex;
   gap: 0.25rem;
   align-items: center;
+  min-width: 0;
 }
 
 .col-bev select {
