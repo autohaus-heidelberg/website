@@ -51,6 +51,39 @@
         ]
     },
     {
+        "id": "jazz-unerwuenscht",
+        "date": "2026-11-16T18:00:00+00:00",
+        "endDate": null,
+        "title": "Jazz (Postpunk, Halle) + Unerw\u00fcnscht (NDW, Mannheim)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Jazz, die Band mit dem suchmaschinenunfreundlichsten Namen den man sich nur ausdenken kann, bringt gewieft mutig-chaotischen Punk auf die B&uuml;hne des Carousels. Klassische Punkbesetzung + Synthesizer mit ausgefuchstem Gesang machen Musik spannend und \"v&ouml;llig au&szlig;er Kontrolle\". Dazu Unerwuenscht, \"au&szlig;erstanden aus den Mannheimer Sperrm&uuml;llhaufen\" und die derzeit hei&szlig;este NDW Hoffnung im Mannheimer Untergrund.</p>\n<p>Konzert am einem Montagabend, f&uuml;r diejenigen die erfrischt in die Woche starten ebenso wie die, die das Wochenende noch nicht ziehen sehen wollen!</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/jazz-unerwuenscht/",
+        "img": "/img/47cbb626-d2f5-41fc-b9cc-98369c0ec6da.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "Jazz",
+                "link": "",
+                "description": "\"... der Irrtum hat mal wieder gewonn!\" beginnt im Irrtums Kern! Und ich glaub, du steckst gleich voll drin. Versuchst dich da irgendwie aus dem Drehpunkt rauszusch\u00e4len. Irrrrrrrrrrrlichter siehst du sie auch? L\u00e4ufst gegen alle W\u00e4nde. Bist v\u00f6llig au\u00dfer Kontrolle. Das ganze Leben ein Reinfall. Die Vernunft schon lang zur Hintert\u00fcre entschwirrt. Aber wer hat gesagt, ohne Vernunft w\u00fcrde es sich schlechter leben? Fragst du dich manchmal, ob du viel zu gemein bist? Schmerz gibt es \u00fcberall kostenlos und kostet dich zu viel. Also gut, dass du paar Mark in die Hand genommen und dir diese Platte geholt hast. Hier l\u00e4uft alles andersrum. Pass auf, die paar Groschen gewinnst du morgen zur\u00fcck, wenn dein K\u00f6nig Matt gesetzt wird. Paradox? Die Welt steht Kopf. Also pack sie beim Schopf! K\u00fcndige morgen und werde steinreich. Paar nette Momente mit die Freunde. Mit die Musik. Und drin steckt das Aromat f\u00fcr dein Leben. Jazz. So schmei\u00df die Scheibe an, tu es mit einem Tanz ausprobiern und dann trinken wir auf unser Leben, denn unser Leben ist unser Ziel!\n\n- Umber Hammelcore",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1246475269/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": ""
+            },
+            {
+                "name": "Unerwuenscht",
+                "link": "",
+                "description": "Auferstanden aus den miefenden Sperrm\u00fcllhaufen der Mannheimer Jungbuschstra\u00dfe, bringen Unerwuenscht dreckigen Synthpunk auf die fein geputzten Gehwege der Republik Deutschland. Dabei transportieren die drei Mannheimer*innen mehr als nur Zeigefinger-Systemkritik. In ihren Songs geht es vielmehr darum sich auch einmal lautstark \u00fcber die kleinen Dinge, wie die immer teurer werdenden Kaugummis, aufzuregen. Ob man es will oder nicht, die eing\u00e4ngigen Hooks bleiben direkt nach dem ersten H\u00f6ren an einem kleben, wie der Hundehaufen in den man versehentlich getreten ist.",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": "/img/2f86cdec-1fa4-4458-9ab5-36c1dc8c7a49.webp"
+            }
+        ]
+    },
+    {
         "id": "20261114-Come-SkinnyMirror",
         "date": "2026-11-14T18:00:00+00:00",
         "endDate": null,
