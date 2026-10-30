@@ -617,6 +617,20 @@ async function sendNewsletter(test = false) {
 .history-event .he-date { font-weight: 700; opacity: 0.7; }
 
 @media (max-width: 640px) {
+  .newsletter-admin {
+    padding: 1rem;
+  }
+  .tab {
+    flex: 1;
+    padding: 0.625rem 0.5rem;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  .proposal-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
   .history-item {
     grid-template-columns: 1fr;
     gap: 0.6rem;
