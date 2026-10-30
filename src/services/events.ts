@@ -72,6 +72,21 @@ export interface PresaleInfo {
   artists: string[]
 }
 
+export interface SentNewsletterEvent {
+  id: string
+  title: string
+  date: string | null
+}
+
+export interface SentNewsletter {
+  id: number
+  subject: string
+  event_snapshot: SentNewsletterEvent[]
+  sent_by: number | null
+  sent_by_name: string
+  sent_at: string
+}
+
 export const eventService = {
   /**
    * Get all events (paginated)
@@ -168,8 +183,15 @@ export const eventService = {
   /**
    * Send newsletter via Rapidmail
    */
-  async sendNewsletter(subject: string, html_content: string, text_content: string, test = false): Promise<{ success: boolean }> {
-    return api.post<{ success: boolean }>('/api/newsletter/send/', { subject, html_content, text_content, test })
+  async sendNewsletter(subject: string, html_content: string, text_content: string, test = false, event_ids: string[] = []): Promise<{ success: boolean }> {
+    return api.post<{ success: boolean }>('/api/newsletter/send/', { subject, html_content, text_content, test, event_ids })
+  },
+
+  /**
+   * History of newsletters that were sent (live, non-test)
+   */
+  async getSentNewsletters(): Promise<SentNewsletter[]> {
+    return api.get<SentNewsletter[]>('/api/newsletter/sent/')
   },
 
   /**
