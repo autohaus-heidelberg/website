@@ -1,11 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import 'dayjs/locale/de'
 import { eventService } from '@/services/events'
-import type { Event, Artist } from '@/services/events'
+import type { Event, Artist, SentNewsletter } from '@/services/events'
 
 dayjs.locale('de')
+
+const route = useRoute()
+const router = useRouter()
+
+type Tab = 'compose' | 'history'
+const activeTab = ref<Tab>(route.query.tab === 'history' ? 'history' : 'compose')
+
+function switchTab(tab: Tab) {
+  activeTab.value = tab
+  const query = { ...route.query }
+  if (tab === 'compose') delete query.tab
+  else query.tab = tab
+  router.replace({ query })
+  if (tab === 'history') loadHistory()
+}
 
 const title = ref('')
 const content = ref('')
@@ -14,6 +30,10 @@ const isGenerating = ref(false)
 const isSending = ref(false)
 const sendSuccess = ref<'test' | 'live' | null>(null)
 const error = ref('')
+
+// Verlauf der zuletzt versendeten Newsletter
+const sentNewsletters = ref<SentNewsletter[]>([])
+const isLoadingHistory = ref(false)
 
 // Kandidaten (kommende Events) und die vom Nutzer gewählte Teilmenge
 const candidateEvents = ref<Event[]>([])
@@ -126,6 +146,14 @@ function eventDateShort(iso: string): string {
   return dayjs(iso).locale('de').format('DD.MM.')
 }
 
+function sentDateOnly(iso: string): string {
+  return dayjs(iso).locale('de').format('DD.MM.YYYY')
+}
+
+function sentTimeOnly(iso: string): string {
+  return dayjs(iso).locale('de').format('HH:mm')
+}
+
 // Sichtbare Betreff-Länge in gängigen Postfächern liegt bei ~70 Zeichen.
 const MAX_SUBJECT = 70
 
@@ -219,7 +247,21 @@ function toggleEvent(id: string) {
 
 onMounted(() => {
   generateProposal()
+  // Verlauf vorab laden, wenn direkt auf dem Verlauf-Tab gestartet wird.
+  if (activeTab.value === 'history') loadHistory()
 })
+
+async function loadHistory() {
+  isLoadingHistory.value = true
+  try {
+    sentNewsletters.value = await eventService.getSentNewsletters()
+  } catch {
+    // Verlauf ist optional – Fehler hier nicht aufdringlich anzeigen.
+    sentNewsletters.value = []
+  } finally {
+    isLoadingHistory.value = false
+  }
+}
 
 async function sendNewsletter(test = false) {
   if (!title.value || !content.value) return
@@ -228,8 +270,13 @@ async function sendNewsletter(test = false) {
   sendSuccess.value = null
 
   try {
-    await eventService.sendNewsletter(title.value, content.value, textContent.value, test)
+    const eventIds = selectedEvents.value.map(e => e.id)
+    await eventService.sendNewsletter(title.value, content.value, textContent.value, test, eventIds)
     sendSuccess.value = test ? 'test' : 'live'
+    if (!test) {
+      // Verlauf aktualisieren, damit der neue Versand sofort erscheint.
+      loadHistory()
+    }
   } catch (e: any) {
     error.value = 'Fehler beim Versenden: ' + (e?.message || e)
   } finally {
@@ -242,72 +289,101 @@ async function sendNewsletter(test = false) {
 .newsletter-admin
   .page-header
     h2 Newsletter versenden
+    .tab-bar
+      button.tab(:class="{ active: activeTab === 'compose' }" @click="switchTab('compose')") ✍️ Erstellen
+      button.tab(:class="{ active: activeTab === 'history' }" @click="switchTab('history')") 📨 Verlauf
 
-  .proposal-section
-    button.btn-primary(
-      @click="generateProposal"
-      :disabled="isGenerating || isSending"
-    ) {{ isGenerating ? 'Wird geladen...' : 'Vorschlag erstellen' }}
-    p.week-info(v-if="!isGenerating")
-      | Vorausgewählt: nächste Woche ({{ getNextWeekRange().start.format('DD.MM.') }} – {{ getNextWeekRange().end.format('DD.MM.YYYY') }})
+  template(v-if="activeTab === 'compose'")
+    .proposal-section
+      button.btn-primary(
+        @click="generateProposal"
+        :disabled="isGenerating || isSending"
+      ) {{ isGenerating ? 'Wird geladen...' : 'Vorschlag erstellen' }}
+      p.week-info(v-if="!isGenerating")
+        | Vorausgewählt: nächste Woche ({{ getNextWeekRange().start.format('DD.MM.') }} – {{ getNextWeekRange().end.format('DD.MM.YYYY') }})
 
-  .error-message(v-if="error") {{ error }}
-  .success-message(v-if="sendSuccess === 'test'") Test-Newsletter erfolgreich versendet!
-  .success-message(v-if="sendSuccess === 'live'") Newsletter erfolgreich versendet!
+    .error-message(v-if="error") {{ error }}
+    .success-message(v-if="sendSuccess === 'test'") Test-Newsletter erfolgreich versendet!
+    .success-message(v-if="sendSuccess === 'live'") Newsletter erfolgreich versendet!
 
-  .event-selector(v-if="candidateEvents.length")
-    .selector-head
-      span.selector-title 📅 Welche Veranstaltungen aufnehmen?
-      span.selector-summary {{ selectedEventIds.length }} von {{ candidateEvents.length }} ausgewählt
-    .event-list
-      label.event-option(
-        v-for="ev in candidateEvents"
-        :key="ev.id"
-        :class="{ active: selectedEventIds.includes(ev.id) }"
-      )
-        input(type="checkbox" :checked="selectedEventIds.includes(ev.id)" @change="toggleEvent(ev.id)")
-        span.ev-title {{ ev.title }}
-        span.ev-date {{ eventDateShort(ev.date) }}
-    p.selector-hint Auswahl ändern erzeugt Betreff und Inhalt neu.
+    .event-selector(v-if="candidateEvents.length")
+      .selector-head
+        span.selector-title 📅 Welche Veranstaltungen aufnehmen?
+        span.selector-summary {{ selectedEventIds.length }} von {{ candidateEvents.length }} ausgewählt
+      .event-list
+        label.event-option(
+          v-for="ev in candidateEvents"
+          :key="ev.id"
+          :class="{ active: selectedEventIds.includes(ev.id) }"
+        )
+          input(type="checkbox" :checked="selectedEventIds.includes(ev.id)" @change="toggleEvent(ev.id)")
+          span.ev-title {{ ev.title }}
+          span.ev-date {{ eventDateShort(ev.date) }}
+      p.selector-hint Auswahl ändern erzeugt Betreff und Inhalt neu.
 
-  .form-section
-    .field
-      label(for="newsletter-title") Betreff
-      input#newsletter-title(
-        type="text"
-        v-model="title"
-        placeholder="z.B. 21.03. Konzertname  /  22.03. Anderes Event"
-      )
+    .form-section
+      .field
+        label(for="newsletter-title") Betreff
+        input#newsletter-title(
+          type="text"
+          v-model="title"
+          placeholder="z.B. 21.03. Konzertname  /  22.03. Anderes Event"
+        )
 
-    .field
-      label(for="newsletter-content") Inhalt (HTML)
-      textarea#newsletter-content(
-        v-model="content"
-        placeholder="Newsletter-Inhalt als HTML..."
-        rows="20"
-      )
+      .field
+        label(for="newsletter-content") Inhalt (HTML)
+        textarea#newsletter-content(
+          v-model="content"
+          placeholder="Newsletter-Inhalt als HTML..."
+          rows="20"
+        )
 
-    .field
-      label(for="newsletter-text") Textversion (Plain Text)
-      textarea#newsletter-text(
-        v-model="textContent"
-        placeholder="Newsletter-Inhalt als reiner Text..."
-        rows="15"
-      )
+      .field
+        label(for="newsletter-text") Textversion (Plain Text)
+        textarea#newsletter-text(
+          v-model="textContent"
+          placeholder="Newsletter-Inhalt als reiner Text..."
+          rows="15"
+        )
 
-  .send-section(v-if="title && content")
-    button.btn-test(
-      @click="sendNewsletter(true)"
-      :disabled="isSending || isGenerating"
-    ) {{ isSending ? 'Wird versendet...' : 'Test versenden' }}
-    button.btn-send(
-      @click="sendNewsletter(false)"
-      :disabled="isSending || isGenerating"
-    ) {{ isSending ? 'Wird versendet...' : 'Newsletter jetzt versenden' }}
+    .send-section(v-if="title && content")
+      button.btn-test(
+        @click="sendNewsletter(true)"
+        :disabled="isSending || isGenerating"
+      ) {{ isSending ? 'Wird versendet...' : 'Test versenden' }}
+      button.btn-send(
+        @click="sendNewsletter(false)"
+        :disabled="isSending || isGenerating"
+      ) {{ isSending ? 'Wird versendet...' : 'Newsletter jetzt versenden' }}
 
-  .preview-section(v-if="content")
-    h2 Vorschau
-    .preview-box(v-html="content")
+    .preview-section(v-if="content")
+      h2 Vorschau
+      .preview-box(v-html="content")
+
+  template(v-else)
+    .history-section
+      .history-head
+        span.history-title 📨 Zuletzt versendete Newsletter
+        span.history-summary(v-if="!isLoadingHistory && sentNewsletters.length") {{ sentNewsletters.length }} im Verlauf
+      p.history-empty(v-if="isLoadingHistory") Verlauf wird geladen …
+      p.history-empty(v-else-if="!sentNewsletters.length") Noch keine Newsletter versendet.
+      ul.history-list(v-else)
+        li.history-item(v-for="nl in sentNewsletters" :key="nl.id")
+          .history-when
+            span.when-date {{ sentDateOnly(nl.sent_at) }}
+            span.when-time {{ sentTimeOnly(nl.sent_at) }} Uhr
+            span.when-by(v-if="nl.sent_by_name") {{ nl.sent_by_name }}
+          .history-body
+            .history-subject
+              span.subject-label Betreff
+              span.subject-text {{ nl.subject }}
+            .history-events(v-if="nl.event_snapshot.length")
+              span.events-label Enthaltene Events
+              .events-chips
+                span.history-event(v-for="ev in nl.event_snapshot" :key="ev.id")
+                  span.he-date(v-if="ev.date") {{ eventDateShort(ev.date) }}
+                  |  {{ ev.title }}
+            .history-events.muted(v-else) Keine Events verknüpft
 </template>
 
 <style scoped>
@@ -318,6 +394,10 @@ async function sendNewsletter(test = false) {
 }
 
 .page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
@@ -325,6 +405,35 @@ async function sendNewsletter(test = false) {
   font-size: 1.75rem;
   font-weight: 900;
   margin: 0;
+}
+
+.tab-bar {
+  display: flex;
+  align-self: stretch;
+  gap: 0.5rem;
+  border-bottom: 0.25rem solid black;
+}
+
+.tab {
+  padding: 0.625rem 1.25rem;
+  border: 0.25rem solid black;
+  border-bottom: none;
+  background: #f0f0f0;
+  color: #666;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-bottom: -0.25rem;
+}
+
+.tab:hover:not(.active) {
+  background: #e0e0e0;
+  color: black;
+}
+
+.tab.active {
+  background: black;
+  color: white;
 }
 
 .proposal-section {
@@ -396,6 +505,133 @@ async function sendNewsletter(test = false) {
 .event-option input { cursor: pointer; }
 .event-option .ev-title { font-weight: 700; }
 .event-option .ev-date { opacity: 0.7; }
+
+.history-section {
+  padding: 0.85rem 1rem;
+  background: #f8f8f8;
+  border: 0.25rem solid black;
+  margin-bottom: 2rem;
+}
+
+.history-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+}
+
+.history-title { font-weight: 900; font-size: 1rem; }
+.history-summary { font-weight: 700; font-size: 0.8rem; color: #444; white-space: nowrap; }
+.history-empty { font-size: 0.85rem; color: #777; margin: 0; }
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 1rem;
+  background: white;
+  border: 0.15rem solid #ccc;
+  padding: 0.75rem 0.9rem;
+}
+
+.history-when {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding-right: 1rem;
+  border-right: 0.15rem solid #eee;
+}
+
+.when-date { font-weight: 900; font-size: 0.9rem; }
+.when-time { font-size: 0.78rem; color: #666; }
+.when-by {
+  margin-top: 0.3rem;
+  font-size: 0.72rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.history-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.history-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.history-subject .subject-label,
+.events-label {
+  font-weight: 700;
+  font-size: 0.68rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.history-subject .subject-text {
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+
+.history-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.history-events.muted { font-size: 0.8rem; color: #999; }
+
+.events-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.history-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  background: #eaeaea;
+  border: 0.1rem solid #ddd;
+  font-size: 0.78rem;
+}
+
+.history-event .he-date { font-weight: 700; opacity: 0.7; }
+
+@media (max-width: 640px) {
+  .history-item {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+  .history-when {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding-right: 0;
+    padding-bottom: 0.4rem;
+    border-right: none;
+    border-bottom: 0.15rem solid #eee;
+  }
+  .when-by { margin-top: 0; margin-left: auto; }
+}
 
 .form-section {
   display: flex;
