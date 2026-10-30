@@ -45,6 +45,19 @@ const selectedEvents = computed(() =>
     .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
 )
 
+// Event-IDs, für die bereits (laut Verlauf) ein Newsletter verschickt wurde.
+const sentEventIds = computed(() => {
+  const ids = new Set<string>()
+  for (const nl of sentNewsletters.value) {
+    for (const ev of nl.event_snapshot) ids.add(ev.id)
+  }
+  return ids
+})
+
+function alreadySent(id: string): boolean {
+  return sentEventIds.value.has(id)
+}
+
 function getNextWeekRange(): { start: dayjs.Dayjs; end: dayjs.Dayjs } {
   const today = dayjs()
   return { start: today, end: today.add(7, 'days').endOf('day') }
@@ -208,6 +221,16 @@ async function generateProposal() {
     const response = await eventService.getAll()
     const allEvents: Event[] = response.results || []
 
+    // Verlauf laden, damit bereits benewsletterte Events nicht
+    // automatisch vorausgewählt werden.
+    if (sentNewsletters.value.length === 0) {
+      try {
+        sentNewsletters.value = await eventService.getSentNewsletters()
+      } catch {
+        // Verlauf optional – ohne ihn werden einfach alle Events vorausgewählt.
+      }
+    }
+
     const upcoming = allEvents
       .filter(e => dayjs(e.date).isAfter(start.subtract(1, 'ms')))
       .sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
@@ -220,11 +243,12 @@ async function generateProposal() {
     }
 
     candidateEvents.value = upcoming
-    // Standardmäßig die Events der nächsten Woche vorauswählen
+    // Standardmäßig die Events der nächsten Woche vorauswählen – aber keine,
+    // für die laut Verlauf bereits ein Newsletter verschickt wurde.
     selectedEventIds.value = upcoming
       .filter(e => {
         const d = dayjs(e.date)
-        return d.isAfter(start.subtract(1, 'ms')) && d.isBefore(end.add(1, 'ms'))
+        return d.isAfter(start.subtract(1, 'ms')) && d.isBefore(end.add(1, 'ms')) && !alreadySent(e.id)
       })
       .map(e => e.id)
 
@@ -314,12 +338,15 @@ async function sendNewsletter(test = false) {
         label.event-option(
           v-for="ev in candidateEvents"
           :key="ev.id"
-          :class="{ active: selectedEventIds.includes(ev.id) }"
+          :class="{ active: selectedEventIds.includes(ev.id), sent: alreadySent(ev.id) }"
         )
           input(type="checkbox" :checked="selectedEventIds.includes(ev.id)" @change="toggleEvent(ev.id)")
           span.ev-title {{ ev.title }}
           span.ev-date {{ eventDateShort(ev.date) }}
-      p.selector-hint Auswahl ändern erzeugt Betreff und Inhalt neu.
+          span.ev-sent(v-if="alreadySent(ev.id)" title="Für dieses Event wurde bereits ein Newsletter verschickt") ✓ versendet
+      p.selector-hint
+        | Auswahl ändern erzeugt Betreff und Inhalt neu.
+        |  Bereits versendete Events sind markiert und nicht vorausgewählt.
 
     .form-section
       .field
@@ -506,6 +533,22 @@ async function sendNewsletter(test = false) {
 .event-option .ev-title { font-weight: 700; }
 .event-option .ev-date { opacity: 0.7; }
 
+/* Bereits benewsletterte Events: dezent abgesetzt, weiterhin wählbar. */
+.event-option.sent:not(.active) { background: #f3f3f3; border-color: #ddd; color: #888; }
+.event-option.sent:not(.active) .ev-title { font-weight: 600; }
+.event-option .ev-sent {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #2e7d32;
+  border: 0.1rem solid currentColor;
+  border-radius: 999px;
+  padding: 0 0.35rem;
+  white-space: nowrap;
+}
+.event-option.active .ev-sent { color: #9be29b; }
+
 .history-section {
   padding: 0.85rem 1rem;
   background: #f8f8f8;
@@ -630,6 +673,24 @@ async function sendNewsletter(test = false) {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+  /* Event-Chips auf dem Handy: volle Breite, Titel umbricht, Datum/Badge rechts. */
+  .event-option {
+    width: 100%;
+    box-sizing: border-box;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .event-option .ev-title { flex: 1 1 60%; min-width: 0; }
+  .event-option .ev-date { margin-left: auto; }
+  .event-option .ev-sent { flex-basis: 100%; }
+  /* Senden-Buttons auf dem Handy untereinander, volle Breite. */
+  .send-section {
+    flex-direction: column;
+  }
+  .send-section .btn-test,
+  .send-section .btn-send {
+    width: 100%;
   }
   .history-item {
     grid-template-columns: 1fr;
