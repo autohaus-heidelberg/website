@@ -272,6 +272,12 @@ export interface PurchaseItem {
   total_price: string
 }
 
+export interface PurchaseExtraCost {
+  label: string
+  amount: string
+  category?: string
+}
+
 export interface Purchase {
   id?: number
   date: string
@@ -282,6 +288,12 @@ export interface Purchase {
   vat_amount?: string | null
   deposit_new?: string
   deposit_returned?: string
+  extra_costs?: PurchaseExtraCost[]
+  /** Endbetrag laut Beleg (kann bei Lieferantenfehler von invoice_total abweichen) */
+  invoice_total_printed?: string | null
+  correction_note?: string
+  /** Read-only: invoice_total minus (Positionen + Pfand + Nebenkosten − Rückgabe) */
+  reconciliation_diff?: string | null
   receipt_drive_file_id?: string
   receipt_drive_url?: string
   notes: string

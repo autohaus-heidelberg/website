@@ -20,6 +20,9 @@ const form = ref<Partial<Purchase>>({
   invoice_total: '0.00',
   deposit_new: '0.00',
   deposit_returned: '0.00',
+  extra_costs: [],
+  invoice_total_printed: null,
+  correction_note: '',
   notes: '',
   items: [],
 })
@@ -149,6 +152,7 @@ async function saveNewBeverage() {
 
 const isScanning = ref(false)
 const scanError = ref('')
+const scanWarnings = ref<string[]>([])
 
 async function scanReceipt(event: Event) {
   const input = event.target as HTMLInputElement
@@ -166,7 +170,17 @@ async function scanReceipt(event: Event) {
     if (result.supplier) form.value.supplier = result.supplier
     if (result.invoice_number) form.value.invoice_number = result.invoice_number
     if (result.date) form.value.date = result.date
-    if (result.invoice_total != null) form.value.invoice_total = String(result.invoice_total)
+    // Der Beleg-Endbetrag wird getrennt gehalten: invoice_total ist das, was wir
+    // tatsächlich schulden (aus den geprüften Positionen berechnet).
+    form.value.invoice_total_printed = result.invoice_total != null ? String(result.invoice_total) : null
+    form.value.correction_note = ''
+    invoiceManuallyEdited.value = false
+    scanWarnings.value = result.warnings ?? []
+    form.value.extra_costs = (result.fees ?? []).map(f => ({
+      label: f.label,
+      amount: Number(f.amount).toFixed(2),
+      category: f.category,
+    }))
     if (result.deposit_new != null) form.value.deposit_new = String(result.deposit_new)
     if (result.deposit_returned != null) form.value.deposit_returned = String(result.deposit_returned)
     if (result.drive_upload) {
@@ -219,6 +233,7 @@ async function scanReceipt(event: Event) {
         itemLoose.value.push(0)
       }
     }
+    form.value.invoice_total = expectedInvoiceTotal.value.toFixed(2)
   } catch (e: any) {
     scanError.value = e.response?.data?.error || e.message || 'Scan fehlgeschlagen'
   } finally {
@@ -247,14 +262,39 @@ const rawTotal = computed(() => {
     .reduce((sum, item) => sum + parseFloat(item.total_price || '0'), 0)
 })
 
+const feesTotal = computed(() =>
+  (form.value.extra_costs ?? []).reduce((sum, c) => sum + (parseFloat(c.amount || '0') || 0), 0)
+)
+
+// Positionen + Pfand neu + Nebenkosten − Pfand-Rückgabe
+const expectedInvoiceTotal = computed(() => {
+  const depositNew = parseFloat(form.value.deposit_new || '0') || 0
+  const depositReturned = parseFloat(form.value.deposit_returned || '0') || 0
+  return rawTotal.value + depositNew + feesTotal.value - depositReturned
+})
+
 const invoiceMismatch = computed(() => {
   const invoice = parseFloat(form.value.invoice_total || '0')
   if (!invoice || !rawTotal.value) return false
-  const depositNew = parseFloat(form.value.deposit_new || '0')
-  const depositReturned = parseFloat(form.value.deposit_returned || '0')
-  const expectedTotal = rawTotal.value + depositNew - depositReturned
-  return Math.abs(invoice - expectedTotal) > 0.5
+  return Math.abs(invoice - expectedInvoiceTotal.value) > 0.5
 })
+
+// Beleg weist einen anderen Endbetrag aus als wir schulden → Lieferantenfehler,
+// der begründet werden muss (Reklamation / Nachvollziehbarkeit).
+const printedDiff = computed(() => {
+  const printed = form.value.invoice_total_printed
+  if (printed == null || printed === '') return 0
+  return (parseFloat(form.value.invoice_total || '0') || 0) - (parseFloat(String(printed)) || 0)
+})
+const printedMismatch = computed(() => Math.abs(printedDiff.value) > 0.01)
+
+function addExtraCost() {
+  form.value.extra_costs = [...(form.value.extra_costs ?? []), { label: '', amount: '0.00', category: 'sonstiges' }]
+}
+
+function removeExtraCost(idx: number) {
+  form.value.extra_costs = (form.value.extra_costs ?? []).filter((_, i) => i !== idx)
+}
 
 // Auto-sync invoice_total with computed sum until user manually edits it
 const invoiceManuallyEdited = ref(false)
@@ -263,11 +303,9 @@ function onInvoiceTotalInput() {
   invoiceManuallyEdited.value = true
 }
 
-watch([rawTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
+watch([rawTotal, feesTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
   if (!invoiceManuallyEdited.value && rawTotal.value > 0) {
-    const depositNew = parseFloat(form.value.deposit_new || '0')
-    const depositReturned = parseFloat(form.value.deposit_returned || '0')
-    form.value.invoice_total = (rawTotal.value + depositNew - depositReturned).toFixed(2)
+    form.value.invoice_total = expectedInvoiceTotal.value.toFixed(2)
   }
 })
 
@@ -278,15 +316,19 @@ function buildBreakdownLine(): string {
   if (rawTotal.value <= 0) return ''
   const depositNew = parseFloat(form.value.deposit_new || '0')
   const depositReturned = parseFloat(form.value.deposit_returned || '0')
-  const total = rawTotal.value + depositNew - depositReturned
+  const total = expectedInvoiceTotal.value
   let line = `${formatCurrency(rawTotal.value)} Positionen`
   if (depositNew > 0) line += ` + ${formatCurrency(depositNew)} Pfand`
+  for (const cost of (form.value.extra_costs ?? [])) {
+    const amount = parseFloat(cost.amount || '0')
+    if (amount > 0) line += ` + ${formatCurrency(amount)} ${cost.label || 'Nebenkosten'}`
+  }
   if (depositReturned > 0) line += ` − ${formatCurrency(depositReturned)} Rückgabe`
   line += ` = ${formatCurrency(total)}`
   return `${BREAKDOWN_MARKER}${line}`
 }
 
-watch([rawTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
+watch([rawTotal, feesTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
   const line = buildBreakdownLine()
   const notes = form.value.notes || ''
   const withoutOld = notes.replace(/\n?📋 .+/, '').trimEnd()
@@ -417,7 +459,7 @@ async function loadData() {
 
     if (props.id) {
       const purchase = await purchaseService.getById(Number(props.id))
-      form.value = { ...purchase }
+      form.value = { ...purchase, extra_costs: purchase.extra_costs ?? [], correction_note: purchase.correction_note ?? '' }
       // If existing purchase already has an invoice_total, don't auto-overwrite
       if (purchase.invoice_total && parseFloat(String(purchase.invoice_total)) > 0) {
         invoiceManuallyEdited.value = true
@@ -451,12 +493,20 @@ async function handleSubmit() {
     error.value = 'Bitte ein Datum eingeben'
     return
   }
+  if (printedMismatch.value && !(form.value.correction_note || '').trim()) {
+    error.value = `Der Beleg weist ${formatCurrency(parseFloat(String(form.value.invoice_total_printed)))} aus, wir buchen ${formatCurrency(parseFloat(form.value.invoice_total || '0'))}. Bitte die Abweichung unter „Korrekturnotiz“ begründen.`
+    return
+  }
   isLoading.value = true
   error.value = ''
   backdatingWarnings.value = []
 
   // Normalize empty decimal fields to null
   const payload = { ...form.value }
+  if (payload.invoice_total_printed === '' || payload.invoice_total_printed == null) payload.invoice_total_printed = null
+  payload.extra_costs = (payload.extra_costs ?? [])
+    .filter(c => c.label.trim() || parseFloat(c.amount || '0') > 0)
+    .map(c => ({ ...c, label: c.label.trim() || 'Nebenkosten', amount: (parseFloat(c.amount || '0') || 0).toFixed(2) }))
   if (!payload.invoice_total) payload.invoice_total = null as any
   if (!payload.net_amount) payload.net_amount = null as any
   if (!payload.vat_amount) payload.vat_amount = null as any
@@ -523,6 +573,28 @@ onMounted(() => {
       .form-group
         label(for="deposit_returned") Pfand-Rückgabe (€)
         input#deposit_returned(v-model="form.deposit_returned" type="number" step="0.01" min="0" placeholder="0.00")
+
+    h3.section-title Nebenkosten
+    .hint(v-if="!(form.extra_costs ?? []).length") Z.B. Lieferpauschale. Wird als eigener Aufwand gebucht, nicht in den Warenwert eingerechnet.
+    .extra-cost-row(v-for="(cost, cidx) in form.extra_costs" :key="cidx")
+      input(v-model="cost.label" type="text" placeholder="z.B. Lieferpauschale" aria-label="Bezeichnung")
+      input(v-model="cost.amount" type="number" step="0.01" min="0" aria-label="Betrag in Euro")
+      button.btn-remove(type="button" @click="removeExtraCost(cidx)" title="Nebenkosten entfernen") ×
+    button.btn-add(type="button" @click="addExtraCost") + Nebenkosten hinzufügen
+
+    .form-row
+      .form-group
+        label(for="invoice_total_printed") Endbetrag laut Beleg (€)
+        input#invoice_total_printed(v-model="form.invoice_total_printed" type="number" step="0.01" min="0" placeholder="optional")
+        .mismatch-warning(v-if="printedMismatch") ⚠ Beleg weicht um {{ formatCurrency(Math.abs(printedDiff)) }} ab ({{ printedDiff > 0 ? 'Beleg zu niedrig' : 'Beleg zu hoch' }}) — bitte begründen
+      .form-group(v-if="printedMismatch || form.correction_note")
+        label(for="correction_note") Korrekturnotiz
+        textarea#correction_note(v-model="form.correction_note" rows="2" placeholder="z.B. Lieferant hat Pils 24er mit 18,50 statt 185,00 ausgewiesen")
+
+    .scan-warnings(v-if="scanWarnings.length")
+      strong Auffälligkeiten im gescannten Beleg
+      ul
+        li(v-for="w in scanWarnings" :key="w") {{ w }}
 
     .form-row
       .form-group
@@ -1111,6 +1183,22 @@ select.unmatched {
   background: #d35400;
 }
 
+.extra-cost-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 40px;
+  gap: 0.5rem;
+  align-items: stretch;
+  margin-bottom: 0.5rem;
+}
+
+.extra-cost-row input {
+  padding: 0.5rem;
+  border: 0.25rem solid black;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-width: 0;
+}
+
 .btn-add {
   margin-top: 0.75rem;
   padding: 0.5rem 1rem;
@@ -1298,5 +1386,20 @@ select.unmatched {
   font-size: 0.7rem;
   color: #666;
   margin-top: 0.25rem;
+}
+
+.scan-warnings {
+  margin: 0.75rem 0;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  background: #fffbeb;
+  font-size: 0.85rem;
+  color: #92400e;
+}
+
+.scan-warnings ul {
+  margin: 0.3rem 0 0;
+  padding-left: 1.1rem;
 }
 </style>

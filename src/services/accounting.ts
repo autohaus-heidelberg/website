@@ -353,6 +353,8 @@ export const purchaseService = {
     supplier?: string, invoice_number?: string, date?: string,
     invoice_total?: number, net_amount?: number, vat_amount?: number,
     deposit_new?: number, deposit_returned?: number,
+    fees?: { label: string, amount: number, category: string }[],
+    warnings?: string[], unexplained_amount?: number | null,
     drive_upload?: { file_id: string, url: string }
   }> {
     const formData = new FormData()
