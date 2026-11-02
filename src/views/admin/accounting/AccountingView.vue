@@ -33,6 +33,7 @@ import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { splitMode, splitQuantity, joinQuantity, stepMinor, normalizeSplit } from '@/utils/inventoryStep'
 import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice, ENTRANCE_VAT_RATE } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
+import { detectPrePayoutCount, detectCashShortfall } from '@/utils/cashCount'
 import { useAuthStore } from '@/stores/auth'
 import { printInvoiceService, PRINT_INVOICE_SOURCE_LABELS, type PrintInvoice } from '@/services/printInvoices'
 
@@ -1195,7 +1196,16 @@ const dealCalcFrozen = ref<string | null>(null)
 // Abrechnung gespeichert, damit der Rechner nach dem Neuladen gleich aussieht.
 // v-model auf type="number" castet Eingaben zu number — daher string | number.
 const dealCalcChange = ref<string | number>('')
-const dealCalcChangeAmount = computed(() => Number(dealCalcChange.value) || 0)
+
+// Leeres Wechselgeld-Feld folgt dem Wechselgeld der Kassenzählung — passend
+// zur Vorbelegung des Bargeld-Felds, das das Wechselgeld mit enthält.
+const dealCalcChangeDefault = computed(() => {
+  const entry = revenues.value.find(r => r.source === 'entrance_cash')
+  return entry ? parseFloat(entry.change_money || '0') || 0 : 0
+})
+const dealCalcChangeAmount = computed(() =>
+  String(dealCalcChange.value).trim() === '' ? dealCalcChangeDefault.value : Number(dealCalcChange.value) || 0,
+)
 
 // Rechner-Eingabe → Backend-Wert (Dezimal mit 2 Stellen, leer = null).
 function dealCalcToPayload(value: string | number | null): string | null {
@@ -1209,16 +1219,85 @@ const DEAL_CALC_DIGITAL_SOURCES: RevenueSource[] = [
   'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe',
 ]
 
-// Bargeld im Einlass inkl. der daraus schon bezahlten Posten — Vorbelegung
-// des Rechner-Felds.
+// Bargeld im Einlass inkl. Wechselgeld und der daraus schon bezahlten Posten —
+// Vorbelegung des Rechner-Felds. Das Wechselgeld zieht erst das zweite Feld ab.
 const dealCalcCashDefault = computed(() => {
   const entry = revenues.value.find(r => r.source === 'entrance_cash')
   if (!entry) return 0
-  return revenueNet(entry) + expensesFromSource('entrance_cash')
+  return parseFloat(entry.total || '0') - parseFloat(entry.fees || '0') + expensesFromSource('entrance_cash')
 })
 
 const dealCalcCash = computed(() =>
   dealCalcFrozen.value === null ? dealCalcCashDefault.value : (parseFloat(dealCalcFrozen.value) || 0),
+)
+
+// Die Kassenzählung gilt NACH der Auszahlung. Wurde stattdessen der Stand vor
+// der Auszahlung eingetragen (= der beim Buchen eingefrorene Rechnerwert),
+// würde die Gage doppelt gezählt — hier erkennen und Korrektur anbieten.
+const prePayoutCountWarning = computed(() => {
+  const entry = revenues.value.find(r => r.source === 'entrance_cash')
+  if (!entry || dealCalcFrozen.value === null) return null
+  return detectPrePayoutCount({
+    frozenCash: parseFloat(dealCalcFrozen.value) || 0,
+    total: parseFloat(entry.total || '0'),
+    fees: parseFloat(entry.fees || '0'),
+    payouts: expensesFromSource('entrance_cash'),
+  })
+})
+
+function applyPrePayoutCorrection() {
+  const w = prePayoutCountWarning.value
+  if (!w) return
+  getRevenue('entrance_cash').total = w.correctedTotal.toFixed(2)
+}
+
+// Gegenstück: die Kassenzählung stimmt, der Rechnerwert wurde nach der
+// Auszahlung eingetragen — auf den Stand vor der Auszahlung setzen.
+function applyCalcCorrection() {
+  const w = prePayoutCountWarning.value
+  if (!w) return
+  dealCalcFrozen.value = w.correctedFrozen.toFixed(2)
+}
+
+// Nach einer Auszahlung ist der Rechnerwert der Kassenbuch-Snapshot (Referenz
+// der Warnung oben) — Änderungen nur bewusst, nach "Ändern".
+const dealCalcUnlocked = ref(false)
+const dealCalcLocked = computed(() =>
+  dealCalcFrozen.value !== null && expensesFromSource('entrance_cash') > 0 && !dealCalcUnlocked.value,
+)
+
+function cashShortfallText(s: { label: string; payouts: number; available: number; shortfall: number }): string {
+  return `⚠️ Aus der ${s.label} bezahlt: ${formatCurrency(s.payouts)} — verfügbar waren nur ${formatCurrency(s.available)} (Bargeld über dem Wechselgeld). `
+    + `Die Differenz von ${formatCurrency(s.shortfall)} kam aus dem Wechselgeld oder einer anderen Kasse? `
+    + 'Bei Überweisung oder anderer Kasse „Bezahlt aus“ anpassen.'
+}
+
+const dealCalcCashMatchesCount = computed(() =>
+  dealCalcFrozen.value !== null
+  && dealCalcCashDefault.value !== 0
+  && Math.abs(dealCalcCashDefault.value - (parseFloat(dealCalcFrozen.value) || 0)) < 0.005,
+)
+
+// Hinweis (keine Sperre), wenn aus einer Kasse mehr bezahlt wurde, als darin
+// über dem Wechselgeld lag — die Differenz kam dann aus dem Wechselgeld oder
+// einer anderen Kasse. Einlass: Stand vor der Auszahlung = eingefrorener
+// Rechnerwert, sonst die Kassenzählung + Auszahlungen. Bar: nur Kassenzählung.
+const CASH_SHORTFALL_SOURCES = [
+  { source: 'entrance_cash', label: 'Einlasskasse' },
+  { source: 'bar_cash', label: 'Bar-Kasse' },
+] as const
+
+const cashShortfalls = computed(() =>
+  CASH_SHORTFALL_SOURCES.flatMap(({ source, label }) => {
+    const payouts = expensesFromSource(source)
+    const entry = revenues.value.find(r => r.source === source)
+    const counted = entry && parseFloat(entry.total || '0') > 0 ? revenueNet(entry) + payouts : null
+    const availableBefore = source === 'entrance_cash' && dealCalcFrozen.value !== null
+      ? (parseFloat(dealCalcFrozen.value) || 0) - dealCalcChangeAmount.value
+      : counted
+    const hit = detectCashShortfall(payouts, availableBefore)
+    return hit ? [{ source, label, ...hit }] : []
+  }),
 )
 
 // Digitale Eintrittseinnahmen (Pretix VVK + PayPal-/SumUp-Einlass) — liegen
@@ -2702,6 +2781,17 @@ function clearPendingNumberSelect() {
 </script>
 
 <template lang="pug">
+//- Warnblöcke, die an mehreren Stellen (Kassenzählung, Gagen, Ergebnis) erscheinen.
+mixin prePayoutBox
+  .pre-payout-warning(v-if="prePayoutCountWarning")
+    p ⚠️ Kassenzählung und Rechner zeigen denselben Stand ({{ formatCurrency(prePayoutCountWarning.countedCash) }} Bargeld inkl. Wechselgeld), obwohl {{ formatCurrency(prePayoutCountWarning.payouts) }} aus der Einlasskasse ausgezahlt wurden. Entweder wurde die Kassenzählung <strong>vor</strong> der Auszahlung eingetragen (danach sollten {{ formatCurrency(prePayoutCountWarning.correctedTotal) }} in der Kasse liegen) oder der Rechnerwert <strong>nach</strong> der Auszahlung (dort gehört der Stand davor hin: {{ formatCurrency(prePayoutCountWarning.correctedFrozen) }}). Sonst wird die Gage doppelt gezählt.
+    .pre-payout-actions
+      button.btn-add-sm.btn-add-primary(type="button" @click="applyPrePayoutCorrection") Kassenzählung auf {{ formatCurrency(prePayoutCountWarning.correctedTotal) }} korrigieren
+      button.btn-add-sm.btn-add-ghost(type="button" @click="applyCalcCorrection") Rechnerwert auf {{ formatCurrency(prePayoutCountWarning.correctedFrozen) }} setzen
+
+mixin shortfallBoxes
+  .cash-shortfall-hint(v-for="s in cashShortfalls" :key="'short-' + s.source") {{ cashShortfallText(s) }}
+
 .accounting-view(@focusin="selectNumberOnFocus" @mouseup="keepNumberSelection" @click="selectNumberOnClick" @focusout="clearPendingNumberSelect")
   .loading(v-if="isLoading") Abrechnung wird geladen...
   template(v-else-if="accounting")
@@ -2803,6 +2893,7 @@ function clearPendingNumberSelect() {
       .section(v-for="group in REVENUE_GROUPS" :key="group.label")
         .section-title-row
           h3.section-title {{ group.label }}
+        p.revenue-hint(v-if="group.label === 'Eintritt'") 💡 Bei „Einlass (Bargeld)“ den Betrag eintragen, der <strong>nach</strong> der Auszahlung der Gagen in der Kasse liegt (z. B. beim Nachzählen zu Hause). Den Stand vor der Auszahlung bitte nur im Rechner unter „Gagen &amp; Ausgaben“ eintragen.
         .revenue-table
           .revenue-header
             .col-source Quelle
@@ -2843,6 +2934,10 @@ function clearPendingNumberSelect() {
                     placeholder="0.00"
                   )
               .col-amount.col-computed(data-label="Brutto") {{ formatCurrency(revenueNet(getRevenue(source))) }}
+            template(v-for="s in cashShortfalls.filter(x => x.source === source)" :key="'short-' + s.source")
+              .cash-shortfall-hint {{ cashShortfallText(s) }}
+            template(v-if="source === 'entrance_cash' && prePayoutCountWarning")
+              +prePayoutBox
             template(v-if="source === 'vvk_pretix' && pretixData")
               .revenue-row.sub-row.expandable(@click="toggleSourceExpanded('pretix')")
                 .col-source.sub-source {{ expandedSources.has('pretix') ? '▾' : '▸' }} {{ Object.keys(pretixData.by_source).length }} Zahlungsquellen
@@ -2918,53 +3013,53 @@ function clearPendingNumberSelect() {
           h3.section-title Zusammenfassung
         .summary-list
           .summary-line.summary-expandable(@click="toggleSourceExpanded('beverage_detail')")
-            span.summary-label {{ expandedSources.has('beverage_detail') ? '▾' : '▸' }} Getränkeverkauf
-            span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[0].sources)) }}
+            span.summary-label {{ expandedSources.has('beverage_detail') ? '▾' : '▸' }} Getränke
+            span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources)) }}
           template(v-if="expandedSources.has('beverage_detail')")
             .summary-line.summary-sub
-              span.summary-label Gezählt (Kasse, brutto)
+              span.summary-label Gezählt (Kasse)
               span.summary-value {{ formatCurrency(groupRevenue(cashSourcesOf(REVENUE_GROUPS[0].sources))) }}
-            .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
-              span.summary-label + Aus Kasse bezahlt
-              span.summary-value + {{ formatCurrency(expensesFromSource('bar_cash')) }}
             .summary-line.summary-sub(v-if="groupRevenue(digitalSourcesOf(REVENUE_GROUPS[0].sources)) > 0")
               span.summary-label + Digital (PayPal/SumUp)
               span.summary-value + {{ formatCurrency(groupRevenue(digitalSourcesOf(REVENUE_GROUPS[0].sources))) }}
+            .summary-line.summary-sub(v-if="expensesFromSource('bar_cash') > 0")
+              span.summary-label + Aus Kasse bezahlt
+              span.summary-value + {{ formatCurrency(expensesFromSource('bar_cash')) }}
             .summary-line.summary-sub.summary-highlight
-              span.summary-label = Getränke brutto
+              span.summary-label = Einnahmen brutto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources)) }}
             .summary-line.summary-sub
-              span.summary-label davon USt (19%)
+              span.summary-label davon USt (19 %)
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources) - groupRevenueGross(REVENUE_GROUPS[0].sources) / 1.19) }}
             .summary-line.summary-sub
-              span.summary-label Netto (abzgl. 19% USt)
+              span.summary-label = Einnahmen netto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources) / 1.19) }}
           .summary-line.summary-expandable(@click="toggleSourceExpanded('entrance_detail')")
             span.summary-label {{ expandedSources.has('entrance_detail') ? '▾' : '▸' }} Eintritt
-            span.summary-value {{ formatCurrency(groupRevenue(REVENUE_GROUPS[1].sources)) }}
+            span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources)) }}
           template(v-if="expandedSources.has('entrance_detail')")
             .summary-line.summary-sub
-              span.summary-label Gezählt (Kasse, brutto)
+              span.summary-label Gezählt (Kasse)
               span.summary-value {{ formatCurrency(groupRevenue(cashSourcesOf(REVENUE_GROUPS[1].sources))) }}
-            .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
-              span.summary-label + Aus Kasse bezahlt (z.B. Honorare)
-              span.summary-value + {{ formatCurrency(expensesFromSource('entrance_cash')) }}
             .summary-line.summary-sub(v-if="groupRevenue(digitalSourcesOf(REVENUE_GROUPS[1].sources)) > 0")
               span.summary-label + Digital (PayPal/SumUp/VVK)
               span.summary-value + {{ formatCurrency(groupRevenue(digitalSourcesOf(REVENUE_GROUPS[1].sources))) }}
+            .summary-line.summary-sub(v-if="expensesFromSource('entrance_cash') > 0")
+              span.summary-label + Aus Kasse bezahlt
+              span.summary-value + {{ formatCurrency(expensesFromSource('entrance_cash')) }}
             .summary-line.summary-sub.summary-highlight
-              span.summary-label = Eintritt brutto
+              span.summary-label = Einnahmen brutto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources)) }}
             .summary-line.summary-sub
-              span.summary-label davon USt (7%)
+              span.summary-label davon USt (7 %)
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources) - groupRevenueGross(REVENUE_GROUPS[1].sources) / 1.07) }}
             .summary-line.summary-sub
-              span.summary-label Netto (abzgl. 7% USt)
+              span.summary-label = Einnahmen netto
               span.summary-value {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources) / 1.07) }}
             .summary-hint(v-if="entranceVisitorEstimate") Entspricht ca. {{ entranceVisitorEstimate }} Besuchern (basierend auf VVK-/AK-Preis)
           .summary-line.summary-total
-            span.summary-label Gesamteinnahmen (gezählt)
-            span.summary-value {{ formatCurrency(totalRevenue) }}
+            span.summary-label Gesamteinnahmen (brutto)
+            span.summary-value {{ formatCurrency(adjustedRevenue) }}
 
     //- ── Inventory Tab ──
     .tab-content(v-if="activeTab === 'inventory'")
@@ -3325,22 +3420,34 @@ function clearPendingNumberSelect() {
               input#deal-calc-base.amount-input(
                 type="number" step="0.01" min="0"
                 :value="dealCalcFrozen ?? dealCalcCashDefault.toFixed(2)"
+                :disabled="dealCalcLocked"
                 @input="setDealCalcBase"
               )
               span €
-          .deal-calc-fetch(v-if="dealCalcFrozen !== null && dealCalcCashDefault !== 0")
+          .deal-calc-fetch(v-if="dealCalcLocked")
+            span.deal-calc-source-hint 🔒 Stand vor der Auszahlung – beim Buchen eingefroren
+            button.btn-fetch-digital(type="button" @click="dealCalcUnlocked = true") Ändern
+          span.deal-calc-source-hint(v-else-if="dealCalcUnlocked && expensesFromSource('entrance_cash') > 0") Nur ändern, wenn vor der Auszahlung falsch gezählt wurde.
+          //- Nach einer Auszahlung ist der eingefrorene Wert der Stand VOR der
+          //- Auszahlung und Referenz der Vor-Auszahlung-Warnung. Den Button hier
+          //- auszublenden verhindert, dass er gelöscht und die Zählung unbemerkt
+          //- in die Gagen-Basis übernommen wird.
+          .deal-calc-fetch(v-if="dealCalcFrozen !== null && dealCalcCashDefault !== 0 && !dealCalcCashMatchesCount && expensesFromSource('entrance_cash') <= 0")
             button.btn-fetch-digital(
               type="button"
               @click="dealCalcFrozen = null"
-            ) Wert aus Kassenzählung übernehmen
+            ) Wert aus Kassenzählung übernehmen ({{ formatCurrency(dealCalcCashDefault) }})
+            span.deal-calc-fetch-hint Kassenzählung weicht vom Rechnerwert ab
+          span.deal-calc-source-hint(v-if="dealCalcCashMatchesCount") ✓ stimmt mit der Kassenzählung überein
           span.deal-calc-source-hint(v-if="dealCalcFrozen === null && dealCalcCashDefault !== 0") aus Kassenzählung vorausgefüllt
+          +prePayoutBox
           .deal-calc-line.deal-calc-change-row
             label.deal-calc-label(for="deal-calc-change") − Wechselgeld zurückbehalten
             .amount-wrap
               input#deal-calc-change.amount-input(
                 type="number" step="0.01" min="0"
                 v-model="dealCalcChange"
-                placeholder="0,00"
+                :placeholder="dealCalcChangeDefault.toFixed(2)"
               )
               span €
           .deal-calc-line.deal-calc-digital(v-if="dealCalcDigital > 0")
@@ -3452,6 +3559,7 @@ function clearPendingNumberSelect() {
         .group-total
           span Gagen gesamt:
           strong {{ formatCurrency(totalGageExpenses) }}
+        +shortfallBoxes
 
       //- == Weitere Ausgaben ==
       .section
@@ -3632,6 +3740,10 @@ function clearPendingNumberSelect() {
     //- ── Result Tab ──
     .tab-content(v-if="activeTab === 'result'")
 
+      //- Hinweise gehören auch hierher: im Ergebnis laufen alle Zahlen zusammen.
+      +prePayoutBox
+      +shortfallBoxes
+
       //- ═══ A) Ergebnis-Tabelle (Read-Only) ══════════════════════
       .section
         .section-title-row
@@ -3646,21 +3758,21 @@ function clearPendingNumberSelect() {
             template(v-for="group in REVENUE_GROUPS" :key="group.label")
               .summary-row.summary-detail.summary-group-subtotal(v-if="groupRevenue(group.sources) !== 0")
                 span.summary-label
-                  | {{ group.sources[0].startsWith('bar_') ? 'Bar' : 'Einlass' }}
+                  | {{ group.label }}
                   span.summary-inline-hint(v-if="group.sources[0].startsWith('bar_') && authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)") (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
                 span.summary-value {{ formatCurrency(groupRevenue(group.sources)) }}
               .summary-row.summary-detail.summary-detail-nested(v-for="rev in revenues.filter(r => group.sources.includes(r.source))" :key="rev.source" v-show="revenueNet(rev) !== 0")
                 span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
                 span.summary-value {{ formatCurrency(revenueNet(rev)) }}
             .summary-row.summary-detail.summary-subtotal-minor(v-if="expensesPaidFromRegister === 0")
-              span.summary-label = Gezählte Einnahmen
+              span.summary-label = Gezählt + Digital
               span.summary-value {{ formatCurrency(totalRevenue) }}
             template(v-if="expensesPaidFromRegister > 0")
               .summary-row.summary-detail.summary-subtotal-minor
-                span.summary-label = Gezählte Einnahmen
+                span.summary-label = Gezählt + Digital
                 span.summary-value {{ formatCurrency(totalRevenue) }}
               .summary-row.summary-detail.summary-expandable(@click.stop="resultExpandCashExpenses = !resultExpandCashExpenses")
-                span.summary-label {{ resultExpandCashExpenses ? '▼' : '▶' }} + Aus Kassen bezahlte Ausgaben
+                span.summary-label {{ resultExpandCashExpenses ? '▼' : '▶' }} + Aus Kasse bezahlt
                 span.summary-value {{ formatCurrency(expensesPaidFromRegister) }}
               template(v-if="resultExpandCashExpenses")
                 template(v-if="expensesFromSource('entrance_cash') > 0")
@@ -3678,7 +3790,7 @@ function clearPendingNumberSelect() {
                     span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
                     span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
               .summary-row.summary-detail.summary-subtotal-minor
-                span.summary-label = Tatsächliche Einnahmen
+                span.summary-label = Einnahmen brutto
                 span.summary-value {{ formatCurrency(adjustedRevenue) }}
 
           //- Wareneinsatz
@@ -3717,10 +3829,10 @@ function clearPendingNumberSelect() {
               span.summary-value −{{ formatCurrency(vatLiability) }}
             template(v-if="resultExpandVat")
               .summary-row.summary-detail(v-if="vat7Entrance !== 0")
-                span.summary-label Output-USt (7% Eintritt)
+                span.summary-label USt Eintritt (7 %)
                 span.summary-value {{ formatCurrency(vat7Entrance) }}
               .summary-row.summary-detail(v-if="vat19Bar !== 0")
-                span.summary-label Output-USt (19% Getränke)
+                span.summary-label USt Getränke (19 %)
                 span.summary-value {{ formatCurrency(vat19Bar) }}
               .summary-row.summary-detail(v-if="vatInput !== 0")
                 span.summary-label − Vorsteuer
@@ -4358,6 +4470,51 @@ h2 {
   font-size: 0.8em;
   opacity: 0.6;
   padding: 0 0.1rem;
+}
+
+.pre-payout-warning {
+  border: 2px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.pre-payout-warning p {
+  margin: 0 0 0.4rem;
+}
+
+.pre-payout-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pre-payout-actions .btn-add-sm {
+  /* Die globale Sperrschrift bläht die Buttons sonst auf die volle Breite auf. */
+  letter-spacing: normal;
+  padding: 0.3rem 0.6rem;
+}
+
+.cash-shortfall-hint {
+  background: #fffbeb;
+  border-left: 0.25rem solid #f59e0b;
+  color: #92400e;
+  padding: 0.5rem 0.75rem;
+  margin: 0.5rem 1rem;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.revenue-hint {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-left: 0.25rem solid black;
+  border-right: 0.25rem solid black;
+  font-size: 0.8rem;
+  color: #666;
 }
 
 .deal-calc .amount-wrap {

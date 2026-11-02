@@ -90,7 +90,7 @@ export const REVENUE_VAT_RATE_DEFAULTS: Partial<Record<RevenueSource, VatRate>> 
 }
 
 export const REVENUE_GROUPS: { label: string; sources: RevenueSource[] }[] = [
-  { label: 'Getränkeverkauf', sources: ['bar_cash', 'bar_paypal', 'bar_sumup'] },
+  { label: 'Getränke', sources: ['bar_cash', 'bar_paypal', 'bar_sumup'] },
   { label: 'Eintritt', sources: ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix'] },
 ]
 

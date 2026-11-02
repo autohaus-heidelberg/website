@@ -130,6 +130,12 @@ Einnahmen werden nach **Quelle** erfasst:
 - **Wechselgeld (change_money)** – Muss abgezogen werden (war schon in der Kasse)
 - **Gebühren (fees)** – PayPal/Stripe/SumUp-Gebühren
 
+**Bargeld nach der Auszahlung eintragen:** Bei `entrance_cash`/`bar_cash` steht der Betrag, der **nach** dem Auszahlen von Gagen und anderen Kassenausgaben in der Kasse liegt. Bezahlt-aus-Ausgaben werden in Zusammenfassung, Ergebnis und Steuer-Export wieder aufaddiert. Den Stand **vor** der Auszahlung trägt man nur im Gagen-Rechner (Tab „Gagen & Ausgaben") ein: im ersten Feld das ganze Bargeld inkl. Wechselgeld, im zweiten das Wechselgeld (leer = Wechselgeld aus der Kassenzählung). Der Rechner friert diesen Wert beim Buchen der ersten Gage ein und sperrt das Feld, sobald aus der Einlasskasse gezahlt wurde („Ändern" hebt die Sperre bewusst auf).
+
+**Hinweise der Abrechnung** (keine Sperren, in Kassenzählung, Gagen und Ergebnis):
+- *Kassenzählung und Rechner zeigen denselben Stand, obwohl ausgezahlt wurde* – einer der beiden Werte wurde zum falschen Zeitpunkt eingetragen, die Auszahlung würde doppelt gezählt. Zwei Buttons korrigieren Kassenzählung oder Rechnerwert.
+- *Aus der Kasse mehr bezahlt als darin (über dem Wechselgeld) lag* – die Differenz kam aus dem Wechselgeld oder einer anderen Kasse; bei Überweisung „Bezahlt aus" anpassen.
+
 **Externe Daten:**
 - **Pretix-VVK**: Wird automatisch über die Pretix-API abgefragt (Ticketverkäufe + Stripe/PayPal-Gebühren)
 - **PayPal Bar**: PayPal-Transaktionen für Bar- und Eintritts-Zahlungen werden automatisch zugeordnet
