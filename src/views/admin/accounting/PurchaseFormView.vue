@@ -251,16 +251,13 @@ function formatQty(val: number | string): string {
   return isNaN(n) ? '0' : n.toLocaleString('de-DE', { maximumFractionDigits: 0 })
 }
 
-const computedTotal = computed(() => {
-  const total = (form.value.items ?? [])
-    .reduce((sum, item) => sum + parseFloat(item.total_price || '0'), 0)
-  return formatCurrency(total)
-})
-
 const rawTotal = computed(() => {
   return (form.value.items ?? [])
     .reduce((sum, item) => sum + parseFloat(item.total_price || '0'), 0)
 })
+
+const depositNewAmount = computed(() => parseFloat(form.value.deposit_new || '0') || 0)
+const depositReturnedAmount = computed(() => parseFloat(form.value.deposit_returned || '0') || 0)
 
 const feesTotal = computed(() =>
   (form.value.extra_costs ?? []).reduce((sum, c) => sum + (parseFloat(c.amount || '0') || 0), 0)
@@ -308,32 +305,6 @@ watch([rawTotal, feesTotal, () => form.value.deposit_new, () => form.value.depos
     form.value.invoice_total = expectedInvoiceTotal.value.toFixed(2)
   }
 })
-
-// Keep breakdown line live in notes
-const BREAKDOWN_MARKER = '📋 '
-
-function buildBreakdownLine(): string {
-  if (rawTotal.value <= 0) return ''
-  const depositNew = parseFloat(form.value.deposit_new || '0')
-  const depositReturned = parseFloat(form.value.deposit_returned || '0')
-  const total = expectedInvoiceTotal.value
-  let line = `${formatCurrency(rawTotal.value)} Positionen`
-  if (depositNew > 0) line += ` + ${formatCurrency(depositNew)} Pfand`
-  for (const cost of (form.value.extra_costs ?? [])) {
-    const amount = parseFloat(cost.amount || '0')
-    if (amount > 0) line += ` + ${formatCurrency(amount)} ${cost.label || 'Nebenkosten'}`
-  }
-  if (depositReturned > 0) line += ` − ${formatCurrency(depositReturned)} Rückgabe`
-  line += ` = ${formatCurrency(total)}`
-  return `${BREAKDOWN_MARKER}${line}`
-}
-
-watch([rawTotal, feesTotal, () => form.value.deposit_new, () => form.value.deposit_returned], () => {
-  const line = buildBreakdownLine()
-  const notes = form.value.notes || ''
-  const withoutOld = notes.replace(/\n?📋 .+/, '').trimEnd()
-  form.value.notes = line ? (withoutOld ? `${withoutOld}\n${line}` : line) : withoutOld
-}, { flush: 'post' })
 
 // Per-row crate/loose state (not sent to API, only for UI)
 const itemCrates = ref<number[]>([])
@@ -459,7 +430,14 @@ async function loadData() {
 
     if (props.id) {
       const purchase = await purchaseService.getById(Number(props.id))
-      form.value = { ...purchase, extra_costs: purchase.extra_costs ?? [], correction_note: purchase.correction_note ?? '' }
+      form.value = {
+        ...purchase,
+        extra_costs: purchase.extra_costs ?? [],
+        correction_note: purchase.correction_note ?? '',
+        // Frühere Versionen schrieben die Rechnung automatisch als 📋-Zeile in die
+        // Notizen; der Abrechnungs-Kasten ersetzt sie.
+        notes: (purchase.notes ?? '').replace(/\n?📋 .+/, '').trim(),
+      }
       // If existing purchase already has an invoice_total, don't auto-overwrite
       if (purchase.invoice_total && parseFloat(String(purchase.invoice_total)) > 0) {
         invoiceManuallyEdited.value = true
@@ -544,6 +522,19 @@ onMounted(() => {
   .error-msg(v-if="error") {{ error }}
 
   form.purchase-form(@submit.prevent="handleSubmit")
+    .scan-area
+      label.btn-scan(:class="{ scanning: isScanning }")
+        input(type="file" accept="image/*" @change="scanReceipt" hidden)
+        | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
+      span.scan-hint Foto vom Bon → KI füllt die Positionen aus
+      a.receipt-link(v-if="form.receipt_drive_url" :href="form.receipt_drive_url" target="_blank") 📄 Beleg ansehen
+    .error-msg(v-if="scanError") {{ scanError }}
+    .scan-warnings(v-if="scanWarnings.length")
+      strong Auffälligkeiten im gescannten Beleg
+      ul
+        li(v-for="w in scanWarnings" :key="w") {{ w }}
+
+    h3.section-title Beleg
     .form-row
       .form-group
         label(for="date") Datum
@@ -555,68 +546,11 @@ onMounted(() => {
         label(for="invoice_number") Rechnungsnr.
         input#invoice_number(v-model="form.invoice_number" type="text")
 
-    .form-row
-      .form-group
-        label(for="invoice_total") Rechnungsbetrag (€)
-        input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0" @input="onInvoiceTotalInput")
-      .form-group
-        label(for="net_amount") Netto (€)
-        input#net_amount(v-model="form.net_amount" type="number" step="0.01" min="0" placeholder="optional")
-      .form-group
-        label(for="vat_amount") USt-Betrag (€)
-        input#vat_amount(v-model="form.vat_amount" type="number" step="0.01" min="0" placeholder="optional")
-
-    .form-row
-      .form-group
-        label(for="deposit_new") Pfand neu (€)
-        input#deposit_new(v-model="form.deposit_new" type="number" step="0.01" min="0" placeholder="0.00")
-      .form-group
-        label(for="deposit_returned") Pfand-Rückgabe (€)
-        input#deposit_returned(v-model="form.deposit_returned" type="number" step="0.01" min="0" placeholder="0.00")
-
-    h3.section-title Nebenkosten
-    .hint(v-if="!(form.extra_costs ?? []).length") Z.B. Lieferpauschale. Wird als eigener Aufwand gebucht, nicht in den Warenwert eingerechnet.
-    .extra-cost-row(v-for="(cost, cidx) in form.extra_costs" :key="cidx")
-      input(v-model="cost.label" type="text" placeholder="z.B. Lieferpauschale" aria-label="Bezeichnung")
-      input(v-model="cost.amount" type="number" step="0.01" min="0" aria-label="Betrag in Euro")
-      button.btn-remove(type="button" @click="removeExtraCost(cidx)" title="Nebenkosten entfernen") ×
-    button.btn-add(type="button" @click="addExtraCost") + Nebenkosten hinzufügen
-
-    .form-row
-      .form-group
-        label(for="invoice_total_printed") Endbetrag laut Beleg (€)
-        input#invoice_total_printed(v-model="form.invoice_total_printed" type="number" step="0.01" min="0" placeholder="optional")
-        .mismatch-warning(v-if="printedMismatch") ⚠ Beleg weicht um {{ formatCurrency(Math.abs(printedDiff)) }} ab ({{ printedDiff > 0 ? 'Beleg zu niedrig' : 'Beleg zu hoch' }}) — bitte begründen
-      .form-group(v-if="printedMismatch || form.correction_note")
-        label(for="correction_note") Korrekturnotiz
-        textarea#correction_note(v-model="form.correction_note" rows="2" placeholder="z.B. Lieferant hat Pils 24er mit 18,50 statt 185,00 ausgewiesen")
-
-    .scan-warnings(v-if="scanWarnings.length")
-      strong Auffälligkeiten im gescannten Beleg
-      ul
-        li(v-for="w in scanWarnings" :key="w") {{ w }}
-
-    .form-row
-      .form-group
-        label Berechnete Summe
-        .computed-total {{ computedTotal }}
-        .mismatch-warning(v-if="invoiceMismatch") ⚠ Weicht vom Rechnungsbetrag ab
-      .form-group
-        label(for="notes") Notizen
-        textarea#notes(v-model="form.notes" rows="3")
-
     .section-title-row
       h3.section-title Positionen
       label.correction-toggle(:title="'Erlaubt bei Kistengetränken zusätzlich Einzelflaschen-Eingaben. Nur für Bestandskorrektur / Anfangsbestand verwenden — Großhändler verkaufen keine einzelnen Flaschen.'")
         input(type="checkbox" v-model="inventoryCorrectionMode" @change="recalcAllItems")
         span 📦 Bestandskorrektur (Flaschen erlaubt)
-    .scan-area
-      label.btn-scan(:class="{ scanning: isScanning }")
-        input(type="file" accept="image/*" @change="scanReceipt" hidden)
-        | {{ isScanning ? '⏳ Wird analysiert...' : '📷 Bon scannen' }}
-      span.scan-hint Foto vom Bon → KI füllt die Positionen aus
-      a.receipt-link(v-if="form.receipt_drive_url" :href="form.receipt_drive_url" target="_blank") 📄 Beleg ansehen
-    .error-msg(v-if="scanError") {{ scanError }}
     .items-header
       span.col-bev Getränk
       span.col-crates Kisten
@@ -710,6 +644,64 @@ onMounted(() => {
         .dialog-actions
           button.btn-save(type="button" @click="saveNewBeverage") Anlegen
           button.btn-cancel-dialog(type="button" @click="showNewBeverage = false") Abbrechen
+
+    h3.section-title Pfand &amp; Nebenkosten
+    .form-row
+      .form-group
+        label(for="deposit_new") Pfand neu (€)
+        input#deposit_new(v-model="form.deposit_new" type="number" step="0.01" min="0" placeholder="0.00")
+      .form-group
+        label(for="deposit_returned") Pfand-Rückgabe (€)
+        input#deposit_returned(v-model="form.deposit_returned" type="number" step="0.01" min="0" placeholder="0.00")
+
+    .sub-label Nebenkosten
+    .hint(v-if="!(form.extra_costs ?? []).length") Z.B. Lieferpauschale. Wird als eigener Aufwand gebucht, nicht in den Warenwert eingerechnet.
+    .extra-cost-row(v-for="(cost, cidx) in form.extra_costs" :key="cidx")
+      input(v-model="cost.label" type="text" placeholder="z.B. Lieferpauschale" aria-label="Bezeichnung")
+      input(v-model="cost.amount" type="number" step="0.01" min="0" aria-label="Betrag in Euro")
+      button.btn-remove(type="button" @click="removeExtraCost(cidx)" title="Nebenkosten entfernen") ×
+    button.btn-add(type="button" @click="addExtraCost") + Nebenkosten hinzufügen
+
+    .calc-box
+      h3.section-title Abrechnung
+      .calc-line
+        span Positionen
+        span.calc-amount {{ formatCurrency(rawTotal) }}
+      .calc-line(v-if="depositNewAmount > 0")
+        span + Pfand neu
+        span.calc-amount {{ formatCurrency(depositNewAmount) }}
+      .calc-line(v-for="(cost, cidx) in form.extra_costs" :key="'calc-' + cidx")
+        span + {{ cost.label || 'Nebenkosten' }}
+        span.calc-amount {{ formatCurrency(parseFloat(cost.amount || '0') || 0) }}
+      .calc-line(v-if="depositReturnedAmount > 0")
+        span − Pfand-Rückgabe
+        span.calc-amount {{ formatCurrency(depositReturnedAmount) }}
+      .calc-line.calc-result
+        label(for="invoice_total") = Rechnungsbetrag (€)
+        input#invoice_total(v-model="form.invoice_total" type="number" step="0.01" min="0" @input="onInvoiceTotalInput")
+      .mismatch-warning(v-if="invoiceMismatch") ⚠ Weicht von der Berechnung ({{ formatCurrency(expectedInvoiceTotal) }}) ab
+      .calc-printed
+        .form-group
+          label(for="invoice_total_printed") Endbetrag laut Beleg (€)
+          input#invoice_total_printed(v-model="form.invoice_total_printed" type="number" step="0.01" min="0" placeholder="optional")
+          .mismatch-warning(v-if="printedMismatch") ⚠ Beleg weicht um {{ formatCurrency(Math.abs(printedDiff)) }} ab ({{ printedDiff > 0 ? 'Beleg zu niedrig' : 'Beleg zu hoch' }}) — bitte begründen
+        .form-group(v-if="printedMismatch || form.correction_note")
+          label(for="correction_note") Korrekturnotiz
+          textarea#correction_note(v-model="form.correction_note" rows="2" placeholder="z.B. Lieferant hat Pils 24er mit 18,50 statt 185,00 ausgewiesen")
+
+    details.tax-details(:open="!!form.net_amount || !!form.vat_amount")
+      summary Steuerangaben (optional)
+      .form-row
+        .form-group
+          label(for="net_amount") Netto (€)
+          input#net_amount(v-model="form.net_amount" type="number" step="0.01" min="0" placeholder="optional")
+        .form-group
+          label(for="vat_amount") USt-Betrag (€)
+          input#vat_amount(v-model="form.vat_amount" type="number" step="0.01" min="0" placeholder="optional")
+
+    .form-group.notes-group
+      label(for="notes") Notizen
+      textarea#notes(v-model="form.notes" rows="3")
 
     .form-actions
       button.btn-save(type="submit" :disabled="isLoading")
@@ -860,9 +852,10 @@ h2 {
 
 .section-title-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   margin: 2rem 0 1rem;
   border-bottom: 0.25rem solid black;
   padding-bottom: 0.5rem;
@@ -875,6 +868,8 @@ h2 {
 }
 
 .correction-toggle {
+  max-width: 100%;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -1183,9 +1178,95 @@ select.unmatched {
   background: #d35400;
 }
 
+.sub-label {
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.375rem;
+}
+
+.calc-box {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 0.25rem solid black;
+  background: #f5f5f5;
+}
+
+.calc-box .section-title {
+  margin-top: 0;
+}
+
+.calc-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.25rem 0;
+  font-weight: 600;
+  text-align: left;
+}
+
+.calc-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.calc-result {
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 0.2rem solid black;
+}
+
+.calc-result label {
+  flex: 1 1 8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+.calc-result input {
+  box-sizing: border-box;
+  flex: 0 1 9rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem;
+  border: 0.25rem solid black;
+  font-size: 1rem;
+  font-weight: 900;
+  text-align: right;
+}
+
+.calc-printed {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 0.1rem dashed #888;
+}
+
+.tax-details {
+  margin-bottom: 1.5rem;
+}
+
+.tax-details summary {
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+}
+
+.notes-group {
+  margin-bottom: 1.5rem;
+}
+
 .extra-cost-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 40px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(5.5rem, 1fr) 40px;
   gap: 0.5rem;
   align-items: stretch;
   margin-bottom: 0.5rem;
