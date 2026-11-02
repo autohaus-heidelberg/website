@@ -1197,17 +1197,16 @@ const dealCalcFrozen = ref<string | null>(null)
 // v-model auf type="number" castet Eingaben zu number — daher string | number.
 const dealCalcChange = ref<string | number>('')
 
-// Leeres Wechselgeld-Feld folgt nur dann dem Wechselgeld der Kassenzählung,
-// wenn auch das Bargeld-Feld daraus vorbelegt ist (inkl. Wechselgeld). Bei
-// einem eingetragenen Bargeld-Wert heißt leer 0 — ältere Werte enthalten das
-// Wechselgeld oft schon nicht mehr.
+// Solange dealCalcFrozen null ist, folgt der Rechner der Kassenzählung: Feld 1
+// zeigt das Bargeld inkl. Wechselgeld, Feld 2 deren Wechselgeld. Sobald ein
+// Feld bearbeitet oder eine Gage gebucht wird, übernimmt freezeDealCalc()
+// beide Werte — danach gelten nur die eigenen Werte (leeres Feld 2 = 0).
 const dealCalcChangeDefault = computed(() => {
-  if (dealCalcFrozen.value !== null) return 0
   const entry = revenues.value.find(r => r.source === 'entrance_cash')
   return entry ? parseFloat(entry.change_money || '0') || 0 : 0
 })
 const dealCalcChangeAmount = computed(() =>
-  String(dealCalcChange.value).trim() === '' ? dealCalcChangeDefault.value : Number(dealCalcChange.value) || 0,
+  dealCalcFrozen.value === null ? dealCalcChangeDefault.value : Number(dealCalcChange.value) || 0,
 )
 
 // Rechner-Eingabe → Backend-Wert (Dezimal mit 2 Stellen, leer = null).
@@ -1233,6 +1232,12 @@ const dealCalcCashDefault = computed(() => {
 const dealCalcCash = computed(() =>
   dealCalcFrozen.value === null ? dealCalcCashDefault.value : (parseFloat(dealCalcFrozen.value) || 0),
 )
+
+function freezeDealCalc() {
+  if (dealCalcFrozen.value !== null) return
+  dealCalcFrozen.value = dealCalcCashDefault.value.toFixed(2)
+  dealCalcChange.value = dealCalcChangeDefault.value.toFixed(2)
+}
 
 // Die Kassenzählung gilt NACH der Auszahlung. Wurde stattdessen der Stand vor
 // der Auszahlung eingetragen (= der beim Buchen eingefrorene Rechnerwert),
@@ -1263,13 +1268,6 @@ function applyCalcCorrection() {
   if (!w) return
   dealCalcFrozen.value = w.correctedFrozen.toFixed(2)
 }
-
-// Nach einer Auszahlung ist der Rechnerwert der Kassenbuch-Snapshot (Referenz
-// der Warnung oben) — Änderungen nur bewusst, nach "Ändern".
-const dealCalcUnlocked = ref(false)
-const dealCalcLocked = computed(() =>
-  dealCalcFrozen.value !== null && expensesFromSource('entrance_cash') > 0 && !dealCalcUnlocked.value,
-)
 
 function cashShortfallText(s: { label: string; payouts: number; available: number; shortfall: number }): string {
   return `⚠️ Aus der ${s.label} bezahlt: ${formatCurrency(s.payouts)} — verfügbar waren nur ${formatCurrency(s.available)} (Bargeld über dem Wechselgeld). `
@@ -1337,15 +1335,15 @@ const dealCalcBase = computed(() => dealCalcSubtotal.value / (1 + ENTRANCE_VAT_R
 
 function setDealCalcBase(e: globalThis.Event) {
   const val = (e.target as HTMLInputElement).value
-  // Vorbelegtes Wechselgeld festhalten, bevor das leere Feld mit dem eigenen
-  // Bargeld-Wert auf 0 zurückfällt.
-  if (dealCalcFrozen.value === null && String(dealCalcChange.value).trim() === '') {
-    dealCalcChange.value = dealCalcChangeDefault.value.toFixed(2)
-  }
-  // Wer im offenen Feld zu tippen beginnt, darf weitertippen — die Sperre
-  // greift sonst schon nach der ersten Ziffer (Auszahlung existiert bereits).
-  if (dealCalcFrozen.value === null) dealCalcUnlocked.value = true
+  freezeDealCalc()
+  // Leeres Feld = wieder der Kassenzählung folgen (beide Felder).
   dealCalcFrozen.value = val === '' ? null : val
+}
+
+function setDealCalcChange(e: globalThis.Event) {
+  const val = (e.target as HTMLInputElement).value
+  freezeDealCalc()
+  dealCalcChange.value = val
 }
 
 function dealLabelFor(
@@ -1431,11 +1429,7 @@ const bandNamesInExternalSplit = computed(() =>
 function applyExpenseRow(row: BandDealRow) {
   // Rechner-Basis festhalten, bevor die gebuchte Gage über die
   // Kassen-Rückrechnung in sie zurückfließt.
-  if (dealCalcFrozen.value === null) {
-    // Wechselgeld mit einfrieren, sonst fiele es danach auf 0 zurück.
-    if (String(dealCalcChange.value).trim() === '') dealCalcChange.value = dealCalcChangeDefault.value.toFixed(2)
-    dealCalcFrozen.value = dealCalcCashDefault.value.toFixed(2)
-  }
+  freezeDealCalc()
   const calcNote = row.dealType === 'guarantee_plus_door'
     ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * dealCalcBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
     : row.dealType === 'door_deal'
@@ -3442,14 +3436,10 @@ mixin shortfallBoxes
               input#deal-calc-base.amount-input(
                 type="number" step="0.01" min="0"
                 :value="dealCalcFrozen ?? dealCalcCashDefault.toFixed(2)"
-                :disabled="dealCalcLocked"
                 @input="setDealCalcBase"
               )
               span €
-          .deal-calc-fetch(v-if="dealCalcLocked")
-            span.deal-calc-source-hint 🔒 Stand vor der Auszahlung – beim Buchen eingefroren
-            button.btn-fetch-digital(type="button" @click="dealCalcUnlocked = true") Ändern
-          span.deal-calc-source-hint(v-else-if="dealCalcUnlocked && expensesFromSource('entrance_cash') > 0") Nur ändern, wenn vor der Auszahlung falsch gezählt wurde.
+          span.deal-calc-source-hint(v-if="dealCalcFrozen !== null && expensesFromSource('entrance_cash') > 0") Stand vor der Auszahlung – nur ändern, wenn vorher falsch gezählt wurde.
           //- Nach einer Auszahlung ist der eingefrorene Wert der Stand VOR der
           //- Auszahlung und Referenz der Vor-Auszahlung-Warnung. Den Button hier
           //- auszublenden verhindert, dass er gelöscht und die Zählung unbemerkt
@@ -3468,8 +3458,9 @@ mixin shortfallBoxes
             .amount-wrap
               input#deal-calc-change.amount-input(
                 type="number" step="0.01" min="0"
-                v-model="dealCalcChange"
-                :placeholder="dealCalcChangeDefault.toFixed(2)"
+                :value="dealCalcFrozen === null ? dealCalcChangeDefault.toFixed(2) : dealCalcChange"
+                placeholder="0,00"
+                @input="setDealCalcChange"
               )
               span €
           .deal-calc-line.deal-calc-digital(v-if="dealCalcDigital > 0")
