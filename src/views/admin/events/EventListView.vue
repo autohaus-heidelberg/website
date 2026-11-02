@@ -559,6 +559,22 @@ function formatDate(date: string) {
   })
 }
 
+// ── Events-Liste als xlsx exportieren (z.B. für Anträge/Nachweise) ──
+const exportStart = ref(`${new Date().getFullYear()}-01-01`)
+const exportEnd = ref(dateKey(now))
+const isExporting = ref(false)
+
+async function downloadEventsExcel() {
+  isExporting.value = true
+  try {
+    await eventService.downloadEventsListExcel(exportStart.value, exportEnd.value)
+  } catch (e: any) {
+    alert('Export fehlgeschlagen: ' + e.message)
+  } finally {
+    isExporting.value = false
+  }
+}
+
 
 
 // ── Grants ──
@@ -1070,7 +1086,18 @@ onMounted(() => {
   template(v-if="activeView === 'statistics'")
     .stats-header
       p.stats-subtitle Übersicht der durchgeführten Veranstaltungen pro Jahr — z.B. für Anträge oder Nachweise gegenüber der Stadt Heidelberg als gemeinnütziger Verein.
-      button.btn-print(type="button" @click="printStatistics") Drucken / PDF
+      .stats-header-actions
+        .export-group
+          input.export-date(type="date" v-model="exportStart" aria-label="Export von")
+          span.export-sep bis
+          input.export-date(type="date" v-model="exportEnd" aria-label="Export bis")
+          button.btn-secondary(
+            type="button"
+            :disabled="isExporting"
+            title="Liste der Veranstaltungen im gewählten Zeitraum als xlsx herunterladen"
+            @click="downloadEventsExcel"
+          ) {{ isExporting ? 'Exportiere...' : '⤓ Excel' }}
+        button.btn-print(type="button" @click="printStatistics") Drucken / PDF
 
     .summary-cards
       .card
@@ -1234,6 +1261,46 @@ h2 {
 
 .btn-primary:hover {
   background: #333;
+}
+
+.export-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.export-date {
+  padding: 0.5rem 0.6rem;
+  border: 0.25rem solid black;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.export-sep {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.btn-secondary {
+  padding: 0.625rem 1.25rem;
+  background: white;
+  color: black;
+  border: 0.25rem solid black;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: black;
+  color: white;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .filter-chips {
@@ -2451,6 +2518,13 @@ a.fee:hover {
   font-size: 0.9rem;
 }
 
+.stats-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .btn-print {
   padding: 0.5rem 1.25rem;
   background: black;
@@ -2688,7 +2762,8 @@ a.fee:hover {
 }
 
 @media print {
-  .btn-print {
+  .btn-print,
+  .stats-header-actions .export-group {
     display: none;
   }
 }
