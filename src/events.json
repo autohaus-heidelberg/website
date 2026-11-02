@@ -51,6 +51,20 @@
         ]
     },
     {
+        "id": "mm-261118",
+        "date": "2026-11-18T19:00:00+00:00",
+        "endDate": null,
+        "title": "Kino: \u00dcberraschungsfilm",
+        "fee": "5",
+        "feeAk": "5",
+        "descriptionShort": "<p><span data-olk-copy-source=\"MessageBody\">Es wird dreckig! Die Kultur- und vor allem die Musikszene sind am boomen, weshalb K&uuml;nstler*innen aus aller Welt nach West-Berlin kommen. Rauch vernebelt die Stra&szlig;en, die Clubs sind voll und Konsum steht an der Tagesordnung. Freut Euch auf eine intime und ehrliche Dokumentation &uuml;ber die Berliner Undergroundszene der achtziger Jahre mit Auftritten von Nick Cave, Blixa Bargeld und vielen anderen bekannten Gesichtern!</span></p>\n<p>&nbsp;</p>",
+        "descriptionLong": "",
+        "shopLink": "",
+        "img": "/img/d46e9311-9ef4-4726-8076-7889f4b0aa24.webp",
+        "cancelled": false,
+        "artists": []
+    },
+    {
         "id": "jazz-unerwuenscht",
         "date": "2026-11-16T18:00:00+00:00",
         "endDate": null,
