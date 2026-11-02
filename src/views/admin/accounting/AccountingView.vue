@@ -1197,9 +1197,12 @@ const dealCalcFrozen = ref<string | null>(null)
 // v-model auf type="number" castet Eingaben zu number — daher string | number.
 const dealCalcChange = ref<string | number>('')
 
-// Leeres Wechselgeld-Feld folgt dem Wechselgeld der Kassenzählung — passend
-// zur Vorbelegung des Bargeld-Felds, das das Wechselgeld mit enthält.
+// Leeres Wechselgeld-Feld folgt nur dann dem Wechselgeld der Kassenzählung,
+// wenn auch das Bargeld-Feld daraus vorbelegt ist (inkl. Wechselgeld). Bei
+// einem eingetragenen Bargeld-Wert heißt leer 0 — ältere Werte enthalten das
+// Wechselgeld oft schon nicht mehr.
 const dealCalcChangeDefault = computed(() => {
+  if (dealCalcFrozen.value !== null) return 0
   const entry = revenues.value.find(r => r.source === 'entrance_cash')
   return entry ? parseFloat(entry.change_money || '0') || 0 : 0
 })
@@ -1238,8 +1241,10 @@ const prePayoutCountWarning = computed(() => {
   const entry = revenues.value.find(r => r.source === 'entrance_cash')
   if (!entry || dealCalcFrozen.value === null) return null
   return detectPrePayoutCount({
-    frozenCash: parseFloat(dealCalcFrozen.value) || 0,
+    calcCash: parseFloat(dealCalcFrozen.value) || 0,
+    calcChange: dealCalcChangeAmount.value,
     total: parseFloat(entry.total || '0'),
+    changeMoney: parseFloat(entry.change_money || '0'),
     fees: parseFloat(entry.fees || '0'),
     payouts: expensesFromSource('entrance_cash'),
   })
@@ -1272,11 +1277,16 @@ function cashShortfallText(s: { label: string; payouts: number; available: numbe
     + 'Bei Überweisung oder anderer Kasse „Bezahlt aus“ anpassen.'
 }
 
-const dealCalcCashMatchesCount = computed(() =>
-  dealCalcFrozen.value !== null
-  && dealCalcCashDefault.value !== 0
-  && Math.abs(dealCalcCashDefault.value - (parseFloat(dealCalcFrozen.value) || 0)) < 0.005,
-)
+// Vergleich ohne Wechselgeld auf beiden Seiten — egal, ob es im Rechner im
+// Bargeld-Feld schon herausgerechnet oder im zweiten Feld abgezogen wurde.
+const dealCalcCashMatchesCount = computed(() => {
+  if (dealCalcFrozen.value === null) return false
+  const entry = revenues.value.find(r => r.source === 'entrance_cash')
+  if (!entry || parseFloat(entry.total || '0') === 0) return false
+  const countedNet = revenueNet(entry) + expensesFromSource('entrance_cash')
+  const calcNet = (parseFloat(dealCalcFrozen.value) || 0) - dealCalcChangeAmount.value
+  return Math.abs(countedNet - calcNet) < 0.005
+})
 
 // Hinweis (keine Sperre), wenn aus einer Kasse mehr bezahlt wurde, als darin
 // über dem Wechselgeld lag — die Differenz kam dann aus dem Wechselgeld oder
@@ -1413,7 +1423,11 @@ const bandNamesInExternalSplit = computed(() =>
 function applyExpenseRow(row: BandDealRow) {
   // Rechner-Basis festhalten, bevor die gebuchte Gage über die
   // Kassen-Rückrechnung in sie zurückfließt.
-  if (dealCalcFrozen.value === null) dealCalcFrozen.value = dealCalcCashDefault.value.toFixed(2)
+  if (dealCalcFrozen.value === null) {
+    // Wechselgeld mit einfrieren, sonst fiele es danach auf 0 zurück.
+    if (String(dealCalcChange.value).trim() === '') dealCalcChange.value = dealCalcChangeDefault.value.toFixed(2)
+    dealCalcFrozen.value = dealCalcCashDefault.value.toFixed(2)
+  }
   const calcNote = row.dealType === 'guarantee_plus_door'
     ? `Doordeal-Vergleich: Garantie ${formatCurrency(row.guaranteeAmount)} vs. ${row.doorDealPercentage}% Netto-Türeinnahme = ${formatCurrency(row.doorDealPercentage / 100 * dealCalcBase.value)} — ${row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'} gewinnt.`
     : row.dealType === 'door_deal'
@@ -2784,7 +2798,7 @@ function clearPendingNumberSelect() {
 //- Warnblöcke, die an mehreren Stellen (Kassenzählung, Gagen, Ergebnis) erscheinen.
 mixin prePayoutBox
   .pre-payout-warning(v-if="prePayoutCountWarning")
-    p ⚠️ Kassenzählung und Rechner zeigen denselben Stand ({{ formatCurrency(prePayoutCountWarning.countedCash) }} Bargeld inkl. Wechselgeld), obwohl {{ formatCurrency(prePayoutCountWarning.payouts) }} aus der Einlasskasse ausgezahlt wurden. Entweder wurde die Kassenzählung <strong>vor</strong> der Auszahlung eingetragen (danach sollten {{ formatCurrency(prePayoutCountWarning.correctedTotal) }} in der Kasse liegen) oder der Rechnerwert <strong>nach</strong> der Auszahlung (dort gehört der Stand davor hin: {{ formatCurrency(prePayoutCountWarning.correctedFrozen) }}). Sonst wird die Gage doppelt gezählt.
+    p ⚠️ Kassenzählung und Rechner zeigen denselben Stand ({{ formatCurrency(prePayoutCountWarning.countedNet) }} ohne Wechselgeld), obwohl {{ formatCurrency(prePayoutCountWarning.payouts) }} aus der Einlasskasse ausgezahlt wurden. Entweder wurde die Kassenzählung <strong>vor</strong> der Auszahlung eingetragen (danach sollten {{ formatCurrency(prePayoutCountWarning.correctedTotal) }} in der Kasse liegen) oder der Rechnerwert <strong>nach</strong> der Auszahlung (dort gehört der Stand davor hin: {{ formatCurrency(prePayoutCountWarning.correctedFrozen) }}). Sonst wird die Gage doppelt gezählt.
     .pre-payout-actions
       button.btn-add-sm.btn-add-primary(type="button" @click="applyPrePayoutCorrection") Kassenzählung auf {{ formatCurrency(prePayoutCountWarning.correctedTotal) }} korrigieren
       button.btn-add-sm.btn-add-ghost(type="button" @click="applyCalcCorrection") Rechnerwert auf {{ formatCurrency(prePayoutCountWarning.correctedFrozen) }} setzen
