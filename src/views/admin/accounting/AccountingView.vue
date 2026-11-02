@@ -3428,78 +3428,120 @@ mixin shortfallBoxes
       .section(v-if="bandDealOverview.length || gageExpenses.length")
         .section-title-row
           h3.section-title 🎤 Gagen
-        p.section-subtitle(v-if="bandDealOverview.length") Rechner für den Abend: trag ein, was im Einlass liegt, bevor ausgezahlt wird. Der Wert fließt nicht in die Abrechnung ein.
-        .deal-calc(v-if="bandDealOverview.length")
-          .deal-calc-head
-            label.deal-calc-label(for="deal-calc-base") Gezähltes Bargeld in der Einlasskasse
-            .amount-wrap
-              input#deal-calc-base.amount-input(
-                type="number" step="0.01" min="0"
-                :value="dealCalcFrozen ?? dealCalcCashDefault.toFixed(2)"
-                @input="setDealCalcBase"
-              )
-              span €
-          span.deal-calc-source-hint(v-if="dealCalcFrozen !== null && expensesFromSource('entrance_cash') > 0") Stand vor der Auszahlung – nur ändern, wenn vorher falsch gezählt wurde.
-          //- Nach einer Auszahlung ist der eingefrorene Wert der Stand VOR der
-          //- Auszahlung und Referenz der Vor-Auszahlung-Warnung. Den Button hier
-          //- auszublenden verhindert, dass er gelöscht und die Zählung unbemerkt
-          //- in die Gagen-Basis übernommen wird.
-          .deal-calc-fetch(v-if="dealCalcFrozen !== null && dealCalcCashDefault !== 0 && !dealCalcCashMatchesCount && expensesFromSource('entrance_cash') <= 0")
-            button.btn-fetch-digital(
-              type="button"
-              @click="dealCalcFrozen = null"
-            ) Wert aus Kassenzählung übernehmen ({{ formatCurrency(dealCalcCashDefault) }})
-            span.deal-calc-fetch-hint Kassenzählung weicht vom Rechnerwert ab
-          span.deal-calc-source-hint(v-if="dealCalcCashMatchesCount") ✓ stimmt mit der Kassenzählung überein
-          span.deal-calc-source-hint(v-if="dealCalcFrozen === null && dealCalcCashDefault !== 0") aus Kassenzählung vorausgefüllt
-          +prePayoutBox
-          .deal-calc-line.deal-calc-change-row
-            label.deal-calc-label(for="deal-calc-change") − Wechselgeld zurückbehalten
-            .amount-wrap
-              input#deal-calc-change.amount-input(
-                type="number" step="0.01" min="0"
-                :value="dealCalcFrozen === null ? dealCalcChangeDefault.toFixed(2) : dealCalcChange"
-                placeholder="0,00"
-                @input="setDealCalcChange"
-              )
-              span €
-          .deal-calc-line.deal-calc-digital(v-if="dealCalcDigital > 0")
-            span + VVK & digitale Zahlungen
-            span +{{ formatCurrency(dealCalcDigital) }}
-          .deal-calc-line.deal-calc-digital(v-if="dealCalcDigitalFees > 0")
-            span − Gebühren für VVK & digitale Zahlungen
-            span −{{ formatCurrency(dealCalcDigitalFees) }}
-          //- Die Kassenzählung wird oft erst am Folgetag gemacht — die
-          //- digitalen Einnahmen müssen also auch hier abrufbar sein.
-          .deal-calc-fetch
-            button.btn-fetch-digital(
-              type="button"
-              @click="fetchAndApplyAllExternal"
-              :disabled="externalDataLoading"
-            ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ VVK & digitale Zahlungen neu laden' : '⬇ VVK & digitale Zahlungen laden' }}
-            span.deal-calc-fetch-hint(v-if="!externalDataLoading && !externalDataLoaded && dealCalcDigital === 0")
-              | Pretix, PayPal und SumUp noch nicht abgerufen
-            span.deal-calc-fetch-hint(v-if="externalDataFetchedAtLabel && !externalDataLoading")  abgerufen {{ externalDataFetchedAtLabel }}
-            span.deal-calc-fetch-error(v-if="pretixError") Pretix: {{ pretixError }}
-            span.deal-calc-fetch-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
-            span.deal-calc-fetch-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
-          .external-diffs(v-if="externalDiffs.length")
-            p.external-diffs-head ⚠️ Abweichung zu deinen erfassten Werten – nichts wurde überschrieben:
-            .external-diff-row(v-for="d in externalDiffs" :key="d.source")
-              span.external-diff-label {{ d.label }}
-              span.external-diff-vals
-                | erfasst {{ formatCurrency(d.storedTotal) }} → laut API {{ formatCurrency(d.fetchedTotal) }}
-              button.btn-add-sm.btn-add-primary(@click="applyExternalDiff(d)") Übernehmen
-              button.btn-add-sm.btn-add-ghost(@click="dismissExternalDiff(d)") Behalten
-          .deal-calc-line.deal-calc-subtotal
-            span = Türeinnahme brutto
-            span {{ formatCurrency(dealCalcSubtotal) }}
-          .deal-calc-line
-            span − 7 % Umsatzsteuer (Eintritt)
-            span −{{ formatCurrency(dealCalcVat) }}
-          .deal-calc-line.deal-calc-total
-            span = Grundlage für die Gagen
-            span.deal-calc-net {{ formatCurrency(dealCalcBase) }}
+        p.section-subtitle(v-if="bandDealOverview.length") Anleitung für den Abend – der Rechner fließt nicht in die Abrechnung ein.
+        ol.deal-calc(v-if="bandDealOverview.length")
+          li.deal-calc-step
+            .deal-calc-step-head
+              span.deal-calc-step-num 1
+              label.deal-calc-step-title(for="deal-calc-base") Bargeld in der Einlasskasse zählen
+              .amount-wrap
+                input#deal-calc-base.amount-input(
+                  type="number" step="0.01" min="0"
+                  :value="dealCalcFrozen ?? dealCalcCashDefault.toFixed(2)"
+                  @input="setDealCalcBase"
+                )
+                span €
+            .deal-calc-step-body
+              p.deal-calc-step-text Alles, was in der Kasse liegt – inklusive Wechselgeld, bevor etwas ausgezahlt wird.
+              span.deal-calc-source-hint(v-if="dealCalcFrozen !== null && expensesFromSource('entrance_cash') > 0") Stand vor der Auszahlung – nur ändern, wenn vorher falsch gezählt wurde.
+              //- Nach einer Auszahlung ist der eingefrorene Wert der Stand VOR der
+              //- Auszahlung und Referenz der Vor-Auszahlung-Warnung. Den Button hier
+              //- auszublenden verhindert, dass er gelöscht und die Zählung unbemerkt
+              //- in die Gagen-Basis übernommen wird.
+              .deal-calc-fetch(v-if="dealCalcFrozen !== null && dealCalcCashDefault !== 0 && !dealCalcCashMatchesCount && expensesFromSource('entrance_cash') <= 0")
+                button.btn-fetch-digital(
+                  type="button"
+                  @click="dealCalcFrozen = null"
+                ) Wert aus Kassenzählung übernehmen ({{ formatCurrency(dealCalcCashDefault) }})
+                span.deal-calc-fetch-hint Kassenzählung weicht vom Rechnerwert ab
+              span.deal-calc-source-hint(v-if="dealCalcCashMatchesCount") ✓ stimmt mit der Kassenzählung überein
+              span.deal-calc-source-hint(v-if="dealCalcFrozen === null && dealCalcCashDefault !== 0") aus Kassenzählung vorausgefüllt
+              +prePayoutBox
+
+          li.deal-calc-step
+            .deal-calc-step-head
+              span.deal-calc-step-num 2
+              label.deal-calc-step-title(for="deal-calc-change") Wechselgeld abziehen
+              .amount-wrap
+                input#deal-calc-change.amount-input(
+                  type="number" step="0.01" min="0"
+                  :value="dealCalcFrozen === null ? dealCalcChangeDefault.toFixed(2) : dealCalcChange"
+                  placeholder="0,00"
+                  @input="setDealCalcChange"
+                )
+                span €
+            .deal-calc-step-body
+              p.deal-calc-step-text Betrag, der als Wechselgeld in der Kasse bleibt – gehört nicht zur Türeinnahme.
+
+          li.deal-calc-step
+            .deal-calc-step-head
+              span.deal-calc-step-num 3
+              span.deal-calc-step-title VVK & digitale Zahlungen laden
+            .deal-calc-step-body
+              p.deal-calc-step-text Pretix-Vorverkauf sowie PayPal und SumUp am Einlass zählen mit zur Türeinnahme.
+              //- Die Kassenzählung wird oft erst am Folgetag gemacht — die
+              //- digitalen Einnahmen müssen also auch hier abrufbar sein.
+              .deal-calc-fetch
+                button.btn-fetch-digital(
+                  type="button"
+                  @click="fetchAndApplyAllExternal"
+                  :disabled="externalDataLoading"
+                ) {{ externalDataLoading ? 'Lade…' : dealCalcDigital > 0 ? '↻ Neu laden' : '⬇ Jetzt laden' }}
+                span.deal-calc-fetch-hint(v-if="!externalDataLoading && !externalDataLoaded && dealCalcDigital === 0")
+                  | Pretix, PayPal und SumUp noch nicht abgerufen
+                span.deal-calc-fetch-hint(v-if="externalDataFetchedAtLabel && !externalDataLoading")  abgerufen {{ externalDataFetchedAtLabel }}
+                span.deal-calc-fetch-error(v-if="pretixError") Pretix: {{ pretixError }}
+                span.deal-calc-fetch-error(v-if="paypalBarError") PayPal: {{ paypalBarError }}
+                span.deal-calc-fetch-error(v-if="sumupBarError") SumUp: {{ sumupBarError }}
+              .external-diffs(v-if="externalDiffs.length")
+                p.external-diffs-head ⚠️ Abweichung zu deinen erfassten Werten – nichts wurde überschrieben:
+                .external-diff-row(v-for="d in externalDiffs" :key="d.source")
+                  span.external-diff-label {{ d.label }}
+                  span.external-diff-vals
+                    | erfasst {{ formatCurrency(d.storedTotal) }} → laut API {{ formatCurrency(d.fetchedTotal) }}
+                  button.btn-add-sm.btn-add-primary(@click="applyExternalDiff(d)") Übernehmen
+                  button.btn-add-sm.btn-add-ghost(@click="dismissExternalDiff(d)") Behalten
+              .deal-calc-line.deal-calc-digital(v-if="dealCalcDigital > 0")
+                span + VVK & digitale Zahlungen
+                span +{{ formatCurrency(dealCalcDigital) }}
+              .deal-calc-line.deal-calc-digital(v-if="dealCalcDigitalFees > 0")
+                span − Gebühren
+                span −{{ formatCurrency(dealCalcDigitalFees) }}
+
+          li.deal-calc-step
+            .deal-calc-step-head
+              span.deal-calc-step-num 4
+              span.deal-calc-step-title Grundlage für die Gagen ablesen
+            .deal-calc-step-body
+              .deal-calc-line
+                span Bargeld − Wechselgeld
+                span {{ formatCurrency(dealCalcCash - dealCalcChangeAmount) }}
+              .deal-calc-line(v-if="dealCalcDigital > 0")
+                span + digital (abzgl. Gebühren)
+                span +{{ formatCurrency(dealCalcDigital - dealCalcDigitalFees) }}
+              .deal-calc-line.deal-calc-subtotal
+                span = Türeinnahme brutto
+                span {{ formatCurrency(dealCalcSubtotal) }}
+              .deal-calc-line
+                span − 7 % Umsatzsteuer (Eintritt)
+                span −{{ formatCurrency(dealCalcVat) }}
+              .deal-calc-line.deal-calc-total
+                span = Grundlage für die Gagen
+                span.deal-calc-net {{ formatCurrency(dealCalcBase) }}
+
+          li.deal-calc-step
+            .deal-calc-step-head
+              span.deal-calc-step-num 5
+              span.deal-calc-step-title Gagen buchen und auszahlen
+            .deal-calc-step-body
+              p.deal-calc-step-text Unten bei jeder Band „Als Gage buchen“ klicken und den Betrag aus der Einlasskasse auszahlen. Beim ersten Buchen werden die Werte aus Schritt 1 und 2 festgehalten.
+
+          li.deal-calc-step
+            .deal-calc-step-head
+              span.deal-calc-step-num 6
+              span.deal-calc-step-title Rest zählen
+            .deal-calc-step-body
+              p.deal-calc-step-text Nach der Auszahlung den restlichen Kasseninhalt unter #[a.deal-calc-step-link(href="#" @click.prevent="activeTab = 'cashcount'") „Kassenzählung“] eintragen – nicht den Stand aus Schritt 1.
 
         .band-deal-table
           .band-deal-header
@@ -4451,38 +4493,74 @@ h2 {
 }
 
 .deal-calc {
-  padding: 0.75rem 1rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 1rem 0.75rem;
   border-bottom: 1px solid #ddd;
   background: #fafafa;
   text-align: left;
   font-size: 0.9rem;
 }
 
-.deal-calc-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
-  margin-bottom: 0.35rem;
-  font-size: inherit;
+.deal-calc-step {
+  padding: 0.6rem 0;
 }
 
-.deal-calc-head {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem 0.75rem;
+.deal-calc-step + .deal-calc-step {
+  border-top: 1px dashed #ddd;
 }
 
-.deal-calc-label {
+/* Nummer | Titel | Eingabe — die Eingaben stehen rechts bündig über den
+   Beträgen der Zeilen darunter. */
+.deal-calc-step-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2rem;
+}
+
+.deal-calc-step-num {
+  flex: 0 0 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: black;
+  color: white;
+  font-weight: 900;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deal-calc-step-title {
+  flex: 1 1 auto;
   font-weight: 900;
   font-size: inherit;
 }
 
+.deal-calc-step-body {
+  padding-left: 2.35rem;
+}
+
+.deal-calc-step-text {
+  margin: 0.15rem 0 0.25rem;
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.deal-calc-step-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 .deal-calc-source-hint {
+  display: block;
   font-weight: 400;
   font-size: 0.8em;
   opacity: 0.6;
-  padding: 0 0.1rem;
+  padding: 0.1rem 0;
 }
 
 .pre-payout-warning {
@@ -4678,19 +4756,6 @@ h2 {
   color: #333;
 }
 
-.deal-calc-line.deal-calc-change-row {
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem 0.75rem;
-  padding: 0.25rem 0 0.4rem;
-}
-
-.deal-calc-change-row .deal-calc-label {
-  font-weight: 900;
-  font-size: inherit;
-  flex: 1 1 auto;
-}
 
 .external-data-bar {
   display: flex;
