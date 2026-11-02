@@ -3436,7 +3436,7 @@ mixin shortfallBoxes
               label.deal-calc-step-title(for="deal-calc-base") Bargeld in der Einlasskasse zählen
               .amount-wrap
                 input#deal-calc-base.amount-input(
-                  type="number" step="0.01" min="0"
+                  type="number" inputmode="decimal" step="0.01" min="0"
                   :value="dealCalcFrozen ?? dealCalcCashDefault.toFixed(2)"
                   @input="setDealCalcBase"
                 )
@@ -3464,7 +3464,7 @@ mixin shortfallBoxes
               label.deal-calc-step-title(for="deal-calc-change") Wechselgeld abziehen
               .amount-wrap
                 input#deal-calc-change.amount-input(
-                  type="number" step="0.01" min="0"
+                  type="number" inputmode="decimal" step="0.01" min="0"
                   :value="dealCalcFrozen === null ? dealCalcChangeDefault.toFixed(2) : dealCalcChange"
                   placeholder="0,00"
                   @input="setDealCalcChange"
@@ -4547,6 +4547,29 @@ h2 {
   font-size: 0.8rem;
   color: #666;
   line-height: 1.4;
+}
+
+/* Handy: Eingabe unter den Titel, 16px gegen den iOS-Zoom beim Antippen. */
+@media (max-width: 500px) {
+  .deal-calc-step-head {
+    flex-wrap: wrap;
+    row-gap: 0.35rem;
+  }
+
+  .deal-calc-step-title {
+    flex-basis: calc(100% - 2.35rem);
+  }
+
+  .deal-calc .deal-calc-step-head .amount-wrap {
+    flex: 1 0 100%;
+    justify-content: flex-end;
+  }
+
+  .accounting-view .deal-calc .amount-input {
+    width: 8rem;
+    height: 2.5rem;
+    font-size: 16px;
+  }
 }
 
 .deal-calc-step-link {
