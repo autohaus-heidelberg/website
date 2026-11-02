@@ -1342,6 +1342,9 @@ function setDealCalcBase(e: globalThis.Event) {
   if (dealCalcFrozen.value === null && String(dealCalcChange.value).trim() === '') {
     dealCalcChange.value = dealCalcChangeDefault.value.toFixed(2)
   }
+  // Wer im offenen Feld zu tippen beginnt, darf weitertippen — die Sperre
+  // greift sonst schon nach der ersten Ziffer (Auszahlung existiert bereits).
+  if (dealCalcFrozen.value === null) dealCalcUnlocked.value = true
   dealCalcFrozen.value = val === '' ? null : val
 }
 
