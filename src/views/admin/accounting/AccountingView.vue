@@ -1337,6 +1337,11 @@ const dealCalcBase = computed(() => dealCalcSubtotal.value / (1 + ENTRANCE_VAT_R
 
 function setDealCalcBase(e: globalThis.Event) {
   const val = (e.target as HTMLInputElement).value
+  // Vorbelegtes Wechselgeld festhalten, bevor das leere Feld mit dem eigenen
+  // Bargeld-Wert auf 0 zurückfällt.
+  if (dealCalcFrozen.value === null && String(dealCalcChange.value).trim() === '') {
+    dealCalcChange.value = dealCalcChangeDefault.value.toFixed(2)
+  }
   dealCalcFrozen.value = val === '' ? null : val
 }
 
