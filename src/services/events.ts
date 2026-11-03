@@ -223,13 +223,16 @@ export const eventService = {
   },
 
   /**
-   * Download an xlsx list of events (Index | Date | Title | Link) within a
-   * date range (e.g. for grant applications / archiving past events).
+   * Download an xlsx list of held events (Index | Date | Title | Link | Category),
+   * optionally limited to a date range (empty = no bound).
    */
   async downloadEventsListExcel(start: string, end: string): Promise<void> {
     const token = localStorage.getItem('access_token')
     const baseUrl = api.getBaseUrl()
-    const response = await fetch(`${baseUrl}/api/events/export/?start=${start}&end=${end}`, {
+    const params = new URLSearchParams()
+    if (start) params.set('start', start)
+    if (end) params.set('end', end)
+    const response = await fetch(`${baseUrl}/api/events/export/?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!response.ok) {
@@ -240,7 +243,7 @@ export const eventService = {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `Events_${start}_${end}.xlsx`
+    a.download = `Events_${start || 'Anfang'}_${end || 'heute'}.xlsx`
     a.click()
     URL.revokeObjectURL(url)
   },
