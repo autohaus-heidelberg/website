@@ -559,22 +559,6 @@ function formatDate(date: string) {
   })
 }
 
-// ── Events-Liste als xlsx exportieren (z.B. für Anträge/Nachweise) ──
-const exportStart = ref(`${new Date().getFullYear()}-01-01`)
-const exportEnd = ref(dateKey(now))
-const isExporting = ref(false)
-
-async function downloadEventsExcel() {
-  isExporting.value = true
-  try {
-    await eventService.downloadEventsListExcel(exportStart.value, exportEnd.value)
-  } catch (e: any) {
-    alert('Export fehlgeschlagen: ' + e.message)
-  } finally {
-    isExporting.value = false
-  }
-}
-
 
 
 // ── Grants ──
@@ -616,12 +600,43 @@ async function downloadAntrag(grant: GrantApplication) {
 }
 
 // ── Statistik ──
-// Nur bereits stattgefundene, nicht abgesagte Events zählen als "durchgeführt".
+// Zeitraum gilt für die ganze Ansicht (Karten, KI-Auswertung, Tabelle, Druck)
+// und für den Excel-Export. Leer = keine Grenze.
+const statsStart = ref('')
+const statsEnd = ref('')
+const isExporting = ref(false)
+
+const statsRangeInvalid = computed(() => !!statsStart.value && !!statsEnd.value && statsStart.value > statsEnd.value)
+
+// Nur bereits stattgefundene, nicht abgesagte Events zählen als "durchgeführt"
+// (gleiche Auswahl wie der Excel-Export im Backend).
 const heldEvents = computed(() => {
   return events.value
-    .filter(e => !e.cancelled && new Date(e.date) <= now)
+    .filter(e => {
+      if (e.cancelled || new Date(e.date) > now) return false
+      const day = dateKey(new Date(e.date))
+      if (statsStart.value && day < statsStart.value) return false
+      if (statsEnd.value && day > statsEnd.value) return false
+      return true
+    })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 })
+
+function resetStatsRange() {
+  statsStart.value = ''
+  statsEnd.value = ''
+}
+
+async function downloadEventsExcel() {
+  isExporting.value = true
+  try {
+    await eventService.downloadEventsListExcel(statsStart.value, statsEnd.value)
+  } catch (e: any) {
+    alert('Export fehlgeschlagen: ' + e.message)
+  } finally {
+    isExporting.value = false
+  }
+}
 
 const yearGroups = computed(() => {
   const groups = new Map<number, Event[]>()
@@ -1088,16 +1103,26 @@ onMounted(() => {
       p.stats-subtitle Übersicht der durchgeführten Veranstaltungen pro Jahr — z.B. für Anträge oder Nachweise gegenüber der Stadt Heidelberg als gemeinnütziger Verein.
       .stats-header-actions
         .export-group
-          input.export-date(type="date" v-model="exportStart" aria-label="Export von")
+          span.export-sep Zeitraum
+          input.export-date(type="date" v-model="statsStart" aria-label="Zeitraum von")
           span.export-sep bis
-          input.export-date(type="date" v-model="exportEnd" aria-label="Export bis")
+          input.export-date(type="date" v-model="statsEnd" aria-label="Zeitraum bis")
+          button.btn-secondary(
+            v-if="statsStart || statsEnd"
+            type="button"
+            title="Zeitraum zurücksetzen (alle Veranstaltungen)"
+            @click="resetStatsRange"
+          ) Alle
           button.btn-secondary(
             type="button"
-            :disabled="isExporting"
-            title="Liste der Veranstaltungen im gewählten Zeitraum als xlsx herunterladen"
+            :disabled="isExporting || statsRangeInvalid"
+            title="Die angezeigten Veranstaltungen als xlsx herunterladen"
             @click="downloadEventsExcel"
           ) {{ isExporting ? 'Exportiere...' : '⤓ Excel' }}
         button.btn-print(type="button" @click="printStatistics") Drucken / PDF
+    p.stats-range-error(v-if="statsRangeInvalid" role="alert") Das Startdatum liegt nach dem Enddatum.
+    p.stats-range-print(v-if="statsStart || statsEnd")
+      | Zeitraum: {{ statsStart ? formatDateShort(statsStart) : 'Anfang' }} – {{ statsEnd ? formatDateShort(statsEnd) : 'heute' }}
 
     .summary-cards
       .card
@@ -1176,7 +1201,7 @@ onMounted(() => {
               ) {{ aiTags.event_categories[event.id] || 'Unbekannt' }}
               span(v-else) —
 
-    .empty(v-if="!yearGroups.length") Noch keine durchgeführten Veranstaltungen erfasst.
+    .empty(v-if="!yearGroups.length") {{ statsStart || statsEnd ? 'Keine durchgeführten Veranstaltungen im gewählten Zeitraum.' : 'Noch keine durchgeführten Veranstaltungen erfasst.' }}
 
   //- ── Cancel Dialog ──
   .dialog-overlay(v-if="cancelDialog" @click.self="cancelDialog = null")
@@ -2516,6 +2541,20 @@ a.fee:hover {
   max-width: 60ch;
   color: #666;
   font-size: 0.9rem;
+}
+
+.stats-range-error {
+  margin: -0.5rem 0 1rem;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #c00;
+}
+
+.stats-range-print {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .stats-header-actions {
