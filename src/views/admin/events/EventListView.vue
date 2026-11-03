@@ -1120,7 +1120,7 @@ onMounted(() => {
             @click="downloadEventsExcel"
           ) {{ isExporting ? 'Exportiere...' : '⤓ Excel' }}
         button.btn-print(type="button" @click="printStatistics") Drucken / PDF
-    .error(v-if="statsRangeInvalid") Das Startdatum liegt nach dem Enddatum.
+    p.stats-range-error(v-if="statsRangeInvalid" role="alert") Das Startdatum liegt nach dem Enddatum.
     p.stats-range-print(v-if="statsStart || statsEnd")
       | Zeitraum: {{ statsStart ? formatDateShort(statsStart) : 'Anfang' }} – {{ statsEnd ? formatDateShort(statsEnd) : 'heute' }}
 
@@ -2541,6 +2541,14 @@ a.fee:hover {
   max-width: 60ch;
   color: #666;
   font-size: 0.9rem;
+}
+
+.stats-range-error {
+  margin: -0.5rem 0 1rem;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #c00;
 }
 
 .stats-range-print {
