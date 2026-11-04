@@ -6592,19 +6592,18 @@ h2 {
   text-align: right;
 }
 
-/* Hauptzeilen (Einnahmen / Wareneinsatz / Ausgaben / USt): jede Gruppe beginnt mit einem grauen Kopfband
-   unter einem schwarzen Balken — dazwischen liegt die weiße, eingerückte Rechnung. */
+/* Hauptzeilen (Einnahmen / Wareneinsatz / Ausgaben / USt): graues Kopfband mit feiner Linie darüber —
+   dazwischen liegt die weiße, eingerückte Rechnung. Dick wird nur der Summenstrich über den Ergebniszeilen. */
 .summary-row.summary-expandable:not(.summary-detail) {
   cursor: pointer;
   user-select: none;
   font-weight: 700;
   background: #ececec;
-  border-top: 0.25rem solid black;
+  border-top: 1px solid #bbb;
   border-bottom: none;
 }
 
-.summary-table > .summary-row.summary-expandable:not(.summary-detail):first-child,
-.summary-row.summary-total + .summary-row.summary-expandable:not(.summary-detail) {
+.summary-table > .summary-row.summary-expandable:not(.summary-detail):first-child {
   border-top: none;
 }
 
@@ -6749,31 +6748,36 @@ h2 {
   color: #888;
 }
 
-/* Schwarzer Balken: Ergebnis-Subtotals (vor USt / nach USt / nach Doordeal) */
+/* Ergebnis-Zeilen (vor USt / nach USt / nach Doordeal): weiß, dicker Summenstrich darüber, große Zahl.
+   Heben sich damit von den grauen Gruppenköpfen ab — Schwarz bleibt den Titelbalken vorbehalten. */
 .summary-row.summary-total {
-  background: black;
-  color: white;
-  font-weight: 700;
+  background: white;
+  color: black;
+  font-weight: 900;
   font-size: 1rem;
+  border-top: 0.25rem solid black;
   border-bottom: none;
+  padding-top: 0.875rem;
+  padding-bottom: 0.875rem;
+}
+
+.summary-row.summary-total .summary-value {
+  font-size: 1.3em;
 }
 
 .summary-row.summary-total .summary-calc {
-  color: rgba(255, 255, 255, 0.7);
+  color: #666;
+  font-weight: 400;
 }
 
-.summary-row.summary-total + .summary-row {
-  border-top: none;
-}
-
-.summary-row.summary-total .positive { color: #4ade80; }
-.summary-row.summary-total .negative { color: #f87171; }
+.summary-row.summary-total .positive { color: #15803d; }
+.summary-row.summary-total .negative { color: #b91c1c; }
 
 /* Sub-Block-Header: Doordeal-Verteilung / Gewinnverteilung */
 .summary-row.summary-subblock-header {
   background: #ececec;
   font-weight: 700;
-  border-top: 0.25rem solid black;
+  border-top: 1px solid #bbb;
   border-bottom: none;
 }
 
