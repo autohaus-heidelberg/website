@@ -415,7 +415,21 @@ const resultExpandInventory = ref(false)
 const resultExpandExpenses = ref(false)
 const resultExpandVat = ref(false)
 const resultExpandDoorDeal = ref(false)
-const resultExpandCashExpenses = ref(false)
+
+// Alle Gruppen der Ergebnis-Tabelle gemeinsam auf-/zuklappen ("Rechenweg komplett").
+const resultAllExpanded = computed(() =>
+  resultExpandRevenue.value && resultExpandInventory.value && resultExpandExpenses.value
+  && resultExpandVat.value && (!doorDealActive.value || resultExpandDoorDeal.value),
+)
+
+function toggleAllResultGroups() {
+  const next = !resultAllExpanded.value
+  resultExpandRevenue.value = next
+  resultExpandInventory.value = next
+  resultExpandExpenses.value = next
+  resultExpandVat.value = next
+  resultExpandDoorDeal.value = next
+}
 
 async function fetchAndApplyAllExternal() {
   if (!props.eventId) return
@@ -3827,11 +3841,14 @@ mixin shortfallBoxes
       .section
         .section-title-row
           h3.section-title Ergebnis
+        .summary-toolbar
+          button.btn-toggle-all(type="button" @click="toggleAllResultGroups") {{ resultAllExpanded ? '▲ Alles zuklappen' : '▼ Rechenweg komplett aufklappen' }}
         .summary-table
 
           //- Einnahmen (zeigen tatsächliche Einnahmen = gezählt + aus Kasse bezahlt)
           .summary-row.summary-expandable(@click="resultExpandRevenue = !resultExpandRevenue")
             span.summary-label {{ resultExpandRevenue ? '▼' : '▶' }} Einnahmen
+            span.summary-toggle-hint {{ resultExpandRevenue ? 'zuklappen' : 'Rechenweg anzeigen' }}
             span.summary-value {{ formatCurrency(adjustedRevenue) }}
           template(v-if="resultExpandRevenue")
             template(v-for="group in REVENUE_GROUPS" :key="group.label")
@@ -3856,19 +3873,18 @@ mixin shortfallBoxes
                   | = Gezählt + Digital
                   span.summary-calc Summe der Einnahmen-Gruppen
                 span.summary-value {{ formatCurrency(totalRevenue) }}
-              .summary-row.summary-detail.summary-expandable(@click.stop="resultExpandCashExpenses = !resultExpandCashExpenses")
+              .summary-row.summary-detail
                 span.summary-label
-                  | {{ resultExpandCashExpenses ? '▼' : '▶' }} + Aus Kasse bezahlt
+                  | + Aus Kasse bezahlt
                   span.summary-calc Schon bar ausgezahlt und deshalb in der Kassenzählung nicht mehr enthalten — wird hier wieder dazugerechnet (steht zusätzlich unter Ausgaben)
                 span.summary-value {{ formatCurrency(expensesPaidFromRegister) }}
-              template(v-if="resultExpandCashExpenses")
-                template(v-for="register in ['entrance_cash', 'bar_cash']" :key="register")
-                  template(v-if="expensesFromSource(register) > 0")
-                    .summary-row.summary-detail.summary-detail-nested.summary-source-header
-                      span.summary-label aus {{ REGISTER_LABELS[register] }}
-                    .summary-row.summary-detail.summary-detail-nested.summary-detail-leaf(v-for="exp in expenses.filter(e => e.paid_from === register && parseFloat(e.amount || '0') !== 0)" :key="register + '-' + (exp.id || exp.description)")
-                      span.summary-label → {{ exp.description || '(ohne Beschreibung)' }}
-                      span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+              template(v-for="register in ['entrance_cash', 'bar_cash']" :key="register")
+                template(v-if="expensesFromSource(register) > 0")
+                  .summary-row.summary-detail.summary-detail-nested.summary-source-header
+                    span.summary-label aus {{ REGISTER_LABELS[register] }}
+                  .summary-row.summary-detail.summary-detail-nested.summary-detail-leaf(v-for="exp in expenses.filter(e => e.paid_from === register && parseFloat(e.amount || '0') !== 0)" :key="register + '-' + (exp.id || exp.description)")
+                    span.summary-label → {{ exp.description || '(ohne Beschreibung)' }}
+                    span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
               .summary-row.summary-detail.summary-subtotal-minor.summary-subtotal-final
                 span.summary-label
                   | = Einnahmen brutto
@@ -3878,6 +3894,7 @@ mixin shortfallBoxes
           //- Wareneinsatz
           .summary-row.summary-expandable(@click="resultExpandInventory = !resultExpandInventory")
             span.summary-label {{ resultExpandInventory ? '▼' : '▶' }} − Wareneinsatz
+            span.summary-toggle-hint {{ resultExpandInventory ? 'zuklappen' : 'Rechenweg anzeigen' }}
             span.summary-value −{{ formatCurrency(totalInventoryValue) }}
           template(v-if="resultExpandInventory")
             .summary-row.summary-detail(v-for="(items, group) in inventoryBySupplier" :key="group" v-show="groupInventoryValue(items) !== 0")
@@ -3887,6 +3904,7 @@ mixin shortfallBoxes
           //- Ausgaben
           .summary-row.summary-expandable(@click="resultExpandExpenses = !resultExpandExpenses")
             span.summary-label {{ resultExpandExpenses ? '▼' : '▶' }} − Ausgaben
+            span.summary-toggle-hint {{ resultExpandExpenses ? 'zuklappen' : 'Rechenweg anzeigen' }}
             span.summary-value −{{ formatCurrency(totalExpenses) }}
           template(v-if="resultExpandExpenses")
             .summary-row.summary-detail(v-for="exp in expenses" :key="exp.id || exp.description" v-show="parseFloat(exp.amount || '0') !== 0")
@@ -3910,6 +3928,7 @@ mixin shortfallBoxes
           template(v-if="vatOutput !== 0 || vatInput !== 0")
             .summary-row.summary-expandable(@click="resultExpandVat = !resultExpandVat")
               span.summary-label {{ resultExpandVat ? '▼' : '▶' }} − USt-Zahllast
+              span.summary-toggle-hint {{ resultExpandVat ? 'zuklappen' : 'Rechenweg anzeigen' }}
               span.summary-value −{{ formatCurrency(vatLiability) }}
             template(v-if="resultExpandVat")
               .summary-row.summary-detail(v-if="vat7Entrance !== 0")
@@ -3951,6 +3970,7 @@ mixin shortfallBoxes
           template(v-if="doorDealActive")
             .summary-row.summary-expandable(@click="resultExpandDoorDeal = !resultExpandDoorDeal")
               span.summary-label {{ resultExpandDoorDeal ? '▼' : '▶' }} − Doordeal-Verteilung
+              span.summary-toggle-hint {{ resultExpandDoorDeal ? 'zuklappen' : 'Rechenweg anzeigen' }}
               span.summary-value −{{ formatCurrency(doorDealArtistAmount) }}
             template(v-if="resultExpandDoorDeal")
               .summary-row.summary-sub-detail
@@ -6595,6 +6615,49 @@ h2 {
 
 .summary-row.summary-expandable.summary-detail:hover {
   background: #f5f5f5;
+}
+
+/* Hinweis rechts an klappbaren Hauptzeilen — beim Überfahren der Zeile gut lesbar. */
+.summary-toggle-hint {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: #777;
+  white-space: nowrap;
+}
+
+.summary-row.summary-expandable:hover .summary-toggle-hint {
+  color: black;
+  text-decoration: underline;
+}
+
+/* Leiste über der Tabelle: "Rechenweg komplett aufklappen" */
+.summary-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 0.25rem solid black;
+  border-top: none;
+  border-bottom: 1px solid #ddd;
+}
+
+.btn-toggle-all {
+  padding: 0.25rem 0.75rem;
+  background: white;
+  color: black;
+  border: 0.15rem solid black;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: var(--fs-sm);
+}
+
+.btn-toggle-all:hover {
+  background: black;
+  color: white;
+}
+
+.summary-toolbar + .summary-table {
+  margin-top: 0;
 }
 
 /* Drilldown-Detailzeilen: weiß, eingerückt, mit durchgehender Führungslinie links;
