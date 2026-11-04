@@ -4859,7 +4859,7 @@ h2 {
   gap: 0.75rem;
   padding: 1rem;
   margin-bottom: 1rem;
-  border: 0.25rem solid black;
+  border: 1px solid #ddd;
   background: #f9f9f9;
 }
 
@@ -4933,7 +4933,13 @@ h2 {
 
 .revenue-table {
   border: 0.25rem solid black;
-  margin-top: 0.75rem;
+  border-top: none;
+}
+
+/* Steht ein Hinweis zwischen Titelbalken und Tabelle, hängt der Rahmen nicht am Balken — dann oben schließen. */
+.revenue-hint + .revenue-table {
+  border-top: 0.25rem solid black;
+  margin-top: 0.5rem;
 }
 
 .revenue-header, .revenue-row {
@@ -4947,7 +4953,7 @@ h2 {
 .revenue-header {
   font-weight: 900;
   font-size: 0.8rem;
-  border-bottom: 0.25rem solid black;
+  border-bottom: 2px solid black;
 }
 
 .revenue-row {
@@ -5178,7 +5184,7 @@ h2 {
 .band-deal-header {
   font-weight: 900;
   font-size: 0.8rem;
-  border-bottom: 0.25rem solid black;
+  border-bottom: 2px solid black;
 }
 /* Kopf folgt der Ausrichtung seiner Spalte. */
 .band-deal-header > span:nth-child(3),
@@ -5337,7 +5343,7 @@ h2 {
 
 .inventory-table {
   border: 0.25rem solid black;
-  margin-top: 0.75rem;
+  border-top: none;
 }
 
 .inventory-header, .inventory-row {
@@ -5540,7 +5546,7 @@ h2 {
 .inventory-header {
   font-weight: 900;
   font-size: 0.8rem;
-  border-bottom: 0.25rem solid black;
+  border-bottom: 2px solid black;
 }
 
 .inventory-header .col-inv-pair,
@@ -6079,7 +6085,7 @@ h2 {
 .expense-header {
   font-weight: 900;
   font-size: 0.8rem;
-  border-bottom: 0.25rem solid black;
+  border-bottom: 2px solid black;
 }
 
 .expense-row {
@@ -6097,8 +6103,14 @@ h2 {
 /* ── Konfig-Tabellen (Doordeal + Gewinnverteilung) ── */
 .config-table {
   border: 0.25rem solid black;
-  margin-top: 0.75rem;
+  border-top: none;
   margin-bottom: 2rem;
+}
+
+/* Steht zwischen Titelbalken und Tabelle ein Untertitel, hängt der Rahmen nicht am Balken — dann oben schließen. */
+.section-subtitle ~ .config-table {
+  border-top: 0.25rem solid black;
+  margin-top: 0.5rem;
 }
 
 .config-header {
@@ -6109,7 +6121,7 @@ h2 {
   align-items: center;
   font-weight: 900;
   font-size: 0.8rem;
-  border-bottom: 0.25rem solid black;
+  border-bottom: 2px solid black;
 }
 
 .config-row {
@@ -6430,6 +6442,13 @@ h2 {
   margin-top: -1rem;
 }
 
+/* Der Strich zwischen Zeilen und Summe ist dünn — dick bleibt nur der äußere Rahmen. */
+.revenue-table:has(+ .group-total),
+.inventory-table:has(+ .group-total),
+.expenses-table:has(+ .group-total) {
+  border-bottom-width: 2px;
+}
+
 /* Ohne Tabelle darüber (leere Liste) braucht die Summenzeile einen eigenen oberen Rahmen. */
 .empty-hint + .group-total {
   border-top: 0.25rem solid black;
@@ -6443,7 +6462,7 @@ h2 {
 /* Zusammenfassung (Kassenzählung): als Rahmen wie die anderen Tabellen. */
 .section-summary .summary-list {
   border: 0.25rem solid black;
-  margin-top: 0.75rem;
+  border-top: none;
 }
 
 .section-summary .summary-line {
@@ -6574,7 +6593,7 @@ h2 {
 
 .summary-table {
   border: 0.25rem solid black;
-  margin-top: 0.75rem;
+  border-top: none;
   margin-bottom: 2rem;
 }
 
@@ -7133,6 +7152,18 @@ h2 {
   display: flex;
   flex-direction: column;
   border: 0.25rem solid black;
+}
+
+/* Förderung: Titelbalken hängt wie in den anderen Tabs direkt am Rahmen (der Flex-Abstand des Tabs gilt nur zwischen den Blöcken). */
+.grant-tab > .section-title + .grant-detail,
+.grant-tab > .section-title + .grant-summary,
+.grant-tab > .section-title + .expenses-table {
+  margin-top: -1.5rem;
+  border-top: none;
+}
+
+.summary-section > .section-title + .grant-detail {
+  border-top: none;
 }
 
 .grant-detail .detail-row .amount {
