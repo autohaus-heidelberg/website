@@ -32,6 +32,11 @@ export interface CalendarDay<T extends CalendarEvent> {
 
 const DAY_MS = 86400000
 
+/** Manche Titel tragen die Absage schon selbst („ABGESAGT Kino…“) – dann nicht doppelt kennzeichnen. */
+export function hasCancelledPrefix(title: string): boolean {
+  return /^abgesagt\b/i.test(title)
+}
+
 export function dateKey(d: Date): string {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -342,8 +347,7 @@ export function buildIcs(
       `DTSTAMP:${stamp}`,
       `DTSTART:${icsStamp(start)}`,
       `DTEND:${icsStamp(end)}`,
-      // Manche Titel tragen die Absage schon selbst, dann nicht doppelt voranstellen.
-      `SUMMARY:${escapeIcs(e.cancelled && !/^abgesagt\b/i.test(e.title) ? `ABGESAGT: ${e.title}` : e.title)}`,
+      `SUMMARY:${escapeIcs(e.cancelled && !hasCancelledPrefix(e.title) ? `ABGESAGT: ${e.title}` : e.title)}`,
       `STATUS:${e.cancelled ? 'CANCELLED' : 'CONFIRMED'}`,
     )
     if (description) lines.push(`DESCRIPTION:${escapeIcs(description)}`)

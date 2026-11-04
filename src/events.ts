@@ -9,6 +9,7 @@ export type Event = {
   // visible past their start date. Absent (or null from the backend) means a
   // single-date event.
   endDate?: string | null;
+  cancelled?: boolean;
   title: string;
   // path to image
   img?: string;

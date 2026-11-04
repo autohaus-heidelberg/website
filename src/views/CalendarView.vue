@@ -7,6 +7,7 @@ import {
   buildCalendarDays,
   dateKey,
   groupEventsByDay,
+  hasCancelledPrefix,
   layoutWeekSegments,
   shiftCursor,
   type CalendarDay,
@@ -84,7 +85,17 @@ function dateRange(e: Event): string {
   return `${shortDate(e.date)} – ${shortDate(e.endDate!)}`
 }
 
+// Abgesagte Events bekommen „ABGESAGT“ statt der Uhrzeit, außer der Titel sagt es schon selbst.
+function showCancelled(e: Event): boolean {
+  return !!e.cancelled && !hasCancelledPrefix(e.title)
+}
+
+function tooltip(e: Event, when: string): string {
+  return `${showCancelled(e) ? 'ABGESAGT: ' : ''}${when} · ${e.title}`
+}
+
 function listLabel(entry: CalendarEntry<Event>): string {
+  if (showCancelled(entry.event)) return 'ABGESAGT'
   if (!entry.multiDay) return `${time(entry.event)} Uhr`
   return entry.isStart ? dateRange(entry.event) : `bis ${shortDate(entry.event.endDate!)}`
 }
@@ -151,9 +162,10 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="entry in singleEntries(day)"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :title="`${time(entry.event)} Uhr · ${entry.event.title}`"
+          :class="{ cancelled: entry.event.cancelled }"
+          :title="tooltip(entry.event, `${time(entry.event)} Uhr`)"
         )
-          span.ev-time {{ time(entry.event) }}
+          span.ev-time {{ showCancelled(entry.event) ? 'ABGESAGT' : time(entry.event) }}
           span.ev-title {{ entry.event.title }}
       //- Mehrtägige Events als durchgehende Balken
       .bars(v-if="row.laneCount" :style="{ gridRow: rowIndex + 2 }")
@@ -161,11 +173,13 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="seg in row.segments"
           :key="seg.event.id"
           :to="eventLink(seg.event)"
-          :title="`${dateRange(seg.event)} · ${seg.event.title}`"
-          :class="{ 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter }"
+          :title="tooltip(seg.event, dateRange(seg.event))"
+          :class="{ 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter, cancelled: seg.event.cancelled }"
           :style="{ gridColumn: `${seg.startCol + 1} / span ${seg.span}`, gridRow: seg.lane + 1 }"
         )
-          span.bar-title {{ seg.continuesBefore ? '◂ ' : '' }}{{ seg.event.title }}
+          span.bar-title {{ seg.continuesBefore ? '◂ ' : '' }}
+            span.cancel-label(v-if="showCancelled(seg.event)") ABGESAGT
+            | {{ seg.event.title }}
           span.bar-range(v-if="seg.span > 1") {{ dateRange(seg.event) }}
           span.bar-arrow(v-if="seg.continuesAfter") ▸
 
@@ -187,7 +201,7 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="entry in day.entries"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :class="{ multiday: entry.multiDay }"
+          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled }"
         )
           span.list-time {{ listLabel(entry) }}
           span.list-title {{ entry.event.title }}
@@ -364,6 +378,20 @@ button.active {
   opacity: 0.55;
 }
 
+/* Abgesagt: grau und durchgestrichen (kein Rot, die Seite bleibt schwarz-weiß + Gelb) */
+.ev.cancelled {
+  color: #666;
+  border-left-color: #999;
+}
+
+.ev.cancelled .ev-title {
+  text-decoration: line-through;
+}
+
+.ev.cancelled .ev-time {
+  letter-spacing: 0.05em;
+}
+
 .bars {
   grid-column: 2 / -1;
   display: grid;
@@ -416,6 +444,28 @@ button.active {
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
+}
+
+.bar.cancelled {
+  background: #e6e6e6;
+  color: #666;
+  border-left-color: #999;
+}
+
+.bar.cancelled:hover {
+  background: #d9d9d9;
+}
+
+.bar.cancelled .bar-title {
+  text-decoration: line-through;
+}
+
+/* inline-block, damit das Label nicht mit durchgestrichen wird */
+.cancel-label {
+  display: inline-block;
+  margin-right: 0.4em;
+  font-weight: 900;
+  letter-spacing: 0.05em;
 }
 
 .bar-range {
@@ -513,6 +563,22 @@ button.active {
   color: black;
 }
 
+.list-entry.cancelled,
+.list-entry.cancelled.multiday {
+  background: #f2f2f2;
+  color: #666;
+  border-color: #999;
+}
+
+.list-entry.cancelled:hover {
+  background: #e6e6e6;
+  color: #666;
+}
+
+.list-entry.cancelled .list-title {
+  text-decoration: line-through;
+}
+
 .list-time {
   font-size: 0.85rem;
   font-weight: 900;
@@ -590,6 +656,10 @@ button.active {
     background: black;
   }
 
+  .ev.cancelled {
+    background: #bbb;
+  }
+
   .grid {
     grid-template-columns: 1.4rem repeat(7, minmax(0, 1fr));
   }
@@ -619,6 +689,10 @@ button.active {
     margin-right: calc(var(--cell-pad) + 0.2rem);
     border-left: none;
     background: var(--multiday-accent);
+  }
+
+  .bar.cancelled {
+    background: #bbb;
   }
 
   .bar.cont-after {

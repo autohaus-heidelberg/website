@@ -5,6 +5,7 @@ import {
   buildIcs,
   dateKey,
   groupEventsByDay,
+  hasCancelledPrefix,
   isoWeek,
   layoutWeekSegments,
   parseDateKey,
@@ -187,6 +188,15 @@ describe('layoutWeekSegments', () => {
     const lanes = Object.fromEntries(segments.map(s => [s.event.id, s.lane]))
     expect(lanes).toEqual({ long: 0, overlap: 1, later: 0 })
     expect(laneCount).toBe(2)
+  })
+})
+
+describe('hasCancelledPrefix', () => {
+  it('detects titles that already announce the cancellation', () => {
+    expect(hasCancelledPrefix('ABGESAGT Kino')).toBe(true)
+    expect(hasCancelledPrefix('Abgesagt: Konzert')).toBe(true)
+    expect(hasCancelledPrefix('Konzert (abgesagt)')).toBe(false)
+    expect(hasCancelledPrefix('Abgesagte Hoffnung')).toBe(false)
   })
 })
 
