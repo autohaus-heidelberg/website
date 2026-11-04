@@ -4007,7 +4007,8 @@ mixin shortfallBoxes
               span.summary-value(:class="resultAfterDoorDeal >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterDoorDeal) }}
 
 
-          //- Gewinnverteilung-Auszahlung (treasurer + Splits konfiguriert)
+          //- Gewinnverteilung-Auszahlung (nur treasurer: das Backend liefert splits=[] für alle anderen).
+          //- Das Vereinsergebnis steht deshalb auch nur hier — ohne die Splits wäre es für andere Rollen falsch.
           template(v-if="authStore.isTreasurer && splits.length")
             .summary-row.summary-subblock-header
               span.summary-label Gewinnverteilung
@@ -4015,13 +4016,12 @@ mixin shortfallBoxes
               span.summary-label {{ split.participant_name || '(kein Name)' }}
               .summary-value-group
                 span.summary-pct {{ Math.round(parseFloat(split.share_percentage)) }}%
-                span.summary-value {{ formatCurrency(splitAmount(split)) }}
-            .summary-row.summary-sub-remaining
-              span.summary-label Carousel e.V. (verbleibt)
-              .summary-value-group
-                span.summary-pct {{ (100 - totalSplitPercentage).toFixed(0) }}%
-                span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'")
-                  | {{ formatCurrency(remainingAfterSplits) }}
+                span.summary-value −{{ formatCurrency(splitAmount(split)) }}
+            .summary-row.summary-total.summary-total-final
+              span.summary-label
+                | Ergebnis Carousel e.V.
+                span.summary-calc Ergebnis nach {{ doorDealActive ? 'Doordeal' : 'USt' }} − Gewinnverteilung · {{ (100 - totalSplitPercentage).toFixed(0) }} % verbleiben im Verein
+              span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'") {{ formatCurrency(remainingAfterSplits) }}
 
       //- ═══ B) Externer Türeinnahmen-Split (Mitveranstalter) ══════
       //- NUR für externe Parteien (Mitveranstalter). Band-Gagen — auch reine
@@ -6772,6 +6772,19 @@ h2 {
 
 .summary-row.summary-total .positive { color: #15803d; }
 .summary-row.summary-total .negative { color: #b91c1c; }
+
+/* Endergebnis (Vereinsergebnis nach Gewinnverteilung): die letzte Zeile der Tabelle, größer und leicht getönt. */
+.summary-row.summary-total.summary-total-final {
+  background: #f5f5f5;
+  border-top: 0.25rem solid black;
+  padding-top: 1.125rem;
+  padding-bottom: 1.125rem;
+  font-size: 1.1rem;
+}
+
+.summary-row.summary-total.summary-total-final .summary-value {
+  font-size: 1.5em;
+}
 
 /* Sub-Block-Header: Doordeal-Verteilung / Gewinnverteilung */
 .summary-row.summary-subblock-header {
