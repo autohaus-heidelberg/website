@@ -606,6 +606,16 @@ function groupRevenueGross(sources: RevenueSource[]): number {
   return net + paidOut
 }
 
+// Aus der Kasse bezahlte Ausgaben einer Einnahmen-Gruppe (fehlen im gezählten Bestand).
+function groupPaidOut(sources: RevenueSource[]): number {
+  return sources.filter(s => s.endsWith('_cash')).reduce((sum, s) => sum + expensesFromSource(s), 0)
+}
+
+const REGISTER_LABELS: Record<string, string> = {
+  entrance_cash: 'Einlasskasse',
+  bar_cash: 'Bar-Kasse',
+}
+
 // "Gezählt" bezieht sich nur auf die physische Kasse; PayPal/SumUp/Pretix
 // werden aus den Zahlungsdienstleister-Reports übernommen, nicht gezählt.
 function cashSourcesOf(sources: RevenueSource[]): RevenueSource[] {
@@ -1722,6 +1732,15 @@ const vatLiability = computed(() => {
 // Backwards-compat alias used by existing template.
 const vatTotal = vatLiability
 
+// Angezeigte Einzelwerte sind gerundet, gerechnet wird ungerundet — die
+// Differenz wird in der USt-Aufschlüsselung als eigene Zeile ausgewiesen,
+// damit die Zeilen sichtbar zur Zahllast aufgehen.
+const vatRoundingDiff = computed(() => {
+  const r2 = (v: number) => Math.round(v * 100) / 100
+  const shownSum = r2(vat7Entrance.value) + r2(vat19Bar.value) - r2(vatInput.value)
+  return Math.round((r2(vatLiability.value) - shownSum) * 100) / 100
+})
+
 // Wahres Ergebnis nach USt-Korrektur:
 //   echtes Netto-Ergebnis = result − (Output-USt − Vorsteuer)
 // Bei mehr Vorsteuer als Output-USt wird das Ergebnis besser (Erstattung).
@@ -1777,8 +1796,8 @@ const remainingAfterSplits = computed(() => {
 
 // ── Doordeal computeds ───────────────────────────────────────────
 
-// Einnahmen aus Eintritt (Einlass + VVK), netto (USt rausgerechnet)
-const doorDealEntranceRevenue = computed(() => {
+// Einnahmen aus Eintritt (Einlass + VVK): brutto und netto (USt rausgerechnet)
+const doorDealEntranceParts = computed(() => {
   const entranceSources: RevenueSource[] = ['entrance_cash', 'entrance_paypal', 'entrance_sumup', 'vvk_pretix', 'vvk_paypal', 'vvk_stripe']
   // Aus der Einlasskasse gezahlte Ausgaben mindern den gezählten Bestand — für
   // die tatsächliche Türeinnahme wieder aufaddieren (spiegelt tax_export.py
@@ -1786,13 +1805,18 @@ const doorDealEntranceRevenue = computed(() => {
   const entrancePayouts = expensesFromSource('entrance_cash')
   return revenues.value
     .filter(r => entranceSources.includes(r.source))
-    .reduce((sum, r) => {
+    .reduce((acc, r) => {
       const gross = revenueNet(r) + (r.source === 'entrance_cash' ? entrancePayouts : 0)
       const vatKey = r.vat_rate ?? REVENUE_VAT_RATE_DEFAULTS[r.source] ?? 'none'
       const rate = vatKey === '7' ? 0.07 : vatKey === '19' ? 0.19 : 0
-      return sum + (rate ? gross / (1 + rate) : gross)
-    }, 0)
+      return {
+        gross: acc.gross + gross,
+        net: acc.net + (rate ? gross / (1 + rate) : gross),
+      }
+    }, { gross: 0, net: 0 })
 })
+
+const doorDealEntranceRevenue = computed(() => doorDealEntranceParts.value.net)
 
 // Abzugsfähige Kosten (z.B. GEMA, KSK) die vor der Doordeal-Aufteilung abgezogen werden
 const doorDealDeductions = computed(() => {
@@ -3814,38 +3838,41 @@ mixin shortfallBoxes
               .summary-row.summary-detail.summary-group-subtotal(v-if="groupRevenue(group.sources) !== 0")
                 span.summary-label
                   | {{ group.label }}
-                  span.summary-inline-hint(v-if="group.sources[0].startsWith('bar_') && authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)") (Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }})
+                  span.summary-calc(v-if="groupPaidOut(group.sources) > 0") + {{ formatCurrency(groupPaidOut(group.sources)) }} aus {{ REGISTER_LABELS[cashSourcesOf(group.sources)[0]] }} bezahlt = {{ formatCurrency(groupRevenueGross(group.sources)) }} brutto (Basis für die USt)
                 span.summary-value {{ formatCurrency(groupRevenue(group.sources)) }}
+              .summary-row.summary-note(v-if="group.sources[0].startsWith('bar_') && groupRevenue(group.sources) !== 0 && authStore.isTreasurer && (totalExpectedRevenue > 0 || missingSellingPriceBeverages.length)")
+                span.summary-label ⚠ Verbrauch hätte {{ formatCurrency(totalExpectedRevenue) }} an Einnahmen erzeugen müssen{{ missingSellingPriceBeverages.length ? ` – ohne VK-Preis: ${missingSellingPriceBeverages.join(', ')}` : '' }}
               .summary-row.summary-detail.summary-detail-nested(v-for="rev in revenues.filter(r => group.sources.includes(r.source))" :key="rev.source" v-show="revenueNet(rev) !== 0")
                 span.summary-label {{ REVENUE_SOURCE_LABELS[rev.source] }}
                 span.summary-value {{ formatCurrency(revenueNet(rev)) }}
             .summary-row.summary-detail.summary-subtotal-minor(v-if="expensesPaidFromRegister === 0")
-              span.summary-label = Gezählt + Digital
+              span.summary-label
+                | = Gezählt + Digital
+                span.summary-calc Summe der Einnahmen-Gruppen
               span.summary-value {{ formatCurrency(totalRevenue) }}
             template(v-if="expensesPaidFromRegister > 0")
               .summary-row.summary-detail.summary-subtotal-minor
-                span.summary-label = Gezählt + Digital
+                span.summary-label
+                  | = Gezählt + Digital
+                  span.summary-calc Summe der Einnahmen-Gruppen
                 span.summary-value {{ formatCurrency(totalRevenue) }}
               .summary-row.summary-detail.summary-expandable(@click.stop="resultExpandCashExpenses = !resultExpandCashExpenses")
-                span.summary-label {{ resultExpandCashExpenses ? '▼' : '▶' }} + Aus Kasse bezahlt
+                span.summary-label
+                  | {{ resultExpandCashExpenses ? '▼' : '▶' }} + Aus Kasse bezahlt
+                  span.summary-calc Schon bar ausgezahlt und deshalb in der Kassenzählung nicht mehr enthalten — wird hier wieder dazugerechnet (steht zusätzlich unter Ausgaben)
                 span.summary-value {{ formatCurrency(expensesPaidFromRegister) }}
               template(v-if="resultExpandCashExpenses")
-                template(v-if="expensesFromSource('entrance_cash') > 0")
-                  .summary-row.summary-detail.summary-detail-nested.summary-subtotal-minor
-                    span.summary-label Einlasskasse
-                    span.summary-value {{ formatCurrency(expensesFromSource('entrance_cash')) }}
-                  .summary-row.summary-detail.summary-detail-nested(v-for="exp in expenses.filter(e => e.paid_from === 'entrance_cash' && parseFloat(e.amount || '0') !== 0)" :key="'ce-' + (exp.id || exp.description)")
-                    span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
-                    span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-                template(v-if="expensesFromSource('bar_cash') > 0")
-                  .summary-row.summary-detail.summary-detail-nested.summary-subtotal-minor
-                    span.summary-label Bar-Kasse
-                    span.summary-value {{ formatCurrency(expensesFromSource('bar_cash')) }}
-                  .summary-row.summary-detail.summary-detail-nested(v-for="exp in expenses.filter(e => e.paid_from === 'bar_cash' && parseFloat(e.amount || '0') !== 0)" :key="'cb-' + (exp.id || exp.description)")
-                    span.summary-label {{ exp.description || '(ohne Beschreibung)' }}
-                    span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
-              .summary-row.summary-detail.summary-subtotal-minor
-                span.summary-label = Einnahmen brutto
+                template(v-for="register in ['entrance_cash', 'bar_cash']" :key="register")
+                  template(v-if="expensesFromSource(register) > 0")
+                    .summary-row.summary-detail.summary-detail-nested.summary-source-header
+                      span.summary-label aus {{ REGISTER_LABELS[register] }}
+                    .summary-row.summary-detail.summary-detail-nested.summary-detail-leaf(v-for="exp in expenses.filter(e => e.paid_from === register && parseFloat(e.amount || '0') !== 0)" :key="register + '-' + (exp.id || exp.description)")
+                      span.summary-label → {{ exp.description || '(ohne Beschreibung)' }}
+                      span.summary-value {{ formatCurrency(parseFloat(exp.amount || '0')) }}
+              .summary-row.summary-detail.summary-subtotal-minor.summary-subtotal-final
+                span.summary-label
+                  | = Einnahmen brutto
+                  span.summary-calc Gezählt + Digital + Aus Kasse bezahlt
                 span.summary-value {{ formatCurrency(adjustedRevenue) }}
 
           //- Wareneinsatz
@@ -3868,13 +3895,15 @@ mixin shortfallBoxes
                 //- Garantie+Doordeal-Details direkt an der betroffenen Ausgabe
                 //- statt in einer separaten Liste weiter unten (siehe Team-Absprache) —
                 //- rein informativ, ändert nichts an der Ausgabe selbst.
-                span.summary-inline-hint(v-if="expenseComboHint(exp)")
-                  |  ({{ expenseComboHint(exp) }})
+                span.summary-calc(v-if="expenseComboHint(exp)") {{ expenseComboHint(exp) }}
+                span.summary-calc(v-if="REGISTER_LABELS[exp.paid_from]") aus {{ REGISTER_LABELS[exp.paid_from] }} bezahlt — oben bei den Einnahmen als „Aus Kasse bezahlt“ wieder dazugerechnet
               span.summary-value −{{ formatCurrency(parseFloat(exp.amount || '0')) }}
 
           //- ═══ Ergebnis vor USt ═══
           .summary-row.summary-total
-            span.summary-label Ergebnis (vor USt)
+            span.summary-label
+              | Ergebnis (vor USt)
+              span.summary-calc Einnahmen brutto − Wareneinsatz − Ausgaben
             span.summary-value(:class="result >= 0 ? 'positive' : 'negative'") {{ formatCurrency(result) }}
 
           //- USt (nur wenn relevant)
@@ -3884,17 +3913,30 @@ mixin shortfallBoxes
               span.summary-value −{{ formatCurrency(vatLiability) }}
             template(v-if="resultExpandVat")
               .summary-row.summary-detail(v-if="vat7Entrance !== 0")
-                span.summary-label USt Eintritt (7 %)
+                span.summary-label
+                  | USt Eintritt (7 %)
+                  span.summary-calc in {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources)) }} brutto enthalten (netto {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[1].sources) - vat7Entrance) }})
                 span.summary-value {{ formatCurrency(vat7Entrance) }}
               .summary-row.summary-detail(v-if="vat19Bar !== 0")
-                span.summary-label USt Getränke (19 %)
+                span.summary-label
+                  | USt Getränke (19 %)
+                  span.summary-calc in {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources)) }} brutto enthalten (netto {{ formatCurrency(groupRevenueGross(REVENUE_GROUPS[0].sources) - vat19Bar) }})
                 span.summary-value {{ formatCurrency(vat19Bar) }}
               .summary-row.summary-detail(v-if="vatInput !== 0")
-                span.summary-label − Vorsteuer
+                span.summary-label
+                  | − Vorsteuer
+                  span.summary-calc Wareneinsatz {{ formatCurrency(inputVatInventory) }} (19 % von {{ formatCurrency(totalInventoryValue) }} brutto) + Ausgaben {{ formatCurrency(inputVatExpenses) }}
                 span.summary-value −{{ formatCurrency(vatInput) }}
+              .summary-row.summary-detail(v-if="vatRoundingDiff !== 0")
+                span.summary-label
+                  | Rundungsdifferenz
+                  span.summary-calc Die Einzelwerte oben sind gerundet, gerechnet wird mit den ungerundeten Beträgen
+                span.summary-value {{ vatRoundingDiff < 0 ? '−' : '+' }}{{ formatCurrency(Math.abs(vatRoundingDiff)) }}
             //- ═══ Ergebnis nach USt ═══
             .summary-row.summary-total
-              span.summary-label Ergebnis (nach USt)
+              span.summary-label
+                | Ergebnis (nach USt)
+                span.summary-calc Ergebnis vor USt − USt-Zahllast
               span.summary-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
 
           //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert).
@@ -3912,7 +3954,9 @@ mixin shortfallBoxes
               span.summary-value −{{ formatCurrency(doorDealArtistAmount) }}
             template(v-if="resultExpandDoorDeal")
               .summary-row.summary-sub-detail
-                span.summary-label Türeinnahmen (Einlass + VVK, netto)
+                span.summary-label
+                  | Türeinnahmen (Einlass + VVK, netto)
+                  span.summary-calc {{ formatCurrency(doorDealEntranceParts.gross) }} brutto (inkl. aus Einlasskasse bezahlter Ausgaben) − {{ formatCurrency(doorDealEntranceParts.gross - doorDealEntranceParts.net) }} USt
                 span.summary-value {{ formatCurrency(doorDealEntranceRevenue) }}
               .summary-row.summary-sub-detail(v-if="doorDealDeductions > 0")
                 span.summary-label − Abzugsfähige Ausgaben
@@ -3938,7 +3982,9 @@ mixin shortfallBoxes
                   span.summary-value(:class="doorDealVenueAmount < 0 ? 'negative' : ''") {{ formatCurrency(doorDealVenueAmount) }}
             //- ═══ Ergebnis nach Doordeal ═══
             .summary-row.summary-total
-              span.summary-label Ergebnis (nach Doordeal)
+              span.summary-label
+                | Ergebnis (nach Doordeal)
+                span.summary-calc Ergebnis nach USt − Doordeal-Verteilung
               span.summary-value(:class="resultAfterDoorDeal >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterDoorDeal) }}
 
 
@@ -6461,7 +6507,7 @@ h2 {
 .summary-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #ddd;
   font-size: 1rem;
@@ -6481,11 +6527,38 @@ h2 {
   white-space: nowrap;
 }
 
+.summary-row .summary-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Feste Betragsspalte: alle Zahlen enden an derselben rechten Kante. */
+.summary-row .summary-value {
+  min-width: 8rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rechenweg einer Zeile (woher die Zahl kommt), direkt unter dem Label. */
+.summary-calc {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.35;
+  color: #777;
+}
+
 .summary-value-group {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 1rem;
   flex-shrink: 0;
+}
+
+.summary-value-group .summary-value {
+  min-width: 6rem;
 }
 
 .summary-pct {
@@ -6495,39 +6568,113 @@ h2 {
   text-align: right;
 }
 
-/* Expandierbare Hauptzeilen */
-.summary-row.summary-expandable {
+/* Hauptzeilen (Einnahmen / Wareneinsatz / Ausgaben / USt): jede Gruppe beginnt mit einem grauen Kopfband
+   unter einem schwarzen Balken — dazwischen liegt die weiße, eingerückte Rechnung. */
+.summary-row.summary-expandable:not(.summary-detail) {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 700;
+  background: #ececec;
+  border-top: 0.25rem solid black;
+  border-bottom: none;
+}
+
+.summary-table > .summary-row.summary-expandable:not(.summary-detail):first-child,
+.summary-row.summary-total + .summary-row.summary-expandable:not(.summary-detail) {
+  border-top: none;
+}
+
+.summary-row.summary-expandable.summary-detail {
   cursor: pointer;
   user-select: none;
 }
 
-.summary-row.summary-expandable:hover {
+.summary-row.summary-expandable:not(.summary-detail):hover {
+  background: #e2e2e2;
+}
+
+.summary-row.summary-expandable.summary-detail:hover {
   background: #f5f5f5;
 }
 
-/* Drilldown-Detailzeilen einer Hauptzeile */
+/* Drilldown-Detailzeilen: weiß, eingerückt, mit durchgehender Führungslinie links;
+   Beträge normal gewichtet (Summen sind fett). */
 .summary-row.summary-detail {
-  padding-left: 2rem;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
   color: #555;
   font-size: 0.9rem;
-  background: #fafafa;
+  background: white;
+  border-left: 0.25rem solid #bbb;
+  border-bottom: 1px solid #eee;
 }
 
+.summary-row.summary-detail .summary-value {
+  font-weight: 400;
+}
+
+/* Zwischensummen ("= …"): stehen auf Gruppenebene — ohne Führungslinie, mit feinem Summenstrich darüber. */
 .summary-row.summary-subtotal-minor {
   font-weight: 700;
-  border-top: 1px solid #ccc;
+  color: black;
+  background: white;
+  border-top: 1px solid #999;
+  border-left-color: transparent;
+}
+
+.summary-row.summary-subtotal-minor .summary-value {
+  font-weight: 700;
+}
+
+/* Endsumme der Gruppe (= Einnahmen brutto): grauer Grund, kräftiger Strich, etwas größer. */
+.summary-row.summary-subtotal-final {
+  background: #f6f6f6;
+  border-top: 2px solid black;
+  border-bottom: none;
+  font-size: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 /* Zwischensumme je Einnahmen-Bereich (Bar / Einlass) innerhalb der Drilldown-Liste */
 .summary-row.summary-group-subtotal {
   font-weight: 700;
   color: #333;
-  background: #f0f0f0;
+  background: #f6f6f6;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.summary-row.summary-group-subtotal .summary-value {
+  font-weight: 700;
 }
 
 /* Einzelne Quelle unterhalb einer Bereichs-Zwischensumme, stärker eingerückt */
 .summary-row.summary-detail-nested {
-  padding-left: 3rem;
+  padding-left: 4rem;
+}
+
+/* Überschrift der Kasse ("aus Einlasskasse") über den einzelnen Auszahlungen — ohne eigenen Betrag */
+.summary-row.summary-source-header {
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  color: #333;
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: none;
+}
+
+.summary-row.summary-detail-leaf {
+  padding-left: 5rem;
+}
+
+/* Warnhinweis als eigene Zeile unter dem betroffenen Posten */
+.summary-row.summary-note {
+  padding: 0.5rem 1rem 0.5rem 4rem;
+  font-size: var(--fs-sm);
+  color: #8a5a00;
+  background: #fff8e1;
+  border-left: 0.25rem solid #e0a800;
+  border-bottom: 1px solid #eee;
 }
 
 /* Plausibilitäts-Hinweis unter der Einnahmen-Zeile (Verbrauch → erwartete Einnahmen) */
@@ -6536,15 +6683,6 @@ h2 {
   font-size: 0.8rem;
   font-style: italic;
   color: #888;
-}
-
-/* Unauffälliger Klammer-Hinweis direkt hinter dem Bar-Label */
-.summary-inline-hint {
-  margin-left: 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 400;
-  font-style: italic;
-  color: #999;
 }
 
 /* Schwarzer Balken: Ergebnis-Subtotals (vor USt / nach USt / nach Doordeal) */
@@ -6556,6 +6694,10 @@ h2 {
   border-bottom: none;
 }
 
+.summary-row.summary-total .summary-calc {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .summary-row.summary-total + .summary-row {
   border-top: none;
 }
@@ -6565,33 +6707,44 @@ h2 {
 
 /* Sub-Block-Header: Doordeal-Verteilung / Gewinnverteilung */
 .summary-row.summary-subblock-header {
-  background: #f0f0f0;
+  background: #ececec;
   font-weight: 700;
   border-top: 0.25rem solid black;
+  border-bottom: none;
 }
 
-/* Sub-Rechnung-Zeilen (innerhalb Doordeal/Splits-Block) */
+/* Sub-Rechnung-Zeilen (innerhalb Doordeal/Splits-Block): gleicher Stil wie die Drilldown-Zeilen oben */
 .summary-row.summary-sub-detail {
-  background: #f5f5f5;
-  padding-left: 2rem;
-  font-size: 0.95rem;
+  background: white;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  font-size: 0.9rem;
+  color: #555;
+  border-left: 0.25rem solid #bbb;
+  border-bottom: 1px solid #eee;
+}
+
+.summary-row.summary-sub-detail .summary-value {
+  font-weight: 400;
 }
 
 /* "= Verteilungsbasis"-Zeile innerhalb Doordeal */
 .summary-row.summary-sub-base {
-  background: #f5f5f5;
-  padding-left: 2rem;
-  font-size: 0.95rem;
+  background: white;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  font-size: 0.9rem;
   font-weight: 700;
   border-top: 1px solid black;
+  border-left: 0.25rem solid #bbb;
 }
 
-/* Carousel-Anteil als Aufteilungs-Info (nicht Final-Total) */
+/* Carousel-Anteil (Rest der Verteilung): fett wie eine Zwischensumme, nicht kursiv */
 .summary-row.summary-sub-remaining {
-  background: #f5f5f5;
-  padding-left: 2rem;
-  font-size: 0.95rem;
-  font-style: italic;
+  background: white;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-top: 1px solid black;
+  border-left: 0.25rem solid #bbb;
 }
 
 .grand-total {
