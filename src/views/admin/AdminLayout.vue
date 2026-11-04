@@ -123,7 +123,7 @@ watch(isMobileMenuOpen, (isOpen) => {
 }
 
 .admin-nav {
-  width: 280px;
+  width: var(--admin-nav-width);
   background: white;
   color: black;
   padding: 0;
@@ -288,7 +288,7 @@ watch(isMobileMenuOpen, (isOpen) => {
 
 .admin-content {
   flex: 1;
-  margin-left: 280px;
+  margin-left: var(--admin-nav-width);
   padding: 2rem;
   overflow-y: auto;
   overflow-x: hidden;
@@ -362,7 +362,7 @@ watch(isMobileMenuOpen, (isOpen) => {
     position: fixed;
     top: 0;
     left: 0;
-    width: 280px;
+    width: var(--admin-nav-width);
     height: 100vh;
     height: 100dvh;
     transform: translateX(-100%);
@@ -382,7 +382,7 @@ watch(isMobileMenuOpen, (isOpen) => {
     content: '';
     position: fixed;
     top: 0;
-    left: 280px;
+    left: var(--admin-nav-width);
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.4);

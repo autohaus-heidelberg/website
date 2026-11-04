@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
+  buildAgendaDays,
   buildCalendarDays,
   buildIcs,
   dateKey,
   groupEventsByDay,
   isoWeek,
+  layoutWeekSegments,
   parseDateKey,
   shiftCursor,
   shiftEventToDay,
@@ -153,6 +155,61 @@ describe('buildCalendarDays', () => {
   })
 })
 
+describe('layoutWeekSegments', () => {
+  // Woche Mo 2026-01-05 bis So 2026-01-11
+  function week(events: CalendarEvent[]) {
+    const days = buildCalendarDays(new Date(2026, 0, 7), 'week', groupEventsByDay(events), new Date(2026, 0, 7))
+    return layoutWeekSegments(days)
+  }
+
+  it('ignores single-day events', () => {
+    expect(week([ev('a', '2026-01-07T19:00:00')])).toEqual({ segments: [], laneCount: 0 })
+  })
+
+  it('creates one segment spanning the event days', () => {
+    const { segments, laneCount } = week([ev('a', '2026-01-06T10:00:00', '2026-01-08T18:00:00')])
+    expect(laneCount).toBe(1)
+    expect(segments).toHaveLength(1)
+    expect(segments[0]).toMatchObject({ startCol: 1, span: 3, lane: 0, continuesBefore: false, continuesAfter: false })
+  })
+
+  it('clips events crossing the week boundaries', () => {
+    const { segments } = week([ev('a', '2025-12-20T10:00:00', '2026-01-20T18:00:00')])
+    expect(segments[0]).toMatchObject({ startCol: 0, span: 7, continuesBefore: true, continuesAfter: true })
+  })
+
+  it('stacks overlapping segments into separate lanes and reuses free lanes', () => {
+    const { segments, laneCount } = week([
+      ev('long', '2026-01-05T10:00:00', '2026-01-08T18:00:00'),
+      ev('overlap', '2026-01-07T10:00:00', '2026-01-09T18:00:00'),
+      ev('later', '2026-01-10T10:00:00', '2026-01-11T18:00:00'),
+    ])
+    const lanes = Object.fromEntries(segments.map(s => [s.event.id, s.lane]))
+    expect(lanes).toEqual({ long: 0, overlap: 1, later: 0 })
+    expect(laneCount).toBe(2)
+  })
+})
+
+describe('buildAgendaDays', () => {
+  it('lists a multi-day event once on its start day and skips empty days', () => {
+    const events = [ev('expo', '2026-01-06T10:00:00', '2026-01-09T18:00:00'), ev('gig', '2026-01-08T19:00:00')]
+    const days = buildCalendarDays(new Date(2026, 0, 5), 'week', groupEventsByDay(events), new Date(2026, 0, 5))
+    const agenda = buildAgendaDays(days)
+    expect(agenda.map(d => [d.key, d.entries.map(e => e.event.id)])).toEqual([
+      ['2026-01-06', ['expo']],
+      ['2026-01-08', ['gig']],
+    ])
+  })
+
+  it('shows an already running event on the first day of the range', () => {
+    const events = [ev('expo', '2025-12-20T10:00:00', '2026-01-20T18:00:00')]
+    const days = buildCalendarDays(new Date(2026, 0, 7), 'week', groupEventsByDay(events), new Date(2026, 0, 7))
+    const agenda = buildAgendaDays(days)
+    expect(agenda.map(d => d.key)).toEqual(['2026-01-05'])
+    expect(agenda[0].entries[0].isStart).toBe(false)
+  })
+})
+
 describe('shiftCursor', () => {
   it('does not skip a month when the cursor is on the 31st', () => {
     const next = shiftCursor(new Date(2026, 0, 31), 'month', 1)
@@ -248,8 +305,25 @@ describe('buildIcs', () => {
     expect(ics.split('\r\n').every(l => l.length <= 75)).toBe(true)
   })
 
-  it('adds a deep link when a base url is given', () => {
-    const ics = buildIcs([ev('a', '2026-01-05T19:00:00.000Z')], { now, baseUrl: 'https://example.org' })
-    expect(ics).toContain('URL:https://example.org/admin/events/a')
+  it('does not double the cancelled prefix', () => {
+    const ics = buildIcs([{ ...ev('a', '2026-01-05T19:00:00.000Z'), title: 'ABGESAGT Kino', cancelled: true }], { now })
+    expect(ics).toContain('SUMMARY:ABGESAGT Kino\r\n')
+  })
+
+  it('decodes html entities in the description', () => {
+    const ics = buildIcs([{ ...ev('a', '2026-01-05T19:00:00.000Z'), descriptionShort: '<p>&Uuml;berraschung &amp; Gr&#252;&szlig;e</p>' }], { now })
+    expect(ics).toContain('DESCRIPTION:Überraschung & Grüße\r\n')
+  })
+
+  it('adds refresh hints for subscribed calendars', () => {
+    const ics = buildIcs([], { now, refreshInterval: 'PT12H' })
+    expect(ics).toContain('REFRESH-INTERVAL;VALUE=DURATION:PT12H\r\n')
+    expect(ics).toContain('X-PUBLISHED-TTL:PT12H\r\n')
+    expect(buildIcs([], { now })).not.toContain('REFRESH-INTERVAL')
+  })
+
+  it('adds a deep link when an url builder is given', () => {
+    const ics = buildIcs([ev('a', '2026-01-05T19:00:00.000Z')], { now, eventUrl: e => `https://example.org/event/${e.id}` })
+    expect(ics).toContain('URL:https://example.org/event/a')
   })
 })

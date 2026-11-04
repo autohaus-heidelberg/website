@@ -9,6 +9,13 @@ const isHome = computed(() => {
   return route.path === "/";
 })
 
+// Der Header richtet sich nach der Breite des Inhalts: Standard (schmal), breite Seiten
+// (Route-Meta `wide`) und Admin (neben der Seitenleiste).
+const headerLayout = computed(() => {
+  if (route.path.startsWith('/admin')) return 'admin'
+  return route.meta.wide ? 'wide' : 'default'
+})
+
 // Public styles (buttons, links) in main.css are scoped to html.public
 watchEffect(() => {
   document.documentElement.classList.toggle('public', !route.path.startsWith('/admin'))
@@ -39,7 +46,7 @@ if (window.history.state.back === null) {
 </script>
 
 <template lang="pug">
-header(v-if="!isHome" :class="{ hidden: headerHidden }")
+header(v-if="!isHome" :class="[`layout-${headerLayout}`, { hidden: headerHidden }]")
   button.back-btn(@click="navigateBack")
     .header-link
       //- !--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--
@@ -70,6 +77,25 @@ header {
 
 header.hidden {
   transform: translateY(-100%);
+}
+
+/* Breite Seiten: gleiche Breite wie der Inhalt (dessen Innenabstand von 1rem abziehen). */
+header.layout-wide {
+  max-width: calc(var(--wide-page-width) - 2rem);
+}
+
+/* Admin: rechts neben der festen Seitenleiste, bündig mit dem Inhalt (2rem Innenabstand). */
+header.layout-admin {
+  max-width: none;
+  margin: 0 2rem 1rem calc(var(--admin-nav-width) + 2rem);
+}
+
+@media (max-width: 768px) {
+  /* Seitenleiste ist ausgeblendet; rechts Platz für den Burger-Button lassen. */
+  header.layout-admin {
+    margin: 0 1rem 1rem;
+    padding-right: 4.5rem;
+  }
 }
 
 .header-logo img {

@@ -99,6 +99,72 @@ export function groupEventsByDay<T extends CalendarEvent>(events: T[]): Map<stri
   return map
 }
 
+export interface WeekSegment<T extends CalendarEvent> {
+  event: T
+  /** Spalte (0 = erster Tag der Zeile) und Anzahl der ueberspannten Tage. */
+  startCol: number
+  span: number
+  lane: number
+  /** Event laeuft ueber den Zeilenanfang/-ende hinaus. */
+  continuesBefore: boolean
+  continuesAfter: boolean
+}
+
+/**
+ * Mehrtaegige Events einer Kalenderzeile als durchgehende Balken. Ueberlappende
+ * Balken bekommen unterschiedliche Lanes (Zeilen), laengere/fruehere zuerst.
+ */
+export function layoutWeekSegments<T extends CalendarEvent>(
+  days: CalendarDay<T>[],
+): { segments: WeekSegment<T>[]; laneCount: number } {
+  const byId = new Map<string, WeekSegment<T>>()
+  days.forEach((day, col) => {
+    for (const entry of day.entries) {
+      if (!entry.multiDay) continue
+      const seg = byId.get(entry.event.id)
+      if (seg) {
+        seg.span = col - seg.startCol + 1
+        seg.continuesAfter = !entry.isEnd
+      } else {
+        byId.set(entry.event.id, {
+          event: entry.event,
+          startCol: col,
+          span: 1,
+          lane: 0,
+          continuesBefore: !entry.isStart,
+          continuesAfter: !entry.isEnd,
+        })
+      }
+    }
+  })
+
+  const segments = [...byId.values()].sort(
+    (a, b) =>
+      a.startCol - b.startCol ||
+      b.span - a.span ||
+      new Date(a.event.date).getTime() - new Date(b.event.date).getTime(),
+  )
+  const laneEnds: number[] = []
+  for (const seg of segments) {
+    let lane = laneEnds.findIndex(end => end < seg.startCol)
+    if (lane === -1) lane = laneEnds.length
+    laneEnds[lane] = seg.startCol + seg.span - 1
+    seg.lane = lane
+  }
+  return { segments, laneCount: laneEnds.length }
+}
+
+/**
+ * Tage fuer die Agenda-Liste: nur Tage mit Terminen, mehrtaegige Events nur einmal
+ * (am Starttag bzw. am ersten Tag des Zeitraums, wenn sie dann schon laufen).
+ */
+export function buildAgendaDays<T extends CalendarEvent>(days: CalendarDay<T>[]): CalendarDay<T>[] {
+  const firstKey = days[0]?.key
+  return days
+    .map(d => ({ ...d, entries: d.entries.filter(e => !e.multiDay || e.isStart || d.key === firstKey) }))
+    .filter(d => d.entries.length > 0)
+}
+
 /** Erster und letzter im Raster sichtbarer Tag fuer den jeweiligen Modus. */
 export function visibleRange(cursor: Date, mode: CalendarMode): { start: Date; end: Date } {
   if (mode === 'day') {
@@ -214,8 +280,22 @@ function icsStamp(d: Date): string {
 }
 
 /** Strippt HTML aus den Rich-Text-Beschreibungen fuer die ICS-Description. */
+const HTML_ENTITIES: Record<string, string> = {
+  nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
+  auml: 'ä', ouml: 'ö', uuml: 'ü', Auml: 'Ä', Ouml: 'Ö', Uuml: 'Ü', szlig: 'ß',
+  ndash: '–', mdash: '—', hellip: '…', bdquo: '„', ldquo: '“', rdquo: '”',
+}
+
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, code: string) => {
+    if (code[0] !== '#') return HTML_ENTITIES[code] ?? match
+    const n = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10)
+    return String.fromCodePoint(n)
+  })
+}
+
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim()
+  return decodeEntities(html.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
 }
 
 export interface IcsEvent extends CalendarEvent {
@@ -224,16 +304,30 @@ export interface IcsEvent extends CalendarEvent {
 }
 
 /** Minimaler, nach RFC 5545 gueltiger VCALENDAR-Export in UTC. */
-export function buildIcs(events: IcsEvent[], options: { baseUrl?: string; now?: Date } = {}): string {
+export function buildIcs(
+  events: IcsEvent[],
+  options: {
+    eventUrl?: (e: IcsEvent) => string
+    now?: Date
+    /** ISO-8601-Dauer (z.B. `PT12H`): wie oft abonnierte Kalender neu laden sollen. */
+    refreshInterval?: string
+  } = {},
+): string {
   const stamp = icsStamp(options.now ?? new Date())
   const lines: string[] = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Carousel im alten Autohaus//Admin Kalender//DE',
+    'PRODID:-//Carousel im alten Autohaus//Kalender//DE',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'X-WR-CALNAME:Carousel Veranstaltungen',
   ]
+  if (options.refreshInterval) {
+    lines.push(
+      `REFRESH-INTERVAL;VALUE=DURATION:${options.refreshInterval}`,
+      `X-PUBLISHED-TTL:${options.refreshInterval}`,
+    )
+  }
   for (const e of events) {
     const start = new Date(e.date)
     // Ohne endDate wird ein Standardblock von 4 Stunden angenommen.
@@ -248,11 +342,12 @@ export function buildIcs(events: IcsEvent[], options: { baseUrl?: string; now?: 
       `DTSTAMP:${stamp}`,
       `DTSTART:${icsStamp(start)}`,
       `DTEND:${icsStamp(end)}`,
-      `SUMMARY:${escapeIcs(e.cancelled ? `ABGESAGT: ${e.title}` : e.title)}`,
+      // Manche Titel tragen die Absage schon selbst, dann nicht doppelt voranstellen.
+      `SUMMARY:${escapeIcs(e.cancelled && !/^abgesagt\b/i.test(e.title) ? `ABGESAGT: ${e.title}` : e.title)}`,
       `STATUS:${e.cancelled ? 'CANCELLED' : 'CONFIRMED'}`,
     )
     if (description) lines.push(`DESCRIPTION:${escapeIcs(description)}`)
-    if (options.baseUrl) lines.push(`URL:${escapeIcs(`${options.baseUrl}/admin/events/${e.id}`)}`)
+    if (options.eventUrl) lines.push(`URL:${escapeIcs(options.eventUrl(e))}`)
     lines.push('END:VEVENT')
   }
   lines.push('END:VCALENDAR')

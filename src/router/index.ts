@@ -5,6 +5,8 @@ import HomeView from '../views/HomeView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to, from, savedPosition) {
+    // Reine Query-Änderungen (z.B. Kalendermonat) sollen nicht nach oben springen.
+    if (to.path === from.path) return false
     return { top: 0 }
   },
   routes: [
@@ -23,6 +25,13 @@ const router = createRouter({
       path: '/past-events/',
       name: 'pastEvents',
       component: () => import('../views/PastEvents.vue')
+    },
+    {
+      path: '/calendar/',
+      name: 'calendar',
+      // Breite Seite: der Header in App.vue übernimmt die Inhaltsbreite
+      meta: { wide: true },
+      component: () => import('../views/CalendarView.vue')
     },
     {
       path: '/anfragen/',

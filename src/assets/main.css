@@ -309,6 +309,10 @@ body.menu-open {
 :root {
     --btn-border: 0.2rem;
     --btn-shadow: 0.35rem;
+    /* Breite breiter Seiten (Kalender) und der Admin-Seitenleiste; der Header in App.vue
+       richtet sich danach aus, damit er mit dem jeweiligen Inhalt mitskaliert. */
+    --wide-page-width: min(95vw, 1400px);
+    --admin-nav-width: 280px;
 }
 
 :where(.public) button,

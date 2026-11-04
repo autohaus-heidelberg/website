@@ -7,15 +7,18 @@ import type { PaginatedResponse } from '@/types/api'
 import type { AiTagsResponse } from '@/services/statistics'
 import { isPastEvent, isOngoing } from '@/utils/eventTime'
 import {
+  buildAgendaDays,
   buildCalendarDays,
   buildIcs,
   dateKey,
   groupEventsByDay,
+  layoutWeekSegments,
   parseDateKey,
   shiftCursor,
   shiftEventToDay,
   type CalendarDay,
   type CalendarMode,
+  type WeekSegment,
 } from '@/utils/calendar'
 import publishedEvents from '@/events.json'
 
@@ -96,10 +99,11 @@ const calendarDays = computed(() => buildCalendarDays(calendarCursor.value, cale
 
 /** Monats-/Wochenraster zeilenweise, damit die KW-Spalte pro Zeile passt. */
 const calendarWeeks = computed(() => {
-  const rows: { week: number; days: CalendarDay<Event>[] }[] = []
   const days = calendarDays.value
+  const rows = []
   for (let i = 0; i < days.length; i += 7) {
-    rows.push({ week: days[i].week, days: days.slice(i, i + 7) })
+    const rowDays = days.slice(i, i + 7)
+    rows.push({ week: rowDays[0].week, days: rowDays, ...layoutWeekSegments(rowDays) })
   }
   return rows
 })
@@ -117,7 +121,14 @@ const yearMonths = computed(() => {
   })
 })
 
-const agendaDays = computed(() => calendarDays.value.filter(d => d.entries.length > 0))
+const agendaDays = computed(() => buildAgendaDays(calendarDays.value))
+
+function agendaTimeLabel(entry: CalendarDay<Event>['entries'][number]): string {
+  if (!entry.multiDay) return eventTime(entry.event)
+  if (entry.isStart) return eventDateRange(entry.event)
+  const end = new Date(entry.event.endDate!).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+  return `läuft bis ${end}`
+}
 
 const dayEntries = computed(() => calendarDays.value[0]?.entries ?? [])
 
@@ -192,8 +203,17 @@ function eventWarnings(e: Event): { icon: string; label: string }[] {
   return warnings
 }
 
+function isMultiDay(e: Event): boolean {
+  return !!e.endDate && dateKey(new Date(e.endDate)) !== dateKey(new Date(e.date))
+}
+
+function eventDateRange(e: Event): string {
+  const fmt = (d: string) => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+  return `${fmt(e.date)} – ${fmt(e.endDate!)}`
+}
+
 function eventTooltip(e: Event): string {
-  const parts = [`${eventTime(e)} · ${e.title}`]
+  const parts = [`${isMultiDay(e) ? eventDateRange(e) : eventTime(e)} · ${e.title}`]
   const artists = artistNames(e)
   if (artists) parts.push(artists)
   parts.push(CALENDAR_STATUSES.find(s => s.key === eventStatus(e))!.label)
@@ -202,13 +222,19 @@ function eventTooltip(e: Event): string {
   return parts.join('\n')
 }
 
-// Im Monat begrenzt, sonst ist pro Tag genug Platz.
-const maxVisibleEntries = computed(() => (calendarMode.value === 'month' ? 4 : 50))
-function visibleEntries(day: CalendarDay<Event>): CalendarDay<Event>['entries'] {
-  return day.entries.slice(0, maxVisibleEntries.value)
+// Im Monat begrenzt (Balken mehrtägiger Events zählen mit), sonst ist pro Tag genug Platz.
+// Mehrtägige Events laufen als Balken über die Zeile und tauchen hier nicht auf.
+function maxVisibleEntries(laneCount: number): number {
+  return calendarMode.value === 'month' ? Math.max(1, 4 - laneCount) : 50
 }
-function hiddenCount(day: CalendarDay<Event>): number {
-  return Math.max(0, day.entries.length - maxVisibleEntries.value)
+function singleDayEntries(day: CalendarDay<Event>): CalendarDay<Event>['entries'] {
+  return day.entries.filter(e => !e.multiDay)
+}
+function visibleEntries(day: CalendarDay<Event>, laneCount: number): CalendarDay<Event>['entries'] {
+  return singleDayEntries(day).slice(0, maxVisibleEntries(laneCount))
+}
+function hiddenCount(day: CalendarDay<Event>, laneCount: number): number {
+  return Math.max(0, singleDayEntries(day).length - maxVisibleEntries(laneCount))
 }
 
 // ── Kalender: Drag & Drop ──
@@ -219,6 +245,15 @@ function onEventDragStart(ev: DragEvent, eventId: string, fromKey: string) {
   calendarDrag.value = { eventId, fromKey }
   ev.dataTransfer?.setData('text/plain', eventId)
   if (ev.dataTransfer) ev.dataTransfer.effectAllowed = 'move'
+}
+
+/** Beim Balken zählt der Tag, an dem er gepackt wurde (sonst verschiebt sich das Event falsch). */
+function onBarDragStart(ev: DragEvent, seg: WeekSegment<Event>, rowDays: CalendarDay<Event>[]) {
+  const bar = ev.currentTarget as HTMLElement
+  const rect = bar.getBoundingClientRect()
+  const offset = Math.floor(((ev.clientX - rect.left) / rect.width) * seg.span)
+  const col = seg.startCol + Math.min(seg.span - 1, Math.max(0, offset))
+  onEventDragStart(ev, seg.event.id, rowDays[col].key)
 }
 
 function onEventDragEnd() {
@@ -299,7 +334,9 @@ function onCalendarKeydown(ev: KeyboardEvent) {
 
 // ── Kalender: ICS-Export ──
 function exportIcs() {
-  const ics = buildIcs(calendarEvents.value, { baseUrl: window.location.origin })
+  const ics = buildIcs(calendarEvents.value, {
+    eventUrl: e => `${window.location.origin}/admin/events/${e.id}`,
+  })
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }))
   const link = document.createElement('a')
   link.href = url
@@ -905,15 +942,16 @@ onMounted(() => {
     )
       .calendar-corner KW
       .calendar-weekday(v-for="w in weekdayLabels" :key="w" role="columnheader") {{ w }}
-      template(v-for="row in calendarWeeks" :key="row.days[0].key")
-        .calendar-weeknum(role="rowheader") {{ row.week }}
+      template(v-for="(row, rowIndex) in calendarWeeks" :key="row.days[0].key")
+        .calendar-weeknum(role="rowheader" :style="{ gridRow: rowIndex + 2, gridColumn: 1 }") {{ row.week }}
         .calendar-day(
-          v-for="day in row.days"
+          v-for="(day, colIndex) in row.days"
           :key="day.key"
           :data-day="day.key"
           role="gridcell"
           tabindex="0"
           :aria-label="dayAriaLabel(day)"
+          :style="{ gridRow: rowIndex + 2, gridColumn: colIndex + 2, '--lanes': row.laneCount }"
           :class="{ 'other-month': !day.inCurrentMonth, 'is-today': day.isToday, 'is-weekend': day.isWeekend, 'drop-target': calendarDropTarget === day.key }"
           @dblclick.self="createEventOn(day)"
           @dragover.prevent="onDayDragOver(day)"
@@ -926,25 +964,48 @@ onMounted(() => {
               :aria-label="`Veranstaltung am ${day.key} anlegen`"
               title="Veranstaltung an diesem Tag anlegen"
             ) +
+          .day-lanes(v-if="row.laneCount" aria-hidden="true")
           .day-events(@dblclick.self="createEventOn(day)")
             .cal-event(
-              v-for="entry in visibleEntries(day)"
+              v-for="entry in visibleEntries(day, row.laneCount)"
               :key="entry.event.id"
               draggable="true"
-              :class="{ cancelled: entry.event.cancelled, multiday: entry.multiDay, dragging: calendarDrag && calendarDrag.eventId === entry.event.id }"
+              :class="{ cancelled: entry.event.cancelled, dragging: calendarDrag && calendarDrag.eventId === entry.event.id }"
               :style="{ borderLeftColor: eventStatusColor(entry.event) }"
               :title="eventTooltip(entry.event)"
               @click.stop="$router.push(`/admin/events/${entry.event.id}`)"
               @dragstart="onEventDragStart($event, entry.event.id, day.key)"
               @dragend="onEventDragEnd"
             )
-              span.cal-event-time(v-if="!entry.multiDay") {{ eventTime(entry.event) }}
+              span.cal-event-time {{ eventTime(entry.event) }}
               span.cal-event-title {{ entry.event.title }}
               span.cal-event-artists(v-if="calendarMode === 'week' && artistNames(entry.event)") {{ artistNames(entry.event) }}
               span.cal-badges(v-if="vvkTickets[entry.event.id] != null || eventWarnings(entry.event).length")
                 span.cal-vvk(v-if="vvkTickets[entry.event.id] != null") 🎟 {{ vvkTickets[entry.event.id] }}
                 span.cal-warn(v-for="w in eventWarnings(entry.event)" :key="w.icon" :title="w.label") {{ w.icon }}
-            button.cal-more(v-if="hiddenCount(day) > 0" @click.stop="openDay(day)") +{{ hiddenCount(day) }} weitere
+            button.cal-more(v-if="hiddenCount(day, row.laneCount) > 0" @click.stop="openDay(day)") +{{ hiddenCount(day, row.laneCount) }} weitere
+        //- Mehrtägige Events als durchgehende Balken über die Tageszellen gelegt
+        .calendar-week-bars(
+          v-if="row.laneCount"
+          :class="{ 'is-dragging': !!calendarDrag }"
+          :style="{ gridRow: rowIndex + 2, gridColumn: '2 / span 7' }"
+        )
+          .cal-bar(
+            v-for="seg in row.segments"
+            :key="seg.event.id"
+            draggable="true"
+            :class="{ cancelled: seg.event.cancelled, 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter, dragging: calendarDrag && calendarDrag.eventId === seg.event.id }"
+            :style="{ gridColumn: `${seg.startCol + 1} / span ${seg.span}`, gridRow: seg.lane + 1, borderLeftColor: eventStatusColor(seg.event) }"
+            :title="eventTooltip(seg.event)"
+            @click.stop="$router.push(`/admin/events/${seg.event.id}`)"
+            @dragstart="onBarDragStart($event, seg, row.days)"
+            @dragend="onEventDragEnd"
+          )
+            span.cal-bar-title {{ seg.continuesBefore ? '◂ ' : '' }}{{ seg.event.title }}
+            span.cal-bar-range(v-if="seg.span > 1") {{ eventDateRange(seg.event) }}
+            span.cal-badges(v-if="vvkTickets[seg.event.id] != null || eventWarnings(seg.event).length")
+              span.cal-vvk(v-if="vvkTickets[seg.event.id] != null") 🎟 {{ vvkTickets[seg.event.id] }}
+              span.cal-warn(v-for="w in eventWarnings(seg.event)" :key="w.icon" :title="w.label") {{ w.icon }}
 
     //- Tagesansicht
     .day-view(v-else-if="calendarMode === 'day'")
@@ -982,11 +1043,11 @@ onMounted(() => {
           .agenda-entry(
             v-for="entry in day.entries"
             :key="entry.event.id"
-            :class="{ cancelled: entry.event.cancelled }"
+            :class="{ cancelled: entry.event.cancelled, multiday: entry.multiDay }"
             :style="{ borderLeftColor: eventStatusColor(entry.event) }"
             @click="$router.push(`/admin/events/${entry.event.id}`)"
           )
-            span.agenda-time {{ entry.multiDay ? 'mehrtägig' : eventTime(entry.event) }}
+            span.agenda-time {{ agendaTimeLabel(entry) }}
             span.agenda-title {{ entry.event.title }}
             span.agenda-artists(v-if="artistNames(entry.event)") {{ artistNames(entry.event) }}
             span.cal-vvk(v-if="vvkTickets[entry.event.id] != null") 🎟 {{ vvkTickets[entry.event.id] }}
@@ -1780,6 +1841,10 @@ a.fee:hover {
 }
 
 .calendar-grid {
+  --bar-h: 1.3rem;
+  --bar-gap: 0.2rem;
+  --cell-pad: 0.3rem;
+  --head-h: 1.6rem;
   display: grid;
   grid-template-columns: 2.2rem repeat(7, 1fr);
   border-top: 0.2rem solid black;
@@ -1817,7 +1882,7 @@ a.fee:hover {
 .calendar-day {
   border-right: 0.2rem solid black;
   border-bottom: 0.2rem solid black;
-  padding: 0.3rem;
+  padding: var(--cell-pad);
   min-height: 6rem;
   display: flex;
   flex-direction: column;
@@ -1865,6 +1930,100 @@ a.fee:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: var(--head-h);
+  flex-shrink: 0;
+}
+
+/* Platzhalter für die darübergelegten Balken mehrtägiger Events. */
+.day-lanes {
+  flex-shrink: 0;
+  height: calc(var(--lanes) * var(--bar-h) + (var(--lanes) - 1) * var(--bar-gap));
+}
+
+.calendar-week-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--bar-h);
+  row-gap: var(--bar-gap);
+  align-self: start;
+  /* Zellen-Padding + Kopfzeile + Flex-Gap der Zelle */
+  padding-top: calc(var(--cell-pad) + var(--head-h) + 0.25rem);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cal-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  /* 0.2rem rechts = Zellrand, damit der Balken nicht über die Gitterlinie läuft */
+  margin: 0 calc(var(--cell-pad) + 0.2rem) 0 var(--cell-pad);
+  padding: 0 0.4rem;
+  background: #fdf3d0;
+  color: black;
+  border-left: 0.35rem solid #ffcc00;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cal-bar:hover {
+  background: #f7e7a8;
+}
+
+/* Fortsetzung aus der Vorwoche / in die nächste Woche: Kante offen bis zum Zellrand */
+.cal-bar.cont-before {
+  margin-left: 0;
+  border-left-width: 0;
+  padding-left: 0.5rem;
+}
+
+.cal-bar.cont-after {
+  margin-right: 0.2rem;
+}
+
+.cal-bar.cont-after::after {
+  content: '▸';
+  flex-shrink: 0;
+}
+
+.cal-bar.cancelled {
+  background: #ddd;
+  color: #666;
+  text-decoration: line-through;
+}
+
+.cal-bar.dragging {
+  opacity: 0.4;
+}
+
+/* Während Drag & Drop sollen die Tageszellen darunter die Drops bekommen. */
+.calendar-week-bars.is-dragging .cal-bar {
+  pointer-events: none;
+}
+
+.cal-bar-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.cal-bar-range {
+  font-size: 0.62rem;
+  font-weight: 600;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.cal-bar .cal-badges {
+  margin-top: 0;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .day-number {
@@ -1938,17 +2097,6 @@ a.fee:hover {
 
 .cal-event.dragging {
   opacity: 0.4;
-}
-
-.cal-event.multiday {
-  background: #fdf3d0;
-  color: black;
-  border-left: 0.3rem solid #ffcc00;
-  font-weight: 700;
-}
-
-.cal-event.multiday:hover {
-  background: #f7e7a8;
 }
 
 .cal-event.cancelled {
@@ -2154,6 +2302,14 @@ a.fee:hover {
 
 .agenda-entry:hover {
   background: #f5f5f5;
+}
+
+.agenda-entry.multiday {
+  background: #fdf3d0;
+}
+
+.agenda-entry.multiday:hover {
+  background: #f7e7a8;
 }
 
 .agenda-entry.cancelled .agenda-title {
@@ -2738,12 +2894,12 @@ a.fee:hover {
   }
 
   .calendar-grid {
+    --cell-pad: 0.2rem;
     grid-template-columns: 1.6rem repeat(7, 1fr);
   }
 
   .calendar-day {
     min-height: 4.5rem;
-    padding: 0.2rem;
   }
 
   .calendar-grid.mode-week .calendar-day {
