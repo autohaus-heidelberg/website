@@ -7495,4 +7495,80 @@ h2 {
 .accounting-view button {
   font-family: inherit;
 }
+
+/* ── Handy: Ergebnis-Tabelle ──
+   Label + Betrag stehen in einer Zeile, der Rechenweg darunter über die volle Breite. */
+@media (max-width: 700px) {
+  .section-title-row.summary-title-row {
+    flex-direction: column;
+    align-items: stretch;
+    background: black;
+    padding-bottom: 0.5rem;
+  }
+
+  .section-title-row.summary-title-row .section-title {
+    flex: none;
+  }
+
+  .btn-toggle-all {
+    position: static;
+    transform: none;
+    align-self: center;
+  }
+
+  .summary-row {
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+    row-gap: 0.1rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .summary-row .summary-label {
+    display: contents;
+  }
+
+  .summary-row .summary-calc {
+    order: 2;
+    flex: 1 0 100%;
+  }
+
+  .summary-row .summary-value,
+  .summary-row .summary-value-group {
+    order: 1;
+    min-width: 0;
+  }
+
+  .summary-toggle-hint {
+    display: none;
+  }
+
+  .summary-row.summary-detail,
+  .summary-row.summary-sub-detail,
+  .summary-row.summary-sub-base,
+  .summary-row.summary-sub-remaining {
+    padding-left: 1.25rem;
+  }
+
+  .summary-row.summary-detail-nested {
+    padding-left: 2rem;
+  }
+
+  .summary-row.summary-detail-leaf {
+    padding-left: 2.75rem;
+  }
+
+  .summary-row.summary-note {
+    padding-left: 1.5rem;
+    text-align: left;
+  }
+
+  .summary-value-group {
+    gap: 0.5rem;
+  }
+
+  .summary-value-group .summary-pct {
+    min-width: 2rem;
+  }
+}
 </style>
