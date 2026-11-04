@@ -3739,8 +3739,9 @@ mixin shortfallBoxes
           strong {{ formatCurrency(totalOtherExpenses) }}
 
       .grand-total
-        span Gesamtausgaben:
-        strong {{ formatCurrency(totalExpenses) }}
+        div
+          span Gesamtausgaben:
+          strong {{ formatCurrency(totalExpenses) }}
 
       //- Rechnungen aus dem Postfach, die dieser Veranstaltung zugeordnet wurden
       .section.inbox-invoices(v-if="eventInvoices.length")
@@ -4696,11 +4697,10 @@ h2 {
 
 .revenue-hint {
   margin: 0;
-  padding: 0.5rem 1rem;
-  border-left: 0.25rem solid black;
-  border-right: 0.25rem solid black;
+  padding: 0.5rem 1rem 0;
   font-size: 0.8rem;
   color: #666;
+  text-align: center;
 }
 
 .deal-calc .amount-wrap {
@@ -4933,7 +4933,7 @@ h2 {
 
 .revenue-table {
   border: 0.25rem solid black;
-  border-top: none;
+  margin-top: 0.75rem;
 }
 
 .revenue-header, .revenue-row {
@@ -5337,7 +5337,7 @@ h2 {
 
 .inventory-table {
   border: 0.25rem solid black;
-  border-top: none;
+  margin-top: 0.75rem;
 }
 
 .inventory-header, .inventory-row {
@@ -6097,13 +6097,8 @@ h2 {
 /* ── Konfig-Tabellen (Doordeal + Gewinnverteilung) ── */
 .config-table {
   border: 0.25rem solid black;
-  border-top: none;
+  margin-top: 0.75rem;
   margin-bottom: 2rem;
-}
-
-/* Steht zwischen Titelbalken und Tabelle ein Untertitel/Hinweis, hängt der Rahmen nicht am Balken — dann oben schließen. */
-.section-subtitle ~ .config-table {
-  border-top: 0.25rem solid black;
 }
 
 .config-header {
@@ -6417,6 +6412,7 @@ h2 {
 
 /* ── Totals ── */
 
+/* Summenzeile: hängt unter dem Tabellenrahmen und schließt ihn seitlich und unten ab. */
 .group-total {
   display: flex;
   justify-content: space-between;
@@ -6425,11 +6421,58 @@ h2 {
   color: black;
   font-weight: 700;
   font-size: 0.95rem;
+  border: 0.25rem solid black;
+  border-top: none;
+}
+
+/* Tabellen mit eigenem Abstand nach unten: Lücke zur Summenzeile schließen. */
+.expenses-table + .group-total {
+  margin-top: -1rem;
+}
+
+/* Ohne Tabelle darüber (leere Liste) braucht die Summenzeile einen eigenen oberen Rahmen. */
+.empty-hint + .group-total {
+  border-top: 0.25rem solid black;
 }
 
 .summary-list {
   display: flex;
   flex-direction: column;
+}
+
+/* Zusammenfassung (Kassenzählung): als Rahmen wie die anderen Tabellen. */
+.section-summary .summary-list {
+  border: 0.25rem solid black;
+  margin-top: 0.75rem;
+}
+
+.section-summary .summary-line {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.section-summary .summary-value {
+  text-align: right;
+}
+
+.section-summary .summary-line.summary-sub {
+  padding-left: 2rem;
+}
+
+.section-summary .summary-line.summary-expandable:hover {
+  margin: 0;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.section-summary .summary-line.summary-total {
+  margin-top: 0.5rem;
+  background: #f5f5f5;
+}
+
+.section-summary .summary-hint {
+  padding-left: 2rem;
+  padding-right: 1rem;
 }
 
 .summary-line {
@@ -6531,7 +6574,7 @@ h2 {
 
 .summary-table {
   border: 0.25rem solid black;
-  border-top: none;
+  margin-top: 0.75rem;
   margin-bottom: 2rem;
 }
 
