@@ -1973,6 +1973,13 @@ function formatCurrency(value: number): string {
   return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
 }
 
+// Ergebnis-Tabelle: Vorzeichen immer als echtes Minus (wie bei den Abzügen), bei showPlus auch "+".
+function formatSigned(value: number, showPlus = false): string {
+  const rounded = Math.round(value * 100) / 100
+  if (rounded < 0) return `−${formatCurrency(-rounded)}`
+  return `${showPlus && rounded > 0 ? '+' : ''}${formatCurrency(rounded)}`
+}
+
 function formatQty(val: number | string): string {
   const n = typeof val === 'string' ? parseFloat(val) : val
   return isNaN(n) ? '0' : n.toLocaleString('de-DE')
@@ -3921,7 +3928,7 @@ mixin shortfallBoxes
             span.summary-label
               | Ergebnis (vor USt)
               span.summary-calc Einnahmen brutto − Wareneinsatz − Ausgaben
-            span.summary-value(:class="result >= 0 ? 'positive' : 'negative'") {{ formatCurrency(result) }}
+            span.summary-value(:class="result >= 0 ? 'positive' : 'negative'") {{ formatSigned(result) }}
 
           //- USt (nur wenn relevant)
           template(v-if="vatOutput !== 0 || vatInput !== 0")
@@ -3955,7 +3962,7 @@ mixin shortfallBoxes
               span.summary-label
                 | Ergebnis (nach USt)
                 span.summary-calc Ergebnis vor USt − USt-Zahllast
-              span.summary-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterVat) }}
+              span.summary-value(:class="resultAfterVat >= 0 ? 'positive' : 'negative'") {{ formatSigned(resultAfterVat) }}
 
           //- Doordeal-Sub-Rechnung (nur wenn mind. eine benannte %-Partei existiert).
           //- Breakdown auf/zuklappbar wie der Rest der Tabelle; die Ergebnis-Zeile
@@ -4004,7 +4011,7 @@ mixin shortfallBoxes
               span.summary-label
                 | Ergebnis (nach Doordeal)
                 span.summary-calc Ergebnis nach USt − Doordeal-Verteilung
-              span.summary-value(:class="resultAfterDoorDeal >= 0 ? 'positive' : 'negative'") {{ formatCurrency(resultAfterDoorDeal) }}
+              span.summary-value(:class="resultAfterDoorDeal >= 0 ? 'positive' : 'negative'") {{ formatSigned(resultAfterDoorDeal) }}
 
 
           //- Gewinnverteilung-Auszahlung (nur treasurer: das Backend liefert splits=[] für alle anderen).
@@ -4016,12 +4023,12 @@ mixin shortfallBoxes
               span.summary-label {{ split.participant_name || '(kein Name)' }}
               .summary-value-group
                 span.summary-pct {{ Math.round(parseFloat(split.share_percentage)) }}%
-                span.summary-value −{{ formatCurrency(splitAmount(split)) }}
+                span.summary-value {{ formatSigned(-splitAmount(split), true) }}
             .summary-row.summary-total.summary-total-final
               span.summary-label
                 | Ergebnis Carousel e.V.
-                span.summary-calc Ergebnis nach {{ doorDealActive ? 'Doordeal' : 'USt' }} − Gewinnverteilung · {{ (100 - totalSplitPercentage).toFixed(0) }} % verbleiben im Verein
-              span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'") {{ formatCurrency(remainingAfterSplits) }}
+                span.summary-calc Ergebnis nach {{ doorDealActive ? 'Doordeal' : 'USt' }} − Gewinnverteilung · {{ resultAfterDoorDeal < 0 ? `Verein trägt ${(100 - totalSplitPercentage).toFixed(0)} % des Verlusts` : `${(100 - totalSplitPercentage).toFixed(0)} % verbleiben im Verein` }}
+              span.summary-value(:class="remainingAfterSplits >= 0 ? 'positive' : 'negative'") {{ formatSigned(remainingAfterSplits) }}
 
       //- ═══ B) Externer Türeinnahmen-Split (Mitveranstalter) ══════
       //- NUR für externe Parteien (Mitveranstalter). Band-Gagen — auch reine
