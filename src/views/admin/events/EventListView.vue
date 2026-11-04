@@ -1118,7 +1118,7 @@ onMounted(() => {
             :disabled="isExporting || statsRangeInvalid"
             title="Die angezeigten Veranstaltungen als xlsx herunterladen"
             @click="downloadEventsExcel"
-          ) {{ isExporting ? 'Exportiere...' : '⤓ Excel' }}
+          ) {{ isExporting ? 'Exportiere...' : 'Excel' }}
         button.btn-print(type="button" @click="printStatistics") Drucken / PDF
     p.stats-range-error(v-if="statsRangeInvalid" role="alert") Das Startdatum liegt nach dem Enddatum.
     p.stats-range-print(v-if="statsStart || statsEnd")
@@ -2548,7 +2548,7 @@ a.fee:hover {
   text-align: right;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #c00;
+  color: black;
 }
 
 .stats-range-print {
