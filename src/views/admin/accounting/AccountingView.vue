@@ -6476,6 +6476,7 @@ h2 {
 
 .section-summary .summary-line.summary-sub {
   padding-left: 2rem;
+  padding-right: 1rem;
 }
 
 .section-summary .summary-line.summary-expandable:hover {
@@ -7667,6 +7668,24 @@ h2 {
 
   .summary-value-group .summary-pct {
     min-width: 2rem;
+  }
+
+  /* Förderung: Name über volle Breite, Betrag + Löschen darunter (sonst schrumpft das Namensfeld zum Strich). */
+  .detail-row.input-row {
+    flex-wrap: wrap;
+  }
+
+  .detail-row.input-row .text-input {
+    flex: 1 0 100%;
+  }
+
+  .detail-row.input-row .input-group {
+    margin-left: auto;
+  }
+
+  /* Leere Felder (Wechselgeld "—") brauchen auf dem Handy keine eigene Zeile. */
+  .revenue-row > .col-amount:has(> .no-field) {
+    display: none;
   }
 }
 </style>
