@@ -221,4 +221,30 @@ export const eventService = {
   async getPresaleInfo(token: string): Promise<PresaleInfo> {
     return api.publicGet<PresaleInfo>(`/api/presale/${token}/`)
   },
+
+  /**
+   * Download an xlsx list of held events (Index | Date | Title | Link | Category),
+   * optionally limited to a date range (empty = no bound).
+   */
+  async downloadEventsListExcel(start: string, end: string): Promise<void> {
+    const token = localStorage.getItem('access_token')
+    const baseUrl = api.getBaseUrl()
+    const params = new URLSearchParams()
+    if (start) params.set('start', start)
+    if (end) params.set('end', end)
+    const response = await fetch(`${baseUrl}/api/events/export/?${params}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Export fehlgeschlagen' }))
+      throw new Error(err.error || 'Export fehlgeschlagen')
+    }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Events_${start || 'Anfang'}_${end || 'heute'}.xlsx`
+    a.click()
+    URL.revokeObjectURL(url)
+  },
 }
