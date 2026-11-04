@@ -3839,10 +3839,9 @@ mixin shortfallBoxes
 
       //- ═══ A) Ergebnis-Tabelle (Read-Only) ══════════════════════
       .section
-        .section-title-row
+        .section-title-row.summary-title-row
           h3.section-title Ergebnis
-        .summary-toolbar
-          button.btn-toggle-all(type="button" @click="toggleAllResultGroups") {{ resultAllExpanded ? '▲ Alles zuklappen' : '▼ Rechenweg komplett aufklappen' }}
+          button.btn-toggle-all(type="button" @click="toggleAllResultGroups" :title="resultAllExpanded ? 'Alle Bereiche zuklappen' : 'Den kompletten Rechenweg aufklappen'") {{ resultAllExpanded ? '▲ Alles zuklappen' : '▼ Alles aufklappen' }}
         .summary-table
 
           //- Einnahmen (zeigen tatsächliche Einnahmen = gezählt + aus Kasse bezahlt)
@@ -6095,6 +6094,11 @@ h2 {
   margin-bottom: 2rem;
 }
 
+/* Steht zwischen Titelbalken und Tabelle ein Untertitel/Hinweis, hängt der Rahmen nicht am Balken — dann oben schließen. */
+.section-subtitle ~ .config-table {
+  border-top: 0.25rem solid black;
+}
+
 .config-header {
   display: grid;
   grid-template-columns: 1fr 110px 36px;
@@ -6630,34 +6634,31 @@ h2 {
   text-decoration: underline;
 }
 
-/* Leiste über der Tabelle: "Rechenweg komplett aufklappen" */
-.summary-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0.5rem 1rem;
-  background: white;
-  border: 0.25rem solid black;
-  border-top: none;
-  border-bottom: 1px solid #ddd;
+/* Auf-/Zuklappen-Knopf rechts im schwarzen "Ergebnis"-Balken */
+.section-title-row.summary-title-row {
+  position: relative;
 }
 
 .btn-toggle-all {
-  padding: 0.25rem 0.75rem;
-  background: white;
-  color: black;
-  border: 0.15rem solid black;
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.15rem 0.6rem;
+  background: transparent;
+  color: white;
+  border: 0.1rem solid rgba(255, 255, 255, 0.7);
   cursor: pointer;
   font-weight: 700;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .btn-toggle-all:hover {
-  background: black;
-  color: white;
-}
-
-.summary-toolbar + .summary-table {
-  margin-top: 0;
+  background: white;
+  color: black;
+  border-color: white;
 }
 
 /* Drilldown-Detailzeilen: weiß, eingerückt, mit durchgehender Führungslinie links;
