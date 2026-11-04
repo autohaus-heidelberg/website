@@ -103,6 +103,8 @@ p Wir sind das Carousel im alten Autohaus.
 .page-content
   .dates
     h1 Termine
+    .calendar-link.calendar-link-top
+      router-link.btn(:to="{ name: 'calendar' }") Kalender ansehen
     .empty(v-if="upcoming.length === 0 && ongoing.length === 0")
       p Aktuell gibt es keine anstehenden Events.
     .event.mb-1(v-else, v-for="event in upComingHighlights", :key="event.id")
@@ -119,6 +121,9 @@ p Wir sind das Carousel im alten Autohaus.
         router-link.events-small.plain-link(v-for="ev in upComingSmall" :key="ev.id" :to="{name: 'event', params: { id: encodeURI(ev.id) }}")
           .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
           span {{ev.title}}
+
+    .calendar-link
+      router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender
 
   .content
     .newsletter
@@ -309,6 +314,21 @@ p Wir sind das Carousel im alten Autohaus.
   display: flex;
   justify-content: center;
   gap: 1rem;
+}
+
+.calendar-link {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.calendar-link-top {
+  margin: 0 0 2rem;
+}
+
+/* .btn-Links haben anders als <button> kein eigenes Padding */
+.calendar-link .btn {
+  padding: 0.7em 1.2em;
 }
 
 .page-content {

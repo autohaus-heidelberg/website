@@ -82,6 +82,9 @@ No colors, gradients, or shades of gray are used in the design.
 - No decorative elements
 - No rounded corners
 - No shadows (exception: hard offset shadow on public buttons)
+- No colors (exception: multi-day events in the public calendar `/calendar/` use the
+  same light yellow as the admin calendar — background `#fdf3d0`, hover `#f7e7a8`,
+  start accent `#ffcc00` — so long-running events stand apart from single dates)
 - No gradients
 - No icons or symbols (text only)
 - Geometric, slightly rotated elements for visual interest
