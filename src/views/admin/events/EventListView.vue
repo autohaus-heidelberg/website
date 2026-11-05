@@ -805,10 +805,6 @@ function formatDateShort(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-function printStatistics() {
-  window.print()
-}
-
 onMounted(() => {
   if (route.query.view === 'grants') {
     activeView.value = 'grants'
@@ -1180,7 +1176,6 @@ onMounted(() => {
             title="Die angezeigten Veranstaltungen als xlsx herunterladen"
             @click="downloadEventsExcel"
           ) {{ isExporting ? 'Exportiere...' : '⤓ Excel' }}
-        button.btn-print(type="button" @click="printStatistics") Drucken / PDF
     p.stats-range-error(v-if="statsRangeInvalid" role="alert") Das Startdatum liegt nach dem Enddatum.
     p.stats-range-print(v-if="statsStart || statsEnd")
       | Zeitraum: {{ statsStart ? formatDateShort(statsStart) : 'Anfang' }} – {{ statsEnd ? formatDateShort(statsEnd) : 'heute' }}
@@ -1351,8 +1346,19 @@ h2 {
 
 .export-group {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.5rem;
+}
+
+.export-group > .export-sep {
+  align-self: center;
+}
+
+/* Buttons in dieser Zeile haben dieselbe Schrift- und Feldgröße wie die Datumsfelder. */
+.export-group .btn-secondary {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.2;
 }
 
 .export-date {
@@ -2720,21 +2726,6 @@ a.fee:hover {
   flex-wrap: wrap;
 }
 
-.btn-print {
-  padding: 0.5rem 1.25rem;
-  background: black;
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.btn-print:hover {
-  filter: brightness(120%);
-}
-
 .ai-section {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -2954,13 +2945,6 @@ a.fee:hover {
   font-weight: 600;
   font-size: 1rem;
   color: #999;
-}
-
-@media print {
-  .btn-print,
-  .stats-header-actions .export-group {
-    display: none;
-  }
 }
 
 @media (max-width: 768px) {
