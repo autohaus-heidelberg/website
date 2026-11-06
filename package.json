@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "deploy": "node scripts/gh-pages-deploy.js"
+    "deploy": "node scripts/gh-pages-deploy.js",
+    "preview:package": "node scripts/build-preview.js"
   },
   "dependencies": {
     "@tinymce/tinymce-vue": "^6.3.0",
