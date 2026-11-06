@@ -53,6 +53,7 @@ export interface Event {
   artist_deals?: ArtistDeals
   artist_count?: number
   cancelled?: boolean
+  event_type?: 'concert' | 'community'
 }
 
 export interface HelferpadEventData {

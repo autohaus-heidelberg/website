@@ -299,13 +299,19 @@ function decodeEntities(text: string): string {
   })
 }
 
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return decodeEntities(html.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
 }
 
 export interface IcsEvent extends CalendarEvent {
+  type?: string
   descriptionShort?: string
   artists?: { name: string }[]
+}
+
+function icsSummary(e: IcsEvent): string {
+  const title = e.type === 'community' ? `Treffen: ${e.title}` : e.title
+  return e.cancelled && !hasCancelledPrefix(e.title) ? `ABGESAGT: ${title}` : title
 }
 
 /** Minimaler, nach RFC 5545 gueltiger VCALENDAR-Export in UTC. */
@@ -347,9 +353,10 @@ export function buildIcs(
       `DTSTAMP:${stamp}`,
       `DTSTART:${icsStamp(start)}`,
       `DTEND:${icsStamp(end)}`,
-      `SUMMARY:${escapeIcs(e.cancelled && !hasCancelledPrefix(e.title) ? `ABGESAGT: ${e.title}` : e.title)}`,
+      `SUMMARY:${escapeIcs(icsSummary(e))}`,
       `STATUS:${e.cancelled ? 'CANCELLED' : 'CONFIRMED'}`,
     )
+    if (e.type === 'community') lines.push('CATEGORIES:Community')
     if (description) lines.push(`DESCRIPTION:${escapeIcs(description)}`)
     if (options.eventUrl) lines.push(`URL:${escapeIcs(options.eventUrl(e))}`)
     lines.push('END:VEVENT')

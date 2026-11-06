@@ -107,6 +107,23 @@ No colors, gradients, or shades of gray are used in the design.
 - Layout changes from single to two-column at 800px
 - Navigation adapts for mobile (stacked layout)
 
+## Fanzine-Stil (Startseite `/` und Community `/community`)
+
+Die Startseite ist wie eine Punk-/DIY-Fanzine-Ausgabe aufgebaut (Titelleiste, Cover, Titelstory, Inhaltsverzeichnis, Rubriken), mit Schreibmaschinen-/Kopierer-Ästhetik. Stylesheet: `src/assets/fanzine.css`, Präfix `.fz-`. Weiterhin nur Schwarz/Weiß; Ausnahmen für diese Seiten:
+
+- Schraffur-Muster (`repeating-linear-gradient`) für „Klebeband" (`.fz-tape`) und Rasterpunkte (`radial-gradient`) als Kopierer-Overlay – nur als Dekor-Textur, keine Verläufe.
+- Kopierer-Körnung (SVG-Rauschen, geringe Deckkraft) über der Seite und ein Kaffeering auf dem Cover – reine Textur, klickt durch; Lesbarkeit hat Vorrang.
+- Harte Offset-Schatten an Kästen, wie bei den Buttons.
+- Ausgerissene Kante (`clip-path`) an der schwarzen Titelleiste und an Rubrikenlabels, gestrichelte „Ausschneide"-Kästen (`.fz-cut`), Stempel (`.fz-stamp`), leichte Rotationen (max. ca. 2°).
+- Flyer/Poster im Kopierer-Look (Graustufen + Raster, Farbe bei Hover).
+- Schreibmaschinen-Schrift (Courier-Stack) für Fließtext, „Ransom-Note"-Titel (Erpresserbrief, Buchstaben einzeln, `ransomChars()` in `src/utils/ransom.ts`), Marker-Strich unter dem Untertitel und Schreibmaschinen-Korrektur (`<s>`).
+- Admin-Zugang für Eingeloggte: kleines „(A)" (Anarchie-A) unten rechts statt eines Banners (`.fz-admin`).
+- Auto-Anspielungen nur als Text, nie als Bild: „Gebraucht, aber gut in Schuss" in der Titelleiste, Kleinanzeige im Community-Teaser (`.fz-ad`), kurzer „Über uns"-Text mit DE/EN-Umschalter (`src/utils/about.ts`), „Pannenhilfe"-Hinweise bei Fehlerseite und Leerzuständen.
+- Unterseiten im Fanzine-Stil (Community, Fehlerseite) bringen ihre eigene schwarze Kopfleiste mit (`FanzineNav.vue`) und blenden den allgemeinen Zurück-/Logo-Header aus.
+- Alle öffentlichen Seiten außer Presale-Link und Login nutzen den Fanzine-Stil: Event-Detail (Poster links als Kopierer-Foto mit Klebeband, Text rechts, Künstler:innen darunter; auch in der Admin-Vorschau über einen `.fz`-Wrapper), Archiv (Liste nach Jahren, Flyer-Galerie), Kalender (breite Variante `.fz-wide`), Anfrage (Datenblatt statt Emoji-Tabelle) und Impressum. Neue Seiten: `.fz`-Wrapper, `FanzineNav` und Ransom-Titel (`ransomChars`), und die Route in `OWN_HEADER_ROUTES` (App.vue) eintragen.
+- Community-Treffen werden im Kalender mit gestrichelter Kontur und Label „Treffen" markiert (keine neue Farbe).
+- `prefers-reduced-motion` wird respektiert; Kontrast und Lesbarkeit des Fließtexts haben Vorrang vor Deko.
+
 ## Admin Section Specifics
 
 Admin pages should follow the same design principles:
