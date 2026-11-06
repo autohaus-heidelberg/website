@@ -107,6 +107,7 @@ const form = ref<Partial<AppEvent>>({
   date: '',
   endDate: '',
   title: '',
+  event_type: 'concert',
   descriptionShort: '',
   fee: '',
   feeAk: '',
@@ -964,6 +965,13 @@ function closeDeployModal() {
               .field-hint(v-if="hasEndDate") Enddatum – bleibt bis dahin auf der Website sichtbar
 
           .form-group
+            label(for="event_type") Art der Veranstaltung
+            select#event_type(v-model="form.event_type")
+              option(value="concert") Konzert / Veranstaltung
+              option(value="community") Community-Treffen
+            .field-hint(v-if="form.event_type === 'community'") Erscheint auf der Website im Community-Bereich und im Kalender, nicht in der Konzertliste. Keine Checkliste, nicht in der Statistik.
+
+          .form-group
             label(for="title") Titel *
             input#title(
               v-model="form.title"
@@ -980,7 +988,7 @@ function closeDeployModal() {
             )
             .field-hint Rich-Text-Editor für Veranstaltungsbeschreibung
 
-          .form-row
+          .form-row(v-if="form.event_type !== 'community'")
             .form-group
               label(for="fee") VVK-Preis
               input#fee(
@@ -1148,7 +1156,8 @@ function closeDeployModal() {
           h3 Live-Vorschau
           .loading-indicator(v-if="loadingArtists") Künstler werden geladen...
         .preview-content
-          EventDisplay(:event="previewEvent" v-if="form.title")
+          .fz.fz-preview(v-if="form.title")
+            EventDisplay(:event="previewEvent")
           .preview-empty(v-else)
             p Formular ausfüllen für Vorschau
 

@@ -2,6 +2,9 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { events, type Event } from '../events'
+import { COMMUNITY_LABEL, isCommunity } from '@/utils/community'
+import FanzineNav from '@/components/FanzineNav.vue'
+import { ransomChars } from '@/utils/ransom'
 import {
   buildAgendaDays,
   buildCalendarDays,
@@ -129,8 +132,13 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 </script>
 
 <template lang="pug">
-.calendar-page
-  h1 Kalender
+.fz.fz-wide
+ FanzineNav(label="Kalender")
+ .calendar-page
+  header.fz-page-head
+    h1.fz-page-title(aria-label="Kalender")
+      span.fz-line(aria-hidden="true")
+        span.fz-ch(v-for="(c, i) in ransomChars('Kalender')" :key="i" :class="c.cls") {{ c.ch }}
 
   .toolbar
     .nav
@@ -162,10 +170,11 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="entry in singleEntries(day)"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :class="{ cancelled: entry.event.cancelled }"
+          :class="{ cancelled: entry.event.cancelled, community: isCommunity(entry.event) }"
           :title="tooltip(entry.event, `${time(entry.event)} Uhr`)"
         )
           span.ev-time {{ showCancelled(entry.event) ? 'ABGESAGT' : time(entry.event) }}
+            span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
           span.ev-title {{ entry.event.title }}
       //- Mehrtägige Events als durchgehende Balken
       .bars(v-if="row.laneCount" :style="{ gridRow: rowIndex + 2 }")
@@ -174,7 +183,7 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           :key="seg.event.id"
           :to="eventLink(seg.event)"
           :title="tooltip(seg.event, dateRange(seg.event))"
-          :class="{ 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter, cancelled: seg.event.cancelled }"
+          :class="{ 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter, cancelled: seg.event.cancelled, community: isCommunity(seg.event) }"
           :style="{ gridColumn: `${seg.startCol + 1} / span ${seg.span}`, gridRow: seg.lane + 1 }"
         )
           span.bar-title {{ seg.continuesBefore ? '◂ ' : '' }}
@@ -201,9 +210,10 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="entry in day.entries"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled }"
+          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled, community: isCommunity(entry.event) }"
         )
           span.list-time {{ listLabel(entry) }}
+            span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
           span.list-title {{ entry.event.title }}
 
   .footer
@@ -218,9 +228,8 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
   --multiday-bg: #fdf3d0;
   --multiday-bg-hover: #f7e7a8;
   --multiday-accent: #ffcc00;
-  max-width: var(--wide-page-width);
-  margin: auto;
-  padding: 1rem;
+  margin: 0;
+  padding: 0;
 }
 
 .toolbar {
@@ -354,6 +363,23 @@ button.active {
   font-size: 0.75rem;
   line-height: 1.25;
   color: black;
+}
+
+/* Community-Treffen: gestrichelte Kontur statt Vollfläche, damit sie von Konzerten unterscheidbar sind (keine neue Farbe) */
+.ev.community {
+  border-left-style: dashed;
+}
+
+.list-entry.community {
+  border-style: dashed;
+}
+
+.bar.community {
+  border-style: dashed;
+}
+
+.community-tag {
+  font-weight: 600;
 }
 
 .ev:hover {

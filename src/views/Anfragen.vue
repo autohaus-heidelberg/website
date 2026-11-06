@@ -1,146 +1,155 @@
 <template lang="pug">
-.anfragen
-  .success-message(v-if="submitted")
-    h1 ✓ Anfrage gesendet
-    p Vielen Dank! Wir werden uns in Kürze bei dir melden.
-    button.btn-back(@click="reset") Neue Anfrage stellen
+.fz
+  FanzineNav(label="Anfrage")
+  header.fz-page-head
+    h1.fz-page-title(aria-label="Anfrage")
+      span.fz-line(aria-hidden="true")
+        span.fz-ch(v-for="(c, i) in ransomChars('Anfrage')" :key="i" :class="c.cls") {{ c.ch }}
+    p.fz-page-sub Für Anfragen verwendet bitte dieses Formular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen.
+  .fz-request
+    .fz-box.success-message(v-if="submitted")
+      h2.fz-h2 Anfrage gesendet
+      p Vielen Dank! Wir werden uns in Kürze bei dir melden.
+      button.btn-back(@click="reset") Neue Anfrage stellen
 
-  template(v-else)
-    h1 Anfrage stellen
+    template(v-else)
+      .fz-cut.fz-datasheet
+        .fz-stamp Datenblatt
+        h2.fz-h2 Infos zur Location
+        dl.fz-form-fields
+          dt Kapazität
+          dd 200 Personen (stehend)
+          dt Bühne
+          dd 5m × 3m, Höhe ca. 43cm (3 Europaletten)
+          dt PA
+          dd 2 Subs + 4 Tops, Allen & Heath SQ5
+          dt Monitoring
+          dd 4 Monitorwege
+          dt Licht
+          dd Grundausstattung vorhanden
+          dt Backline
+          dd Nur nach Absprache
+          dt Load-In
+          dd Ebenerdig, Parkplatz direkt vor der Tür
+          dt Gagenmodell
+          dd Garantie und/oder Tür-Anteil — nach Absprache
 
-    h3 Infos zur Location
-    .info-grid
-      span.info-label 🏠 Kapazität
-      span.info-value 200 Personen (stehend)
-      span.info-label 🎤 Bühne
-      span.info-value 5m × 3m, Höhe ca. 43cm (3 Europaletten)
-      span.info-label 🔊 PA
-      span.info-value 2 Subs + 4 Tops, Allen & Heath SQ5
-      span.info-label 🎧 Monitoring
-      span.info-value 4 Monitorwege
-      span.info-label 💡 Licht
-      span.info-value Grundausstattung vorhanden
-      span.info-label 🥁 Backline
-      span.info-value Nur nach Absprache
-      span.info-label 🚗 Load-In
-      span.info-value Ebenerdig, Parkplatz direkt vor der Tür
-      span.info-label 💰 Gagenmodell
-      span.info-value Garantie und/oder Tür-Anteil — nach Absprache
+      h2.fz-h2.fz-request-title Anfrage
 
-    h2 Anfrage
-
-    form.request-form(@submit.prevent="submitForm")
-      .form-group
-        label Art der Anfrage *
-        select(v-model="form.type" required)
-          option(value="" disabled) Bitte wählen
-          option(value="band") Band / Booking
-          option(value="event") Veranstaltung
-          option(value="rent") Vermietung
-          option(value="other") Sonstiges
-        .form-hint.hint-warning(v-if="form.type === 'rent'") ⚠️ Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
-        .form-hint.hint-info(v-if="form.type === 'event'")
-          | 💡 Du hast eine eigene Idee für eine Veranstaltung? Am besten stellst du sie persönlich bei einem unserer Treffen vor. Die Termine geben wir hier bekannt:&nbsp;
-          a(href="https://t.me/+PCvpsCalJzkyNzFi" target="_blank" rel="noopener") Telegram-Gruppe
-
-      .form-group
-        label {{ form.type === 'band' ? 'Bandname *' : 'Name / Organisation *' }}
-        input(v-model="form.name" required :placeholder="form.type === 'band' ? 'Bandname' : 'Dein Name oder Organisation'")
-
-      .form-group
-        label E-Mail *
-        input(v-model="form.contactEmail" type="email" required placeholder="deine@email.de")
-
-      //- ── Band-spezifische Felder ──
-      template(v-if="form.type === 'band'")
+      form.request-form(@submit.prevent="submitForm")
         .form-group
-          label Link zur Musik *
-          input(v-model="form.musicLink" required placeholder="Bandcamp, Spotify, YouTube, etc.")
-          .form-hint So können wir uns einen Eindruck verschaffen
-
-        .form-row
-          .form-group.half
-            label Genre
-            select(v-model="form.genre")
-              option(value="") —
-              option(v-for="g in genres" :key="g" :value="g") {{ g }}
-          .form-group.half
-            label Anzahl Personen
-            input(v-model="form.persons" type="number" min="1" max="30" placeholder="z.B. 4")
+          label Art der Anfrage *
+          select(v-model="form.type" required)
+            option(value="" disabled) Bitte wählen
+            option(value="band") Band / Booking
+            option(value="event") Veranstaltung
+            option(value="rent") Vermietung
+            option(value="other") Sonstiges
+          .form-hint.hint-warning(v-if="form.type === 'rent'") Achtung: Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
+          .form-hint.hint-info(v-if="form.type === 'event'")
+            | Tipp: Du hast eine eigene Idee für eine Veranstaltung? Am besten stellst du sie persönlich bei einem unserer Treffen vor. Die Termine geben wir hier bekannt:&nbsp;
+            a(href="https://t.me/+PCvpsCalJzkyNzFi" target="_blank" rel="noopener") Telegram-Gruppe
 
         .form-group
-          label Woher kommt ihr?
-          input(v-model="form.origin" placeholder="Stadt / Land")
+          label {{ form.type === 'band' ? 'Bandname *' : 'Name / Organisation *' }}
+          input(v-model="form.name" required :placeholder="form.type === 'band' ? 'Bandname' : 'Dein Name oder Organisation'")
 
         .form-group
-          label Wunschzeitraum
-          .date-row
-            .date-field
-              label.date-label von
-              input(type="date" v-model="form.dateStart")
-            .date-field
-              label.date-label bis
-              input(type="date" v-model="form.dateEnd")
-          .form-hint Oder einfach in der Nachricht beschreiben
+          label E-Mail *
+          input(v-model="form.contactEmail" type="email" required placeholder="deine@email.de")
+
+        //- ── Band-spezifische Felder ──
+        template(v-if="form.type === 'band'")
+          .form-group
+            label Link zur Musik *
+            input(v-model="form.musicLink" required placeholder="Bandcamp, Spotify, YouTube, etc.")
+            .form-hint So können wir uns einen Eindruck verschaffen
+
+          .form-row
+            .form-group.half
+              label Genre
+              select(v-model="form.genre")
+                option(value="") —
+                option(v-for="g in genres" :key="g" :value="g") {{ g }}
+            .form-group.half
+              label Anzahl Personen
+              input(v-model="form.persons" type="number" min="1" max="30" placeholder="z.B. 4")
+
+          .form-group
+            label Woher kommt ihr?
+            input(v-model="form.origin" placeholder="Stadt / Land")
+
+          .form-group
+            label Wunschzeitraum
+            .date-row
+              .date-field
+                label.date-label von
+                input(type="date" v-model="form.dateStart")
+              .date-field
+                label.date-label bis
+                input(type="date" v-model="form.dateEnd")
+            .form-hint Oder einfach in der Nachricht beschreiben
+
+          .form-group
+            label Technische Anforderungen
+            textarea(v-model="form.technicalRequirements" rows="3" placeholder="Eigene Backline? Besondere Monitoring-Wünsche? DI-Boxen? Wie viele Mikros?")
+
+          .form-group
+            label Gagenvorstellung
+            input(v-model="form.budget" placeholder="z.B. gewünschte Garantie und/oder Tür-Anteil")
+            .form-hint Garantie und Tür-Anteil sind Verhandlungssache.
+
+        //- ── Event/Vermietung-spezifische Felder ──
+        template(v-if="form.type === 'event' || form.type === 'rent'")
+          .form-group
+            label Datum
+            .date-row
+              .date-field
+                label.date-label von
+                input(type="date" v-model="form.dateStart")
+              .date-field
+                label.date-label bis
+                input(type="date" v-model="form.dateEnd")
+
+          .form-group
+            label Erwartete Besucherzahl
+            input(v-model="form.persons" type="number" min="1" placeholder="z.B. 80")
+
+          .form-group
+            label Budget
+            input(v-model="form.budget" placeholder="z.B. 500€, nach Absprache...")
+
+        //- ── Sonstige ──
+        template(v-if="form.type === 'other'")
+          .form-group
+            label Zeitraum
+            .date-row
+              .date-field
+                label.date-label von
+                input(type="date" v-model="form.dateStart")
+              .date-field
+                label.date-label bis
+                input(type="date" v-model="form.dateEnd")
 
         .form-group
-          label Technische Anforderungen
-          textarea(v-model="form.technicalRequirements" rows="3" placeholder="Eigene Backline? Besondere Monitoring-Wünsche? DI-Boxen? Wie viele Mikros?")
+          label Nachricht *
+          textarea(v-model="form.message" required rows="6" :placeholder="messagePlaceholder")
 
-        .form-group
-          label Gagenvorstellung
-          input(v-model="form.budget" placeholder="z.B. gewünschte Garantie und/oder Tür-Anteil")
-          .form-hint Garantie und Tür-Anteil sind Verhandlungssache.
+        //- Honeypot (hidden from users, visible to bots)
+        input.hp-field(v-model="form.honeypot" tabindex="-1" autocomplete="off")
 
-      //- ── Event/Vermietung-spezifische Felder ──
-      template(v-if="form.type === 'event' || form.type === 'rent'")
-        .form-group
-          label Datum
-          .date-row
-            .date-field
-              label.date-label von
-              input(type="date" v-model="form.dateStart")
-            .date-field
-              label.date-label bis
-              input(type="date" v-model="form.dateEnd")
+        .form-error(v-if="error") {{ error }}
 
-        .form-group
-          label Erwartete Besucherzahl
-          input(v-model="form.persons" type="number" min="1" placeholder="z.B. 80")
-
-        .form-group
-          label Budget
-          input(v-model="form.budget" placeholder="z.B. 500€, nach Absprache...")
-
-      //- ── Sonstige ──
-      template(v-if="form.type === 'other'")
-        .form-group
-          label Zeitraum
-          .date-row
-            .date-field
-              label.date-label von
-              input(type="date" v-model="form.dateStart")
-            .date-field
-              label.date-label bis
-              input(type="date" v-model="form.dateEnd")
-
-      .form-group
-        label Nachricht *
-        textarea(v-model="form.message" required rows="6" :placeholder="messagePlaceholder")
-
-      //- Honeypot (hidden from users, visible to bots)
-      input.hp-field(v-model="form.honeypot" tabindex="-1" autocomplete="off")
-
-      .form-error(v-if="error") {{ error }}
-
-      button.btn-submit(:disabled="submitting" type="submit")
-        | {{ submitting ? 'Wird gesendet...' : 'Anfrage absenden' }}
+        button.btn-submit(:disabled="submitting" type="submit")
+          | {{ submitting ? 'Wird gesendet...' : 'Anfrage absenden' }}
 </template>
 
 <script lang="ts" setup>
 import { ref, reactive, computed } from 'vue'
 import { API_BASE_URL } from '@/services/api'
 import axios from 'axios'
+import FanzineNav from '@/components/FanzineNav.vue'
+import { ransomChars } from '@/utils/ransom'
 
 const genres = [
   'Punk', 'Rock', 'Metal', 'Pop', 'Jazz', 'Blues',
@@ -252,79 +261,15 @@ function reset() {
 </script>
 
 <style scoped>
-.anfragen {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
-}
+.fz-request { max-width: 56rem; margin-top: 2.5rem; }
 
-h1 {
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-h2 {
-  margin-top: 2rem;
-  font-weight: 900;
-}
-
-h3 {
-  font-weight: 700;
-  margin-top: 1.5rem;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  margin: 1rem 0;
-  border: 0.15rem solid black;
-}
-
-.info-label,
-.info-value {
-  padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid #ddd;
-}
-
-.info-grid > :nth-last-child(-n+2) {
-  border-bottom: none;
-}
-
-.info-label {
-  font-weight: 800;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  white-space: nowrap;
-  background: #f5f5f5;
-}
-
-/* Stack label above value on narrow screens so long values get full width to wrap in */
-@media (max-width: 480px) {
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .info-label {
-    border-bottom: none;
-    padding-bottom: 0.15rem;
-  }
-
-  .info-value {
-    padding-top: 0;
-  }
-}
-
-.info-value {
-  font-size: 0.85rem;
-  min-width: 0;
-  overflow-wrap: break-word;
-}
+.fz-datasheet { margin-bottom: 2.5rem; }
+.fz-request-title { margin-bottom: 1rem; }
 
 .request-form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  margin-top: 1rem;
 }
 
 .form-group {
@@ -334,8 +279,10 @@ h3 {
 }
 
 .form-group label {
-  font-weight: 700;
-  font-size: 0.9rem;
+  font-weight: 900;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .form-row {
@@ -354,37 +301,30 @@ h3 {
 }
 
 .form-hint {
-  font-size: 0.8rem;
-  color: #666;
+  font-size: 0.85rem;
   margin-top: 0.2rem;
 }
 
 .hint-warning {
-  color: #b00;
-  font-weight: 700;
+  font-weight: 900;
 }
 
 .hint-info {
-  color: #1a1a1a;
-  font-weight: 600;
-}
-
-.hint-info a {
-  color: #0055cc;
   font-weight: 700;
 }
 
 input, select, textarea {
   padding: 0.6rem 0.75rem;
   border: 0.2rem solid black;
+  border-radius: 0;
+  background: #fff;
   font-size: 1rem;
   font-family: inherit;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #333;
-  box-shadow: 3px 3px 0 black;
+  box-shadow: 0.3rem 0.3rem 0 black;
 }
 
 textarea {
@@ -393,6 +333,7 @@ textarea {
 
 .date-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -405,42 +346,34 @@ textarea {
 .date-label {
   font-weight: 400 !important;
   font-size: 0.85rem !important;
+  text-transform: none !important;
 }
 
 .btn-submit {
-  padding: 0.75rem 2rem;
+  align-self: flex-start;
+  padding: 0.6em 1.4em;
   font-weight: 900;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   text-transform: uppercase;
   cursor: pointer;
 }
 
 .form-error {
-  background: #fee;
-  border: 0.2rem solid #c00;
+  border: 0.2rem solid black;
+  border-left-width: 0.8rem;
   padding: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: pre-line;
 }
 
-.success-message {
-  text-align: center;
-  padding: 3rem 1rem;
-}
-
-.success-message h1 {
-  color: #090;
-  font-size: 2rem;
-}
-
 .success-message p {
-  font-size: 1.2rem;
-  margin: 1rem 0 2rem;
+  margin: 1rem 0 0;
 }
 
 .btn-back {
-  padding: 0.5rem 1.5rem;
-  font-weight: 700;
+  padding: 0.45em 0.9em;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
   cursor: pointer;
 }
 

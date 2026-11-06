@@ -1,5 +1,6 @@
 import './assets/main.css'
 import './assets/newsletter.css'
+import './assets/fanzine.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

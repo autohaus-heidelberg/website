@@ -10,6 +10,8 @@ export type Event = {
   // single-date event.
   endDate?: string | null;
   cancelled?: boolean;
+  /** 'concert' (Standard, auch wenn fehlend) oder 'community' (Treffen, nicht in Konzertlisten) */
+  type?: string;
   title: string;
   // path to image
   img?: string;

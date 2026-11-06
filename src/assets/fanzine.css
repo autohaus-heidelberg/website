@@ -1,0 +1,502 @@
+/* DIY-Fanzine-Stil für die öffentliche Startseite und den Community-Bereich.
+   Schwarz/Weiß, Kopierer-/Klebe-/Schreibmaschinen-Ästhetik. Bausteine tragen das Präfix .fz-;
+   der eigentliche Look (Körnung, Ransom-Note, Typewriter) steht im Abschnitt "Look" am Ende. */
+
+.fz {
+    --fz-rule: 0.25rem;
+    --fz-mono: "Courier New", Courier, "Nimbus Mono PS", monospace;
+    max-width: min(95vw, 1200px);
+    margin: 0 auto;
+    padding: 0 0.25rem;
+    text-align: left;
+}
+
+.fz h1, .fz h2, .fz h3, .fz p { margin: 0; }
+.fz h1 { border-bottom: 0; }
+.fz p { white-space: normal; line-height: 1.55; }
+.fz p + p { margin-top: 0.8em; }
+
+/* ---------- Masthead ---------- */
+
+.fz-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    margin-top: 1rem;
+    padding: 0.6rem 1rem 1.1rem;
+    background: #000;
+    color: #fff;
+    font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transform: rotate(-0.3deg);
+    /* ausgerissene Unterkante */
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 97% 100%, 93% 86%, 89% 100%, 84% 87%, 79% 100%, 74% 86%, 69% 100%, 63% 87%, 58% 100%, 53% 86%, 47% 100%, 42% 87%, 36% 100%, 31% 86%, 25% 100%, 20% 87%, 14% 100%, 9% 86%, 4% 100%, 0 86%);
+}
+
+.fz-cover {
+    display: grid;
+    gap: 1.5rem 3rem;
+    align-items: end;
+    padding: 2rem 0 2.5rem;
+    border-bottom: var(--fz-rule) solid #000;
+}
+
+/* Zweispaltig erst ab 1000px: in schmaleren Spalten bricht der Ransom-Titel mitten im Wort um */
+@media (min-width: 1000px) {
+    .fz-cover { grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); align-items: center; }
+}
+
+.fz-title {
+    font-size: clamp(2.4rem, 11vw, 7.5rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.fz-title .fz-line { display: block; }
+/* Zweite Zeile als Untertitel, damit das Cover nicht den ganzen Bildschirm füllt */
+.fz-title .fz-line + .fz-line { font-size: 0.4em; margin-top: 0.3em; letter-spacing: 0.02em; }
+
+.fz-claim {
+    max-width: 42ch;
+    font-size: clamp(1rem, 1.6vw, 1.3rem);
+}
+
+.fz-cover-cta { display: flex; flex-wrap: wrap; gap: 1rem 1.25rem; margin-top: 1.25rem; }
+.fz-cover-cta .btn, .fz-cover-cta button { padding: 0.7em 1.2em; }
+
+
+/* ---------- Sektionen ---------- */
+
+.fz-section { margin-top: 3rem; }
+
+.fz-label {
+    display: inline-block;
+    padding: 0.25rem 1rem 0.35rem;
+    margin-bottom: 1.25rem;
+    background: #000;
+    color: #fff;
+    font-size: clamp(0.95rem, 2vw, 1.3rem);
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transform: rotate(-1.2deg);
+    /* ausgerissene Unterkante */
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 96% 100%, 92% 86%, 87% 100%, 82% 87%, 76% 100%, 70% 86%, 64% 100%, 58% 87%, 52% 100%, 46% 86%, 40% 100%, 34% 87%, 28% 100%, 22% 86%, 16% 100%, 10% 87%, 5% 100%, 0 86%);
+}
+
+.fz-h2 {
+    font-size: clamp(1.4rem, 3.6vw, 2.6rem);
+    font-weight: 900;
+    line-height: 1.05;
+    text-transform: uppercase;
+}
+
+/* ---------- Bausteine: Klebeband, Foto, Kasten ---------- */
+
+.fz-tape {
+    position: absolute;
+    z-index: 2;
+    width: 7rem;
+    height: 1.7rem;
+    background: #fff;
+    border: 0.12rem solid #000;
+    background-image: repeating-linear-gradient(-45deg, #000 0 0.1rem, transparent 0.1rem 0.45rem);
+    opacity: 0.92;
+    pointer-events: none;
+}
+/* Eck-Klebeband: diagonal über die Ecke gelegt, die Ecke liegt in der Bandmitte.
+   --tape-shift schiebt das Band ins Bild: je schmaler das Fenster, desto weniger ragt es über die Ecke
+   hinaus (bis 1330px Breite wächst der Überstand stufenlos). Die 12px Grundversatz halten das längere
+   Band so im Bild, dass es die Ecke überspannt statt nur mit der Spitze aufzuliegen. */
+.fz-tape.tl, .fz-tape.tr { --tape-shift: calc(12px + clamp(0px, calc((1330px - 100vw) * 0.1), 34px)); top: 0; }
+.fz-tape.tl { left: 0; transform: translate(calc(-50% + var(--tape-shift)), -50%) rotate(-45deg); }
+.fz-tape.tr { right: 0; transform: translate(calc(50% - var(--tape-shift)), -50%) rotate(45deg); }
+.fz-tape.tc { top: -0.9rem; left: 50%; margin-left: -3.25rem; transform: rotate(-3deg); }
+
+/* Reißzwecke fürs schwarze Brett: schwarzer Kopf, weißer Glanzpunkt, kurzer Schlagschatten */
+.fz-pin {
+    position: absolute;
+    top: -0.7rem;
+    left: 50%;
+    z-index: 2;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: -0.75rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #fff 0 12%, #000 14%);
+    border: 0.12rem solid #000;
+    box-shadow: 0.25rem 0.35rem 0 rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+}
+.fz-wanted li:nth-child(even) .fz-pin { left: 22%; }
+.fz-wanted li:nth-child(3n) .fz-pin { left: 78%; }
+
+.fz-photo { position: relative; display: block; margin: 0; }
+.fz-photo img {
+    width: 100%;
+    margin: 0;
+    border: 0.35rem solid #000;
+    background: #fff;
+}
+
+.fz-box {
+    position: relative;
+    padding: 1.25rem 1.25rem 1.5rem;
+    border: 0.3rem solid #000;
+    background: #fff;
+}
+
+.fz-box > h2, .fz-box > h3 { margin-bottom: 0.75rem; }
+.fz-box p + .btn, .fz-box p + button, .fz-box p + a { margin-top: 1.25rem; }
+.fz-box .btn, .fz-box button, .fz-cut .btn { margin-top: 1.25rem; padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+
+.fz .btn-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.25rem; }
+.fz .btn-row .btn { margin-top: 0; padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+
+/* Ausschneide-Kasten mit gestrichelter Linie */
+.fz-cut {
+    position: relative;
+    padding: 1.5rem;
+    border: 0.25rem dashed #000;
+    background: #fff;
+}
+
+.fz-stamp {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border: 0.2rem solid #000;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transform: rotate(-4deg);
+}
+
+/* ---------- Titelstory ---------- */
+
+.fz-feature {
+    display: grid;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (min-width: 800px) {
+    .fz-feature { grid-template-columns: 5fr 6fr; gap: 3rem; }
+    .fz-feature.no-img { grid-template-columns: 1fr; }
+}
+
+.fz-feature { margin-top: 1.5rem; }
+.fz-feature .fz-photo { transform: rotate(-1.8deg); margin: 0.5rem 0.5rem 0; }
+.fz-feature-date {
+    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.fz-feature-title {
+    margin: 0.4rem 0 1rem !important;
+    font-size: clamp(2rem, 6vw, 4.4rem);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+.fz-feature-diff { margin-top: 0.5rem; font-weight: 700; letter-spacing: 0.05em; }
+.fz-teaser {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 60ch;
+    font-size: clamp(1rem, 1.8vw, 1.25rem);
+}
+.fz-feature .btn { margin-top: 1.5rem; padding: 0.7em 1.2em; }
+
+.fz-cancelled { text-decoration: line-through; }
+.fz-cancelled-tag { color: red; font-weight: 900; letter-spacing: 0.1em; margin-right: 0.5rem; text-decoration: none; display: inline-block; }
+
+/* ---------- Programm: Nebenstories + Inhaltsverzeichnis ---------- */
+
+.fz-picks {
+    display: grid;
+    gap: 2rem;
+    margin-top: 3rem;
+}
+@media (min-width: 700px) { .fz-picks { grid-template-columns: 1fr 1fr; gap: 2.5rem; } }
+
+.fz-pick { display: block; }
+.fz-pick .fz-photo { margin-bottom: 0.9rem; }
+.fz-pick:nth-child(odd) .fz-photo { transform: rotate(1.2deg); }
+.fz-pick:nth-child(even) .fz-photo { transform: rotate(-1deg); }
+.fz-pick-date { font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(0.9rem, 1.6vw, 1.1rem); }
+.fz-pick-title { margin-top: 0.2rem !important; font-size: clamp(1.4rem, 3.2vw, 2.2rem); font-weight: 900; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+
+.fz-toc { list-style: none; margin: 0; padding: 0; }
+.fz-toc li { margin: 0; }
+.fz-toc a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.55rem 0.25rem;
+    border-bottom: 0.1rem solid #000;
+    text-decoration: none;
+    font-size: clamp(1rem, 2vw, 1.4rem);
+}
+.fz-toc a:hover { background: #000; color: #fff; }
+.fz-toc .toc-date { flex: none; min-width: 7.5ch; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+.fz-toc .toc-title { min-width: 0; overflow-wrap: anywhere; }
+.fz-toc .toc-lead { flex: 1; align-self: end; margin-bottom: 0.35em; min-width: 1rem; border-bottom: 0.2rem dotted currentColor; }
+.fz-toc .toc-time { flex: none; font-weight: 600; }
+
+@media (max-width: 520px) {
+    .fz-toc .toc-lead { display: none; }
+    .fz-toc .toc-title { flex: 1; }
+}
+
+/* Weiterblättern-Leiste unter dem Programm: eigener Block, gleich breite Buttons */
+.fz-more { display: grid; gap: 1.25rem; margin-top: 2.5rem; padding-top: 1.25rem; border-top: var(--fz-rule) solid #000; }
+.fz-more-label { font-size: 0.85em; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; }
+.fz-more .btn { display: block; padding: 1em 1.2em; font-size: clamp(0.95rem, 1.3vw, 1.1rem); letter-spacing: 0.06em; text-align: center; }
+@media (min-width: 700px) {
+    .fz-more { grid-template-columns: repeat(3, 1fr); }
+    .fz-more-label { grid-column: 1 / -1; }
+}
+.fz-more .btn:nth-of-type(1) { transform: rotate(-0.8deg); }
+.fz-more .btn:nth-of-type(2) { transform: rotate(0.6deg); }
+.fz-more .btn:nth-of-type(3) { transform: rotate(-0.4deg); }
+
+.fz-ongoing { margin-top: 2.5rem; }
+.fz-ongoing a { display: block; margin-top: 0.4rem; font-size: clamp(1.1rem, 2.4vw, 1.6rem); font-weight: 900; }
+.fz-empty { padding: 1.5rem 0; font-size: clamp(1.1rem, 2.2vw, 1.5rem); }
+
+/* ---------- Community-Teaser ---------- */
+
+.fz-community { transform: rotate(0.8deg); margin: 3.5rem 0.5rem 0; }
+.fz-community .fz-h2 { margin-bottom: 0.75rem; }
+.fz-community .btn { margin-top: 1.25rem; padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz-community-next { margin-top: 1.25rem; padding-top: 1rem; border-top: 0.15rem solid #000; }
+.fz-community-next .lbl { font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
+.fz-community-next a { font-weight: 900; }
+
+/* ---------- Rubriken ---------- */
+
+.fz-rubriken { display: grid; gap: 2.5rem; margin-top: 3.5rem; padding-top: 2rem; border-top: var(--fz-rule) solid #000; align-items: start; }
+@media (min-width: 800px) {
+    .fz-rubriken { grid-template-columns: repeat(6, 1fr); gap: 3rem 2.5rem; }
+    .fz-rubriken > .r-wide { grid-column: span 4; }
+    .fz-rubriken > .r-narrow { grid-column: span 2; }
+    .fz-rubriken > .r-third { grid-column: span 2; }
+    .fz-rubriken > .r-half { grid-column: span 3; }
+    .fz-rubriken > .r-full { grid-column: 1 / -1; }
+}
+.fz-rubriken .btn, .fz-rubriken button { padding: 0.45em 0.9em; margin-top: 1.25rem; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz-map { margin-top: 1rem; height: max(300px, 22vh); width: 100%; border: 0.3rem solid #000; }
+.fz-colophon { font-size: 0.85em; }
+
+/* ---------- Community-Seite ---------- */
+
+.fz-page-head { padding: 2rem 0 2rem; border-bottom: var(--fz-rule) solid #000; }
+.fz-page-title { font-size: clamp(2.4rem, 9vw, 5.5rem); font-weight: 900; line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; }
+.fz-page-sub { margin-top: 1rem !important; font-size: clamp(1.05rem, 2vw, 1.4rem); }
+
+.fz-wanted { list-style: none; margin: 0; padding: 0.75rem 0 0; display: grid; gap: 1.5rem; }
+@media (min-width: 700px) { .fz-wanted { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+.fz-wanted li { margin: 0; position: relative; }
+.fz-wanted li:nth-child(3n+1) { transform: rotate(-0.8deg); }
+.fz-wanted li:nth-child(3n+2) { transform: rotate(0.9deg); }
+.fz-wanted li:nth-child(3n) { transform: rotate(-0.3deg); }
+.fz-wanted h3 { font-size: clamp(1.3rem, 2.8vw, 1.9rem); font-weight: 900; text-transform: uppercase; line-height: 1.05; margin-bottom: 0.5rem; }
+
+.fz-meetings { display: grid; gap: 1.75rem; }
+.fz-meeting { display: grid; gap: 0.25rem 1.5rem; padding-bottom: 1.5rem; border-bottom: 0.1rem solid #000; text-decoration: none; }
+@media (min-width: 700px) { .fz-meeting { grid-template-columns: 15rem 1fr; } }
+.fz-meeting .when { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+.fz-meeting .what { font-size: clamp(1.3rem, 2.8vw, 2rem); font-weight: 900; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
+.fz-meeting:hover .what { text-decoration: underline; text-decoration-thickness: 0.15em; }
+.fz-meeting-past { opacity: 0.75; }
+
+/* ---------- Look: Kopierer, Schreibmaschine, Ransom-Note, Marker ---------- */
+
+.fz { font-family: var(--fz-mono); font-weight: 700; position: relative; }
+.fz p, .fz .toc-title, .fz .fz-teaser { font-family: var(--fz-mono); font-weight: 700; letter-spacing: -0.01em; }
+
+/* Kopierer-Körnung über der ganzen Seite (reine Textur, klickt durch) */
+.fz::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0.2;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.1 -0.5'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Schreibmaschinen-Korrektur: falsches Wort durchgestrichen */
+.fz s { text-decoration: line-through; text-decoration-thickness: 0.1em; text-decoration-skip-ink: none; }
+
+/* Zensurbalken: Text ist schwarz auf schwarz, beim Antippen/Drüberfahren/Fokus wird er lesbar */
+.fz-censor {
+    background: #000;
+    color: #000;
+    cursor: pointer;
+    padding: 0 0.15em;
+    transition: color 0.15s;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+.fz-censor:hover, .fz-censor:focus-visible, .fz-censor.open { color: #fff; outline: none; }
+
+/* Formblatt "Antrag auf Mithilfe" */
+.fz-form { padding-right: 1.25rem; }
+.fz-form-stamp { position: absolute; top: 1rem; right: 1rem; transform: rotate(8deg); font-size: clamp(0.9rem, 2vw, 1.2rem); }
+.fz-form-fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.6rem 1rem; align-items: baseline; margin: 1rem 0 1.25rem; }
+.fz-form-fields dt { font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85em; }
+.fz-form-fields dd { margin: 0; padding-bottom: 0.15rem; border-bottom: 0.1rem dotted #000; min-height: 1.5em; overflow-wrap: anywhere; }
+/* Sprachumschalter in der "Über uns"-Box */
+.fz-lang { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.fz-lang .btn { padding: 0.25em 0.7em; --btn-shadow: 0.15rem; --btn-border: 0.12rem; }
+@media (max-width: 520px) {
+    .fz-form-fields { grid-template-columns: 1fr; gap: 0.1rem; }
+    .fz-form-fields dd { margin-bottom: 0.6rem; }
+    .fz-form-stamp { position: static; display: inline-block; margin-bottom: 0.5rem; }
+}
+
+.fz-service { margin-top: 0.8em; }
+
+.fz .fz-photo img { filter: grayscale(1) contrast(1.55) brightness(1.05); transition: filter 0.25s; }
+.fz .fz-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0.35rem;
+    background-image: radial-gradient(#000 0.07rem, transparent 0.09rem);
+    background-size: 0.3rem 0.3rem;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+}
+.fz a:hover .fz-photo img, .fz .fz-photo:hover img { filter: none; }
+.fz a:hover .fz-photo::after, .fz .fz-photo:hover::after { opacity: 0; }
+
+/* Ransom-Note-Titel */
+/* Einspaltig (Buttons rutschen unter den Titel): "CAROUSEL" ist ca. 6,6em breit und füllt die ganze Inhaltsbreite */
+.fz .fz-title { font-size: max(2.2rem, calc((min(95vw, 1200px) - 0.5rem) / 6.8)); line-height: 1.15; }
+/* Ab zwei Spalten ist der Titel nur so breit wie seine Spalte, sonst bricht er mitten im Wort um */
+@media (min-width: 1000px) { .fz .fz-title { font-size: clamp(2.2rem, 8vw, 7rem); } }
+.fz .fz-page-title { font-size: clamp(2.2rem, 8.5vw, 5.8rem); line-height: 1.12; }
+.fz .fz-page-title .fz-line { display: block; margin-bottom: 0.08em; }
+.fz .fz-page-title.long { font-size: clamp(1.8rem, 6vw, 4rem); }
+.fz .fz-title .fz-line { margin-bottom: 0.08em; }
+.fz .fz-ch { display: inline-block; padding: 0 0.04em; margin: 0 0.01em; line-height: 1; }
+.fz .fz-ch-0 { font-family: var(--fz-mono); font-weight: 900; transform: rotate(-3deg); }
+.fz .fz-ch-1 { background: #000; color: #fff; transform: rotate(2deg); padding: 0 0.08em; }
+.fz .fz-ch-2 { font-family: Georgia, "Times New Roman", serif; font-weight: 900; transform: rotate(-1deg) translateY(0.04em); }
+.fz .fz-ch-3 { border: 0.06em solid #000; transform: rotate(3deg); padding: 0 0.06em; }
+.fz .fz-ch-4 { font-family: Geologica, sans-serif; font-weight: 900; transform: rotate(-2deg) translateY(-0.03em); }
+.fz .fz-ch-sp { display: inline-block; width: 0.3em; }
+/* Erster Buchstabe jeder Zeile bündig mit dem Rand, sonst wirkt die Titelkante ausgefranst */
+.fz .fz-line > .fz-ch:first-child { transform: none; padding-left: 0; margin-left: 0; }
+
+.fz .fz-label { font-family: var(--fz-mono); }
+.fz .fz-box { border-width: 0.25rem; box-shadow: 0.5rem 0.5rem 0 #000; }
+.fz .fz-community { transform: rotate(-1.2deg); }
+.fz .fz-stamp { font-family: var(--fz-mono); }
+.fz .fz-h2, .fz .fz-feature-title, .fz .fz-pick-title { font-family: Geologica, sans-serif; }
+
+/* Datum der Titelstory wie mit Marker/Label-Gerät aufgeklebt */
+.fz .fz-feature-date { display: inline-block; padding: 0.2em 0.7em; background: #000; color: #fff; transform: rotate(-1deg); }
+
+/* Handgezogener Marker-Strich unter dem Untertitel */
+.fz .fz-title .fz-line + .fz-line {
+    width: fit-content;
+    padding-bottom: 0.3em;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 12' preserveAspectRatio='none'><path d='M2 7 C 30 2, 60 11, 100 6 S 170 3, 238 8' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/></svg>") bottom / 100% 0.35em no-repeat;
+}
+
+/* Kaffeering auf dem Cover */
+.fz-cover { position: relative; }
+.fz-cover::before {
+    content: "";
+    position: absolute;
+    bottom: -3rem;
+    right: 6%;
+    width: 11rem;
+    height: 11rem;
+    background: radial-gradient(circle, transparent 0 55%, rgba(0, 0, 0, 0.2) 57%, rgba(0, 0, 0, 0.06) 63%, transparent 66%);
+    pointer-events: none;
+}
+.fz-cover > * { position: relative; }
+
+/* Abgerissene Ecke unten rechts: die Trennlinie endet an einer ausgefransten Schräge */
+.fz-cover {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 3.6rem), calc(100% - 0.4rem) calc(100% - 3.08rem), calc(100% - 0.8rem) calc(100% - 2.92rem), calc(100% - 1.2rem) calc(100% - 2.28rem), calc(100% - 1.6rem) calc(100% - 2.12rem), calc(100% - 2rem) calc(100% - 1.48rem), calc(100% - 2.4rem) calc(100% - 1.32rem), calc(100% - 2.8rem) calc(100% - 0.68rem), calc(100% - 3.2rem) calc(100% - 0.52rem), calc(100% - 3.6rem) 100%, 0 100%);
+}
+.fz-cover::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 3.6rem;
+    height: 3.6rem;
+    pointer-events: none;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><polyline points='35,0 31,4.2 27,5.8 23,12.2 19,13.8 15,20.2 11,21.8 7,28.2 3,29.8 -1,35' fill='none' stroke='black' stroke-width='1.2' stroke-linejoin='round'/></svg>") no-repeat center / 100% 100%;
+}
+
+/* Links in der schwarzen Titelleiste müssen weiß sein (sonst schwarz auf schwarz) */
+.fz-strip a, .fz-strip a:visited, .fz-strip a:hover, .fz-strip a:focus { color: #fff; }
+.fz-strip a:hover { text-decoration-thickness: 0.25em; }
+
+/* Kleinanzeige im Community-Teaser */
+.fz-ad { margin: 1.25rem 0 0; padding: 0.8rem 1rem 0.9rem; border: 0.15rem solid #000; background: #fff; max-width: 40ch; }
+.fz-ad-head { margin-bottom: 0.5rem; padding-bottom: 0.3rem; border-bottom: 0.1rem solid #000; font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
+.fz-ad p { margin: 0; }
+.fz-ad p + p { margin-top: 0.3em; }
+.fz-ad-foot { margin-top: 0.6em !important; font-size: 0.85em; }
+
+/* Breite Seiten (Kalender) */
+.fz.fz-wide { max-width: var(--wide-page-width); }
+
+/* Archiv: Jahresüberschriften, Umschalter, Flyer-Galerie als aufgeklebte Kopien */
+.fz-year { margin: 2.5rem 0 0.5rem; }
+.fz-year:first-child { margin-top: 0; }
+.fz .fz-toggle { padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz .fz-toggle.on { background: #000; color: #fff; }
+.fz-page-head .btn-row { margin-top: 1.5rem; }
+
+.fz-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 1.75rem 1.25rem; align-items: start; }
+.fz-gallery .flyer { margin: 0.4rem; }
+.fz-gallery .flyer:nth-child(3n+1) { transform: rotate(-1.2deg); }
+.fz-gallery .flyer:nth-child(3n+2) { transform: rotate(0.9deg); }
+.fz-gallery .flyer:nth-child(3n) { transform: rotate(-0.4deg); }
+.fz-gallery .flyer img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; background: #e8e8e8; border-width: 0.25rem; }
+
+/* Impressum und andere Rechtstexte: ruhig und gut lesbar */
+.fz-legal { display: grid; gap: 2rem; margin-top: 2.5rem; max-width: 75ch; }
+.fz-legal .fz-h2 { margin-bottom: 0.5rem; font-size: clamp(1.1rem, 2.2vw, 1.5rem); }
+.fz-legal p { overflow-wrap: anywhere; }
+
+/* Geheimer Admin-Zugang für Eingeloggte: kleines Anarchie-A, wackelt beim Drüberfahren */
+.fz-admin {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 20;
+    padding: 0.2rem 0.45rem;
+    background: #fff;
+    border: 0.15rem solid #000;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    transform: rotate(-8deg);
+    transition: transform 0.15s;
+}
+.fz-admin:hover { transform: rotate(6deg) scale(1.25); }
+
+@media (prefers-reduced-motion: reduce) {
+    .fz * { transition: none !important; }
+}

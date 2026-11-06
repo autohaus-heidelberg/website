@@ -46,6 +46,11 @@ const router = createRouter({
       props: { view: 'gallery' }
     },
     {
+      path: '/community',
+      name: 'community',
+      component: () => import('../views/CommunityView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue')
@@ -108,6 +113,11 @@ const router = createRouter({
           name: 'admin-artist-edit',
           component: () => import('../views/admin/artists/ArtistFormView.vue'),
           props: true
+        },
+        {
+          path: 'help-requests',
+          name: 'admin-help-requests',
+          component: () => import('../views/admin/community/HelpRequestsView.vue')
         },
         {
           path: 'settings',
@@ -207,6 +217,13 @@ const router = createRouter({
           component: () => import('../views/admin/anfragen/AnfragenListView.vue')
         }
       ]
+    },
+
+    // Unbekannte Adressen (muss zuletzt stehen)
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFoundView.vue')
     }
   ]
 })

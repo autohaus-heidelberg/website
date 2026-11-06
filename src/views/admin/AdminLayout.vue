@@ -93,6 +93,8 @@ watch(isMobileMenuOpen, (isOpen) => {
         span Newsletter
       router-link.nav-link(to="/admin/anfragen" active-class="active" @click="handleNavigation")
         span Anfragen
+      router-link.nav-link(to="/admin/help-requests" active-class="active" @click="handleNavigation")
+        span Mithilfe-Gesuche
 
       .nav-section-label Buchhaltung & Lager
       router-link.nav-link(to="/admin/lager" active-class="active" @click="handleNavigation")

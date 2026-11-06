@@ -8,6 +8,9 @@ const route = useRoute();
 const isHome = computed(() => {
   return route.path === "/";
 })
+// Diese Seiten bringen ihre eigene Fanzine-Kopfleiste mit (FanzineNav)
+const OWN_HEADER_ROUTES = ['community', 'not-found', 'event', 'pastEvents', 'flyerGallery', 'calendar', 'requests', 'about']
+const hasOwnHeader = computed(() => OWN_HEADER_ROUTES.includes(route.name as string))
 
 // Der Header richtet sich nach der Breite des Inhalts: Standard (schmal), breite Seiten
 // (Route-Meta `wide`) und Admin (neben der Seitenleiste).
@@ -46,7 +49,7 @@ if (window.history.state.back === null) {
 </script>
 
 <template lang="pug">
-header(v-if="!isHome" :class="[`layout-${headerLayout}`, { hidden: headerHidden }]")
+header(v-if="!isHome && !hasOwnHeader" :class="[`layout-${headerLayout}`, { hidden: headerHidden }]")
   button.back-btn(@click="navigateBack")
     .header-link
       //- !--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--

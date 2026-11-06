@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 // Baut ein Preview-Paket der öffentlichen Seite zum Teilen (z.B. per Netlify Drop).
 // Verändert das Repo nicht: gebaut wird in einer temporären Kopie, in die Beispieldaten
-// für die Community-Seite (Treffen, "Wir suchen") eingefügt werden.
+// für die Community-Seite eingefügt werden (Treffen immer, "Wir suchen" nur falls community.json leer ist).
 //
 // Aufruf: npm run preview:package [-- <Zielordner>]
 // Standard-Ziel: ~/Desktop/carousel-preview (+ .zip daneben)
@@ -53,7 +53,12 @@ try {
   const eventsFile = path.join(work, "src", "events.json");
   const events = JSON.parse(readFileSync(eventsFile, "utf-8"));
   writeFileSync(eventsFile, JSON.stringify([...demoMeetings, ...events], null, 4));
-  writeFileSync(path.join(work, "src", "community.json"), JSON.stringify(demoCommunity, null, 4));
+  // Echte Gesuche aus dem Repo behalten, Beispiele nur wenn dort noch nichts steht
+  const communityFile = path.join(work, "src", "community.json");
+  const real = JSON.parse(readFileSync(communityFile, "utf-8"));
+  if (!real.helpRequests?.length) {
+    writeFileSync(communityFile, JSON.stringify(demoCommunity, null, 4));
+  }
 
   console.log("Baue Preview...");
   execFileSync("npx", ["vite", "build"], { cwd: work, stdio: "inherit" });

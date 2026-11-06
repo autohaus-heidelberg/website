@@ -1,148 +1,194 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { events } from "../events";
 import dayjs from "dayjs";
-import EventPreview from "../components/EventPreview.vue";
+import relativeTime from "dayjs/plugin/relativeTime";
+import "dayjs/locale/de";
 import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import CircularLogo from "../components/CircularLogo.vue"
 import { isPastEvent } from "@/utils/eventTime";
+import { communityOnly, concertsOnly, helpRequests, COMMUNITY_LABEL } from "@/utils/community";
+import { stripHtml } from "@/utils/calendar";
+import { ransomChars } from "@/utils/ransom";
+import { claim } from "@/utils/claims";
+import { aboutTexts, type AboutLang } from "@/utils/about";
 import { useAuthStore } from "@/stores/auth";
+
+dayjs.extend(relativeTime);
+dayjs.locale("de");
 
 const authStore = useAuthStore();
 
+const concerts = concertsOnly(events);
 
 // Multi-day events (e.g. exhibitions) that already started but aren't over yet.
 const ongoing = computed(() =>
-  events
+  concerts
     .filter((item) => item.endDate && dayjs(item.date).isBefore(dayjs()) && dayjs(item.endDate).isAfter(dayjs()))
     .map((item) => ({ ...item, date_d: dayjs(item.endDate) }))
     .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
 );
 
 const upcoming = computed(() =>
-  events
+  concerts
     .map((item) => ({ ...item, date_d: dayjs(item.date) }))
     .filter((item) => !isPastEvent(item))
-    // Already-started multi-day events are shown in the "Läuft aktuell" section instead
+    // Already-started multi-day events are shown in the "Läuft aktuell" box instead
     .filter((item) => !ongoing.value.some((o) => o.id === item.id))
     .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
 );
 
-const upComingHighlights = computed(() => {
-  // NOTE: we restrict the large events to 3 or the first one without image. Other events are show in the smaller overview
-return upcoming.value.reduce<typeof upcoming.value>((acc, event) => {
-  if (acc.length < 3 && event.img) {
-    acc.push(event);
-  }
-  return acc;
-}, []);
-})
-
-const upComingSmall = computed(() => 
-  upcoming.value.filter(item => !upComingHighlights.value.some(up => up.id === item.id))
+// Titelstory = nächster Termin, Nebenstories = die nächsten (max. 2) mit Bild, Rest im Inhaltsverzeichnis
+const feature = computed(() => upcoming.value[0]);
+const picks = computed(() => upcoming.value.slice(1).filter((e) => e.img).slice(0, 2));
+const toc = computed(() =>
+  upcoming.value.slice(1).filter((e) => !picks.value.some((p) => p.id === e.id))
 );
 
+const nextMeeting = computed(() =>
+  communityOnly(events)
+    .map((item) => ({ ...item, date_d: dayjs(item.date) }))
+    .filter((item) => !isPastEvent(item) && !item.cancelled)
+    .sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))[0]
+);
+
+const teaser = (html?: string) => (html ? stripHtml(html) : "");
+const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) } });
+
+const issueNo = dayjs().format("MM/YY");
+const issueMonth = dayjs().format("MMMM");
+const titleLines = ["Carousel", "im alten Autohaus"];
+
+const censorOpen = ref(false);
+
+const lang = ref<AboutLang>("de");
+const about = computed(() => aboutTexts[lang.value]);
+
 const zoom = ref(17);
-
-
-const logoContainer = ref<HTMLElement | null>(null);
-
-onMounted(() => {
-  // Use ResizeObserver to set the height as soon as the container has a real
-  // layout size — more reliable than a fixed setTimeout.
-  const ro = new ResizeObserver(() => {
-    setLogoHeight();
-  });
-  if (logoContainer.value) ro.observe(logoContainer.value);
-  window.addEventListener("resize", setLogoHeight);
-  onUnmounted(() => {
-    ro.disconnect();
-    window.removeEventListener("resize", setLogoHeight);
-  });
-});
-
-
-const logoHeight = ref(100);
-
-function setLogoHeight() {
-  if (!logoContainer.value) return;
-  // Use body's actual available width minus padding.
-  // Extra 20px margin so CircleType's outer ring letters don't get clipped
-  // on narrow viewports (letters extend slightly beyond the calculated radius).
-  const bodyStyle = getComputedStyle(document.body);
-  const bodyPadding = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight);
-  const availableWidth = document.documentElement.clientWidth - bodyPadding - 20;
-  const diameter = Math.min(availableWidth, 600);
-  logoHeight.value = diameter;
-  logoContainer.value.style.height = `${diameter}px`;
-}
-
 </script>
 
 <template lang="pug">
-//- h1 Autohaus Heidelberg
-router-link.btn.admin-btn(v-if="authStore.accessToken" :to="{ name: 'admin-dashboard' }") Admin
-.l-center
-  .logo-container(ref="logoContainer")
-    //- .video
-    //-   video(autoplay loop muted :height="logoHeight")
-    //-     source(src="/header_video.mp4")
-    CircularLogo(:diameter="logoHeight")
-    //- img.img-animate(:src="imgSrc1", :style="styleImg1") 
-    //- img.img-animate(:src="imgSrc2", :style="styleImg2") 
-    //- img.img-outline(src="/img/logo_outline.svg")
-p Wir sind das Carousel im alten Autohaus.
-  br 
-  | Ein gemeinnütziger Verein zur Förderung von Livemusik und allem was dazu gehört. 
-  br
-  //- a(href="#about") Mehr erfahren
+.fz
+  router-link.fz-admin.plain-link(v-if="authStore.accessToken" :to="{ name: 'admin-dashboard' }" title="Admin – hier geht's hinter die Kulissen" aria-label="Admin") (A)
+  //- ===== Cover =====
+  header.fz-masthead
+    .fz-strip
+      span Nr. {{ issueNo }} · {{ issueMonth }}
+      span Kopiert &amp; geklebt im Alten Autohaus · Heidelberg
+      span Gebraucht, aber gut in Schuss
+    .fz-cover
+      h1.fz-title(aria-label="Carousel im alten Autohaus")
+        span.fz-line(v-for="(line, li) in titleLines" :key="li" aria-hidden="true")
+          span.fz-ch(v-for="(c, i) in ransomChars(line, li)" :key="i" :class="c.cls") {{ c.ch }}
+      .fz-cover-side
+        p.fz-claim
+          template(v-for="(part, i) in claim" :key="i")
+            span.fz-censor(
+              v-if="'censor' in part"
+              :class="{ open: censorOpen }"
+              role="button"
+              tabindex="0"
+              title="Antippen zum Aufdecken"
+              @click="censorOpen = !censorOpen"
+              @keydown.enter.prevent="censorOpen = !censorOpen"
+            ) {{ part.censor }}
+            template(v-else) {{ part.text }}
+        .fz-cover-cta
+          router-link.btn(:to="{ name: 'calendar' }") Kalender
+          router-link.btn(:to="{ name: 'community' }") Mach mit!
 
-.page-content
-  .dates
-    h1 Termine
-    .calendar-link.calendar-link-top
-      router-link.btn(:to="{ name: 'calendar' }") Kalender ansehen
-    .empty(v-if="upcoming.length === 0 && ongoing.length === 0")
-      p Aktuell gibt es keine anstehenden Events.
-    .event.mb-1(v-else, v-for="event in upComingHighlights", :key="event.id")
-      EventPreview(:event="event")
+  //- ===== Programm =====
+  section.fz-section#programm
+    .fz-label Das Programm
 
-    template(v-if="ongoing.length > 0")
-      h1 Läuft aktuell
-      .event.mb-1(v-for="event in ongoing" :key="event.id")
-        EventPreview(:event="event")
+    .fz-empty(v-if="!feature && ongoing.length === 0") Werkstattpause: Aktuell ist kein Termin geplant. Pannenhilfe: Newsletter abonnieren oder bald wieder reinschauen.
 
-    template(v-if="upComingSmall.length > 0")
-      h1 Noch mehr
-      .events-small-container()
-        router-link.events-small.plain-link(v-for="ev in upComingSmall" :key="ev.id" :to="{name: 'event', params: { id: encodeURI(ev.id) }}")
-          .date {{ dayjs(ev.date).format('dddd, DD. MMMM YYYY') }}
-          span {{ev.title}}
+    router-link.plain-link.fz-feature(
+      v-if="feature"
+      :to="eventLink(feature.id)"
+      :class="{ 'no-img': !feature.img }"
+    )
+      .fz-photo(v-if="feature.img")
+        .fz-tape.tl
+        .fz-tape.tr
+        img(:src="feature.img" :alt="feature.title" crossorigin="anonymous")
+      div
+        .fz-feature-date {{ feature.date_d.format('dddd, DD. MMMM') }} · {{ feature.date_d.format('HH:mm') }} Uhr
+        h2.fz-feature-title(:class="{ 'fz-cancelled': feature.cancelled }")
+          span.fz-cancelled-tag(v-if="feature.cancelled") Abgesagt
+          | {{ feature.title }}
+        p.fz-teaser(v-if="teaser(feature.descriptionShort)") {{ teaser(feature.descriptionShort) }}
+        p.fz-feature-diff Abfahrt {{ feature.date_d.fromNow() }}
+        span.btn Zum Artikel
 
-    .calendar-link
+    .fz-picks(v-if="picks.length")
+      router-link.plain-link.fz-pick(v-for="ev in picks" :key="ev.id" :to="eventLink(ev.id)")
+        .fz-photo
+          .fz-tape.tc
+          img(:src="ev.img" :alt="ev.title" crossorigin="anonymous")
+        .fz-pick-date {{ ev.date_d.format('dd, DD.MM.') }} · {{ ev.date_d.format('HH:mm') }} Uhr
+        h3.fz-pick-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
+
+    .fz-box.fz-ongoing(v-if="ongoing.length")
+      .fz-stamp Läuft aktuell
+      router-link(v-for="ev in ongoing" :key="ev.id" :to="eventLink(ev.id)") {{ ev.title }} (bis {{ ev.date_d.format('DD.MM.') }})
+
+    template(v-if="toc.length")
+      h2.fz-h2(style="margin-top: 3rem") Außerdem im Programm
+      ul.fz-toc(style="margin-top: 1rem")
+        li(v-for="ev in toc" :key="ev.id")
+          router-link.plain-link(:to="eventLink(ev.id)")
+            span.toc-date {{ ev.date_d.format('dd DD.MM.') }}
+            span.toc-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
+            span.toc-lead
+            span.toc-time {{ ev.date_d.format('HH:mm') }}
+
+    nav.fz-more(aria-label="Weiterblättern")
+      .fz-more-label Weiterblättern
       router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender
+      router-link.btn(:to="{ name: 'pastEvents' }") Vergangene Events
+      router-link.btn(:to="{ name: 'flyerGallery' }") Flyer-Galerie
 
-  .content
-    .newsletter
-      h1 Newsletter
-      p Abonniere den Newsletter um updates über anstehende Konzerte und Veranstaltungen zu erhalten. 
+  //- ===== Community-Teaser =====
+  aside.fz-cut.fz-community#community
+    .fz-stamp {{ COMMUNITY_LABEL }}
+    h2.fz-h2(style="margin-top: 0.75rem") Mach mit! Der Laden lebt vom Ehrenamt.
+    p Wir sind ein Verein ohne Chef:innen und ohne Geld im Rücken. Essen für die Bands, Ton, Bar, Veranstaltungen – hier wird alles von Leuten wie dir gemacht.
+    p(v-if="helpRequests.length") Aktuell suchen wir Hilfe bei {{ helpRequests.length }} {{ helpRequests.length === 1 ? 'Sache' : 'Sachen' }}.
+    .fz-ad
+      .fz-ad-head Kleinanzeigen · Gesuche
+      p
+        b SUCHE:
+        |  Leute fürs Bandessen, für Ton, Bar und eigene Abende.
+      p
+        b BIETE:
+        |  Bier, Applaus, nette Leute. VB.
+      p.fz-ad-foot Zuschriften unter Chiffre HD-CA oder einfach vorbeikommen.
+    .fz-community-next(v-if="nextMeeting")
+      .lbl Nächstes Treffen
+      router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
+    router-link.btn(:to="{ name: 'community' }") Zur Community-Seite
+
+  //- ===== Rubriken =====
+  .fz-rubriken
+    .fz-box.r-narrow#newsletter
+      h2.fz-h2 Newsletter
+      p Abonniere den Newsletter, um Updates über anstehende Konzerte und Veranstaltungen zu erhalten.
       button.rm-open-popup Newsletter abonnieren
 
-    .directions
-      h1 Lage
+    .fz-box.r-wide.directions#lage
+      h2.fz-h2 Lage
       p Das Carousel im alten Autohaus befindet sich in der
-        br
-        br
+        |  
         a(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Hebelstraße 7
-        br
-        br
-        | am einfachsten mit dem Fahrrad oder mit der Bahn erreichbar, die nächste Haltestelle ist die 
+        | , am einfachsten mit dem Fahrrad oder der Bahn erreichbar. Nächste Haltestelle:
+        |  
         a(href="https://maps.app.goo.gl/7k4UvxVHtGvHK1NfA") Rudolf-Diesel-Straße
-      a.mb-1(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
-      .map
+        | .
+      p.fz-service
+        b Serviceleistung:
+        |  Fahrrad oder Bahn – wir sind ein Autohaus, kein Parkhaus.
+      .fz-map
         l-map(
           ref="map",
           v-model:zoom="zoom",
@@ -154,251 +200,26 @@ p Wir sind das Carousel im alten Autohaus.
             name="OpenStreetMap"
           )
           l-marker(:latLng="[49.39666, 8.680584425099438]")
+      a.btn(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
 
-    .past-events
-      h1 Vergangene Events
-      p Ihr wollt wissen wie die Band gestern oder letzte Woche hieß, oder einfach durch die Flyer-Artworks stöbern?
-      .past-events-links
-        router-link(:to="{ name: 'pastEvents' }")
-          button Liste
-        router-link(:to="{ name: 'flyerGallery' }")
-          button Galerie
+    #about.fz-cut.r-half
+      .fz-lang(role="group" aria-label="Sprache")
+        button.btn.fz-toggle(:class="{ on: lang === 'de' }" :aria-pressed="lang === 'de'" @click="lang = 'de'") DE
+        button.btn.fz-toggle(:class="{ on: lang === 'en' }" :aria-pressed="lang === 'en'" @click="lang = 'en'") EN
+      h2.fz-h2 {{ about.title }}
+      p(v-for="(para, i) in about.paragraphs" :key="i" :lang="lang") {{ para }}
 
-    #about
-      h1 Über uns
-      p Wir sind ein gemeinnütziger Verein, getragen von ehrenamtlicher Arbeit. 
-      p Unser Ziel ist die Förderung von Livemusik in Heidelberg.  
-
-    #anfragen
-      h1 Anfragen
+    #anfragen.fz-box.r-half
+      h2.fz-h2 Anfragen
       p Für Anfragen verwendet bitte unser Anfragenformular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen.
-      router-link(:to="{ name: 'requests' }")
-        button Anfragenformular
+      router-link.btn(:to="{ name: 'requests' }") Anfragenformular
 
-    #impressum
-      h1 Impressum
+    #impressum.fz-cut.r-full.fz-colophon
+      h2.fz-h2 Impressum
       p Verantwortlich für den Inhalt dieser Website:
-      p Carousel e.V. - Hebelstraße 7 - 69115 Heidelberg
-      a(href="mailto:carouselev@gmail.com") carouselev@gmail.com
-      br
-      br
-      router-link(:to="{ name: 'about' }") Mehr
+      p Carousel e.V. – Hebelstraße 7 – 69115 Heidelberg
+      p
+        a(href="mailto:carouselev@gmail.com") carouselev@gmail.com
+      p
+        router-link(:to="{ name: 'about' }") Mehr
 </template>
-
-<style scoped>
-.admin-btn {
-  display: block;
-  text-align: center;
-  padding: 0.5rem 1rem;
-  font-weight: bold;
-  position: relative;
-  z-index: 10;
-  max-width: 100%;
-}
-
-#mce-EMAIL {
-  width: 100%;
-  height: 3em;
-  padding: 0.5rem;
-  border: solid #000000;
-  font-size: 1rem;
-  margin-bottom: 1rem;
-}
-
-#mce-EMAIL:focus {
-  outline: none;
-  border-color: #000000;
-}
-
-#mc-embedded-subscribe {
-  width: 100%;
-  height: 3em;
-}
-
-.event {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.events-small {
-
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-
-    font-weight: 900;
-    font-size: clamp(1.6rem, 3vw, 4rem);
-
-    align-items: center;
-    grid-gap: 0.5rem;
-    border: 0.5rem solid;
-  margin-top: -0.5rem;
-    background-color: var(--text-color);
-
-
-  transform: rotate(1deg);
-  touch-action: manipulation;
-
-}
-
-@media screen and (max-width: 767px) {
-  .events-small {
-    grid-template-columns: auto 1fr;
-    font-size: clamp(1rem, 5vw, 2rem);
-  }
-}
-
-.events-small > * {
-  padding: 1rem;
-  background-color: var(--background-color);
-  height: 100%;
-  width: 100%;
-}
-
-.newsletter-form {
-  display: flex;
-  justify-content: center;
-}
-
-.img-animate {
-  position: absolute;
-  margin: 0;
-  object-fit: cover;
-  aspect-ratio: 3.57/1;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  transition: 2s;
-  filter: brightness(200%);
-  mask-image: url("/img/logo.svg");
-  mask-mode: luminance;
-  mask-repeat: no-repeat;
-  mask-size: contain;
-}
-
-.img-outline {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  object-fit: cover;
-  aspect-ratio: 3.57/1;
-  margin: 0;
-}
-
-.header-img {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.header-img > .container {
-  position: relative;
-  margin: 0;
-  max-width: 1024px;
-  width: 100%;
-  aspect-ratio: 3.57/1;
-  margin-bottom: 2rem;
-  overflow: hidden;
-}
-
-.map {
-  margin-top: 1rem;
-  height: max(300px, 20vh);
-  width: 100%;
-}
-
-.past-events-links {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.calendar-link {
-  display: flex;
-  justify-content: center;
-  margin: 2rem 0;
-}
-
-.calendar-link-top {
-  margin: 0 0 2rem;
-}
-
-/* .btn-Links haben anders als <button> kein eigenes Padding */
-.calendar-link .btn {
-  padding: 0.7em 1.2em;
-}
-
-.page-content {
-  margin: auto;
-  max-width: min(95vw, 2048px);
-}
-
-
-
-.logo-container {
-  height: 500px;
-  color: var(--link-color)
-}
-
-
-
-.video {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  width: 100%;
-  filter: brightness(70%);
-}
-
-.video > video {
-    max-width: 100%;
-
-}
-
-.l-center {
-  display: flex;
-  justify-content: center;
-}
-
-
-@media screen and (min-width: 768px) {
-  .page-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    max-width: 2048px;
-    grid-gap: 1rem;
-    column-gap: 3rem;
-    grid-template-areas:
-      "dates content"
-  }
-
-  .dates {
-    grid-area: dates;
-  }
-
-  .newsletter {
-    grid-area: newsletter;
-  }
-
-  .past-events {
-    grid-area: past-events;
-  }
-
-  .directions {
-    grid-area: directions;
-  }
-
-  #about {
-    grid-area: about;
-  }
-
-  #impressum {
-    grid-area: impressum;
-  }
-}
-
-</style>
