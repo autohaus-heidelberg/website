@@ -13,12 +13,11 @@
       button.btn-back(@click="reset") Neue Anfrage stellen
 
     template(v-else)
-      .fz-cut.fz-datasheet
-        .fz-stamp Datenblatt
-        h2.fz-h2 Infos zur Location
+      .fz-label Infos zur Location
+      .fz-box.fz-datasheet
         dl.fz-form-fields
           dt Kapazität
-          dd 200 Personen (stehend)
+          dd 199 Personen (stehend)
           dt Bühne
           dd 5m × 3m, Höhe ca. 43cm (3 Europaletten)
           dt PA
@@ -34,7 +33,7 @@
           dt Gagenmodell
           dd Garantie und/oder Tür-Anteil — nach Absprache
 
-      h2.fz-h2.fz-request-title Anfrage
+      .fz-label.fz-request-title Deine Anfrage
 
       form.request-form(@submit.prevent="submitForm")
         .form-group
@@ -264,7 +263,8 @@ function reset() {
 .fz-request { max-width: 56rem; margin-top: 2.5rem; }
 
 .fz-datasheet { margin-bottom: 2.5rem; }
-.fz-request-title { margin-bottom: 1rem; }
+.fz-datasheet .fz-form-fields { margin: 0; }
+.fz-request-title { margin-bottom: 1.5rem; }
 
 .request-form {
   display: flex;
@@ -306,10 +306,15 @@ function reset() {
 }
 
 .hint-warning {
+  padding: 0.5rem 0.75rem;
+  border: 0.15rem solid #000;
+  background: var(--mark);
   font-weight: 900;
 }
 
 .hint-info {
+  padding-left: 0.75rem;
+  border-left: 0.4rem solid #000;
   font-weight: 700;
 }
 
@@ -360,11 +365,13 @@ textarea {
 
 .form-error {
   border: 0.2rem solid black;
-  border-left-width: 0.8rem;
+  border-left: 0.8rem solid var(--alert);
   padding: 0.75rem;
   font-weight: 700;
   white-space: pre-line;
 }
+
+.success-message { border-left: 0.8rem solid var(--multi); background: var(--soft); }
 
 .success-message p {
   margin: 1rem 0 0;

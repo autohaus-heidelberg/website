@@ -35,6 +35,7 @@ const mode = ref<Mode>(
   route.query.view === 'month' ? 'month' : route.query.view === 'list' || isMobile() ? 'list' : 'month',
 )
 const cursor = ref<Date>(parseMonth(route.query.month) ?? new Date())
+const showSubscribe = ref(false)
 
 const monthKey = computed(() => dateKey(cursor.value).slice(0, 7))
 
@@ -135,17 +136,10 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 .fz.fz-wide
  FanzineNav(label="Kalender")
  .calendar-page
-  header.fz-page-head.cal-head
+  header.fz-page-head
     h1.fz-page-title(aria-label="Kalender")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Kalender')" :key="i" :class="c.cls") {{ c.ch }}
-    .fz-cut.cal-take
-      .fz-stamp Zum Mitnehmen
-      p Wann läuft was? Abonniere den Kalender in deiner App, dann erscheinen neue Termine automatisch bei dir.
-      .btn-row
-        a.btn(:href="subscribeUrl") Apple / Outlook
-        a.btn(:href="googleSubscribeUrl" target="_blank" rel="noopener") Google Kalender
-        a.btn(:href="feedPath" download="carousel-termine.ics") .ics-Datei
 
   .toolbar
     .nav
@@ -153,9 +147,19 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
       button.nav-btn(@click="today") Heute
       button.nav-btn(@click="next" aria-label="Nächster Monat") ›
     h2.title.fz-label(aria-live="polite") {{ title }}
-    .modes(role="group" aria-label="Ansicht")
-      button(:class="{ active: mode === 'month' }" :aria-pressed="mode === 'month'" @click="mode = 'month'") Monat
-      button(:class="{ active: mode === 'list' }" :aria-pressed="mode === 'list'" @click="mode = 'list'") Liste
+    .toolbar-right
+      .modes(role="group" aria-label="Ansicht")
+        button(:class="{ active: mode === 'month' }" :aria-pressed="mode === 'month'" @click="mode = 'month'") Monat
+        button(:class="{ active: mode === 'list' }" :aria-pressed="mode === 'list'" @click="mode = 'list'") Liste
+      button.sub-toggle(:aria-expanded="showSubscribe" aria-controls="abo" @click="showSubscribe = !showSubscribe") Abonnieren
+
+  //- Abo: aufklappbar, damit oben der Kalender selbst steht
+  #abo.cal-take(v-if="showSubscribe")
+    p Neue Termine automatisch in deiner Kalender-App:
+    .btn-row
+      a.btn(:href="subscribeUrl") Apple / Outlook
+      a.btn(:href="googleSubscribeUrl" target="_blank" rel="noopener") Google Kalender
+      a.btn(:href="feedPath" download="carousel-termine.ics") .ics-Datei
 
   //- Monatsraster
   .grid(v-if="mode === 'month'" role="grid" :aria-label="`Kalender ${title}`" :style="{ '--weeks': weeks.length }")
@@ -230,33 +234,18 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
   padding: 0;
 }
 
-/* Kopf: Titel links, Abo-Kasten rechts (auf schmalen Bildschirmen darunter) */
-.cal-head {
-  display: grid;
-  gap: 1.5rem 3rem;
-  align-items: center;
-}
-
-@media (min-width: 1000px) {
-  .cal-head {
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 30rem);
-  }
-}
-
-/* Kompakter Kasten: kleinere Schrift und Buttons als im Fließtext, damit er den Titel nicht überragt */
+/* Aufklappbarer Abo-Bereich: gestrichelt = zum Mitnehmen */
 .cal-take {
-  padding: 1rem 1.25rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 1.5rem auto;
+  padding: 0.9rem 1.1rem 1rem;
+  border: 0.15rem dashed #000;
   --btn-shadow: 0.2rem;
   --btn-border: 0.15rem;
 }
 
-.cal-take .fz-stamp {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
 .cal-take p {
-  max-width: 48ch;
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.4;
@@ -283,10 +272,13 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 }
 
 .nav,
-.modes {
+.modes,
+.toolbar-right {
   display: flex;
   gap: 0.8rem;
 }
+
+.toolbar-right { flex-wrap: wrap; justify-content: center; }
 
 /* Kompakter als die globalen Buttons (die erben die große Fließtextgröße),
    damit die Steuerung nicht das dichte Kalenderraster erschlägt. */
@@ -303,6 +295,16 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 
 .nav-btn {
   min-width: 2.4rem;
+}
+
+/* Kein Ansichts-Schalter: gestrichelt (= zum Mitnehmen), offen wie in den Schatten gedrückt statt schwarz */
+.sub-toggle {
+  border-style: dashed;
+}
+
+.sub-toggle[aria-expanded="true"] {
+  box-shadow: none;
+  transform: translate(-0.2rem, 0.2rem);
 }
 
 /* Monatstitel als schwarzes Etikett (.fz-label aus fanzine.css) */

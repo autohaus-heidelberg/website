@@ -134,7 +134,7 @@ const zoom = ref(17);
         .fz-pick-date {{ ev.date_d.format('dd, DD.MM.') }} · {{ ev.date_d.format('HH:mm') }} Uhr
         h3.fz-pick-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
 
-    .fz-box.fz-ongoing(v-if="ongoing.length")
+    .fz-box.fz-ongoing.fz-dots(v-if="ongoing.length")
       .fz-stamp Läuft aktuell
       router-link(v-for="ev in ongoing" :key="ev.id" :to="eventLink(ev.id)") {{ ev.title }} (bis {{ ev.date_d.format('DD.MM.') }})
 

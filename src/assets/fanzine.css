@@ -78,9 +78,9 @@
 .fz-cover-cta { display: flex; flex-wrap: wrap; gap: 1rem 1.25rem; margin-top: 1.25rem; }
 .fz-cover-cta .btn, .fz-cover-cta button { padding: 0.7em 1.2em; }
 
-/* Rasterpunkte (Kopierer-Halbton) im Kasten „Läuft aktuell“, von rechts nach links ausblendend, damit der Text lesbar bleibt */
-.fz-ongoing { isolation: isolate; overflow: hidden; }
-.fz-ongoing::before {
+/* Rasterpunkte (Kopierer-Halbton) in Kästen mit .fz-dots („Läuft aktuell“), von rechts nach links ausblendend, damit der Text lesbar bleibt */
+.fz-dots { position: relative; isolation: isolate; overflow: hidden; }
+.fz-dots::before {
     content: "";
     position: absolute;
     inset: 0;
