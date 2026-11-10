@@ -141,11 +141,11 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
         span.fz-ch(v-for="(c, i) in ransomChars('Kalender')" :key="i" :class="c.cls") {{ c.ch }}
     .fz-cut.cal-take
       .fz-stamp Zum Mitnehmen
-      p Wann läuft was? Abonniere den Kalender, dann erscheinen neue Termine automatisch bei dir.
+      p Wann läuft was? Abonniere den Kalender in deiner App, dann erscheinen neue Termine automatisch bei dir.
       .btn-row
-        a.btn(:href="subscribeUrl") Kalender abonnieren
-        a.btn(:href="googleSubscribeUrl" target="_blank" rel="noopener") In Google Kalender
-        a.btn(:href="feedPath" download="carousel-termine.ics") Als .ics herunterladen
+        a.btn(:href="subscribeUrl") Apple / Outlook
+        a.btn(:href="googleSubscribeUrl" target="_blank" rel="noopener") Google Kalender
+        a.btn(:href="feedPath" download="carousel-termine.ics") .ics-Datei
 
   .toolbar
     .nav
@@ -158,7 +158,7 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
       button(:class="{ active: mode === 'list' }" :aria-pressed="mode === 'list'" @click="mode = 'list'") Liste
 
   //- Monatsraster
-  .grid(v-if="mode === 'month'" role="grid" :aria-label="`Kalender ${title}`")
+  .grid(v-if="mode === 'month'" role="grid" :aria-label="`Kalender ${title}`" :style="{ '--weeks': weeks.length }")
     .corner KW
     .weekday(v-for="w in weekdayLabels" :key="w" role="columnheader") {{ w }}
     template(v-for="(row, rowIndex) in weeks" :key="row.key")
@@ -226,8 +226,13 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 
 <style scoped>
 .calendar-page {
-  /* Mehrtägige Events: schwarz-weiße Schraffur (wie das Klebeband), keine Farbe */
-  --hatch: repeating-linear-gradient(-45deg, #000 0 0.1rem, transparent 0.1rem 0.45rem);
+  /* Zwei Akzente wie Textmarker und Stempelrot auf der Kopie: Gelb für Heute und Treffen, Rot nur für Abgesagt */
+  --mark: #ffe600;
+  --alert: #d10000;
+  /* Konzerte: Riso-Grün (Kante, Rahmen, Schraffur, zarte Fläche) */
+  --multi: #0b8a6c;
+  --soft: #e1f3ec;
+  --hatch: repeating-linear-gradient(-45deg, #6cc3a8 0 0.06rem, transparent 0.06rem 0.5rem);
   margin: 0;
   padding: 0;
 }
@@ -245,16 +250,34 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
   }
 }
 
+/* Kompakter Kasten: kleinere Schrift und Buttons als im Fließtext, damit er den Titel nicht überragt */
+.cal-take {
+  padding: 1rem 1.25rem;
+  --btn-shadow: 0.2rem;
+  --btn-border: 0.15rem;
+}
+
 .cal-take .fz-stamp {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 .cal-take p {
   max-width: 48ch;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 .cal-take .btn-row {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+  gap: 0.6rem;
+}
+
+.cal-take .btn {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  padding: 0.4em 0.8em;
 }
 
 .toolbar {
@@ -307,6 +330,8 @@ button.active {
   --num-h: 1.8rem;
   display: grid;
   grid-template-columns: 2.4rem repeat(7, minmax(0, 1fr));
+  /* Alle Wochen so hoch wie die höchste */
+  grid-template-rows: auto repeat(var(--weeks), 1fr);
   border-top: 0.3rem solid black;
   border-left: 0.3rem solid black;
 }
@@ -364,7 +389,11 @@ button.active {
   flex-shrink: 0;
 }
 
-/* Heute: schief aufgestempelt */
+/* Heute: Zelle gelb hinterlegt, Zahl schief aufgestempelt */
+.day.today {
+  background: var(--mark);
+}
+
 .day.today .day-num {
   background: black;
   color: white;
@@ -400,24 +429,39 @@ button.active {
 .ev {
   display: flex;
   flex-direction: column;
-  padding: 0.2rem 0.35rem;
-  border-left: 0.3rem solid black;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  /* Konzerte: grüne Kante und zarte grüne Fläche, damit sie im schwarzen Raster auffallen */
+  border-left: 0.35rem solid var(--multi);
+  background: var(--soft);
+  font-size: 0.8rem;
   line-height: 1.25;
   color: black;
 }
 
-/* Community-Treffen: gestrichelte Kontur statt Vollfläche, damit sie von Konzerten unterscheidbar sind (keine neue Farbe) */
+/* Community-Treffen: gelb markiert, zusätzlich gestrichelt (auch ohne Farbe erkennbar) */
 .ev.community {
-  border-left-style: dashed;
+  border: 0.12rem dashed black;
+  border-left-width: 0.3rem;
+  background: var(--mark);
 }
 
 .list-entry.community {
   border-style: dashed;
+  background: var(--mark);
 }
 
 .bar.community {
   border-style: dashed;
+  border-color: black;
+  background: var(--mark);
+  color: black;
+}
+
+.ev.community:hover,
+.list-entry.community:hover,
+.bar.community:hover {
+  background: black;
+  color: white;
 }
 
 .community-tag {
@@ -440,16 +484,17 @@ button.active {
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
+  font-weight: 800;
 }
 
-/* Termine vergangener Tage liegen auf Weiß, damit die Diagonale den Text nicht stört */
-.day.past .ev {
+/* Abgesagt: durchgestrichen und gepunktet */
+.ev.cancelled {
+  border-left: 0.35rem dotted black;
   background: white;
 }
 
-/* Abgesagt: durchgestrichen und gepunktet (kein Rot, kein Grau) */
-.ev.cancelled {
-  border-left-style: dotted;
+.ev.cancelled:hover {
+  background: black;
 }
 
 .ev.cancelled .ev-title {
@@ -458,6 +503,11 @@ button.active {
 
 .ev.cancelled .ev-time {
   letter-spacing: 0.05em;
+  color: var(--alert);
+}
+
+.ev.cancelled:hover .ev-time {
+  color: white;
 }
 
 .bars {
@@ -485,10 +535,10 @@ button.active {
   /* 0.3rem rechts = Zellrand, damit der Balken nicht über die Gitterlinie läuft */
   margin: 0 calc(var(--cell-pad) + 0.3rem) 0 var(--cell-pad);
   padding: 0 0.5rem;
-  /* Schraffur statt Farbe; Titel und Zeitraum liegen auf weißen Etiketten */
-  background: var(--hatch), white;
+  /* Schraffur; Titel und Zeitraum liegen auf weißen Etiketten. Treffen gelb (.community) */
+  background: var(--hatch), var(--soft);
   color: black;
-  border: 0.12rem solid black;
+  border: 0.12rem solid var(--multi);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
@@ -531,11 +581,14 @@ button.active {
 
 .bar.cancelled {
   background: white;
+  color: black;
   border-style: dotted;
+  border-color: black;
 }
 
 .bar.cancelled:hover {
   background: black;
+  color: white;
 }
 
 .bar.cancelled .bar-title {
@@ -548,6 +601,11 @@ button.active {
   margin-right: 0.4em;
   font-weight: 900;
   letter-spacing: 0.05em;
+  color: var(--alert);
+}
+
+.bar.cancelled:hover .cancel-label {
+  color: white;
 }
 
 .bar-range {
@@ -605,8 +663,7 @@ button.active {
 }
 
 .list-day.today .list-date {
-  background: black;
-  color: white;
+  background: var(--mark);
   transform: rotate(-4deg);
 }
 
@@ -643,13 +700,18 @@ button.active {
   color: white;
 }
 
-/* Mehrtägig: schraffierter Streifen links statt Farbe */
+/* Mehrtägig: schraffierter Streifen links */
 .list-entry.multiday {
-  background: var(--hatch) left / 1rem 100% no-repeat, white;
+  background: var(--hatch) left / 1rem 100% no-repeat, var(--soft);
   padding-left: 1.6rem;
 }
 
-.list-entry.multiday:hover {
+.list-entry.multiday.community {
+  background: var(--hatch) left / 1rem 100% no-repeat, var(--mark);
+}
+
+.list-entry.multiday:hover,
+.list-entry.multiday.community:hover {
   background: black;
 }
 
@@ -741,7 +803,12 @@ button.active {
     height: 0.45rem;
     padding: 0;
     border-left: none;
-    background: black;
+    background: var(--multi);
+  }
+
+  .ev.community {
+    background: var(--mark);
+    border: 0.1rem dashed black;
   }
 
   .ev.cancelled {
@@ -771,13 +838,16 @@ button.active {
     display: none;
   }
 
-  /* Als dünner Streifen bleibt die Schraffur lesbar */
   .bar {
     pointer-events: none;
     padding: 0;
     margin-right: calc(var(--cell-pad) + 0.2rem);
     border-left: none;
-    background: var(--hatch), white;
+    background: var(--hatch), var(--soft);
+  }
+
+  .bar.community {
+    background: var(--mark);
   }
 
   .bar.cancelled {
