@@ -48,11 +48,11 @@ export interface EveningStep {
 /** Anonymer Beispielabend, abgeleitet aus der Pad-Vorlage (relativ zum Beginn der Veranstaltung). */
 export const eveningSteps: EveningStep[] = [
   { when: '3 Std. vorher', what: 'Get-In: die Bands kommen an, Aufbau' },
-  { when: '2 Std. vorher', what: 'Soundcheck' },
+  { when: '2 Std. vorher', what: 'Soundcheck und Hospitality' },
   { when: '1 Std. vorher', what: 'Essen für die Bands' },
   { when: 'Beginn', what: 'Einlass und Bar, Schichten à 90 Minuten, an der Bar zu zweit' },
   { when: 'Den Abend über', what: 'Ton und Licht' },
-  { when: 'Tag danach, 14 Uhr', what: 'Aufräumen' },
+  { when: 'Tag danach', what: 'Aufräumen' },
 ]
 
 /** "SUCHE:"-Zeile der Kleinanzeige: die Titel der aktiven Gesuche aus dem Admin, sonst ein Standardtext. */

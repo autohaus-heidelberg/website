@@ -226,13 +226,6 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 
 <style scoped>
 .calendar-page {
-  /* Zwei Akzente wie Textmarker und Stempelrot auf der Kopie: Gelb für Heute und Treffen, Rot nur für Abgesagt */
-  --mark: #ffe600;
-  --alert: #d10000;
-  /* Konzerte: Riso-Grün (Kante, Rahmen, Schraffur, zarte Fläche) */
-  --multi: #0b8a6c;
-  --soft: #e1f3ec;
-  --hatch: repeating-linear-gradient(-45deg, #6cc3a8 0 0.06rem, transparent 0.06rem 0.5rem);
   margin: 0;
   padding: 0;
 }

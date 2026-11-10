@@ -168,7 +168,7 @@ function copyLink() {
     padding: 0.2em 0.7em;
     background: #000;
     color: #fff;
-    font-size: clamp(0.95rem, 2.2vw, 1.35rem);
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
     font-weight: 900;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -185,7 +185,7 @@ function copyLink() {
 
 .title {
     margin: 0.4rem 0 1rem;
-    font-size: clamp(1.6rem, 3.4vw, 2.8rem);
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
     font-weight: 900;
     line-height: 1.02;
     text-transform: uppercase;
@@ -337,7 +337,7 @@ function copyLink() {
 
 .artist-name {
     margin: 0 0 0.75rem;
-    font-size: clamp(1.4rem, 3.2vw, 2.2rem);
+    font-size: clamp(1.4rem, 3.2vw, 1.7rem);
     font-weight: 900;
     line-height: 1.05;
     text-transform: uppercase;
