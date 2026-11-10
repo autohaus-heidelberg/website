@@ -163,6 +163,10 @@ function copyLink() {
     height: auto;
 }
 
+/* Das Poster der Event-Seite immer im Original (Kopierer-Look nur auf Teasern und bei den Künstler:innen) */
+.fz .event-img-wrapper img { filter: none; }
+.fz .event-img-wrapper::after { display: none; }
+
 .event-header { min-width: 0; }
 
 .fz-event-date {

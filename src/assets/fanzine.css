@@ -486,7 +486,7 @@
 }
 
 
-.fz .fz-photo img { filter: grayscale(1) contrast(1.55) brightness(1.05); transition: filter 0.25s; }
+.fz .fz-photo img { filter: grayscale(1) contrast(1.55) brightness(1.05); transition: filter 0.4s; }
 .fz .fz-photo::after {
     content: "";
     position: absolute;
@@ -495,10 +495,11 @@
     background-size: 0.3rem 0.3rem;
     mix-blend-mode: multiply;
     opacity: 0.35;
+    transition: opacity 0.4s;
     pointer-events: none;
 }
-.fz a:hover .fz-photo img, .fz .fz-photo:hover img { filter: none; }
-.fz a:hover .fz-photo::after, .fz .fz-photo:hover::after { opacity: 0; }
+.fz a:hover .fz-photo img, .fz .fz-photo:hover img, .fz .fz-photo.is-revealed img { filter: none; }
+.fz a:hover .fz-photo::after, .fz .fz-photo:hover::after, .fz .fz-photo.is-revealed::after { opacity: 0; }
 
 /* Ransom-Note-Titel */
 /* Einspaltig (Buttons rutschen unter den Titel): "CAROUSEL" ist ca. 6,6em breit und füllt die ganze Inhaltsbreite */
