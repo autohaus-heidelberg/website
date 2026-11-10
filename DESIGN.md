@@ -119,8 +119,15 @@ Die Startseite ist wie eine Punk-/DIY-Fanzine-Ausgabe aufgebaut (Titelleiste, Co
 - Auto-Anspielungen nur als Text, nie als Bild: „Gebraucht, aber gut in Schuss" in der Titelleiste, Kleinanzeige im Community-Teaser (`.fz-ad`), kurzer „Über uns"-Text mit DE/EN-Umschalter (`src/utils/about.ts`), „Pannenhilfe"-Hinweise bei Fehlerseite und Leerzuständen.
 - Unterseiten im Fanzine-Stil (Community, Fehlerseite) bringen ihre eigene schwarze Kopfleiste mit (`FanzineNav.vue`) und blenden den allgemeinen Zurück-/Logo-Header aus.
 - Alle öffentlichen Seiten außer Presale-Link und Login nutzen den Fanzine-Stil: Event-Detail (Poster links als Kopierer-Foto mit Klebeband, Text rechts, Künstler:innen darunter; auch in der Admin-Vorschau über einen `.fz`-Wrapper), Archiv (Liste nach Jahren, Flyer-Galerie), Kalender (breite Variante `.fz-wide`), Anfrage (Datenblatt statt Emoji-Tabelle) und Impressum. Neue Seiten: `.fz`-Wrapper, `FanzineNav` und Ransom-Titel (`ransomChars`), und die Route in `OWN_HEADER_ROUTES` (App.vue) eintragen.
-- Community-Treffen werden im Kalender mit gestrichelter Kontur und Label „Treffen" markiert (keine neue Farbe).
-- Öffentlicher Kalender: Monatstitel als schwarzes Etikett, mehrtägige Events schraffiert (kein Gelb), vergangene Tage diagonal durchgestrichen (kein Grau), abgesagte Termine gepunktet und durchgestrichen, „Heute" als schief aufgestempelter schwarzer Kasten, Abo-Buttons im Kasten „Zum Mitnehmen" neben dem Titel.
+- Community-Treffen werden im Kalender gelb (Textmarker) hinterlegt, gestrichelt umrandet und mit Label „Treffen“ markiert.
+- Öffentlicher Kalender (Ausnahme vom Schwarz-Weiß, Übersichtlichkeit hat Vorrang): zwei Akzente, Marker-Gelb `--mark` (#ffe600) für „Heute“ (Zelle) und Treffen, Stempel-Rot `--alert` (#d10000) nur für „ABGESAGT“. Alles andere bleibt schwarz/weiß: Monatstitel als schwarzes Etikett, Konzerte in Riso-Grün (`--multi` #0b8a6c für Kante/Rahmen, `--soft` #e1f3ec als zarte Fläche): Einzeltermine mit grüner Kante und fetterem Titel, mehrtägige als helle Schraffur mit weißen Etiketten für Titel und Zeitraum, vergangene Tage diagonal durchgestrichen (kein Grau), abgesagte Termine gepunktet und durchgestrichen, „Heute“-Zahl als schief aufgestempelter schwarzer Kasten, Abo-Buttons im Kasten „Zum Mitnehmen“ neben dem Titel. Alle Wochenzeilen sind gleich hoch.
+- Riso-Paletten für die Konzertfarbe im Kalender (Variablen `--multi` Kante/Rahmen, `--soft` Fläche, `--hatch` Schraffurlinien in `CalendarView.vue`). Aktiv ist Grün; Pink wurde ausprobiert und gefiel gut, ist aber näher am roten „ABGESAGT“ (dann `--alert` dunkler und wärmer wählen, z. B. #b3261e). Blau (#3d68d4 / #e6edfb / #7d9ae4) wurde verworfen.
+
+  | Palette | `--multi` | `--soft` | Schraffur |
+  |---|---|---|---|
+  | Grün (aktiv) | #0b8a6c | #e1f3ec | #6cc3a8 |
+  | Pink | #d8307f | #fce6f0 | #ee8fb9 |
+  | Blau (verworfen) | #3d68d4 | #e6edfb | #7d9ae4 |
 - `prefers-reduced-motion` wird respektiert; Kontrast und Lesbarkeit des Fließtexts haben Vorrang vor Deko.
 
 ## Admin Section Specifics
