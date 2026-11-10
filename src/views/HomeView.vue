@@ -78,7 +78,6 @@ const zoom = ref(17);
   header.fz-masthead
     .fz-strip
       span Nr. {{ issueNo }} · {{ issueMonth }}
-      span Kopiert &amp; geklebt im Alten Autohaus · Heidelberg
       span Gebraucht, aber gut in Schuss
     .fz-cover
       h1.fz-title(aria-label="Carousel im alten Autohaus")
