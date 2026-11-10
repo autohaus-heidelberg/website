@@ -113,7 +113,7 @@ Die Startseite ist wie eine Punk-/DIY-Fanzine-Ausgabe aufgebaut (Titelleiste, Co
 - Kopierer-Körnung (SVG-Rauschen, geringe Deckkraft) über der Seite – reine Textur, klickt durch; Lesbarkeit hat Vorrang. Kaffeering und abgerissene Cover-Ecke wurden ausprobiert und verworfen (wirkten nicht).
 - Harte Offset-Schatten an Kästen, wie bei den Buttons.
 - Ausgerissene Kante (`clip-path`) an der schwarzen Titelleiste und an Rubrikenlabels, gestrichelte „Ausschneide"-Kästen (`.fz-cut`), Stempel (`.fz-stamp`), leichte Rotationen (max. ca. 2°).
-- Flyer/Poster im Kopierer-Look (Graustufen + Raster, Farbe bei Hover).
+- Flyer/Poster im Kopierer-Look (Graustufen + Raster, Farbe bei Hover). Auf Touch-Geräten ohne Hover „entwickelt“ sich das Foto in Farbe, sobald es im mittleren Bildschirmbereich liegt (`utils/photoReveal.ts`, Klasse `.is-revealed`). Das Poster der Event-Seite zeigt immer das Original.
 - Schreibmaschinen-Schrift (Courier-Stack) für Fließtext, „Ransom-Note"-Titel (Erpresserbrief, Buchstaben einzeln, `ransomChars()` in `src/utils/ransom.ts`), Marker-Strich unter dem Untertitel und Schreibmaschinen-Korrektur (`<s>`).
 - Admin-Zugang für Eingeloggte: kleines „(A)" (Anarchie-A) unten rechts statt eines Banners (`.fz-admin`).
 - Auto-Anspielungen nur als Text, nie als Bild: „Gebraucht, aber gut in Schuss" in der Titelleiste, Kleinanzeige im Community-Teaser (`.fz-ad`), kurzer „Über uns"-Text mit DE/EN-Umschalter (`src/utils/about.ts`), „Pannenhilfe"-Hinweise bei Fehlerseite und Leerzuständen.
