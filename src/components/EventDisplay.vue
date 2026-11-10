@@ -8,8 +8,8 @@
             .cancelled-stamp(v-if="event.cancelled") ABGESAGT
     .event-header
         router-link.community-stamp.plain-link(v-if="isCommunityEvent" :to="{ name: 'community' }") Community-Treffen · Alle Infos &amp; Mithilfe
-        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
-        p.datediff(v-if="showDatediff") {{ dateDiff }}
+        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
+        p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
         h1.title {{ event.title }}
         .event-meta
@@ -28,6 +28,7 @@
             button.btn.share-btn(@click="copyLink") {{ copyLabel }}
         p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
     .artists(v-if="event.artists && event.artists.length")
+        .fz-label Line-up
         .artist(v-for="artist in event.artists" :class="{ 'has-img': artistImage(artist) }")
             .artist-photo.fz-photo(v-if="artistImage(artist)")
                 .fz-tape.tc
@@ -175,6 +176,16 @@ function copyLink() {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     transform: rotate(-1deg);
+    /* Konzerte: harter Versatz-Schatten in Grün (Konzertfarbe) */
+    box-shadow: 0.3rem 0.3rem 0 var(--multi);
+}
+
+/* Vereinstreffen: Textmarker-Gelb statt Konzert-Grün */
+.fz-event-date.is-community {
+    background: var(--mark);
+    color: #000;
+    border: 0.15rem solid #000;
+    box-shadow: none;
 }
 
 .date-cancelled { text-decoration: line-through; }
@@ -183,6 +194,17 @@ function copyLink() {
     margin: 0 0 0.5rem;
     font-weight: 700;
     letter-spacing: 0.05em;
+}
+
+/* Laufende Ausstellung o. Ä.: Rasterkasten wie „Läuft aktuell“ auf der Startseite */
+.datediff.ongoing {
+    display: block;
+    width: fit-content;
+    margin-top: 0.9rem;
+    padding: 0.4rem 3.5rem 0.4rem 1rem;
+    border: 0.2rem solid #000;
+    background: #fff;
+    font-weight: 900;
 }
 
 .title {
@@ -202,6 +224,7 @@ function copyLink() {
     margin: 0 0 0.75rem;
     padding: 0.2rem 0.7rem;
     border: 0.2rem dashed black;
+    background: var(--mark);
     font-size: clamp(0.8rem, 1.6vw, 0.95rem);
     font-weight: 900;
     letter-spacing: 0.1em;
@@ -210,7 +233,7 @@ function copyLink() {
 }
 
 .cancelled-display {
-    color: red;
+    color: var(--alert);
     font-size: clamp(2rem, 8vw, 4rem);
     font-weight: 900;
     letter-spacing: 0.1em;
@@ -222,11 +245,11 @@ function copyLink() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(45deg);
-    color: red;
+    color: var(--alert);
     font-size: clamp(2rem, 6vw, 3.5rem);
     font-weight: 900;
     letter-spacing: 0.15em;
-    border: 5px solid red;
+    border: 5px solid var(--alert);
     padding: 0.5rem 1.5rem;
     white-space: nowrap;
     pointer-events: none;
@@ -243,11 +266,13 @@ function copyLink() {
 
 .price-badge {
     display: inline-block;
-    padding: 0.7em 1em;
-    background: black;
-    color: white;
-    font-weight: 700;
-    letter-spacing: 0.3em;
+    padding: 0.6em 1em;
+    border: 0.15rem solid #000;
+    border-left: 0.5rem solid var(--multi);
+    background: var(--soft);
+    color: #000;
+    font-weight: 900;
+    letter-spacing: 0.1em;
 }
 
 .ticket-btn {
@@ -310,6 +335,8 @@ function copyLink() {
     padding-top: 2rem;
     border-top: 0.25rem solid #000;
 }
+
+.artists > .fz-label { justify-self: start; margin-bottom: -1.25rem; }
 
 .artist {
     display: grid;

@@ -12,10 +12,17 @@ import FanzineNav from "@/components/FanzineNav.vue";
         span.fz-ch(v-for="(c, i) in ransomChars(line, li)" :key="i" :class="c.cls") {{ c.ch }}
     p.fz-page-sub Diese Seite ist nicht mehr befahrbar. Wer hier raus will, nimmt die Bahn.
   section.fz-section
-    p
-      b Zurück auf die Autobahn:
-    .btn-row
-      router-link.btn(:to="{ name: 'home' }") Zurück zur Startseite
-      router-link.btn(:to="{ name: 'calendar' }") Zum Kalender
+    .fz-box.fz-dots.fz-help
+      .fz-stamp Pannenhilfe
+      p
+        b Zurück auf die Autobahn:
+      .btn-row
+        router-link.btn(:to="{ name: 'home' }") Zurück zur Startseite
+        router-link.btn(:to="{ name: 'calendar' }") Zum Kalender
 </template>
+
+<style scoped>
+.fz-help { max-width: 36rem; }
+.fz-help .fz-stamp { margin-bottom: 1rem; }
+</style>
 
