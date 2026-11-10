@@ -78,6 +78,19 @@
 .fz-cover-cta { display: flex; flex-wrap: wrap; gap: 1rem 1.25rem; margin-top: 1.25rem; }
 .fz-cover-cta .btn, .fz-cover-cta button { padding: 0.7em 1.2em; }
 
+/* Rasterpunkte (Kopierer-Halbton) im Kasten „Läuft aktuell“, von rechts nach links ausblendend, damit der Text lesbar bleibt */
+.fz-ongoing { isolation: isolate; overflow: hidden; }
+.fz-ongoing::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle, #000 0.08rem, transparent 0.1rem) 0 0 / 0.55rem 0.55rem;
+    -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 65%);
+    mask-image: linear-gradient(to left, #000 0%, transparent 65%);
+    pointer-events: none;
+}
+
 
 /* ---------- Sektionen ---------- */
 
@@ -89,7 +102,7 @@
     margin-bottom: 1.25rem;
     background: #000;
     color: #fff;
-    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    font-size: clamp(0.95rem, 2vw, 1.3rem);
     font-weight: 900;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -339,7 +352,10 @@
 .fz-community { transform: rotate(0.8deg); margin: 3.5rem 0.5rem 0; }
 .fz-community .fz-h2 { margin-bottom: 0.75rem; }
 .fz-community-grid { display: grid; gap: 1.25rem 3rem; align-items: start; }
-@media (min-width: 800px) { .fz-community-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
+@media (min-width: 800px) {
+    .fz-community-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+    .fz-community-grid > div:first-child { grid-row: 1 / span 2; }
+}
 .fz-community-grid .fz-ad { margin-top: 1.25rem; max-width: none; }
 .fz-door-links { list-style: none; margin: 1rem 0 0; padding: 0; counter-reset: door; display: grid; gap: 0.5rem; }
 .fz-door-links li { margin: 0; counter-increment: door; display: flex; gap: 0.75rem; align-items: baseline; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -347,24 +363,31 @@
 .fz-community-note { margin-top: 0.4rem !important; font-size: 0.9em; max-width: 60ch; }
 .fz-community .btn-row { margin-top: 1.25rem; }
 .fz-community .btn { padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
-.fz-community-next { margin-top: 1.25rem; padding-top: 1rem; border-top: 0.15rem solid #000; }
+.fz-community-grid .fz-community-next { margin: 0; padding: 0; border: 0; }
 .fz-community-next .lbl { font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
 .fz-community-next a { font-weight: 900; }
 
-/* ---------- Rubriken ---------- */
+/* ---------- Unterer Teil der Startseite: „Gut zu wissen“ und „Kleingedrucktes“ ---------- */
+/* Regel: gestrichelter Kasten = nur der Community-Aufruf, durchgezogene Kasten = praktische Infos, Kleingedrucktes ohne Kasten */
 
-.fz-rubriken { display: grid; gap: 2.5rem; margin-top: 3.5rem; padding-top: 2rem; border-top: var(--fz-rule) solid #000; align-items: start; }
+.fz-page { margin-top: 3.5rem; padding-top: 2rem; border-top: var(--fz-rule) solid #000; }
+.fz-info, .fz-print { display: grid; gap: 2rem 2.5rem; align-items: start; }
+.fz-info > .fz-label, .fz-print > .fz-label { justify-self: start; margin-bottom: 0; }
 @media (min-width: 800px) {
-    .fz-rubriken { grid-template-columns: repeat(6, 1fr); gap: 3rem 2.5rem; }
-    .fz-rubriken > .r-wide { grid-column: span 4; }
-    .fz-rubriken > .r-narrow { grid-column: span 2; }
-    .fz-rubriken > .r-third { grid-column: span 2; }
-    .fz-rubriken > .r-half { grid-column: span 3; }
-    .fz-rubriken > .r-full { grid-column: 1 / -1; }
+    .fz-info, .fz-print { grid-template-columns: repeat(6, 1fr); }
+    .fz-info > .fz-label, .fz-print > .fz-label { grid-column: 1 / -1; }
+    .fz-info > #lage { grid-column: 1 / span 4; grid-row: 2 / span 2; }
+    .fz-info > #newsletter { grid-column: 5 / span 2; grid-row: 2; }
+    .fz-info > #anfragen { grid-column: 5 / span 2; grid-row: 3; }
+    .fz-print > #about { grid-column: span 4; }
+    .fz-print > #impressum { grid-column: span 2; }
 }
-.fz-rubriken .btn, .fz-rubriken button { padding: 0.45em 0.9em; margin-top: 1.25rem; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz-info .btn, .fz-info button { padding: 0.45em 0.9em; margin-top: 1.25rem; font-size: 0.8rem; letter-spacing: 0.08em; }
 .fz-map { margin-top: 1rem; height: max(300px, 22vh); width: 100%; border: 0.3rem solid #000; }
-.fz-colophon { font-size: 0.85em; }
+.fz-print { font-size: 0.85em; }
+.fz-print .fz-h2 { margin-bottom: 0.5rem; font-size: clamp(1.1rem, 2.2vw, 1.3rem); }
+.fz-about-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+.fz-about-head .fz-h2, .fz-about-head .fz-lang { margin-bottom: 0; }
 
 /* ---------- Community-Seite ---------- */
 
@@ -374,11 +397,13 @@
 
 .fz-wanted { list-style: none; margin: 0; padding: 0.75rem 0 0; display: grid; gap: 1.5rem; }
 @media (min-width: 700px) { .fz-wanted { grid-template-columns: 1fr 1fr; gap: 2rem; } }
-.fz-wanted li { margin: 0; position: relative; background: var(--mark); }
+.fz-wanted li { margin: 0; position: relative; }
 .fz-wanted li:nth-child(3n+1) { transform: rotate(-0.8deg); }
 .fz-wanted li:nth-child(3n+2) { transform: rotate(0.9deg); }
 .fz-wanted li:nth-child(3n) { transform: rotate(-0.3deg); }
-.fz-wanted h3 { font-size: clamp(1.3rem, 2.8vw, 1.5rem); font-weight: 900; text-transform: uppercase; line-height: 1.05; margin-bottom: 0.5rem; }
+/* Gelb nur als Marker-Strich unter dem Titel, nicht als ganze Fläche */
+.fz-wanted h3 { display: inline; padding: 0 0.2em; background: linear-gradient(transparent 50%, var(--mark) 50%); box-decoration-break: clone; -webkit-box-decoration-break: clone; font-size: clamp(1.3rem, 2.8vw, 1.5rem); font-weight: 900; text-transform: uppercase; line-height: 1.3; }
+.fz-wanted h3 + p { margin-top: 0.75rem; }
 
 .fz-meetings { display: grid; gap: 1.75rem; }
 .fz-meeting { display: grid; gap: 0.25rem 1.5rem; padding-bottom: 1.5rem; border-bottom: 0.1rem solid #000; text-decoration: none; }
@@ -460,7 +485,6 @@
     .fz-form-fields dd { margin-bottom: 0.6rem; }
 }
 
-.fz-service { margin-top: 0.8em; }
 
 .fz .fz-photo img { filter: grayscale(1) contrast(1.55) brightness(1.05); transition: filter 0.25s; }
 .fz .fz-photo::after {
@@ -511,45 +535,29 @@
     background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 12' preserveAspectRatio='none'><path d='M2 7 C 30 2, 60 11, 100 6 S 170 3, 238 8' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/></svg>") bottom / 100% 0.35em no-repeat;
 }
 
-/* Kaffeering auf dem Cover */
-.fz-cover { position: relative; }
-.fz-cover::before {
-    content: "";
-    position: absolute;
-    bottom: -3rem;
-    right: 6%;
-    width: 11rem;
-    height: 11rem;
-    background: radial-gradient(circle, transparent 0 55%, rgba(0, 0, 0, 0.2) 57%, rgba(0, 0, 0, 0.06) 63%, transparent 66%);
-    pointer-events: none;
-}
-.fz-cover > * { position: relative; }
-
-/* Abgerissene Ecke unten rechts: die Trennlinie endet an einer ausgefransten Schräge */
-.fz-cover {
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 3.6rem), calc(100% - 0.4rem) calc(100% - 3.08rem), calc(100% - 0.8rem) calc(100% - 2.92rem), calc(100% - 1.2rem) calc(100% - 2.28rem), calc(100% - 1.6rem) calc(100% - 2.12rem), calc(100% - 2rem) calc(100% - 1.48rem), calc(100% - 2.4rem) calc(100% - 1.32rem), calc(100% - 2.8rem) calc(100% - 0.68rem), calc(100% - 3.2rem) calc(100% - 0.52rem), calc(100% - 3.6rem) 100%, 0 100%);
-}
-.fz-cover::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 3.6rem;
-    height: 3.6rem;
-    pointer-events: none;
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'><polyline points='35,0 31,4.2 27,5.8 23,12.2 19,13.8 15,20.2 11,21.8 7,28.2 3,29.8 -1,35' fill='none' stroke='black' stroke-width='1.2' stroke-linejoin='round'/></svg>") no-repeat center / 100% 100%;
-}
-
 /* Links in der schwarzen Titelleiste müssen weiß sein (sonst schwarz auf schwarz) */
 .fz-strip a, .fz-strip a:visited, .fz-strip a:hover, .fz-strip a:focus { color: #fff; }
 .fz-strip a:hover { text-decoration-thickness: 0.25em; }
 
 /* Kleinanzeige im Community-Teaser */
-.fz-ad { margin: 1.25rem 0 0; padding: 0.8rem 1rem 0.9rem; border: 0.15rem solid #000; background: #fff; max-width: 40ch; }
-.fz-ad-head { margin-bottom: 0.5rem; padding-bottom: 0.3rem; border-bottom: 0.1rem solid #000; font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
-.fz-ad p { margin: 0; }
-.fz-ad p + p { margin-top: 0.3em; }
-.fz-ad-foot { margin-top: 0.6em !important; font-size: 0.85em; }
+.fz-ad {
+    margin: 1.25rem 0 0;
+    max-width: 40ch;
+    border: 0.2rem solid #000;
+    background: #fff;
+    /* zweiter, dünner Rahmen wie bei einer Zeitungsanzeige */
+    box-shadow: inset 0 0 0 0.2rem #fff, inset 0 0 0 0.3rem #000;
+    transform: rotate(-1deg);
+}
+.fz-ad-head { padding: 0.5rem 1rem; background: #000; color: #fff; font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
+.fz-ad-body { display: grid; gap: 0.8rem; padding: 1rem 1rem 0.6rem; }
+.fz-ad-row { display: grid; grid-template-columns: 5.5ch 1fr; gap: 0.9rem; align-items: baseline; }
+.fz-ad-key { font-weight: 900; letter-spacing: 0.05em; }
+.fz-ad-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.fz-ad-list li { margin: 0; }
+/* Marker-Strich unter den Gesuchen, in der Farbe der Gesuchs-Zettel */
+.fz-hl { background: linear-gradient(transparent 50%, var(--mark) 50%); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 0 0.2em; }
+.fz-ad-foot { margin: 0.4rem 0 0 !important; padding: 0.7rem 1rem 0.8rem; border-top: 0.15rem dashed #000; font-size: 0.85em; }
 
 /* Breite Seiten (Kalender) */
 .fz.fz-wide { max-width: var(--wide-page-width); }

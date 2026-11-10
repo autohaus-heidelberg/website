@@ -1,10 +1,11 @@
 <template lang="pug">
 .event.fz-event(:class="{ 'no-img': !imageUrl }")
-    .event-img-wrapper.fz-photo(v-if="imageUrl")
-        .fz-tape.tl
-        .fz-tape.tr
-        img.event-img(:src="imageUrl" crossorigin="anonymous")
-        .cancelled-stamp(v-if="event.cancelled") ABGESAGT
+    .event-poster(v-if="imageUrl")
+        .event-img-wrapper.fz-photo
+            .fz-tape.tl
+            .fz-tape.tr
+            img.event-img(:src="imageUrl" crossorigin="anonymous")
+            .cancelled-stamp(v-if="event.cancelled") ABGESAGT
     .event-header
         router-link.community-stamp.plain-link(v-if="isCommunityEvent" :to="{ name: 'community' }") Community-Treffen · Alle Infos &amp; Mithilfe
         h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
@@ -144,6 +145,7 @@ function copyLink() {
 @media (min-width: 900px) {
     .event { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
     .event.no-img { grid-template-columns: minmax(0, 1fr); }
+    .event .event-poster { align-self: stretch; }
     .event .event-img-wrapper { position: sticky; top: 1.5rem; }
     .event .artists { grid-column: 1 / -1; }
 }
