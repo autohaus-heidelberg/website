@@ -63,7 +63,7 @@ const titleLines = ["Carousel", "im alten Autohaus"];
 
 const censorOpen = ref(false);
 
-const wanted = computed(() => wantedLine(helpRequests.map((h) => h.title)));
+const wantedFallback = wantedLine([]);
 
 const lang = ref<AboutLang>("de");
 const about = computed(() => aboutTexts[lang.value]);
@@ -151,9 +151,9 @@ const zoom = ref(17);
 
     nav.fz-more(aria-label="Weiterblättern")
       .fz-more-label Weiterblättern
-      router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender
-      router-link.btn(:to="{ name: 'pastEvents' }") Vergangene Events
       router-link.btn(:to="{ name: 'flyerGallery' }") Flyer-Galerie
+      router-link.btn(:to="{ name: 'pastEvents' }") Vergangene Events
+      router-link.btn(:to="{ name: 'calendar' }") Termine abonnieren
 
   //- ===== Community-Teaser =====
   aside.fz-cut.fz-community#community
@@ -166,36 +166,38 @@ const zoom = ref(17);
         ol.fz-door-links
           li(v-for="d in doors" :key="d.id")
             router-link(:to="{ name: 'community', hash: '#mitmachen' }") {{ d.title }}
+        .btn-row
+          router-link.btn(:to="{ name: 'community' }") Zur Community-Seite
+          a.btn(:href="mailto(support.subject)") Uns unterstützen
       .fz-ad
         .fz-ad-head Kleinanzeigen · Gesuche
-        p
-          b SUCHE:
-          |  {{ wanted }}.
-        p
-          b BIETE:
-          |  Bier, Applaus, nette Leute. VB.
+        .fz-ad-body
+          .fz-ad-row
+            b.fz-ad-key SUCHE
+            ul.fz-ad-list(v-if="helpRequests.length")
+              li(v-for="h in helpRequests" :key="h.title")
+                span.fz-hl {{ h.title }}
+            span(v-else)
+              span.fz-hl {{ wantedFallback }}
+          .fz-ad-row
+            b.fz-ad-key BIETE
+            span Bier, Applaus, nette Leute. VB.
         p.fz-ad-foot Zuschriften unter Chiffre HD-CA oder
           |  
           a(:href="mailto('Mithilfe im Verein')") per Mail
           | .
-    .fz-community-next
-      .lbl Nächstes Vereinstreffen
-      template(v-if="nextMeeting")
-        router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
-        p.fz-community-note Der öffentliche Teil ist offen für alle, die im Carousel etwas auf die Beine stellen wollen.
-      p(v-else) Werkstattpause: Aktuell ist kein Vereinstreffen angekündigt. Neue Termine erscheinen hier und im Kalender.
-    .btn-row
-      router-link.btn(:to="{ name: 'community' }") Zur Community-Seite
-      a.btn(:href="mailto(support.subject)") Uns unterstützen
+      .fz-community-next
+        .lbl Nächstes Vereinstreffen
+        template(v-if="nextMeeting")
+          router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
+          p.fz-community-note Der öffentliche Teil ist offen für alle, die im Carousel etwas auf die Beine stellen wollen.
+        p(v-else) Werkstattpause: Aktuell ist kein Vereinstreffen angekündigt. Neue Termine erscheinen hier und im Kalender.
 
-  //- ===== Rubriken =====
-  .fz-rubriken
-    .fz-box.r-narrow#newsletter
-      h2.fz-h2 Newsletter
-      p Abonniere den Newsletter, um Updates über anstehende Konzerte und Veranstaltungen zu erhalten.
-      button.rm-open-popup Newsletter abonnieren
+  //- ===== Gut zu wissen =====
+  section.fz-section.fz-page.fz-info
+    .fz-label Gut zu wissen
 
-    .fz-box.r-wide.directions#lage
+    .fz-box.directions#lage
       h2.fz-h2 Lage
       p Das Carousel im alten Autohaus befindet sich in der
         |  
@@ -204,9 +206,6 @@ const zoom = ref(17);
         |  
         a(href="https://maps.app.goo.gl/7k4UvxVHtGvHK1NfA") Rudolf-Diesel-Straße
         | .
-      p.fz-service
-        b Serviceleistung:
-        |  Fahrrad oder Bahn – wir sind ein Autohaus, kein Parkhaus.
       .fz-map
         l-map(
           ref="map",
@@ -221,19 +220,29 @@ const zoom = ref(17);
           l-marker(:latLng="[49.39666, 8.680584425099438]")
       a.btn(href="https://maps.app.goo.gl/Dp9BHeBE5aU8KwQH6") Auf Google Maps öffnen
 
-    #about.fz-cut.r-half
-      .fz-lang(role="group" aria-label="Sprache")
-        button.btn.fz-toggle(:class="{ on: lang === 'de' }" :aria-pressed="lang === 'de'" @click="lang = 'de'") DE
-        button.btn.fz-toggle(:class="{ on: lang === 'en' }" :aria-pressed="lang === 'en'" @click="lang = 'en'") EN
-      h2.fz-h2 {{ about.title }}
-      p(v-for="(para, i) in about.paragraphs" :key="i" :lang="lang") {{ para }}
+    .fz-box#newsletter
+      h2.fz-h2 Newsletter
+      p Abonniere den Newsletter, um Updates über anstehende Konzerte und Veranstaltungen zu erhalten.
+      button.rm-open-popup Newsletter abonnieren
 
-    #anfragen.fz-box.r-half
+    .fz-box#anfragen
       h2.fz-h2 Anfragen
       p Für Anfragen verwendet bitte unser Anfragenformular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen.
       router-link.btn(:to="{ name: 'requests' }") Anfragenformular
 
-    #impressum.fz-cut.r-full.fz-colophon
+  //- ===== Kleingedrucktes =====
+  section.fz-section.fz-page.fz-print
+    .fz-label Kleingedrucktes
+
+    #about
+      .fz-about-head
+        h2.fz-h2 {{ about.title }}
+        .fz-lang(role="group" aria-label="Sprache")
+          button.btn.fz-toggle(:class="{ on: lang === 'de' }" :aria-pressed="lang === 'de'" @click="lang = 'de'") DE
+          button.btn.fz-toggle(:class="{ on: lang === 'en' }" :aria-pressed="lang === 'en'" @click="lang = 'en'") EN
+      p(v-for="(para, i) in about.paragraphs" :key="i" :lang="lang") {{ para }}
+
+    #impressum
       h2.fz-h2 Impressum
       p Verantwortlich für den Inhalt dieser Website:
       p Carousel e.V. – Hebelstraße 7 – 69115 Heidelberg
