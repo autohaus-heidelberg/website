@@ -13,6 +13,7 @@ import { ransomChars } from "@/utils/ransom";
 import { claim } from "@/utils/claims";
 import { doors, mailto, support, wantedLine } from "@/utils/communityContent";
 import { aboutTexts, type AboutLang } from "@/utils/about";
+import FanzineBurst from "@/components/FanzineBurst.vue";
 import { useAuthStore } from "@/stores/auth";
 
 dayjs.extend(relativeTime);
@@ -115,6 +116,7 @@ const zoom = ref(17);
         .fz-tape.tl
         .fz-tape.tr
         img(:src="feature.img" :alt="feature.title" crossorigin="anonymous")
+        FanzineBurst.on-photo(tone="multi") Als nächstes!
       div
         .fz-feature-date {{ feature.date_d.format('dddd, DD. MMMM') }} · {{ feature.date_d.format('HH:mm') }} Uhr
         h2.fz-feature-title(:class="{ 'fz-cancelled': feature.cancelled }")
@@ -137,14 +139,15 @@ const zoom = ref(17);
       router-link(v-for="ev in ongoing" :key="ev.id" :to="eventLink(ev.id)") {{ ev.title }} (bis {{ ev.date_d.format('DD.MM.') }})
 
     template(v-if="toc.length")
-      h2.fz-h2(style="margin-top: 3rem") Außerdem im Programm
-      ul.fz-toc(style="margin-top: 1rem")
-        li(v-for="ev in toc" :key="ev.id")
-          router-link.plain-link(:to="eventLink(ev.id)")
-            span.toc-date {{ ev.date_d.format('dd DD.MM.') }}
-            span.toc-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
-            span.toc-lead
-            span.toc-time {{ ev.date_d.format('HH:mm') }}
+      .fz-sub
+        .fz-label Außerdem im Programm
+        ul.fz-toc
+          li(v-for="ev in toc" :key="ev.id")
+            router-link.plain-link(:to="eventLink(ev.id)")
+              span.toc-date {{ ev.date_d.format('dd DD.MM.') }}
+              span.toc-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
+              span.toc-lead
+              span.toc-time {{ ev.date_d.format('HH:mm') }}
 
     nav.fz-more(aria-label="Weiterblättern")
       .fz-more-label Weiterblättern
@@ -154,6 +157,7 @@ const zoom = ref(17);
 
   //- ===== Community-Teaser =====
   aside.fz-cut.fz-community#community
+    FanzineBurst.on-box Du fehlst!
     .fz-stamp Community
     .fz-community-grid
       div

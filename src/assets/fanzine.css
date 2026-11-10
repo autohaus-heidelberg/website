@@ -5,6 +5,14 @@
 .fz {
     --fz-rule: 0.25rem;
     --fz-mono: "Courier New", Courier, "Nimbus Mono PS", monospace;
+    /* Riso-Akzente mit fester Bedeutung: Gelb = Verein/Community (Heute, Treffen, Gesuche), Grün = Konzerte, Rot = abgesagt */
+    --mark: #ffe600;
+    --alert: #d10000;
+    --multi: #0b8a6c;
+    --soft: #e1f3ec;
+    --hatch: repeating-linear-gradient(-45deg, #6cc3a8 0 0.06rem, transparent 0.06rem 0.5rem);
+    /* Courier ist breit: auf Desktop nicht mit dem globalen 1.5vw mitwachsen (sonst ~23px), mobil bleibt es bei 1rem */
+    font-size: clamp(1rem, 0.5vw + 0.65rem, 1.15rem);
     max-width: min(95vw, 1200px);
     margin: 0 auto;
     padding: 0 0.25rem;
@@ -64,7 +72,7 @@
 
 .fz-claim {
     max-width: 42ch;
-    font-size: clamp(1rem, 1.6vw, 1.3rem);
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
 }
 
 .fz-cover-cta { display: flex; flex-wrap: wrap; gap: 1rem 1.25rem; margin-top: 1.25rem; }
@@ -81,7 +89,7 @@
     margin-bottom: 1.25rem;
     background: #000;
     color: #fff;
-    font-size: clamp(0.95rem, 2vw, 1.3rem);
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
     font-weight: 900;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -91,7 +99,7 @@
 }
 
 .fz-h2 {
-    font-size: clamp(1.4rem, 3.6vw, 2.6rem);
+    font-size: clamp(1.4rem, 3.2vw, 2rem);
     font-weight: 900;
     line-height: 1.05;
     text-transform: uppercase;
@@ -177,6 +185,53 @@
     transform: rotate(-4deg);
 }
 
+/* Pop-Art-Sprechblase wie „POW!“ (FanzineBurst.vue): unregelmäßiger Zackenstern mit Farbband, schwarzem Schatten,
+   Strichen und Rasterpunkten; nur Deko, daher aria-hidden. Farbe über --burst-tone (Gelb = Community, Grün = Konzerte). */
+.fz-burst {
+    --burst-tone: var(--mark);
+    position: relative;
+    width: 15em;
+    aspect-ratio: 300 / 220;
+    font-size: 0.85rem;
+    transform: rotate(-7deg);
+    pointer-events: none;
+}
+.fz-burst.multi { --burst-tone: var(--multi); }
+.fz-burst svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.fz-burst-lines polygon { fill: #000; }
+.fz-burst-out { fill: var(--burst-tone); stroke: #000; stroke-width: 3; stroke-linejoin: miter; }
+.fz-burst-shadow { fill: #000; }
+.fz-burst-in { fill: #fff; }
+.fz-burst-dots {
+    position: absolute;
+    inset: 6% 10%;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--burst-tone) 26%, transparent 30%) 0 0 / 0.7em 0.7em;
+    -webkit-mask-image: radial-gradient(ellipse, #000 55%, transparent 72%);
+    mask-image: radial-gradient(ellipse, #000 55%, transparent 72%);
+}
+.fz-burst-text {
+    position: absolute;
+    inset: 0 29%;
+    display: grid;
+    place-items: center;
+    color: #000;
+    font-size: 1.15em;
+    font-weight: 900;
+    font-style: italic;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-align: center;
+    text-transform: uppercase;
+}
+/* Auf dem Foto der Titelstory und an der Ecke des Community-Kastens */
+.fz-burst.on-photo { position: absolute; right: -6.5rem; bottom: -4.5rem; z-index: 3; }
+.fz-burst.on-box { position: absolute; top: -4rem; right: 0; z-index: 3; transform: rotate(6deg); }
+@media (max-width: 799px) {
+    .fz-burst.on-photo { width: 11em; font-size: 0.75rem; right: -1rem; bottom: -2rem; }
+    .fz-burst.on-box { display: none; }
+}
+
 /* ---------- Titelstory ---------- */
 
 .fz-feature {
@@ -193,14 +248,14 @@
 .fz-feature { margin-top: 1.5rem; }
 .fz-feature .fz-photo { transform: rotate(-1.8deg); margin: 0.5rem 0.5rem 0; }
 .fz-feature-date {
-    font-size: clamp(1rem, 2.2vw, 1.5rem);
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
     font-weight: 900;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 .fz-feature-title {
     margin: 0.4rem 0 1rem !important;
-    font-size: clamp(2rem, 6vw, 4.4rem);
+    font-size: clamp(2rem, 6vw, 3.4rem);
     font-weight: 900;
     line-height: 1;
     text-transform: uppercase;
@@ -214,14 +269,18 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
     max-width: 60ch;
-    font-size: clamp(1rem, 1.8vw, 1.25rem);
+    font-size: clamp(1rem, 1.8vw, 1.1rem);
 }
 .fz-feature .btn { margin-top: 1.5rem; padding: 0.7em 1.2em; }
 
 .fz-cancelled { text-decoration: line-through; }
-.fz-cancelled-tag { color: red; font-weight: 900; letter-spacing: 0.1em; margin-right: 0.5rem; text-decoration: none; display: inline-block; }
+.fz-cancelled-tag { color: var(--alert); font-weight: 900; letter-spacing: 0.1em; margin-right: 0.5rem; text-decoration: none; display: inline-block; }
 
 /* ---------- Programm: Nebenstories + Inhaltsverzeichnis ---------- */
+
+/* Dicke Linie = neue „Seite“ (Cover, Programm, Rubriken); im Programm selbst keine weiteren Trennlinien */
+#programm { padding-bottom: 3rem; border-bottom: var(--fz-rule) solid #000; }
+.fz-sub { margin-top: 3rem; }
 
 .fz-picks {
     display: grid;
@@ -234,8 +293,8 @@
 .fz-pick .fz-photo { margin-bottom: 0.9rem; }
 .fz-pick:nth-child(odd) .fz-photo { transform: rotate(1.2deg); }
 .fz-pick:nth-child(even) .fz-photo { transform: rotate(-1deg); }
-.fz-pick-date { font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(0.9rem, 1.6vw, 1.1rem); }
-.fz-pick-title { margin-top: 0.2rem !important; font-size: clamp(1.4rem, 3.2vw, 2.2rem); font-weight: 900; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+.fz-pick-date { font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(0.9rem, 1.6vw, 1rem); }
+.fz-pick-title { margin-top: 0.2rem !important; font-size: clamp(1.4rem, 3.2vw, 1.8rem); font-weight: 900; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
 
 .fz-toc { list-style: none; margin: 0; padding: 0; }
 .fz-toc li { margin: 0; }
@@ -246,7 +305,7 @@
     padding: 0.55rem 0.25rem;
     border-bottom: 0.1rem solid #000;
     text-decoration: none;
-    font-size: clamp(1rem, 2vw, 1.4rem);
+    font-size: clamp(1rem, 2vw, 1.2rem);
 }
 .fz-toc a:hover { background: #000; color: #fff; }
 .fz-toc .toc-date { flex: none; min-width: 7.5ch; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -272,8 +331,8 @@
 .fz-more .btn:nth-of-type(3) { transform: rotate(-0.4deg); }
 
 .fz-ongoing { margin-top: 2.5rem; }
-.fz-ongoing a { display: block; margin-top: 0.4rem; font-size: clamp(1.1rem, 2.4vw, 1.6rem); font-weight: 900; }
-.fz-empty { padding: 1.5rem 0; font-size: clamp(1.1rem, 2.2vw, 1.5rem); }
+.fz-ongoing a { display: block; margin-top: 0.4rem; font-size: clamp(1.1rem, 2.4vw, 1.3rem); font-weight: 900; }
+.fz-empty { padding: 1.5rem 0; font-size: clamp(1.1rem, 2.2vw, 1.2rem); }
 
 /* ---------- Community-Teaser ---------- */
 
@@ -311,23 +370,24 @@
 
 .fz-page-head { padding: 2rem 0 2rem; border-bottom: var(--fz-rule) solid #000; }
 .fz-page-title { font-size: clamp(2.4rem, 9vw, 5.5rem); font-weight: 900; line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; }
-.fz-page-sub { margin-top: 1rem !important; font-size: clamp(1.05rem, 2vw, 1.4rem); }
+.fz-page-sub { margin-top: 1rem !important; font-size: clamp(1.05rem, 2vw, 1.2rem); }
 
 .fz-wanted { list-style: none; margin: 0; padding: 0.75rem 0 0; display: grid; gap: 1.5rem; }
 @media (min-width: 700px) { .fz-wanted { grid-template-columns: 1fr 1fr; gap: 2rem; } }
-.fz-wanted li { margin: 0; position: relative; }
+.fz-wanted li { margin: 0; position: relative; background: var(--mark); }
 .fz-wanted li:nth-child(3n+1) { transform: rotate(-0.8deg); }
 .fz-wanted li:nth-child(3n+2) { transform: rotate(0.9deg); }
 .fz-wanted li:nth-child(3n) { transform: rotate(-0.3deg); }
-.fz-wanted h3 { font-size: clamp(1.3rem, 2.8vw, 1.9rem); font-weight: 900; text-transform: uppercase; line-height: 1.05; margin-bottom: 0.5rem; }
+.fz-wanted h3 { font-size: clamp(1.3rem, 2.8vw, 1.5rem); font-weight: 900; text-transform: uppercase; line-height: 1.05; margin-bottom: 0.5rem; }
 
 .fz-meetings { display: grid; gap: 1.75rem; }
 .fz-meeting { display: grid; gap: 0.25rem 1.5rem; padding-bottom: 1.5rem; border-bottom: 0.1rem solid #000; text-decoration: none; }
-@media (min-width: 700px) { .fz-meeting { grid-template-columns: 15rem 1fr; } }
-.fz-meeting .when { font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
-.fz-meeting .what { font-size: clamp(1.3rem, 2.8vw, 2rem); font-weight: 900; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
+@media (min-width: 700px) { .fz-meeting { grid-template-columns: max-content 1fr; } .fz-meeting .when { white-space: nowrap; } }
+.fz-meeting .when { justify-self: start; align-self: start; padding: 0.1rem 0.5rem; background: var(--mark); font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+.fz-meeting .what { font-size: clamp(1.3rem, 2.8vw, 1.6rem); font-weight: 900; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
 .fz-meeting:hover .what { text-decoration: underline; text-decoration-thickness: 0.15em; }
 .fz-meeting-past { opacity: 0.75; }
+.fz-meeting-past .when { padding: 0; background: none; }
 
 /* ---------- Look: Kopierer, Schreibmaschine, Ransom-Note, Marker ---------- */
 
@@ -364,7 +424,7 @@
 .fz-doors { display: grid; gap: 1.75rem; margin-top: 0.5rem; }
 @media (min-width: 900px) { .fz-doors { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
 .fz-door { display: flex; flex-direction: column; }
-.fz-door .fz-h2 { font-size: clamp(1.3rem, 2.4vw, 1.9rem); margin-bottom: 0.75rem; }
+.fz-door .fz-h2 { font-size: clamp(1.2rem, 2.4vw, 1.45rem); margin-bottom: 0.75rem; }
 .fz-door .btn { margin-top: auto; align-self: flex-start; }
 .fz-door p { margin-bottom: 1.25rem; }
 .fz-door-no {
@@ -510,7 +570,7 @@
 
 /* Impressum und andere Rechtstexte: ruhig und gut lesbar */
 .fz-legal { display: grid; gap: 2rem; margin-top: 2.5rem; max-width: 75ch; }
-.fz-legal .fz-h2 { margin-bottom: 0.5rem; font-size: clamp(1.1rem, 2.2vw, 1.5rem); }
+.fz-legal .fz-h2 { margin-bottom: 0.5rem; font-size: clamp(1.1rem, 2.2vw, 1.3rem); }
 .fz-legal p { overflow-wrap: anywhere; }
 
 /* Geheimer Admin-Zugang für Eingeloggte: kleines Anarchie-A, wackelt beim Drüberfahren */
