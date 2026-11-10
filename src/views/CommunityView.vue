@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed } from "vue";
 import dayjs from "dayjs";
 import "dayjs/locale/de";
 import { events } from "../events";
@@ -7,6 +7,7 @@ import { isPastEvent } from "@/utils/eventTime";
 import { communityOnly, helpRequests } from "@/utils/community";
 import { ransomChars } from "@/utils/ransom";
 import FanzineNav from "@/components/FanzineNav.vue";
+import { doors, eveningSteps, mailto, support } from "@/utils/communityContent";
 
 dayjs.locale("de");
 
@@ -19,8 +20,6 @@ const past = computed(() =>
 );
 
 const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) } });
-const issueNo = dayjs().format("MM/YY");
-const censorOpen = ref(false);
 </script>
 
 <template lang="pug">
@@ -30,7 +29,24 @@ const censorOpen = ref(false);
     h1.fz-page-title(aria-label="Community")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Community')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Das Carousel läuft ausschließlich durch ehrenamtliche Arbeit. Hier siehst du, wo wir gerade Hilfe brauchen und wann wir uns treffen.
+    p.fz-page-sub Das Carousel läuft ausschließlich durch ehrenamtliche Arbeit. Hier siehst du, wie du mitmachen kannst, wo wir gerade Hilfe brauchen und wann wir uns treffen.
+
+  section.fz-section#mitmachen
+    .fz-label So machst du mit
+    .fz-doors
+      .fz-door.fz-box(v-for="(d, i) in doors" :key="d.id")
+        .fz-door-no {{ i + 1 }}
+        h2.fz-h2 {{ d.title }}
+        p {{ d.text }}
+        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route }") {{ d.cta }}
+        a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
+
+  section.fz-section
+    .fz-label So läuft ein Abend
+    ol.fz-run
+      li(v-for="s in eveningSteps" :key="s.when")
+        span.run-when {{ s.when }}
+        span.run-what {{ s.what }}
 
   section.fz-section
     .fz-label
@@ -42,17 +58,21 @@ const censorOpen = ref(false);
         h3 {{ h.title }}
         p {{ h.text }}
     .fz-box(v-else)
-      p Werkstattpause: Gerade gibt es keine konkreten Gesuche – Hilfe ist trotzdem immer willkommen. Komm zum nächsten Treffen oder schreib uns über das Anfragenformular.
+      p Werkstattpause: Gerade gibt es keine konkreten Gesuche – Hilfe ist trotzdem immer willkommen. Schreib uns einfach.
 
   section.fz-section
-    .fz-label Treffen
+    .fz-label Vereinstreffen
+    p.fz-meetings-intro Beim Vereinstreffen besprechen wir erst intern, was bei uns läuft. Danach gibt es einen öffentlichen Teil, offen für alle, die im Carousel etwas auf die Beine stellen wollen. Die Termine geben wir jeweils bekannt.
     .fz-meetings(v-if="upcoming.length")
       router-link.plain-link.fz-meeting(v-for="m in upcoming" :key="m.id" :to="eventLink(m.id)")
         .when {{ m.date_d.format('dd, DD.MM.YYYY') }} · {{ m.date_d.format('HH:mm') }} Uhr
         .what(:class="{ 'fz-cancelled': m.cancelled }")
           span.fz-cancelled-tag(v-if="m.cancelled") Abgesagt
           | {{ m.title }}
-    p(v-else) Werkstattpause: Aktuell ist kein Treffen geplant. Neue Termine erscheinen hier und im Kalender.
+    p(v-else) Werkstattpause: Aktuell ist kein Vereinstreffen angekündigt. Neue Termine erscheinen hier und im Kalender, oder schreib uns, wenn du beim nächsten dabei sein möchtest.
+
+    .btn-row
+      router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender
 
     template(v-if="past.length")
       h2.fz-h2(style="margin-top: 2.5rem; margin-bottom: 1rem") Zuletzt
@@ -62,29 +82,9 @@ const censorOpen = ref(false);
           .what {{ m.title }}
 
   section.fz-section
-    .fz-box.fz-form
-      .fz-stamp.fz-form-stamp Genehmigt
-      h2.fz-h2 Antrag auf Mithilfe
-      dl.fz-form-fields
-        dt Aktenzeichen
-        dd MH-{{ issueNo }}
-        dt Antragsteller:in
-        dd.blank
-        dt Gewünschte Tätigkeit
-        dd Essen für die Bands, Ton, Bar, eigene Abende – such dir was aus
-        dt Vergütung
-        dd
-          span.fz-censor(
-            :class="{ open: censorOpen }"
-            role="button"
-            tabindex="0"
-            title="Antippen zum Aufdecken"
-            @click="censorOpen = !censorOpen"
-            @keydown.enter.prevent="censorOpen = !censorOpen"
-          ) Bier und Applaus
-      p Komm einfach zu einem Treffen vorbei – du musst niemanden kennen. Oder melde dich vorab über das Anfragenformular.
-      .btn-row
-        router-link.btn(:to="{ name: 'requests' }") Anfragenformular
-        router-link.btn(:to="{ name: 'calendar' }") Kalender
+    .fz-box.fz-support
+      h2.fz-h2 {{ support.title }}
+      p {{ support.text }}
+      a.btn(:href="mailto(support.subject)") {{ support.cta }}
 </template>
 

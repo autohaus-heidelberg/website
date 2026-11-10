@@ -5,6 +5,8 @@ import HomeView from '../views/HomeView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to, from, savedPosition) {
+    // Sprungmarken (z.B. /community#mitmachen) scrollen zum Element
+    if (to.hash) return { el: to.hash, top: 16 }
     // Reine Query-Änderungen (z.B. Kalendermonat) sollen nicht nach oben springen.
     if (to.path === from.path) return false
     return { top: 0 }

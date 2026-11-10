@@ -22,9 +22,11 @@
 
 Beim Anlegen wird automatisch eine **Checkliste** aus den hinterlegten Vorlagen erstellt (Phasen: Vorher / Während / Nachher).
 
-**Community-Treffen** (z.B. Plenum, Helfer:innen-Treffen) werden wie Events angelegt und veröffentlicht, erscheinen aber auf der Website nur im Community-Bereich (`/community`) und im Kalender (als „Treffen" markiert), nicht in der Konzertliste, bei Vergangenen Events und in der Flyer-Galerie. Sie bekommen keine Checkliste und zählen nicht in Statistik, Newsletter-Erinnerung und Getränkeplanung.
+**Community-Treffen** (die Vereinstreffen; im Laden, jeweils einzeln angekündigt) werden wie Events angelegt, mit Datum/Uhrzeit des **öffentlichen** Teils. Der interne Teil wird nicht veröffentlicht. Beim Auswählen des Typs wird eine Beschreibung vorgeschlagen. Sie werden veröffentlicht, erscheinen aber auf der Website nur im Community-Bereich (`/community`) und im Kalender (als „Treffen" markiert), nicht in der Konzertliste, bei Vergangenen Events und in der Flyer-Galerie. Sie bekommen keine Checkliste und zählen nicht in Statistik, Newsletter-Erinnerung und Getränkeplanung.
 
 **Mithilfe-Gesuche** („Wir suchen …") pflegst du unter Admin → Mithilfe-Gesuche. Sie werden beim Veröffentlichen der Events als `community.json` auf die Website übernommen.
+
+**Einstieg neuer Helfer:innen:** Die Event-Pads bleiben das Werkzeug für Schichten. Auf der Community-Seite stehen keine Einladungslinks zu den Telegram-Gruppen (Helfer:innen, Kreative); wer mitmachen will, schreibt an die Vereinsadresse und bekommt den Link persönlich. Die Pad-Adressen und Gästelisten gehören nicht auf die öffentliche Seite (Pads sind ohne Anmeldung lesbar).
 
 ---
 

@@ -7,10 +7,11 @@ import "dayjs/locale/de";
 import "leaflet/dist/leaflet.css";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import { isPastEvent } from "@/utils/eventTime";
-import { communityOnly, concertsOnly, helpRequests, COMMUNITY_LABEL } from "@/utils/community";
+import { communityOnly, concertsOnly, helpRequests } from "@/utils/community";
 import { stripHtml } from "@/utils/calendar";
 import { ransomChars } from "@/utils/ransom";
 import { claim } from "@/utils/claims";
+import { doors, mailto, support, wantedLine } from "@/utils/communityContent";
 import { aboutTexts, type AboutLang } from "@/utils/about";
 import { useAuthStore } from "@/stores/auth";
 
@@ -60,6 +61,8 @@ const issueMonth = dayjs().format("MMMM");
 const titleLines = ["Carousel", "im alten Autohaus"];
 
 const censorOpen = ref(false);
+
+const wanted = computed(() => wantedLine(helpRequests.map((h) => h.title)));
 
 const lang = ref<AboutLang>("de");
 const about = computed(() => aboutTexts[lang.value]);
@@ -151,23 +154,35 @@ const zoom = ref(17);
 
   //- ===== Community-Teaser =====
   aside.fz-cut.fz-community#community
-    .fz-stamp {{ COMMUNITY_LABEL }}
-    h2.fz-h2(style="margin-top: 0.75rem") Mach mit! Der Laden lebt vom Ehrenamt.
-    p Wir sind ein Verein ohne Chef:innen und ohne Geld im Rücken. Essen für die Bands, Ton, Bar, Veranstaltungen – hier wird alles von Leuten wie dir gemacht.
-    p(v-if="helpRequests.length") Aktuell suchen wir Hilfe bei {{ helpRequests.length }} {{ helpRequests.length === 1 ? 'Sache' : 'Sachen' }}.
-    .fz-ad
-      .fz-ad-head Kleinanzeigen · Gesuche
-      p
-        b SUCHE:
-        |  Leute fürs Bandessen, für Ton, Bar und eigene Abende.
-      p
-        b BIETE:
-        |  Bier, Applaus, nette Leute. VB.
-      p.fz-ad-foot Zuschriften unter Chiffre HD-CA oder einfach vorbeikommen.
-    .fz-community-next(v-if="nextMeeting")
-      .lbl Nächstes Treffen
-      router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
-    router-link.btn(:to="{ name: 'community' }") Zur Community-Seite
+    .fz-stamp Community
+    .fz-community-grid
+      div
+        h2.fz-h2(style="margin-top: 0.75rem") Mach mit! Der Laden lebt vom Ehrenamt.
+        p Wir sind ein Verein ohne Chef:innen und ohne Geld im Rücken. Hier wird alles von Leuten wie dir gemacht. Drei Wege, mitzumachen:
+        ol.fz-door-links
+          li(v-for="d in doors" :key="d.id")
+            router-link(:to="{ name: 'community', hash: '#mitmachen' }") {{ d.title }}
+      .fz-ad
+        .fz-ad-head Kleinanzeigen · Gesuche
+        p
+          b SUCHE:
+          |  {{ wanted }}.
+        p
+          b BIETE:
+          |  Bier, Applaus, nette Leute. VB.
+        p.fz-ad-foot Zuschriften unter Chiffre HD-CA oder
+          |  
+          a(:href="mailto('Mithilfe im Verein')") per Mail
+          | .
+    .fz-community-next
+      .lbl Nächstes Vereinstreffen
+      template(v-if="nextMeeting")
+        router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
+        p.fz-community-note Der öffentliche Teil ist offen für alle, die im Carousel etwas auf die Beine stellen wollen.
+      p(v-else) Werkstattpause: Aktuell ist kein Vereinstreffen angekündigt. Neue Termine erscheinen hier und im Kalender.
+    .btn-row
+      router-link.btn(:to="{ name: 'community' }") Zur Community-Seite
+      a.btn(:href="mailto(support.subject)") Uns unterstützen
 
   //- ===== Rubriken =====
   .fz-rubriken

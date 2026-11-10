@@ -82,9 +82,7 @@ No colors, gradients, or shades of gray are used in the design.
 - No decorative elements
 - No rounded corners
 - No shadows (exception: hard offset shadow on public buttons)
-- No colors (exception: multi-day events in the public calendar `/calendar/` use the
-  same light yellow as the admin calendar — background `#fdf3d0`, hover `#f7e7a8`,
-  start accent `#ffcc00` — so long-running events stand apart from single dates)
+- No colors (the admin calendar still marks multi-day events with light yellow; the public calendar uses a black/white hatch instead)
 - No gradients
 - No icons or symbols (text only)
 - Geometric, slightly rotated elements for visual interest
@@ -122,6 +120,7 @@ Die Startseite ist wie eine Punk-/DIY-Fanzine-Ausgabe aufgebaut (Titelleiste, Co
 - Unterseiten im Fanzine-Stil (Community, Fehlerseite) bringen ihre eigene schwarze Kopfleiste mit (`FanzineNav.vue`) und blenden den allgemeinen Zurück-/Logo-Header aus.
 - Alle öffentlichen Seiten außer Presale-Link und Login nutzen den Fanzine-Stil: Event-Detail (Poster links als Kopierer-Foto mit Klebeband, Text rechts, Künstler:innen darunter; auch in der Admin-Vorschau über einen `.fz`-Wrapper), Archiv (Liste nach Jahren, Flyer-Galerie), Kalender (breite Variante `.fz-wide`), Anfrage (Datenblatt statt Emoji-Tabelle) und Impressum. Neue Seiten: `.fz`-Wrapper, `FanzineNav` und Ransom-Titel (`ransomChars`), und die Route in `OWN_HEADER_ROUTES` (App.vue) eintragen.
 - Community-Treffen werden im Kalender mit gestrichelter Kontur und Label „Treffen" markiert (keine neue Farbe).
+- Öffentlicher Kalender: Monatstitel als schwarzes Etikett, mehrtägige Events schraffiert (kein Gelb), vergangene Tage diagonal durchgestrichen (kein Grau), abgesagte Termine gepunktet und durchgestrichen, „Heute" als schief aufgestempelter schwarzer Kasten, Abo-Buttons im Kasten „Zum Mitnehmen" neben dem Titel.
 - `prefers-reduced-motion` wird respektiert; Kontrast und Lesbarkeit des Fließtexts haben Vorrang vor Deko.
 
 ## Admin Section Specifics
