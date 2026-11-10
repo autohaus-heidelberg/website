@@ -14,6 +14,8 @@ dist-ssr
 .gh-pages-worktree
 coverage
 *.local
+# Lokale Vorschau aus der Datenbank (backendv2: manage.py export_local_preview)
+src/*.local.json
 
 /cypress/videos/
 /cypress/screenshots/

@@ -2,7 +2,7 @@
 .fz
   FanzineNav(:label="isCommunity ? 'Treffen' : 'Programm'")
   .admin-controls(v-if="authStore.hasWebsiteGroup && event")
-    router-link.btn.btn-admin(:to="`/admin/events/${event.id}?tab=checklist`") Checkliste
+    router-link.btn.btn-admin(v-if="!isCommunity" :to="`/admin/events/${event.id}?tab=checklist`") Checkliste
     router-link.btn.btn-admin(:to="`/admin/events/${event.id}`") Bearbeiten
 
   EventDisplay(v-if="event" :event="event")

@@ -1,5 +1,6 @@
 // NOTE: do not add a trailing comma or the script will fail
 import eventsJson from './events.json';
+import { localData, mergeById } from './utils/localPreview';
 
 export type Event = {
   // Unique id, this is used in the URL so URLencoded is better
@@ -32,4 +33,4 @@ export type Event = {
   }>;
 };
 
-export const events: Event[] = eventsJson;
+export const events: Event[] = mergeById(eventsJson as Event[], localData<Event[]>('events'));

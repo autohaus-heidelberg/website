@@ -1,4 +1,5 @@
 import communityJson from '@/community.json'
+import { localData } from '@/utils/localPreview'
 
 export type EventKind = 'concert' | 'community'
 
@@ -27,4 +28,7 @@ export function communityOnly<T extends TypedEvent>(events: T[]): T[] {
   return events.filter(isCommunity)
 }
 
-export const helpRequests: HelpRequestPublic[] = communityJson.helpRequests
+const localCommunity = localData<{ helpRequests: HelpRequestPublic[] }>('community')
+
+// Lokal (Dev) ersetzen die Gesuche aus der Datenbank die veröffentlichten; sonst gilt community.json
+export const helpRequests: HelpRequestPublic[] = localCommunity?.helpRequests ?? communityJson.helpRequests
