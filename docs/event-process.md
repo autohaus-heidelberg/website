@@ -26,7 +26,7 @@ Beim Anlegen wird automatisch eine **Checkliste** aus den hinterlegten Vorlagen 
 
 **Mithilfe-Gesuche** („Wir suchen …") pflegst du unter Admin → Mithilfe-Gesuche. Sie werden beim Veröffentlichen der Events als `community.json` auf die Website übernommen.
 
-**Einstieg neuer Helfer:innen:** Die Event-Pads bleiben das Werkzeug für Schichten. Auf der Community-Seite stehen keine Einladungslinks zu den Telegram-Gruppen (Helfer:innen, Kreative); wer mitmachen will, schreibt an die Vereinsadresse und bekommt den Link persönlich. Die Pad-Adressen und Gästelisten gehören nicht auf die öffentliche Seite (Pads sind ohne Anmeldung lesbar). Ausnahme: Der öffentliche Telegram-Kanal mit den Treffen-Terminen ist auf der Anfrage-Seite verlinkt, er ist ohnehin öffentlich und keine Gruppe mit Klarnamen.
+**Einstieg neuer Helfer*innen:** Die Event-Pads bleiben das Werkzeug für Schichten. Auf der Community-Seite stehen keine Einladungslinks zu den Telegram-Gruppen (Helfer*innen, Kreative); wer mitmachen will, schreibt an die Vereinsadresse und bekommt den Link persönlich. Die Pad-Adressen und Gästelisten gehören nicht auf die öffentliche Seite (Pads sind ohne Anmeldung lesbar). Ausnahme: Der öffentliche Telegram-Kanal mit den Treffen-Terminen ist auf der Anfrage-Seite verlinkt, er ist ohnehin öffentlich und keine Gruppe mit Klarnamen.
 
 ---
 
