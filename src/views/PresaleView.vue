@@ -6,7 +6,7 @@
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Presale')" :key="i" :class="c.cls") {{ c.ch }}
     p.fz-page-sub(v-if="error") Dieser Presale-Link existiert nicht oder ist abgelaufen.
-    p.fz-page-sub(v-else) Vorverkaufs-Info für Bands und Veranstalter:innen.
+    p.fz-page-sub(v-else) Vorverkaufs-Info für Bands und Veranstalter*innen.
 
   section.fz-section(v-if="loading")
     p Lade Presale-Daten...
