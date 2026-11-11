@@ -46,7 +46,7 @@ async function handleLogin() {
     h1.fz-page-title(aria-label="Login")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Login')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Nur für den Verein: Hier geht's hinter die Kulissen.
+    p.fz-page-sub Zutritt nur fürs Werkstattpersonal.
   .fz-login
     form.fz-box.login-form(@submit.prevent="handleLogin")
       .form-group

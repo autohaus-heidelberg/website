@@ -29,7 +29,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
     h1.fz-page-title(aria-label="Community")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Community')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Das Carousel läuft ausschließlich durch ehrenamtliche Arbeit. Hier siehst du, wie du mitmachen kannst, wo wir gerade Hilfe brauchen und wann wir uns treffen.
+    p.fz-page-sub Hinter jedem Konzert stehen Leute, die dafür keinen Cent sehen und trotzdem wiederkommen. Hier steht, wie du dazustößt, wo es gerade brennt und wann wir uns treffen.
 
   section.fz-section#mitmachen
     .fz-label So machst du mit
@@ -38,7 +38,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         .fz-door-no {{ i + 1 }}
         h2.fz-h2 {{ d.title }}
         p {{ d.text }}
-        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route }") {{ d.cta }}
+        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash }") {{ d.cta }}
         a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
 
   section.fz-section
@@ -58,18 +58,18 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         h3 {{ h.title }}
         p {{ h.text }}
     .fz-box(v-else)
-      p Werkstattpause: Gerade gibt es keine konkreten Gesuche – Hilfe ist trotzdem immer willkommen. Schreib uns einfach.
+      p Gerade ist jeder Posten besetzt. Kommt selten vor, hält nie lange. Schreib uns trotzdem.
 
-  section.fz-section
+  section.fz-section#treffen
     .fz-label Vereinstreffen
-    p.fz-meetings-intro Beim Vereinstreffen besprechen wir erst intern, was bei uns läuft. Danach gibt es einen öffentlichen Teil, offen für alle, die im Carousel etwas auf die Beine stellen wollen. Die Termine geben wir jeweils bekannt.
+    p.fz-meetings-intro Erst klären wir unter uns, was ansteht. Dann geht die Tür auf: Der öffentliche Teil gehört allen, die im Carousel was anzetteln wollen. Idee mitbringen, kurz vorstellen, Mitstreiter*innen finden.
     .fz-meetings(v-if="upcoming.length")
       router-link.plain-link.fz-meeting(v-for="m in upcoming" :key="m.id" :to="eventLink(m.id)")
         .when {{ m.date_d.format('dd, DD.MM.YYYY') }} · {{ m.date_d.format('HH:mm') }} Uhr
         .what(:class="{ 'fz-cancelled': m.cancelled }")
           span.fz-cancelled-tag(v-if="m.cancelled") Abgesagt
           | {{ m.title }}
-    p(v-else) Werkstattpause: Aktuell ist kein Vereinstreffen angekündigt. Neue Termine erscheinen hier und im Kalender, oder schreib uns, wenn du beim nächsten dabei sein möchtest.
+    p(v-else) Noch kein Termin angesetzt. Sobald einer steht, hängt er hier und im Kalender. Wer nicht warten will: schreib uns.
 
     .btn-row
       router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender

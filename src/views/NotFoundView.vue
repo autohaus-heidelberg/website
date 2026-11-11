@@ -10,12 +10,12 @@ import FanzineNav from "@/components/FanzineNav.vue";
     h1.fz-page-title.long(aria-label="Diese Ausfahrt gibt es nicht")
       span.fz-line(aria-hidden="true" v-for="(line, li) in ['Diese Ausfahrt', 'gibt es nicht']" :key="li")
         span.fz-ch(v-for="(c, i) in ransomChars(line, li)" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Diese Seite ist nicht mehr befahrbar. Wer hier raus will, nimmt die Bahn.
+    p.fz-page-sub Wer soll da noch wissen, wo oben und unten ist? Wir sicher nicht! In Zusammenarbeit mit dem TÜV-Südwest wurde diese Seite stillgelegt.
   section.fz-section
     .fz-box.fz-dots.fz-help
       .fz-stamp Pannenhilfe
       p
-        b Zurück auf die Autobahn:
+        b Wenden und weiter:
       .btn-row
         router-link.btn(:to="{ name: 'home' }") Zurück zur Startseite
         router-link.btn(:to="{ name: 'calendar' }") Zum Kalender

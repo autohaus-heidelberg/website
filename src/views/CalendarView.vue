@@ -168,7 +168,7 @@ const subscribeLinks = [
     .fz-cut.cal-take.cal-take-top
       FanzineBurst.cal-star Abo!
       .fz-stamp Zum Mitnehmen
-      p Neue Termine automatisch in deiner Kalender-App.
+      p Abonnieren, und kein Konzert rauscht mehr an dir vorbei.
       .btn-row
         a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 
@@ -226,7 +226,7 @@ const subscribeLinks = [
 
   //- Liste
   .list(v-else)
-    p.empty(v-if="!listDays.length") Keine Termine im {{ title }}.
+    p.empty(v-if="!listDays.length") Im {{ title }} steht noch nichts. Kommt noch.
     .list-day(
       v-for="day in listDays"
       :key="day.key"
@@ -251,7 +251,7 @@ const subscribeLinks = [
   //- Mobil: Abo am Seitenende, damit oben der Kalender steht (am Desktop sitzt der Kasten im Kopf)
   .fz-cut.cal-take.cal-take-bottom
     .fz-stamp Zum Mitnehmen
-    p Neue Termine automatisch in deiner Kalender-App.
+    p Abonnieren, und kein Konzert rauscht mehr an dir vorbei.
     .btn-row
       a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 </template>

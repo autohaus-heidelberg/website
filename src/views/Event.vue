@@ -7,7 +7,7 @@
 
   EventDisplay(v-if="event" :event="event")
   .error(v-else)
-    p Diese Ausfahrt gibt es nicht: Event nicht gefunden.
+    p Falsch abgebogen: Dieses Event gibt es nicht (mehr).
     router-link.btn(:to="{ name: 'home' }") Zur Titelseite
 </template>
 
