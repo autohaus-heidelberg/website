@@ -5,7 +5,7 @@
     h1.fz-page-title(aria-label="Anfrage")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Anfrage')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Für Anfragen verwendet bitte dieses Formular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen.
+    p.fz-page-sub Booking-, Veranstaltungs- und Raumanfragen bitte nur über dieses Formular. Per E-Mail gehen sie bei uns leicht unter.
   .fz-request
     .fz-box.success-message(v-if="submitted")
       h2.fz-h2 Anfrage gesendet
