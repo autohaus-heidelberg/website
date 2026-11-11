@@ -130,6 +130,12 @@ const feedPath = '/calendar.ics'
 const subscribeUrl = `webcal://${window.location.host}${feedPath}`
 // Google Kalender (Web) reagiert nicht auf webcal://, hat aber einen eigenen Abo-Link.
 const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(subscribeUrl)}`
+
+const subscribeLinks = [
+  { label: 'Apple / Outlook', href: subscribeUrl },
+  { label: 'Google Kalender', href: googleSubscribeUrl, external: true },
+  { label: '.ics-Datei', href: feedPath, download: 'carousel-termine.ics' },
+]
 </script>
 
 <template lang="pug">
@@ -159,14 +165,12 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           li
             span.sw.sw-past
             | vorbei
-    .fz-cut.cal-take
+    .fz-cut.cal-take.cal-take-top
       FanzineBurst.cal-star Abo!
       .fz-stamp Zum Mitnehmen
       p Neue Termine automatisch in deiner Kalender-App.
       .btn-row
-        a.btn(:href="subscribeUrl") Apple / Outlook
-        a.btn(:href="googleSubscribeUrl" target="_blank" rel="noopener") Google Kalender
-        a.btn(:href="feedPath" download="carousel-termine.ics") .ics-Datei
+        a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 
   .toolbar
     .nav
@@ -243,6 +247,13 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           span.list-time {{ listLabel(entry) }}
             span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
           span.list-title {{ entry.event.title }}
+
+  //- Mobil: Abo am Seitenende, damit oben der Kalender steht (am Desktop sitzt der Kasten im Kopf)
+  .fz-cut.cal-take.cal-take-bottom
+    .fz-stamp Zum Mitnehmen
+    p Neue Termine automatisch in deiner Kalender-App.
+    .btn-row
+      a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 </template>
 
 <style scoped>
@@ -305,6 +316,15 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 .cal-take .fz-stamp {
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
+}
+
+/* Kopf-Kasten nur ab Desktop, mobil steht der Kasten am Seitenende */
+.cal-take-top { display: none; }
+.cal-take-bottom { margin-top: 2.5rem; }
+
+@media (min-width: 1000px) {
+  .cal-take-top { display: block; }
+  .cal-take-bottom { display: none; }
 }
 
 /* Reine Deko: Stern sitzt an der oberen rechten Ecke des Kastens, nur ab Desktop */
