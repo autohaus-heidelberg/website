@@ -12,7 +12,7 @@
         p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
         h1.title {{ event.title }}
-        .event-meta
+        .event-meta(v-if="!isCommunityEvent")
             a.btn.ticket-btn(v-if="event.shopLink && event.fee && event.feeAk" :href="event.shopLink" target="_blank" rel="noopener")
                 span.ticket-price VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} &nbsp;·&nbsp; AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
                 span.ticket-cta Tickets kaufen
@@ -27,7 +27,7 @@
             button.btn.share-btn(@click="shareNative" v-if="canShare") Teilen
             button.btn.share-btn(@click="copyLink") {{ copyLabel }}
         p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
-    .artists(v-if="event.artists && event.artists.length")
+    .artists(v-if="!isCommunityEvent && event.artists && event.artists.length")
         .fz-label Line-up
         .artist(v-for="artist in event.artists" :class="{ 'has-img': artistImage(artist) }")
             .artist-photo.fz-photo(v-if="artistImage(artist)")

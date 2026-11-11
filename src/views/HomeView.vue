@@ -226,7 +226,7 @@ const zoom = ref(17);
 
     .fz-box#anfragen
       h2.fz-h2 Anfragen
-      p Für Anfragen verwendet bitte unser Anfragenformular. Anfragen per E-Mail werden wir wahrscheinlich nicht sehen.
+      p Booking-, Veranstaltungs- und Raumanfragen bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
       router-link.btn(:to="{ name: 'requests' }") Anfragenformular
 
   //- ===== Kleingedrucktes =====

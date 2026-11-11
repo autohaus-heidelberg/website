@@ -575,6 +575,9 @@ async function handleSubmit() {
     formData.date = new Date(form.value.date!).toISOString()
     formData.endDate = form.value.endDate ? new Date(form.value.endDate).toISOString() : null
 
+    // Bei Community-Treffen sind diese Felder ausgeblendet; ihre alten Werte würden sonst öffentlich angezeigt
+    if (isCommunityType.value) Object.assign(formData, { fee: '', feeAk: '', shopLink: '', artist_ids: [] })
+
     if (isEditing.value) {
       // For editing, only send fields that can be updated (exclude image and image_url)
       await eventService.update(form.value.id!, formData)
