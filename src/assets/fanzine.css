@@ -501,6 +501,10 @@
 .fz a:hover .fz-photo img, .fz .fz-photo:hover img, .fz .fz-photo.is-revealed img { filter: none; }
 .fz a:hover .fz-photo::after, .fz .fz-photo:hover::after, .fz .fz-photo.is-revealed::after { opacity: 0; }
 
+/* Titelstory (nächstes Event): Plakat immer in Farbe, ohne Raster */
+.fz .fz-feature .fz-photo img { filter: none; }
+.fz .fz-feature .fz-photo::after { opacity: 0; }
+
 /* Ransom-Note-Titel */
 /* Einspaltig (Buttons rutschen unter den Titel): "CAROUSEL" ist ca. 6,6em breit und füllt die ganze Inhaltsbreite */
 .fz .fz-title { font-size: max(2.2rem, calc((min(95vw, 1200px) - 0.5rem) / 6.8)); line-height: 1.15; }
