@@ -5,7 +5,7 @@
 .fz {
     --fz-rule: 0.25rem;
     --fz-mono: "Courier New", Courier, "Nimbus Mono PS", monospace;
-    /* Riso-Akzente mit fester Bedeutung: Gelb = Verein/Community (Heute, Treffen, Gesuche), Grün = Konzerte, Rot = abgesagt */
+    /* Riso-Akzente mit fester Bedeutung: Gelb = Verein/Community (Treffen, Gesuche), Grün = Konzerte, Rot = abgesagt */
     --mark: #ffe600;
     --alert: #d10000;
     --multi: #0b8a6c;
