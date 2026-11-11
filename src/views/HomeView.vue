@@ -94,6 +94,7 @@ const zoom = ref(17);
               title="Antippen zum Aufdecken"
               @click="censorOpen = !censorOpen"
               @keydown.enter.prevent="censorOpen = !censorOpen"
+              @keydown.space.prevent="censorOpen = !censorOpen"
             ) {{ part.censor }}
             template(v-else) {{ part.text }}
         .fz-cover-cta
