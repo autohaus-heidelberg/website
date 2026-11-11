@@ -10,8 +10,8 @@ export const aboutTexts: Record<AboutLang, AboutText> = {
   de: {
     title: 'Über uns',
     paragraphs: [
-      'Wir sind ein kleiner Kreis an Menschen, die sich für Musik und alles drum herum begeistern. Als ehrenamtlicher Verein Carousel e.V. sind wir seit 2023 aktiv und veranstalten Konzerte, Partys, Kinoabende, Ausstellungen und worauf wir sonst Lust haben.',
-      'Unsere Veranstaltungen werden getragen von einem großen Kreis an fleißigen Helfer*innen, die an der Tür, hinter der Bar und bei allen weiteren Aufgaben tatkräftig unterstützen.',
+      'Wir sind ein kleiner Haufen Leute, die für Musik und alles drumherum brennen. Seit 2023 machen wir als ehrenamtlicher Verein Carousel e.V. Konzerte, Partys, Kinoabende, Ausstellungen und worauf wir sonst Lust haben.',
+      'Möglich macht das ein deutlich größerer Haufen: die Helfer*innen an der Tür, hinter der Bar und überall, wo sonst noch was zu tun ist.',
     ],
   },
   en: {

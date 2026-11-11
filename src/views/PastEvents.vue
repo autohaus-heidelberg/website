@@ -78,7 +78,7 @@ watchEffect(async () => {
     h1.fz-page-title(aria-label="Archiv")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Archiv')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Alles, was schon gelaufen ist: {{ past.length }} Abende, nach Jahren sortiert. Oder einfach durch die Flyer blättern.
+    p.fz-page-sub {{ past.length }} Abende, die ihr entweder erlebt oder verpasst habt. Nach Jahren sortiert, oder einfach durch die Flyer blättern.
     .btn-row
       button.btn.fz-toggle(:class="{ on: currentView === 'list' }" :aria-pressed="currentView === 'list'" @click="currentView = 'list'") Liste
       button.btn.fz-toggle(:class="{ on: currentView === 'gallery' }" :aria-pressed="currentView === 'gallery'" @click="currentView = 'gallery'") Galerie

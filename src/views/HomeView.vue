@@ -104,7 +104,7 @@ const zoom = ref(17);
   section.fz-section#programm
     .fz-label Das Programm
 
-    .fz-empty(v-if="!feature && ongoing.length === 0") Werkstattpause: Aktuell ist kein Termin geplant. Pannenhilfe: Newsletter abonnieren oder bald wieder reinschauen.
+    .fz-empty(v-if="!feature && ongoing.length === 0") Gerade steht nichts auf der Hebebühne. Kein Grund zur Panik: Newsletter abonnieren, dann erfahrt ihr als Erste, wann es wieder kracht.
 
     router-link.plain-link.fz-feature(
       v-if="feature"
@@ -123,7 +123,7 @@ const zoom = ref(17);
           | {{ feature.title }}
         p.fz-teaser(v-if="teaser(feature.descriptionShort)") {{ teaser(feature.descriptionShort) }}
         p.fz-feature-diff Abfahrt {{ feature.date_d.fromNow() }}
-        span.btn Zum Artikel
+        span.btn Weiterlesen
 
     .fz-picks(v-if="picks.length")
       router-link.plain-link.fz-pick(v-for="ev in picks" :key="ev.id" :to="eventLink(ev.id)")
@@ -139,7 +139,7 @@ const zoom = ref(17);
 
     template(v-if="toc.length")
       .fz-sub
-        .fz-label Außerdem im Programm
+        .fz-label Doch damit nicht genug
         ul.fz-toc
           li(v-for="ev in toc" :key="ev.id")
             router-link.plain-link(:to="eventLink(ev.id)")
@@ -160,8 +160,8 @@ const zoom = ref(17);
     .fz-stamp Community
     .fz-community-grid
       div
-        h2.fz-h2(style="margin-top: 0.75rem") Mach mit! Der Laden lebt vom Ehrenamt.
-        p Wir sind ein Verein ohne Chef:innen und ohne Geld im Rücken. Hier wird alles von Leuten wie dir gemacht. Drei Wege, mitzumachen:
+        h2.fz-h2(style="margin-top: 0.75rem") Der Laden läuft nicht von allein.
+        p Kein Chef, kein Sponsor, kein doppelter Boden. Jeder Abend hier wird von Leuten wie dir gemacht: an der Tür, hinter der Bar, am Mischpult. Drei Wege rein:
         ol.fz-door-links
           li(v-for="d in doors" :key="d.id")
             router-link(:to="{ name: 'community', hash: '#mitmachen' }") {{ d.title }}
@@ -189,8 +189,8 @@ const zoom = ref(17);
         .lbl Nächstes Vereinstreffen
         template(v-if="nextMeeting")
           router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
-          p.fz-community-note Der öffentliche Teil ist offen für alle, die im Carousel etwas auf die Beine stellen wollen.
-        p(v-else) Werkstattpause: Aktuell ist kein Vereinstreffen angekündigt. Neue Termine erscheinen hier und im Kalender.
+          p.fz-community-note Öffentlicher Teil, offene Tür: für alle, die im Carousel selbst was anzetteln wollen.
+        p(v-else) Noch kein Termin angesetzt. Sobald einer steht, hängt er hier und im Kalender.
 
   //- ===== Gut zu wissen =====
   section.fz-section.fz-page.fz-info

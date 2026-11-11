@@ -254,10 +254,10 @@ watch(hasEndDate, (checked) => {
 // Vorschlag für die Beschreibung eines Community-Treffens (nur bei neuen Events mit leerer Beschreibung).
 // Datum/Uhrzeit des Events = Beginn des öffentlichen Teils; der interne Teil wird nicht veröffentlicht.
 const COMMUNITY_DESCRIPTION_TEMPLATE =
-  '<p>Das regelmäßige Vereinstreffen im Carousel. Kommt gerne zum öffentlichen Teil zur oben genannten Uhrzeit vorbei!</p>' +
+  '<p>Vereinstreffen im Carousel. Der öffentliche Teil startet zur oben genannten Uhrzeit, die Tür ist offen.</p>' +
   '<p>Ihr habt eine Idee für ein Konzert, eine Party oder einen Abend im Autohaus? ' +
-  'Kommt vorbei, stellt sie kurz vor und findet Mitstreiter*innen aus dem Verein.</p>' +
-  '<p>Offen für alle, die im Carousel etwas auf die Beine stellen wollen.</p>'
+  'Bringt sie mit, stellt sie kurz vor und findet Mitstreiter*innen.</p>' +
+  '<p>Kommt rum. Mehr als eine Idee braucht ihr nicht.</p>'
 watch(() => form.value.event_type, (type) => {
   if (type === 'community' && !props.id && !form.value.descriptionShort) {
     form.value.descriptionShort = COMMUNITY_DESCRIPTION_TEMPLATE
