@@ -165,6 +165,9 @@ const subscribeLinks = [
           li
             span.sw.sw-past
             | vorbei
+          li
+            span.sw.sw-today
+            | heute
     .fz-cut.cal-take.cal-take-top
       FanzineBurst.cal-star Abo!
       .fz-stamp Zum Mitnehmen
@@ -304,6 +307,12 @@ const subscribeLinks = [
 .sw-cancel { border-style: dotted; }
 .sw-past {
   background: linear-gradient(to bottom right, transparent calc(50% - 0.05rem), #000 calc(50% - 0.05rem), #000 calc(50% + 0.05rem), transparent calc(50% + 0.05rem)), #fff;
+}
+.sw-today {
+  width: 0.9rem;
+  margin-right: 0.6rem;
+  background: #000;
+  transform: rotate(-7deg);
 }
 
 /* Kompakter Abo-Kasten: kleinere Schrift und Buttons als im Fließtext */
@@ -471,11 +480,7 @@ button.active {
   flex-shrink: 0;
 }
 
-/* Heute: Zelle gelb hinterlegt, Zahl schief aufgestempelt */
-.day.today {
-  background: var(--mark);
-}
-
+/* Heute: nur die Zahl, schief aufgestempelt. Kein Gelb, das gehört den Vereinstreffen. */
 .day.today .day-num {
   background: black;
   color: white;
@@ -745,7 +750,8 @@ button.active {
 }
 
 .list-day.today .list-date {
-  background: var(--mark);
+  background: black;
+  color: white;
   transform: rotate(-4deg);
 }
 
