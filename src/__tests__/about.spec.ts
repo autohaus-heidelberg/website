@@ -9,9 +9,9 @@ describe('aboutTexts', () => {
     }
   })
 
-  it('mentions the founding year and the address where visitors need it', () => {
-    expect(aboutTexts.de.paragraphs.join(' ')).toContain('2023')
-    expect(aboutTexts.en.paragraphs.join(' ')).toContain('2023')
+  it('names the association and gives the address where visitors need it', () => {
+    expect(aboutTexts.de.paragraphs.join(' ')).toContain('Carousel e.V.')
+    expect(aboutTexts.en.paragraphs.join(' ')).toContain('Carousel e.V.')
     expect(aboutTexts.en.paragraphs.join(' ')).toContain('Hebelstraße 7')
   })
 })
