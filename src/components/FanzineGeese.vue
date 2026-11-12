@@ -15,8 +15,8 @@ const POSTS = [12, 36, 60, 84, 108, 132, 156, 180, 204];
 </script>
 
 <template lang="pug">
-button.fz-geese(type="button" :class="{ open }" @click="open = !open" aria-label="Zwei Gänse hinterm Zaun sagen: Good clean fun.")
-  span.fz-geese-say(aria-hidden="true") Good clean fun.
+button.fz-geese(type="button" :class="{ open }" @click="open = !open" aria-label="Zwei Gänse hinterm Zaun sagen: Good clean fun, Johnny.")
+  span.fz-geese-say(aria-hidden="true") Good clean fun, Johnny.
   svg(viewBox="0 0 230 150" focusable="false" aria-hidden="true")
     defs
       pattern#fz-geese-dots(width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)")
