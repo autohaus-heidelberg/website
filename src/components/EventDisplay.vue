@@ -1,14 +1,18 @@
 <template lang="pug">
-.event
-    .event-img-wrapper(v-if="imageUrl")
-        img.event-img(:src="imageUrl" crossorigin="anonymous")
-        .cancelled-stamp(v-if="event.cancelled") ABGESAGT
+.event.fz-event(:class="{ 'no-img': !imageUrl }")
+    .event-poster(v-if="imageUrl")
+        .event-img-wrapper.fz-photo
+            .fz-tape.tl
+            .fz-tape.tr
+            img.event-img(:src="imageUrl" crossorigin="anonymous")
+            .cancelled-stamp(v-if="event.cancelled") ABGESAGT
     .event-header
-        h2.date.accent(:class="{ 'date-cancelled': event.cancelled }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
-        p.datediff.accent(v-if="showDatediff") {{ dateDiff }}
+        router-link.community-stamp.plain-link(v-if="isCommunityEvent" :to="{ name: 'community' }") Community-Treffen · Alle Infos &amp; Mithilfe
+        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
+        p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
-        h1.accent.title {{ event.title }}
-        .event-meta
+        h1.title {{ event.title }}
+        .event-meta(v-if="!isCommunityEvent")
             a.btn.ticket-btn(v-if="event.shopLink && event.fee && event.feeAk" :href="event.shopLink" target="_blank" rel="noopener")
                 span.ticket-price VVK {{ event.fee.endsWith('€') ? event.fee : event.fee + ' €' }} &nbsp;·&nbsp; AK {{ event.feeAk.endsWith('€') ? event.feeAk : event.feeAk + ' €' }}
                 span.ticket-cta Tickets kaufen
@@ -22,23 +26,24 @@
         .share-bar
             button.btn.share-btn(@click="shareNative" v-if="canShare") Teilen
             button.btn.share-btn(@click="copyLink") {{ copyLabel }}
-    p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
-    template(v-if="event.artists && event.artists.length")
-        .artist(v-for="artist in event.artists")
-            //- Name appears above the image on mobile, beside it on desktop
-            h2.accent.artist-name-mobile {{ artist.name }}
-            img.artist-img(v-if="artistImage(artist)" :src="artistImage(artist)" crossorigin="anonymous")
+        p.description(v-html="event.descriptionLong ? event.descriptionLong : event.descriptionShort")
+    .artists(v-if="!isCommunityEvent && event.artists && event.artists.length")
+        .fz-label Line-up
+        .artist(v-for="artist in event.artists" :class="{ 'has-img': artistImage(artist) }")
+            .artist-photo.fz-photo(v-if="artistImage(artist)")
+                .fz-tape.tc
+                img.artist-img(:src="artistImage(artist)" crossorigin="anonymous")
             .artist-text
-                h2.accent.artist-name-desktop {{ artist.name }}
+                h2.artist-name {{ artist.name }}
                 p {{ artist.description }}
-            a.btn.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") Band-Website
-            .bandcamp-container(v-if="artist.bandcamp")
-                p.media-label Klingt so:
-                iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="100%" height="175" seamless)
-            template(v-if="artist.youtube")
-                p.media-label Video
-                .video-container
-                    iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
+                a.btn.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") Band-Website
+                .bandcamp-container(v-if="artist.bandcamp")
+                    p.media-label Klingt so:
+                    iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="100%" height="175" seamless)
+                template(v-if="artist.youtube")
+                    p.media-label Video
+                    .video-container
+                        iframe.youtube(:src="artist.youtube" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen)
 </template>
 
 
@@ -55,6 +60,12 @@ const props = defineProps<{ event: Event }>()
 dayjs.extend(duration)
 dayjs.extend(relativeTime)
 dayjs.locale('de')
+
+// Public events.json uses `type`, the admin API `event_type`
+const isCommunityEvent = computed(() => {
+  const evt = props.event as any
+  return (evt.type || evt.event_type) === 'community'
+})
 
 // Handle both image_url (new API) and img (old static) properties
 const imageUrl = computed(() => {
@@ -96,7 +107,8 @@ const dateDiff = computed(() => {
   if (isOngoing.value && endDate.value) {
     return `Läuft noch bis ${endDate.value.format('DD.MM.YYYY')}`
   }
-  return dayjs(props.event?.date).locale('de').fromNow()
+  const start = dayjs(props.event?.date).locale('de')
+  return start.isAfter(dayjs()) ? `Abfahrt ${start.fromNow()}` : `Das war ${start.fromNow()}`
 })
 
 // Share
@@ -121,107 +133,115 @@ function copyLink() {
 
 
 <style scoped>
-
-.video-container {
-  position: relative;
-  padding-bottom: 56.25%; /* 16:9 */
-  height: 0;
-  margin-bottom: 1.5rem;
-  width: 100%;
-}
-.video-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+/* Layout: Poster links, Text rechts (wie die Titelstory der Startseite); Künstler:innen darunter.
+   Der Fanzine-Look (Kopierer-Foto, Klebeband) kommt aus fanzine.css, sobald ein .fz-Elternelement existiert. */
+.event {
+    display: grid;
+    gap: 2rem 3rem;
+    align-items: start;
+    text-align: left;
+    margin: 2.25rem 0 0;
 }
 
-.bandcamp-container {
-  width: 100%;
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.bandcamp-container iframe {
-  width: 100% !important;
-  max-width: 780px;
-  height: 175px;
-  display: block;
-}
-
-.media-label {
-  font-size: clamp(0.8rem, 1.5vw, 0.95rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin: 1.5rem 0 0.5rem;
-  color: black;
-  clear: both;
-}
-
-.artist {
-    width: 100%;
-    clear: both;
-}
-
-.artist + .artist {
-    margin-top: 3rem;
-}
-
-.artist h2 {
-    margin: 0 0 1.25rem;
-    align-self: center;
-}
-
-.event-header {
-    overflow: hidden;
+@media (min-width: 900px) {
+    .event { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); }
+    .event.no-img { grid-template-columns: minmax(0, 1fr); }
+    .event .event-poster { align-self: stretch; }
+    .event .event-img-wrapper { position: sticky; top: 1.5rem; }
+    .event .artists { grid-column: 1 / -1; }
 }
 
 .event-img-wrapper {
-    position: relative;
-    float: right;
-    margin: 0 0 1rem 1.5rem;
-    max-width: min(55%, 460px);
-}
-
-@media (max-width: 500px) {
-    .event-img-wrapper {
-        float: none;
-        max-width: 100%;
-        margin: 0 0 1rem;
-    }
-    .event-header {
-        overflow: visible;
-    }
+    margin: 0.5rem 0.5rem 0;
+    transform: rotate(-1.4deg);
 }
 
 .event-img {
     display: block;
     margin: 0;
-    max-width: 100%;
+    width: 100%;
     height: auto;
 }
 
-.event::after {
-    content: '';
-    display: table;
-    clear: both;
+/* Das Poster der Event-Seite immer im Original (Kopierer-Look nur auf Teasern und bei den Künstler:innen) */
+.fz .event-img-wrapper img { filter: none; }
+.fz .event-img-wrapper::after { display: none; }
+
+.event-header { min-width: 0; }
+
+.fz-event-date {
+    display: inline-block;
+    margin: 0 0 0.6rem;
+    padding: 0.2em 0.7em;
+    background: #000;
+    color: #fff;
+    font-size: clamp(0.95rem, 2.2vw, 1.15rem);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transform: rotate(-1deg);
+    /* Konzerte: harter Versatz-Schatten in Grün (Konzertfarbe) */
+    box-shadow: 0.3rem 0.3rem 0 var(--multi);
 }
 
-.date-cancelled {
-    text-decoration: line-through;
+/* Vereinstreffen: Textmarker-Gelb statt Konzert-Grün */
+.fz-event-date.is-community {
+    background: var(--mark);
+    color: #000;
+    border: 0.15rem solid #000;
+    box-shadow: none;
+}
+
+.date-cancelled { text-decoration: line-through; }
+
+.datediff {
+    margin: 0 0 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* Laufende Ausstellung o. Ä.: Rasterkasten wie „Läuft aktuell“ auf der Startseite */
+.datediff.ongoing {
+    display: block;
+    width: fit-content;
+    margin-top: 0.9rem;
+    padding: 0.4rem 3.5rem 0.4rem 1rem;
+    border: 0.2rem solid #000;
+    background: #fff;
+    font-weight: 900;
+}
+
+.title {
+    margin: 0.4rem 0 1rem;
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+    font-weight: 900;
+    line-height: 1.02;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+.community-stamp {
+    display: block;
+    width: fit-content;
+    text-align: left;
+    margin: 0 0 0.75rem;
+    padding: 0.2rem 0.7rem;
+    border: 0.2rem dashed black;
+    background: var(--mark);
+    font-size: clamp(0.8rem, 1.6vw, 0.95rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transform: rotate(-1.5deg);
 }
 
 .cancelled-display {
-    color: red;
+    color: var(--alert);
     font-size: clamp(2rem, 8vw, 4rem);
     font-weight: 900;
     letter-spacing: 0.1em;
     font-family: "Geologica";
-    text-align: center;
 }
 
 .cancelled-stamp {
@@ -229,158 +249,41 @@ function copyLink() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(45deg);
-    color: red;
+    color: var(--alert);
     font-size: clamp(2rem, 6vw, 3.5rem);
     font-weight: 900;
     letter-spacing: 0.15em;
-    border: 5px solid red;
+    border: 5px solid var(--alert);
     padding: 0.5rem 1.5rem;
     white-space: nowrap;
     pointer-events: none;
     background: rgba(255,255,255,0.15);
 }
 
-.artist-img {
-    float: left;
-    margin: 0 1.5rem 1rem 0;
-    max-width: min(45%, 280px);
-    height: auto;
-}
-
-.artist-name-mobile {
-    display: none;
-}
-
-@media (max-width: 500px) {
-    .artist-img {
-        float: none;
-        max-width: 100%;
-        margin: 0 0 1rem;
-    }
-    .artist .artist-name-mobile {
-        display: block;
-        margin: 0 0 0.75rem;
-        text-align: left;
-    }
-    .artist-name-desktop {
-        display: none;
-    }
-}
-
-.artist-text {
-    overflow: hidden;
-}
-
-.artist-text h2 {
-    margin: 0 0 0.75rem;
-    text-align: left;
-}
-
-.artist-text p {
-    text-align: left;
-    line-height: 1.65;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-}
-
-.description :deep(p) {
-  margin: 0 0 0.9em !important;
-  white-space: normal;
-}
-
-.description :deep(p:last-child) {
-  margin-bottom: 0 !important;
-}
-
-/* Flex items default to min-width:auto, which uses the longest unbreakable
-   run (e.g. "AAAAaaaahhhh!!!") as a hard minimum and defeats break-word,
-   causing horizontal overflow. min-width:0 lets it shrink to the column. */
-.description {
-  min-width: 0;
-  width: 100%;
-  text-align: left;
-  line-height: 1.65;
-  white-space: normal;
-}
-
-.artist p {
-  text-align: left;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  min-width: 0;
-  width: 100%;
-}
-
-.share-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  justify-content: flex-start;
-}
-
-.share-btn {
-  padding: 0.5em 1.2em;
-  font-size: clamp(0.85rem, 1.5vw, 1rem);
-  letter-spacing: normal;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-}
-
-.event {
-    display: block;
-    max-width: 75ch;
-    margin: auto;
-}
-
-.date {
-    font-size: clamp(1.1rem, 5vw, 1.75rem);
-    margin: 0 0 0.25rem;
-    text-align: left;
-}
-
-.datediff {
-    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
-    margin: 0 0 0.5rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-align: left;
-}
-
-.title {
-    font-size: clamp(1.5rem, 7vw, 3.5rem);
-    margin: 0.5rem 0 1rem;
-    text-align: left;
-}
-
 .event-meta {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-start;
     gap: 0.75rem;
     margin: 0.5rem 0 1rem;
-    width: 100%;
 }
 
 .price-badge {
-    font-size: 1em;
-    font-weight: 700;
-    letter-spacing: 0.4em;
-    background: black;
-    color: white;
-    padding: 0.7em 1em;
     display: inline-block;
+    padding: 0.6em 1em;
+    border: 0.15rem solid #000;
+    border-left: 0.5rem solid var(--multi);
+    background: var(--soft);
+    color: #000;
+    font-weight: 900;
+    letter-spacing: 0.1em;
 }
 
 .ticket-btn {
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    padding: 0.35em 1.1em;
+    padding: 0.45em 1.1em;
     font-size: 0.85em;
     cursor: pointer;
 }
@@ -389,28 +292,131 @@ function copyLink() {
     font-size: 0.8em;
     font-weight: 600;
     letter-spacing: 0.12em;
-    opacity: 0.85;
 }
 
 .ticket-cta {
-    font-size: 1em;
     font-weight: 700;
-    letter-spacing: 0.4em;
+    letter-spacing: 0.3em;
+}
+
+.share-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.share-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45em 0.9em;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+}
+
+/* Beschreibung kommt als HTML aus dem Editor; min-width:0 verhindert Überlauf durch lange Wörter */
+.description {
+    min-width: 0;
+    max-width: 70ch;
+    text-align: left;
+    line-height: 1.65;
+    white-space: normal;
+    overflow-wrap: break-word;
+}
+
+.description :deep(p) {
+    margin: 0 0 0.9em !important;
+    white-space: normal;
+}
+
+.description :deep(p:last-child) { margin-bottom: 0 !important; }
+
+/* ---------- Künstler:innen ---------- */
+.artists {
+    display: grid;
+    gap: 3rem;
+    padding-top: 2rem;
+    border-top: 0.25rem solid #000;
+}
+
+.artists > .fz-label { justify-self: start; margin-bottom: -1.25rem; }
+
+.artist {
+    display: grid;
+    gap: 1.25rem 2.5rem;
+    align-items: start;
+}
+
+@media (min-width: 700px) {
+    .artist.has-img { grid-template-columns: minmax(0, 18rem) minmax(0, 1fr); }
+}
+
+.artist-photo {
+    margin: 0.5rem;
+    transform: rotate(1.2deg);
+}
+
+.artist:nth-child(even) .artist-photo { transform: rotate(-1.2deg); }
+
+.artist-img {
+    display: block;
+    margin: 0;
+    width: 100%;
+    height: auto;
+}
+
+.artist-text { min-width: 0; }
+
+.artist-name {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.4rem, 3.2vw, 1.7rem);
+    font-weight: 900;
+    line-height: 1.05;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.artist-text p {
+    max-width: 70ch;
+    text-align: left;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
 }
 
 .band-website-btn {
-    padding: 0.4em 1.1em;
-    font-size: clamp(0.85rem, 1.5vw, 1rem);
-    letter-spacing: 0.05em;
-    margin-bottom: 1.25rem;
-    clear: both;
+    margin: 1rem 0 0.5rem;
+    padding: 0.45em 0.9em;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
 }
 
-.share-bar-bottom {
-    margin-top: 2.5rem;
-    padding-top: 2rem;
-    border-top: 0.2rem solid black;
+.media-label {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.bandcamp-container { width: 100%; max-width: 780px; margin-bottom: 1rem; }
+.bandcamp-container iframe { width: 100% !important; display: block; height: 175px; }
+
+.video-container {
+    position: relative;
     width: 100%;
+    max-width: 780px;
+    padding-bottom: min(56.25%, 438px);
+    height: 0;
+    margin-bottom: 1rem;
 }
 
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
 </style>

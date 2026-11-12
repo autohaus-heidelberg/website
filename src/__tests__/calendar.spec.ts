@@ -297,6 +297,12 @@ describe('buildIcs', () => {
     expect(ics).toContain('SUMMARY:ABGESAGT: Konzert')
   })
 
+  it('marks community meetings in summary and categories', () => {
+    const ics = buildIcs([{ ...ev('a', '2026-01-05T19:00:00.000Z'), title: 'Plenum', type: 'community' }], { now })
+    expect(ics).toContain('SUMMARY:Treffen: Plenum')
+    expect(ics).toContain('CATEGORIES:Community')
+  })
+
   it('escapes commas, semicolons and newlines', () => {
     const ics = buildIcs([{ ...ev('a', '2026-01-05T19:00:00.000Z'), title: 'A, B; C' }], { now })
     expect(ics).toContain('SUMMARY:A\\, B\\; C')

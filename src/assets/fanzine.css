@@ -1,0 +1,709 @@
+/* DIY-Fanzine-Stil für die öffentliche Startseite und den Community-Bereich.
+   Schwarz/Weiß, Kopierer-/Klebe-/Schreibmaschinen-Ästhetik. Bausteine tragen das Präfix .fz-;
+   der eigentliche Look (Körnung, Ransom-Note, Typewriter) steht im Abschnitt "Look" am Ende. */
+
+.fz {
+    --fz-rule: 0.25rem;
+    --fz-mono: "Courier New", Courier, "Nimbus Mono PS", monospace;
+    /* Riso-Akzente mit fester Bedeutung: Gelb = Verein/Community (Treffen, Gesuche), Grün = Konzerte, Rot = abgesagt */
+    --mark: #ffe600;
+    --alert: #d10000;
+    --multi: #0b8a6c;
+    --soft: #e1f3ec;
+    --hatch: repeating-linear-gradient(-45deg, #6cc3a8 0 0.06rem, transparent 0.06rem 0.5rem);
+    /* Courier ist breit: auf Desktop nicht mit dem globalen 1.5vw mitwachsen (sonst ~23px), mobil bleibt es bei 1rem */
+    font-size: clamp(1rem, 0.5vw + 0.65rem, 1.15rem);
+    max-width: min(95vw, 1200px);
+    margin: 0 auto;
+    padding: 0 0.25rem;
+    text-align: left;
+}
+
+.fz h1, .fz h2, .fz h3, .fz p { margin: 0; }
+.fz h1 { border-bottom: 0; }
+.fz p { white-space: normal; line-height: 1.55; }
+.fz p + p { margin-top: 0.8em; }
+
+/* ---------- Masthead ---------- */
+
+.fz-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    margin-top: 1rem;
+    padding: 0.6rem 1rem 1.1rem;
+    background: #000;
+    color: #fff;
+    font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transform: rotate(-0.3deg);
+    /* ausgerissene Unterkante */
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 97% 100%, 93% 86%, 89% 100%, 84% 87%, 79% 100%, 74% 86%, 69% 100%, 63% 87%, 58% 100%, 53% 86%, 47% 100%, 42% 87%, 36% 100%, 31% 86%, 25% 100%, 20% 87%, 14% 100%, 9% 86%, 4% 100%, 0 86%);
+}
+
+.fz-cover {
+    display: grid;
+    gap: 1.5rem 3rem;
+    align-items: end;
+    padding: 2rem 0 2.5rem;
+    border-bottom: var(--fz-rule) solid #000;
+}
+
+/* Zweispaltig erst ab 1000px: in schmaleren Spalten bricht der Ransom-Titel mitten im Wort um */
+@media (min-width: 1000px) {
+    .fz-cover { grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); align-items: center; }
+}
+
+.fz-title {
+    font-size: clamp(2.4rem, 11vw, 7.5rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.fz-title .fz-line { display: block; }
+/* Zweite Zeile als Untertitel, damit das Cover nicht den ganzen Bildschirm füllt */
+.fz-title .fz-line + .fz-line { font-size: 0.4em; margin-top: 0.3em; letter-spacing: 0.02em; }
+
+.fz-claim {
+    max-width: 42ch;
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+}
+
+.fz-cover-cta { display: flex; flex-wrap: wrap; gap: 1rem 1.25rem; margin-top: 1.25rem; }
+.fz-cover-cta .btn, .fz-cover-cta button { padding: 0.7em 1.2em; }
+
+/* Rasterpunkte (Kopierer-Halbton) in Kästen mit .fz-dots („Läuft aktuell“), von rechts nach links ausblendend, damit der Text lesbar bleibt */
+.fz-dots { position: relative; isolation: isolate; overflow: hidden; }
+.fz-dots::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle, #000 0.08rem, transparent 0.1rem) 0 0 / 0.55rem 0.55rem;
+    -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 65%);
+    mask-image: linear-gradient(to left, #000 0%, transparent 65%);
+    pointer-events: none;
+}
+
+
+/* ---------- Sektionen ---------- */
+
+.fz-section { margin-top: 3rem; }
+
+.fz-label {
+    display: inline-block;
+    padding: 0.25rem 1rem 0.35rem;
+    margin-bottom: 1.25rem;
+    background: #000;
+    color: #fff;
+    font-size: clamp(0.95rem, 2vw, 1.3rem);
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    transform: rotate(-1.2deg);
+    /* ausgerissene Unterkante */
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 96% 100%, 92% 86%, 87% 100%, 82% 87%, 76% 100%, 70% 86%, 64% 100%, 58% 87%, 52% 100%, 46% 86%, 40% 100%, 34% 87%, 28% 100%, 22% 86%, 16% 100%, 10% 87%, 5% 100%, 0 86%);
+}
+
+.fz-h2 {
+    font-size: clamp(1.4rem, 3.2vw, 2rem);
+    font-weight: 900;
+    line-height: 1.05;
+    text-transform: uppercase;
+}
+
+/* ---------- Bausteine: Klebeband, Foto, Kasten ---------- */
+
+.fz-tape {
+    position: absolute;
+    z-index: 2;
+    width: 7rem;
+    height: 1.7rem;
+    background: #fff;
+    border: 0.12rem solid #000;
+    background-image: repeating-linear-gradient(-45deg, #000 0 0.1rem, transparent 0.1rem 0.45rem);
+    opacity: 0.92;
+    pointer-events: none;
+}
+/* Eck-Klebeband: diagonal über die Ecke gelegt, die Ecke liegt in der Bandmitte.
+   --tape-shift schiebt das Band ins Bild: je schmaler das Fenster, desto weniger ragt es über die Ecke
+   hinaus (bis 1330px Breite wächst der Überstand stufenlos). Die 12px Grundversatz halten das längere
+   Band so im Bild, dass es die Ecke überspannt statt nur mit der Spitze aufzuliegen. */
+.fz-tape.tl, .fz-tape.tr { --tape-shift: calc(12px + clamp(0px, calc((1330px - 100vw) * 0.1), 34px)); top: 0; }
+.fz-tape.tl { left: 0; transform: translate(calc(-50% + var(--tape-shift)), -50%) rotate(-45deg); }
+.fz-tape.tr { right: 0; transform: translate(calc(50% - var(--tape-shift)), -50%) rotate(45deg); }
+.fz-tape.tc { top: -0.9rem; left: 50%; margin-left: -3.25rem; transform: rotate(-3deg); }
+
+/* Reißzwecke fürs schwarze Brett: schwarzer Kopf, weißer Glanzpunkt, kurzer Schlagschatten */
+.fz-pin {
+    position: absolute;
+    top: -0.7rem;
+    left: 50%;
+    z-index: 2;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-left: -0.75rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 30%, #fff 0 12%, #000 14%);
+    border: 0.12rem solid #000;
+    box-shadow: 0.25rem 0.35rem 0 rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+}
+.fz-wanted li:nth-child(even) .fz-pin { left: 22%; }
+.fz-wanted li:nth-child(3n) .fz-pin { left: 78%; }
+
+.fz-photo { position: relative; display: block; margin: 0; }
+.fz-photo img {
+    width: 100%;
+    margin: 0;
+    border: 0.35rem solid #000;
+    background: #fff;
+}
+
+.fz-box {
+    position: relative;
+    padding: 1.25rem 1.25rem 1.5rem;
+    border: 0.3rem solid #000;
+    background: #fff;
+}
+
+.fz-box > h2, .fz-box > h3 { margin-bottom: 0.75rem; }
+.fz-box p + .btn, .fz-box p + button, .fz-box p + a { margin-top: 1.25rem; }
+.fz-box .btn, .fz-box button, .fz-cut .btn { margin-top: 1.25rem; padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+
+.fz .btn-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.25rem; }
+.fz .btn-row .btn { margin-top: 0; padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+
+/* Ausschneide-Kasten mit gestrichelter Linie */
+.fz-cut {
+    position: relative;
+    padding: 1.5rem;
+    border: 0.25rem dashed #000;
+    background: #fff;
+}
+
+.fz-stamp {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border: 0.2rem solid #000;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transform: rotate(-4deg);
+}
+
+/* Pop-Art-Sprechblase wie „POW!“ (FanzineBurst.vue): unregelmäßiger Zackenstern mit Farbband, schwarzem Schatten,
+   Strichen und Rasterpunkten; nur Deko, daher aria-hidden. Farbe über --burst-tone (Gelb = Community, Grün = Konzerte). */
+.fz-burst {
+    --burst-tone: var(--mark);
+    position: relative;
+    width: 15em;
+    aspect-ratio: 300 / 220;
+    font-size: 0.85rem;
+    transform: rotate(-7deg);
+    pointer-events: none;
+}
+.fz-burst.multi { --burst-tone: var(--multi); }
+.fz-burst svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.fz-burst-lines polygon { fill: #000; }
+.fz-burst-out { fill: var(--burst-tone); stroke: #000; stroke-width: 3; stroke-linejoin: miter; }
+.fz-burst-shadow { fill: #000; }
+.fz-burst-in { fill: #fff; }
+.fz-burst-dots {
+    position: absolute;
+    inset: 6% 10%;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--burst-tone) 26%, transparent 30%) 0 0 / 0.7em 0.7em;
+    -webkit-mask-image: radial-gradient(ellipse, #000 55%, transparent 72%);
+    mask-image: radial-gradient(ellipse, #000 55%, transparent 72%);
+}
+.fz-burst-text {
+    position: absolute;
+    inset: 0 29%;
+    display: grid;
+    place-items: center;
+    color: #000;
+    font-size: 1.15em;
+    font-weight: 900;
+    font-style: italic;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    text-align: center;
+    text-transform: uppercase;
+}
+/* Auf dem Foto der Titelstory und an der Ecke des Community-Kastens */
+.fz-burst.on-photo { position: absolute; right: -6.5rem; bottom: -4.5rem; z-index: 3; }
+.fz-burst.on-box { position: absolute; top: -4rem; right: 0; z-index: 3; transform: rotate(6deg); }
+@media (max-width: 799px) {
+    .fz-burst.on-photo { width: 11em; font-size: 0.75rem; right: -1rem; bottom: -2rem; }
+    .fz-burst.on-box { display: none; }
+}
+
+/* ---------- Titelstory ---------- */
+
+.fz-feature {
+    display: grid;
+    gap: 2rem;
+    align-items: start;
+}
+
+@media (min-width: 800px) {
+    .fz-feature { grid-template-columns: 5fr 6fr; gap: 3rem; }
+    .fz-feature.no-img { grid-template-columns: 1fr; }
+}
+
+.fz-feature { margin-top: 1.5rem; }
+.fz-feature .fz-photo { transform: rotate(-1.8deg); margin: 0.5rem 0.5rem 0; }
+.fz-feature-date {
+    font-size: clamp(1rem, 2.2vw, 1.2rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.fz-feature-title {
+    margin: 0.4rem 0 1rem !important;
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+.fz-feature-diff { margin-top: 0.5rem; font-weight: 700; letter-spacing: 0.05em; }
+.fz-teaser {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 60ch;
+    font-size: clamp(1rem, 1.8vw, 1.1rem);
+}
+.fz-feature .btn { margin-top: 1.5rem; padding: 0.7em 1.2em; }
+
+.fz-cancelled { text-decoration: line-through; }
+.fz-cancelled-tag { color: var(--alert); font-weight: 900; letter-spacing: 0.1em; margin-right: 0.5rem; text-decoration: none; display: inline-block; }
+
+/* ---------- Programm: Nebenstories + Inhaltsverzeichnis ---------- */
+
+/* Dicke Linie = neue „Seite“ (Cover, Programm, Rubriken); im Programm selbst keine weiteren Trennlinien */
+#programm { padding-bottom: 3rem; border-bottom: var(--fz-rule) solid #000; }
+.fz-sub { margin-top: 3rem; }
+
+.fz-picks {
+    display: grid;
+    gap: 2rem;
+    margin-top: 3rem;
+}
+@media (min-width: 700px) { .fz-picks { grid-template-columns: 1fr 1fr; gap: 2.5rem; } }
+
+.fz-pick { display: block; }
+.fz-pick .fz-photo { margin-bottom: 0.9rem; }
+.fz-pick:nth-child(odd) .fz-photo { transform: rotate(1.2deg); }
+.fz-pick:nth-child(even) .fz-photo { transform: rotate(-1deg); }
+.fz-pick-date { font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(0.9rem, 1.6vw, 1rem); }
+.fz-pick-title { margin-top: 0.2rem !important; font-size: clamp(1.4rem, 3.2vw, 1.8rem); font-weight: 900; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+
+.fz-toc { list-style: none; margin: 0; padding: 0; }
+.fz-toc li { margin: 0; }
+.fz-toc a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.55rem 0.25rem;
+    border-bottom: 0.1rem solid #000;
+    text-decoration: none;
+    font-size: clamp(1rem, 2vw, 1.2rem);
+}
+.fz-toc a:hover { background: #000; color: #fff; }
+.fz-toc .toc-date { flex: none; min-width: 7.5ch; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+.fz-toc .toc-title { min-width: 0; overflow-wrap: anywhere; }
+.fz-toc .toc-lead { flex: 1; align-self: end; margin-bottom: 0.35em; min-width: 1rem; border-bottom: 0.2rem dotted currentColor; }
+.fz-toc .toc-time { flex: none; font-weight: 600; }
+
+@media (max-width: 520px) {
+    .fz-toc .toc-lead { display: none; }
+    .fz-toc .toc-title { flex: 1; }
+}
+
+/* Weiterblättern-Leiste unter dem Programm: eigener Block, gleich breite Buttons */
+.fz-more { display: grid; gap: 1.25rem; margin-top: 2.5rem; padding-top: 1.25rem; border-top: var(--fz-rule) solid #000; }
+.fz-more-label { font-size: 0.85em; font-weight: 900; letter-spacing: 0.2em; text-transform: uppercase; }
+.fz-more .btn { display: block; padding: 1em 1.2em; font-size: clamp(0.95rem, 1.3vw, 1.1rem); letter-spacing: 0.06em; text-align: center; }
+@media (min-width: 700px) {
+    .fz-more { grid-template-columns: repeat(3, 1fr); }
+    .fz-more-label { grid-column: 1 / -1; }
+}
+.fz-more .btn:nth-of-type(1) { transform: rotate(-0.8deg); }
+.fz-more .btn:nth-of-type(2) { transform: rotate(0.6deg); }
+.fz-more .btn:nth-of-type(3) { transform: rotate(-0.4deg); }
+
+.fz-ongoing { margin-top: 2.5rem; }
+.fz-ongoing a { display: block; margin-top: 0.4rem; font-size: clamp(1.1rem, 2.4vw, 1.3rem); font-weight: 900; }
+.fz-empty { padding: 1.5rem 0; font-size: clamp(1.1rem, 2.2vw, 1.2rem); }
+
+/* ---------- Community-Teaser ---------- */
+
+.fz-community { transform: rotate(0.8deg); margin: 3.5rem 0.5rem 0; }
+.fz-community .fz-h2 { margin-bottom: 0.75rem; }
+.fz-community-grid { display: grid; gap: 1.25rem 3rem; align-items: start; }
+@media (min-width: 800px) {
+    .fz-community-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
+    .fz-community-grid > div:first-child { grid-row: 1 / span 2; }
+}
+.fz-community-grid .fz-ad { margin-top: 1.25rem; max-width: none; }
+.fz-door-links { list-style: none; margin: 1rem 0 0; padding: 0; counter-reset: door; display: grid; gap: 0.5rem; }
+.fz-door-links li { margin: 0; counter-increment: door; display: flex; gap: 0.75rem; align-items: baseline; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+.fz-door-links li::before { content: counter(door); display: inline-block; min-width: 1.6em; padding: 0 0.3em; background: #000; color: #fff; text-align: center; transform: rotate(-4deg); }
+.fz-community-note { margin-top: 0.4rem !important; font-size: 0.9em; max-width: 60ch; }
+.fz-community .btn-row { margin-top: 1.25rem; }
+.fz-community .btn { padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz-community-grid .fz-community-next { margin: 0; padding: 0; border: 0; }
+.fz-community-next .lbl { font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
+.fz-community-next a { font-weight: 900; }
+
+/* ---------- Unterer Teil der Startseite: „Gut zu wissen“ und „Kleingedrucktes“ ---------- */
+/* Regel: gestrichelter Kasten = nur der Community-Aufruf, durchgezogene Kasten = praktische Infos, Kleingedrucktes ohne Kasten */
+
+.fz-page { margin-top: 3.5rem; padding-top: 2rem; border-top: var(--fz-rule) solid #000; }
+.fz-info, .fz-print { display: grid; gap: 2rem 2.5rem; align-items: start; }
+.fz-info > .fz-label, .fz-print > .fz-label { justify-self: start; margin-bottom: 0; }
+@media (min-width: 800px) {
+    .fz-info, .fz-print { grid-template-columns: repeat(6, 1fr); }
+    .fz-info > .fz-label, .fz-print > .fz-label { grid-column: 1 / -1; }
+    .fz-info > #lage { grid-column: 1 / span 4; grid-row: 2 / span 2; }
+    .fz-info > #newsletter { grid-column: 5 / span 2; grid-row: 2; }
+    .fz-info > #anfragen { grid-column: 5 / span 2; grid-row: 3; }
+    .fz-print > #about { grid-column: span 4; }
+    .fz-print > #impressum { grid-column: span 2; }
+}
+.fz-info .btn, .fz-info button { padding: 0.45em 0.9em; margin-top: 1.25rem; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz-map { margin-top: 1rem; height: max(300px, 22vh); width: 100%; border: 0.3rem solid #000; }
+.fz-print { font-size: 0.85em; }
+.fz-print .fz-h2 { margin-bottom: 0.5rem; font-size: clamp(1.1rem, 2.2vw, 1.3rem); }
+.fz-about-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+.fz-about-head .fz-h2, .fz-about-head .fz-lang { margin-bottom: 0; }
+
+/* ---------- Community-Seite ---------- */
+
+.fz-page-head { padding: 2rem 0 2rem; border-bottom: var(--fz-rule) solid #000; }
+.fz-page-title { font-size: clamp(2.4rem, 9vw, 5.5rem); font-weight: 900; line-height: 0.95; text-transform: uppercase; overflow-wrap: anywhere; }
+.fz-page-sub { margin-top: 1rem !important; font-size: clamp(1.05rem, 2vw, 1.2rem); }
+
+.fz-wanted { list-style: none; margin: 0; padding: 0.75rem 0 0; display: grid; gap: 1.5rem; }
+@media (min-width: 700px) { .fz-wanted { grid-template-columns: 1fr 1fr; gap: 2rem; } }
+.fz-wanted li { margin: 0; position: relative; }
+.fz-wanted li:nth-child(3n+1) { transform: rotate(-0.8deg); }
+.fz-wanted li:nth-child(3n+2) { transform: rotate(0.9deg); }
+.fz-wanted li:nth-child(3n) { transform: rotate(-0.3deg); }
+/* Gelb nur als Marker-Strich unter dem Titel, nicht als ganze Fläche */
+.fz-wanted h3 { display: inline; padding: 0 0.2em; background: linear-gradient(transparent 50%, var(--mark) 50%); box-decoration-break: clone; -webkit-box-decoration-break: clone; font-size: clamp(1.3rem, 2.8vw, 1.5rem); font-weight: 900; text-transform: uppercase; line-height: 1.3; }
+.fz-wanted h3 + p { margin-top: 0.75rem; }
+
+.fz-meetings { display: grid; gap: 1.75rem; }
+.fz-meeting { display: grid; gap: 0.25rem 1.5rem; padding-bottom: 1.5rem; border-bottom: 0.1rem solid #000; text-decoration: none; }
+@media (min-width: 700px) { .fz-meeting { grid-template-columns: max-content 1fr; } .fz-meeting .when { white-space: nowrap; } }
+.fz-meeting .when { justify-self: start; align-self: start; padding: 0.1rem 0.5rem; background: var(--mark); font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; }
+.fz-meeting .what { font-size: clamp(1.3rem, 2.8vw, 1.6rem); font-weight: 900; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
+.fz-meeting:hover .what { text-decoration: underline; text-decoration-thickness: 0.15em; }
+.fz-meeting-past { opacity: 0.75; }
+.fz-meeting-past .when { padding: 0; background: none; }
+
+/* ---------- Look: Kopierer, Schreibmaschine, Ransom-Note, Marker ---------- */
+
+.fz { font-family: var(--fz-mono); font-weight: 700; position: relative; }
+.fz p, .fz .toc-title, .fz .fz-teaser { font-family: var(--fz-mono); font-weight: 700; letter-spacing: -0.01em; }
+
+/* Kopierer-Körnung über der ganzen Seite (reine Textur, klickt durch) */
+.fz::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0.2;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.1 -0.5'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Schreibmaschinen-Korrektur: falsches Wort durchgestrichen */
+.fz s { text-decoration: line-through; text-decoration-thickness: 0.1em; text-decoration-skip-ink: none; }
+
+/* Zensurbalken: Text ist schwarz auf schwarz, beim Antippen/Drüberfahren/Fokus wird er lesbar */
+.fz-censor {
+    background: #000;
+    color: #000;
+    cursor: pointer;
+    padding: 0 0.15em;
+    transition: color 0.15s;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+.fz-censor:hover, .fz-censor:focus-visible, .fz-censor.open { color: #fff; outline: none; }
+
+/* Die drei Türen: drei Wege, mitzumachen */
+.fz-doors { display: grid; gap: 1.75rem; margin-top: 0.5rem; }
+@media (min-width: 900px) { .fz-doors { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
+.fz-door { display: flex; flex-direction: column; }
+.fz-door .fz-h2 { font-size: clamp(1.2rem, 2.4vw, 1.45rem); margin-bottom: 0.75rem; }
+.fz-door .btn { margin-top: auto; align-self: flex-start; }
+.fz-door p { margin-bottom: 1.25rem; }
+.fz-door-no {
+    position: absolute;
+    top: -1.1rem;
+    left: 1rem;
+    padding: 0 0.7rem;
+    background: #000;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 900;
+    transform: rotate(-4deg);
+}
+.fz-door:nth-child(2) { transform: rotate(0.4deg); }
+.fz-door:nth-child(3) { transform: rotate(-0.4deg); }
+
+/* Beispielabend als Ablaufplan */
+.fz-run { list-style: none; margin: 0; padding: 0; counter-reset: run; border-top: 0.25rem solid #000; }
+.fz-run li { display: grid; grid-template-columns: 12.5rem 1fr; gap: 1rem; padding: 0.7rem 0.25rem; border-bottom: 0.1rem solid #000; margin: 0; }
+.fz-run .run-when { font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+@media (max-width: 560px) { .fz-run li { grid-template-columns: 1fr; gap: 0.1rem; } }
+.fz-meetings-intro { margin-bottom: 1.5rem; max-width: 70ch; }
+
+/* Beschriftung/Wert-Tabelle (Datenblatt der Anfrage-Seite) */
+.fz-form-fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.6rem 1rem; align-items: baseline; margin: 1rem 0 1.25rem; }
+.fz-form-fields dt { font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85em; }
+.fz-form-fields dd { margin: 0; padding-bottom: 0.15rem; border-bottom: 0.1rem dotted #000; min-height: 1.5em; overflow-wrap: anywhere; }
+/* Sprachumschalter in der "Über uns"-Box */
+.fz-lang { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.fz-lang .btn { padding: 0.25em 0.7em; --btn-shadow: 0.15rem; --btn-border: 0.12rem; }
+@media (max-width: 520px) {
+    .fz-form-fields { grid-template-columns: 1fr; gap: 0.1rem; }
+    .fz-form-fields dd { margin-bottom: 0.6rem; }
+}
+
+
+.fz .fz-photo img { filter: grayscale(1) contrast(1.55) brightness(1.05); transition: filter 0.4s; }
+.fz .fz-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0.35rem;
+    background-image: radial-gradient(#000 0.07rem, transparent 0.09rem);
+    background-size: 0.3rem 0.3rem;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    transition: opacity 0.4s;
+    pointer-events: none;
+}
+.fz a:hover .fz-photo img, .fz .fz-photo:hover img, .fz .fz-photo.is-revealed img { filter: none; }
+.fz a:hover .fz-photo::after, .fz .fz-photo:hover::after, .fz .fz-photo.is-revealed::after { opacity: 0; }
+
+/* Titelstory (nächstes Event): Plakat immer in Farbe, ohne Raster */
+.fz .fz-feature .fz-photo img { filter: none; }
+.fz .fz-feature .fz-photo::after { opacity: 0; }
+
+/* Ransom-Note-Titel */
+/* Einspaltig (Buttons rutschen unter den Titel): "CAROUSEL" ist ca. 6,6em breit und füllt die ganze Inhaltsbreite */
+.fz .fz-title { font-size: max(2.2rem, calc((min(95vw, 1200px) - 0.5rem) / 6.8)); line-height: 1.15; }
+/* Ab zwei Spalten ist der Titel nur so breit wie seine Spalte, sonst bricht er mitten im Wort um */
+@media (min-width: 1000px) { .fz .fz-title { font-size: clamp(2.2rem, 8vw, 7rem); } }
+.fz .fz-page-title { font-size: clamp(2.2rem, 8.5vw, 5.8rem); line-height: 1.12; }
+.fz .fz-page-title .fz-line { display: block; margin-bottom: 0.08em; }
+.fz .fz-page-title.long { font-size: clamp(1.8rem, 6vw, 4rem); }
+.fz .fz-title .fz-line { margin-bottom: 0.08em; }
+.fz .fz-ch { display: inline-block; padding: 0 0.04em; margin: 0 0.01em; line-height: 1; }
+.fz .fz-ch-0 { font-family: var(--fz-mono); font-weight: 900; transform: rotate(-3deg); }
+.fz .fz-ch-1 { background: #000; color: #fff; transform: rotate(2deg); padding: 0 0.08em; }
+.fz .fz-ch-2 { font-family: Georgia, "Times New Roman", serif; font-weight: 900; transform: rotate(-1deg) translateY(0.04em); }
+.fz .fz-ch-3 { border: 0.06em solid #000; transform: rotate(3deg); padding: 0 0.06em; }
+.fz .fz-ch-4 { font-family: Geologica, sans-serif; font-weight: 900; transform: rotate(-2deg) translateY(-0.03em); }
+.fz .fz-ch-sp { display: inline-block; width: 0.3em; }
+/* Erster Buchstabe jeder Zeile bündig mit dem Rand, sonst wirkt die Titelkante ausgefranst */
+.fz .fz-line > .fz-ch:first-child { transform: none; padding-left: 0; margin-left: 0; }
+
+.fz .fz-label { font-family: var(--fz-mono); }
+.fz .fz-box { border-width: 0.25rem; box-shadow: 0.5rem 0.5rem 0 #000; }
+.fz .fz-community { transform: rotate(-1.2deg); }
+.fz .fz-stamp { font-family: var(--fz-mono); }
+.fz .fz-h2, .fz .fz-feature-title, .fz .fz-pick-title { font-family: Geologica, sans-serif; }
+
+/* Datum der Titelstory wie mit Marker/Label-Gerät aufgeklebt */
+.fz .fz-feature-date { display: inline-block; padding: 0.2em 0.7em; background: #000; color: #fff; transform: rotate(-1deg); }
+
+/* Handgezogener Marker-Strich unter dem Untertitel */
+.fz .fz-title .fz-line + .fz-line {
+    width: fit-content;
+    padding-bottom: 0.3em;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 12' preserveAspectRatio='none'><path d='M2 7 C 30 2, 60 11, 100 6 S 170 3, 238 8' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'/></svg>") bottom / 100% 0.35em no-repeat;
+}
+
+/* Links in der schwarzen Titelleiste müssen weiß sein (sonst schwarz auf schwarz) */
+.fz-strip a, .fz-strip a:visited, .fz-strip a:hover, .fz-strip a:focus { color: #fff; }
+.fz-strip a:hover { text-decoration-thickness: 0.25em; }
+
+/* Kleinanzeige im Community-Teaser */
+.fz-ad {
+    margin: 1.25rem 0 0;
+    max-width: 40ch;
+    border: 0.2rem solid #000;
+    background: #fff;
+    /* zweiter, dünner Rahmen wie bei einer Zeitungsanzeige */
+    box-shadow: inset 0 0 0 0.2rem #fff, inset 0 0 0 0.3rem #000;
+    transform: rotate(-1deg);
+}
+.fz-ad-head { padding: 0.5rem 1rem; background: #000; color: #fff; font-size: 0.8em; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; }
+.fz-ad-body { display: grid; gap: 0.8rem; padding: 1rem 1rem 0.6rem; }
+.fz-ad-row { display: grid; grid-template-columns: 5.5ch 1fr; gap: 0.9rem; align-items: baseline; }
+.fz-ad-key { font-weight: 900; letter-spacing: 0.05em; }
+.fz-ad-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.fz-ad-list li { margin: 0; }
+/* Marker-Strich unter den Gesuchen, in der Farbe der Gesuchs-Zettel */
+.fz-hl { background: linear-gradient(transparent 50%, var(--mark) 50%); box-decoration-break: clone; -webkit-box-decoration-break: clone; padding: 0 0.2em; }
+.fz-ad-foot { margin: 0.4rem 0 0 !important; padding: 0.7rem 1rem 0.8rem; border-top: 0.15rem dashed #000; font-size: 0.85em; }
+
+/* Breite Seiten (Kalender) */
+.fz.fz-wide { max-width: var(--wide-page-width); }
+
+/* Archiv: Jahresüberschriften, Umschalter, Flyer-Galerie als aufgeklebte Kopien */
+.fz-year { margin: 2.5rem 0 0.5rem; }
+.fz-year:first-child { margin-top: 0; }
+.fz .fz-toggle { padding: 0.45em 0.9em; font-size: 0.8rem; letter-spacing: 0.08em; }
+.fz .fz-toggle.on { background: #000; color: #fff; }
+.fz-page-head .btn-row { margin-top: 1.5rem; }
+
+.fz-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 1.75rem 1.25rem; align-items: start; }
+.fz-gallery .flyer { margin: 0.4rem; }
+.fz-gallery .flyer:nth-child(3n+1) { transform: rotate(-1.2deg); }
+.fz-gallery .flyer:nth-child(3n+2) { transform: rotate(0.9deg); }
+.fz-gallery .flyer:nth-child(3n) { transform: rotate(-0.4deg); }
+.fz-gallery .flyer img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; background: #e8e8e8; border-width: 0.25rem; }
+
+/* Impressum und andere Rechtstexte: ruhig und gut lesbar */
+.fz-legal { display: grid; gap: 2rem; margin-top: 2.5rem; max-width: 75ch; }
+.fz-legal .fz-h2 { margin-bottom: 0.5rem; font-size: clamp(1.1rem, 2.2vw, 1.3rem); }
+.fz-legal p { overflow-wrap: anywhere; }
+
+/* Geheimer Admin-Zugang für Eingeloggte: kleines Anarchie-A, wackelt beim Drüberfahren */
+.fz-admin {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 20;
+    padding: 0.2rem 0.45rem;
+    background: #fff;
+    border: 0.15rem solid #000;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0;
+    transform: rotate(-8deg);
+    transition: transform 0.15s;
+}
+.fz-admin:hover { transform: rotate(6deg) scale(1.25); }
+
+/* ---------- Easter Eggs ---------- */
+
+/* Prüfstempel: erscheint nach mehrfachem Tippen auf den Spruch in der Kopfleiste der Startseite (utils/plakette.ts) */
+.fz-cover { position: relative; }
+.fz-egg { cursor: default; user-select: none; -webkit-user-select: none; }
+.fz .fz-plakette {
+    position: absolute;
+    z-index: 4;
+    /* rechts neben dem Titel, direkt vor der 22rem breiten Seitenspalte: verdeckt weder Claim noch Buttons */
+    right: calc(22rem + 0.75rem);
+    bottom: -1.5rem;
+    display: grid;
+    justify-items: end;
+    gap: 0.4rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: #000;
+    font-family: var(--fz-mono);
+    letter-spacing: 0;
+    cursor: pointer;
+    transform: rotate(-11deg);
+    animation: fz-stamp-in 0.22s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.fz .fz-plakette:hover { filter: none; }
+.fz-plakette .pl-ring {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 0.15rem;
+    width: 9rem;
+    height: 9rem;
+    border: 0.3rem solid #000;
+    border-radius: 50%;
+    outline: 0.12rem solid #000;
+    outline-offset: -0.65rem;
+    background: #fff;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+.fz-plakette .pl-top { font-size: 0.52rem; font-weight: 900; letter-spacing: 0.08em; }
+.fz-plakette .pl-main { font-family: Geologica, sans-serif; font-size: 1.15rem; font-weight: 900; letter-spacing: 0.02em; }
+.fz-plakette .pl-sub { font-size: 0.7rem; font-weight: 900; }
+.fz-plakette .pl-date { margin-top: 0.2rem; padding: 0.1rem 0.4rem; background: #000; color: #fff; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; }
+.fz-plakette .pl-foot { padding: 0.1rem 0.4rem; background: #fff; font-size: 0.65rem; font-weight: 700; }
+@keyframes fz-stamp-in {
+    from { opacity: 0; transform: rotate(-11deg) scale(2.2); }
+    to { opacity: 1; transform: rotate(-11deg) scale(1); }
+}
+/* Einspaltig steht der Stempel unter den Buttons im Fluss, damit er nichts verdeckt, und darf größer sein */
+@media (max-width: 999px) {
+    .fz .fz-plakette { position: static; justify-self: end; justify-items: center; margin: -0.5rem 0.5rem -0.5rem 0; }
+    .fz-plakette .pl-ring { width: 10.5rem; height: 10.5rem; }
+    .fz-plakette .pl-top { font-size: 0.6rem; }
+    .fz-plakette .pl-main { font-size: 1.35rem; }
+    .fz-plakette .pl-sub { font-size: 0.8rem; }
+    .fz-plakette .pl-date { font-size: 0.65rem; }
+}
+
+/* Zwei Gänse hinterm Zaun (Fehlerseite): Gruß an das Fanzine „Good Clean Fun“. Sie stehen auf der dicken Linie des Seitenkopfs. */
+.fz-page-head.has-geese { padding-bottom: 0; }
+.fz .fz-geese {
+    position: relative;
+    display: block;
+    width: min(15rem, 62%);
+    margin: 1.75rem 0 0 auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+.fz .fz-geese:hover { filter: none; }
+.fz .fz-geese:active { transform: none; }
+.fz-geese svg { display: block; width: 100%; height: auto; }
+.fz-geese .goose { fill: #fff; stroke: #000; stroke-width: 3; stroke-linejoin: round; }
+.fz-geese .shade { fill: url(#fz-geese-dots); }
+.fz-geese .wing { fill: none; stroke: #000; stroke-width: 2; stroke-linecap: round; }
+.fz-geese .beak { fill: #000; stroke: #000; stroke-width: 2; stroke-linejoin: round; }
+.fz-geese .eye { fill: #000; }
+.fz-geese .fence path { fill: none; stroke: #000; stroke-width: 1; }
+.fz-geese-say {
+    position: absolute;
+    left: -2.5rem;
+    top: -0.25rem;
+    padding: 0.15rem 0.5rem;
+    background: #000;
+    color: #fff;
+    font-family: var(--fz-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    transform: rotate(-4deg);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.fz-geese:hover .fz-geese-say, .fz-geese:focus-visible .fz-geese-say, .fz-geese.open .fz-geese-say { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+    .fz * { transition: none !important; }
+    .fz .fz-plakette { animation: none; }
+}
