@@ -14,6 +14,7 @@ import { claim } from "@/utils/claims";
 import { doors, mailto, support, wantedLine } from "@/utils/communityContent";
 import { aboutTexts, type AboutLang } from "@/utils/about";
 import FanzineBurst from "@/components/FanzineBurst.vue";
+import { PLAKETTE_TAPS, nextInspection } from "@/utils/plakette";
 import { useAuthStore } from "@/stores/auth";
 
 dayjs.extend(relativeTime);
@@ -63,6 +64,11 @@ const titleLines = ["Carousel", "im alten Autohaus"];
 
 const censorOpen = ref(false);
 
+// Easter Egg: mehrfach auf den Spruch in der Kopfleiste tippen → Prüfstempel auf dem Cover
+const plaketteTaps = ref(0);
+const stamped = computed(() => plaketteTaps.value >= PLAKETTE_TAPS);
+const nextHu = nextInspection();
+
 const wantedFallback = wantedLine([]);
 
 const lang = ref<AboutLang>("de");
@@ -78,7 +84,7 @@ const zoom = ref(17);
   header.fz-masthead
     .fz-strip
       span Nr. {{ issueNo }} · {{ issueMonth }}
-      span Gebraucht, aber gut in Schuss
+      span.fz-egg(@click="plaketteTaps++") Gebraucht, aber gut in Schuss
     .fz-cover
       h1.fz-title(aria-label="Carousel im alten Autohaus")
         span.fz-line(v-for="(line, li) in titleLines" :key="li" aria-hidden="true")
@@ -100,6 +106,13 @@ const zoom = ref(17);
         .fz-cover-cta
           router-link.btn(:to="{ name: 'calendar' }") Kalender
           router-link.btn(:to="{ name: 'community' }") Mach mit!
+      button.fz-plakette(v-if="stamped" type="button" title="Antippen zum Entfernen" @click="plaketteTaps = 0")
+        span.pl-ring
+          span.pl-top Hauptuntersuchung
+          span.pl-main Bestanden
+          span.pl-sub Ohne Mängel*
+          span.pl-date Nächste HU {{ nextHu }}
+        span.pl-foot *Wir können für nichts garantieren.
 
   //- ===== Programm =====
   section.fz-section#programm
