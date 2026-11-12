@@ -5,10 +5,8 @@
     router-link.btn.btn-admin(v-if="!isCommunity" :to="`/admin/events/${event.id}?tab=checklist`") Checkliste
     router-link.btn.btn-admin(:to="`/admin/events/${event.id}`") Bearbeiten
 
+  //- Unbekannte Events fängt die Route ab und zeigt die 404-Seite
   EventDisplay(v-if="event" :event="event")
-  .error(v-else)
-    p Falsch abgebogen: Dieses Event gibt es nicht (mehr).
-    router-link.btn(:to="{ name: 'home' }") Zur Titelseite
 </template>
 
 
@@ -16,7 +14,7 @@
 import EventDisplay from '@/components/EventDisplay.vue'
 import FanzineNav from '@/components/FanzineNav.vue'
 import { isCommunity as isCommunityEvent } from '@/utils/community'
-import { events } from "../events"
+import { findEvent } from "../events"
 import { computed } from "vue"
 import { useAuthStore } from '@/stores/auth'
 
@@ -24,9 +22,7 @@ const props = defineProps<{id: string}>()
 
 const authStore = useAuthStore()
 
-const event = computed(() => {
-  return events.find(item => item.id === decodeURI(props.id))
-})
+const event = computed(() => findEvent(props.id))
 
 const isCommunity = computed(() => !!event.value && isCommunityEvent(event.value))
 </script>
@@ -62,12 +58,5 @@ const isCommunity = computed(() => !!event.value && isCommunityEvent(event.value
     padding: 0.75rem 1rem;
     letter-spacing: 0.1em;
   }
-}
-
-.error {
-  text-align: center;
-  padding: 4rem 2rem;
-  font-size: 1.5rem;
-  font-weight: 600;
 }
 </style>

@@ -113,3 +113,23 @@ describe('Router Navigation Guards', () => {
     expect(router.currentRoute.value.query.redirect).toBe('/admin/events')
   })
 })
+
+describe('Event-Route', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('zeigt bei unbekanntem Event die 404-Seite und behält die Adresse', async () => {
+    const { default: router } = await import('@/router')
+    await router.push('/event/gibts-nicht?x=1')
+    expect(router.currentRoute.value.name).toBe('not-found')
+    expect(router.currentRoute.value.fullPath).toBe('/event/gibts-nicht?x=1')
+  })
+
+  it('zeigt vorhandene Events normal an', async () => {
+    const { default: router } = await import('@/router')
+    const { events } = await import('@/events')
+    await router.push({ name: 'event', params: { id: encodeURI(events[0].id) } })
+    expect(router.currentRoute.value.name).toBe('event')
+  })
+})
