@@ -603,6 +603,107 @@
 }
 .fz-admin:hover { transform: rotate(6deg) scale(1.25); }
 
+/* ---------- Easter Eggs ---------- */
+
+/* Prüfstempel: erscheint nach mehrfachem Tippen auf den Spruch in der Kopfleiste der Startseite (utils/plakette.ts) */
+.fz-cover { position: relative; }
+.fz-egg { cursor: default; user-select: none; -webkit-user-select: none; }
+.fz .fz-plakette {
+    position: absolute;
+    z-index: 4;
+    /* rechts neben dem Titel, direkt vor der 22rem breiten Seitenspalte: verdeckt weder Claim noch Buttons */
+    right: calc(22rem + 0.75rem);
+    bottom: -1.5rem;
+    display: grid;
+    justify-items: end;
+    gap: 0.4rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: #000;
+    font-family: var(--fz-mono);
+    letter-spacing: 0;
+    cursor: pointer;
+    transform: rotate(-11deg);
+    animation: fz-stamp-in 0.22s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.fz .fz-plakette:hover { filter: none; }
+.fz-plakette .pl-ring {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 0.15rem;
+    width: 9rem;
+    height: 9rem;
+    border: 0.3rem solid #000;
+    border-radius: 50%;
+    outline: 0.12rem solid #000;
+    outline-offset: -0.65rem;
+    background: #fff;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+.fz-plakette .pl-top { font-size: 0.52rem; font-weight: 900; letter-spacing: 0.08em; }
+.fz-plakette .pl-main { font-family: Geologica, sans-serif; font-size: 1.15rem; font-weight: 900; letter-spacing: 0.02em; }
+.fz-plakette .pl-sub { font-size: 0.7rem; font-weight: 900; }
+.fz-plakette .pl-date { margin-top: 0.2rem; padding: 0.1rem 0.4rem; background: #000; color: #fff; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; }
+.fz-plakette .pl-foot { padding: 0.1rem 0.4rem; background: #fff; font-size: 0.65rem; font-weight: 700; }
+@keyframes fz-stamp-in {
+    from { opacity: 0; transform: rotate(-11deg) scale(2.2); }
+    to { opacity: 1; transform: rotate(-11deg) scale(1); }
+}
+/* Einspaltig steht der Stempel unter den Buttons im Fluss, damit er nichts verdeckt, und darf größer sein */
+@media (max-width: 999px) {
+    .fz .fz-plakette { position: static; justify-self: end; justify-items: center; margin: -0.5rem 0.5rem -0.5rem 0; }
+    .fz-plakette .pl-ring { width: 10.5rem; height: 10.5rem; }
+    .fz-plakette .pl-top { font-size: 0.6rem; }
+    .fz-plakette .pl-main { font-size: 1.35rem; }
+    .fz-plakette .pl-sub { font-size: 0.8rem; }
+    .fz-plakette .pl-date { font-size: 0.65rem; }
+}
+
+/* Zwei Gänse hinterm Zaun (Fehlerseite): Gruß an das Fanzine „Good Clean Fun“. Sie stehen auf der dicken Linie des Seitenkopfs. */
+.fz-page-head.has-geese { padding-bottom: 0; }
+.fz .fz-geese {
+    position: relative;
+    display: block;
+    width: min(15rem, 62%);
+    margin: 1.75rem 0 0 auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    cursor: pointer;
+}
+.fz .fz-geese:hover { filter: none; }
+.fz .fz-geese:active { transform: none; }
+.fz-geese svg { display: block; width: 100%; height: auto; }
+.fz-geese .goose { fill: #fff; stroke: #000; stroke-width: 3; stroke-linejoin: round; }
+.fz-geese .shade { fill: url(#fz-geese-dots); }
+.fz-geese .wing { fill: none; stroke: #000; stroke-width: 2; stroke-linecap: round; }
+.fz-geese .beak { fill: #000; stroke: #000; stroke-width: 2; stroke-linejoin: round; }
+.fz-geese .eye { fill: #000; }
+.fz-geese .fence path { fill: none; stroke: #000; stroke-width: 1; }
+.fz-geese-say {
+    position: absolute;
+    left: -2.5rem;
+    top: -0.25rem;
+    padding: 0.15rem 0.5rem;
+    background: #000;
+    color: #fff;
+    font-family: var(--fz-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    transform: rotate(-4deg);
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+.fz-geese:hover .fz-geese-say, .fz-geese:focus-visible .fz-geese-say, .fz-geese.open .fz-geese-say { opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
     .fz * { transition: none !important; }
+    .fz .fz-plakette { animation: none; }
 }
