@@ -3,7 +3,7 @@ import { CONTACT_EMAIL, doors, eveningSteps, mailto, support, wantedLine } from 
 
 describe('communityContent', () => {
   it('builds a mailto link with an encoded subject', () => {
-    expect(mailto('Helfer*in werden')).toBe(`mailto:${CONTACT_EMAIL}?subject=Helfer%3Ain%20werden`)
+    expect(mailto('Helfer*in werden')).toBe(`mailto:${CONTACT_EMAIL}?subject=Helfer*in%20werden`)
   })
 
   it('has the three doors and every door has an action', () => {
