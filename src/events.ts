@@ -34,3 +34,8 @@ export type Event = {
 };
 
 export const events: Event[] = mergeById(eventsJson as Event[], localData<Event[]>('events'));
+
+/** Event zur ID aus der URL (Links kodieren die ID mit encodeURI). */
+export function findEvent(id: string): Event | undefined {
+  return events.find(item => item.id === decodeURI(id));
+}

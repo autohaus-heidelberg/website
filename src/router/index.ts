@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
+import { findEvent } from '../events'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,7 +22,14 @@ const router = createRouter({
       path: '/event/:id',
       name: 'event',
       props: true,
-      component: () => import('../views/Event.vue')
+      component: () => import('../views/Event.vue'),
+      // Unbekannte Events zeigen die 404-Seite, die Adresse bleibt dabei stehen
+      beforeEnter: (to) => findEvent(String(to.params.id)) ? true : {
+        name: 'not-found',
+        params: { pathMatch: to.path.slice(1).split('/') },
+        query: to.query,
+        hash: to.hash,
+      }
     },
     {
       path: '/past-events/',

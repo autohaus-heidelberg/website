@@ -2,6 +2,12 @@
 import { ransomChars } from "@/utils/ransom";
 import FanzineNav from "@/components/FanzineNav.vue";
 import FanzineGeese from "@/components/FanzineGeese.vue";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+
+// Alte Links auf gelöschte oder umbenannte Events bekommen einen eigenen Hinweis
+const route = useRoute();
+const isEvent = computed(() => route.path.startsWith("/event/"));
 </script>
 
 <template lang="pug">
@@ -11,7 +17,8 @@ import FanzineGeese from "@/components/FanzineGeese.vue";
     h1.fz-page-title.long(aria-label="Diese Ausfahrt gibt es nicht")
       span.fz-line(aria-hidden="true" v-for="(line, li) in ['Diese Ausfahrt', 'gibt es nicht']" :key="li")
         span.fz-ch(v-for="(c, i) in ransomChars(line, li)" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Wer soll da noch wissen, wo oben und unten ist? Wir sicher nicht! In Zusammenarbeit mit dem TÜV-Südwest wurde diese Seite stillgelegt.
+    p.fz-page-sub(v-if="isEvent") Dieses Event gibt es nicht (mehr). Vielleicht hat sich der Link geändert, ältere Events findest du im Archiv.
+    p.fz-page-sub(v-else) Wer soll da noch wissen, wo oben und unten ist? Wir sicher nicht! In Zusammenarbeit mit dem TÜV-Südwest wurde diese Seite stillgelegt.
     .fz-404-foot
       .fz-help
         .fz-stamp Pannenhilfe
@@ -20,6 +27,7 @@ import FanzineGeese from "@/components/FanzineGeese.vue";
         .btn-row
           router-link.btn(:to="{ name: 'home' }") Zurück zur Startseite
           router-link.btn(:to="{ name: 'calendar' }") Zum Kalender
+          router-link.btn(v-if="isEvent" :to="{ name: 'pastEvents' }") Zum Archiv
       FanzineGeese
 </template>
 
