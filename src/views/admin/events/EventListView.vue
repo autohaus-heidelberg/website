@@ -739,11 +739,12 @@ function toggleCountry(country: string) {
   expandedCountry.value = expandedCountry.value === country ? null : country
 }
 
-// Artist-Herkunft wird per echter Websuche recherchiert (langsam, und mit sehr
-// knappem Gemini-Freikontingent, geteilt mit allen anderen KI-Features der
-// App). Deshalb hier nur EIN Aufruf statt einer Polling-Schleife, und beim
-// Seitenaufruf (onMounted) `readonly`, damit reines Öffnen der Seite nicht
-// von selbst Kontingent verbrennt — neu schätzen passiert nur auf Knopfdruck.
+// Artist-Herkunft wird per echter Websuche (Google-Search-Grounding)
+// recherchiert: langsam, und im Gemini-Freikontingent auf ~40 Aufrufe à 10
+// Künstler pro Tag begrenzt. Jeder Aufruf bearbeitet einen Block, das Backend
+// merkt sich die restliche Warteschlange; wir pollen, bis nichts mehr offen ist,
+// das Kontingent leer ist oder kein Fortschritt mehr passiert. Beim Seitenaufruf
+// (onMounted) `readonly`, damit reines Öffnen der Seite kein Kontingent verbrennt.
 async function loadAiTags(force = false, retryUnknown = false, readonly = false) {
   if (force && !confirm('Alle Kategorien/Länder neu von der KI schätzen lassen? Das überschreibt auch bereits von Hand korrigierte Werte.')) {
     return
@@ -752,21 +753,26 @@ async function loadAiTags(force = false, retryUnknown = false, readonly = false)
   aiError.value = ''
   aiPending.value = 0
   try {
-    // First call — may return with pending > 0 if the artist list is large.
-    // Keep polling until all are classified (each call processes one chunk).
     let res = await statisticsService.getAiTags(force, retryUnknown, readonly)
     aiTags.value = res
     aiPending.value = res.artist_countries_pending
 
-    // Auto-poll for remaining chunks (force/retryUnknown only needed on first call)
-    while (res.artist_countries_pending > 0) {
+    let lastPending = Infinity
+    while (!readonly && res.artist_countries_pending > 0
+      && !res.artist_countries_quota_exhausted && res.artist_countries_pending < lastPending) {
+      lastPending = res.artist_countries_pending
       res = await statisticsService.getAiTags(false, false, false)
-      // Merge new countries into existing result
       if (aiTags.value) {
         aiTags.value.artist_countries = { ...aiTags.value.artist_countries, ...res.artist_countries }
         aiTags.value.artist_countries_pending = res.artist_countries_pending
       }
       aiPending.value = res.artist_countries_pending
+    }
+
+    if (!readonly && res.artist_countries_pending > 0) {
+      aiError.value = res.artist_countries_quota_exhausted
+        ? 'Tageskontingent für die Websuche aufgebraucht – ab 9 Uhr morgens geht es per Knopfdruck an derselben Stelle weiter.'
+        : 'KI gerade nicht erreichbar – später erneut versuchen, es geht an derselben Stelle weiter.'
     }
   } catch (e: any) {
     aiError.value = e.message || 'KI-Schätzung fehlgeschlagen'
@@ -1202,7 +1208,7 @@ onMounted(() => {
       p.ai-disclaimer(v-if="aiTags")
         | KI-Schätzung — Künstler-Herkunft wird per Websuche recherchiert (u.a. Bandcamp/SoundCloud), Veranstaltungsart aus Titel/Beschreibung. Bitte vor offizieller Verwendung prüfen und ggf. korrigieren (Klick auf einen Eintrag).
       p.ai-disclaimer(v-if="!isLoadingAi && aiPending > 0")
-        | Noch {{ aiPending }} Künstler offen — einfach den Button nochmal klicken (ggf. an einem anderen Tag, falls das Suchlimit erreicht ist).
+        | Noch {{ aiPending }} Künstler offen — „Neue Events/Künstler schätzen“ klicken, um weiterzumachen.
 
       .ai-columns(v-if="aiTags")
         .ai-column
