@@ -1293,10 +1293,9 @@ function applyCalcCorrection() {
   dealCalcFrozen.value = w.correctedFrozen.toFixed(2)
 }
 
-function cashShortfallText(s: { label: string; payouts: number; available: number; shortfall: number }): string {
-  return `⚠️ Aus der ${s.label} bezahlt: ${formatCurrency(s.payouts)} — verfügbar waren nur ${formatCurrency(s.available)} (Bargeld über dem Wechselgeld). `
-    + `Die Differenz von ${formatCurrency(s.shortfall)} kam aus dem Wechselgeld oder einer anderen Kasse? `
-    + 'Bei Überweisung oder anderer Kasse „Bezahlt aus“ anpassen.'
+function cashShortfallText(s: { label: string; payouts: number; available: number; shortfall: number; changeMoney: number }): string {
+  return `⚠️ Aus der ${s.label} bezahlt: ${formatCurrency(s.payouts)}. Ohne Wechselgeld lagen nur ${formatCurrency(s.available)} drin, `
+    + `das Wechselgeld (${formatCurrency(s.changeMoney)}) reicht für die fehlenden ${formatCurrency(s.shortfall)} nicht. „Bezahlt aus“ prüfen.`
 }
 
 // Vergleich ohne Wechselgeld auf beiden Seiten — egal, ob es im Rechner im
@@ -1311,8 +1310,8 @@ const dealCalcCashMatchesCount = computed(() => {
 })
 
 // Hinweis (keine Sperre), wenn aus einer Kasse mehr bezahlt wurde, als darin
-// über dem Wechselgeld lag — die Differenz kam dann aus dem Wechselgeld oder
-// einer anderen Kasse. Einlass: Stand vor der Auszahlung = eingefrorener
+// über dem Wechselgeld lag und auch das Wechselgeld die Differenz nicht deckt —
+// sie muss dann aus einer anderen Kasse kommen. Einlass: Stand vor der Auszahlung = eingefrorener
 // Rechnerwert, sonst die Kassenzählung + Auszahlungen. Bar: nur Kassenzählung.
 const CASH_SHORTFALL_SOURCES = [
   { source: 'entrance_cash', label: 'Einlasskasse' },
@@ -1327,8 +1326,11 @@ const cashShortfalls = computed(() =>
     const availableBefore = source === 'entrance_cash' && dealCalcFrozen.value !== null
       ? (parseFloat(dealCalcFrozen.value) || 0) - dealCalcChangeAmount.value
       : counted
-    const hit = detectCashShortfall(payouts, availableBefore)
-    return hit ? [{ source, label, ...hit }] : []
+    const changeMoney = source === 'entrance_cash' && dealCalcFrozen.value !== null
+      ? dealCalcChangeAmount.value
+      : parseFloat(entry?.change_money || '0') || 0
+    const hit = detectCashShortfall(payouts, availableBefore, changeMoney)
+    return hit ? [{ source, label, changeMoney, ...hit }] : []
   }),
 )
 

@@ -57,4 +57,13 @@ describe('detectCashShortfall', () => {
   it('rechnet einen negativen Bestand als 0 verfügbar', () => {
     expect(detectCashShortfall(100, -20)).toEqual({ payouts: 100, available: 0, shortfall: 100 })
   })
+
+  it('schweigt, wenn das Wechselgeld die Differenz deckt', () => {
+    expect(detectCashShortfall(500, 410, 90)).toBeNull()
+    expect(detectCashShortfall(500, 420, 90)).toBeNull()
+  })
+
+  it('meldet, wenn auch das Wechselgeld nicht reicht', () => {
+    expect(detectCashShortfall(500, 380, 90)).toEqual({ payouts: 500, available: 380, shortfall: 120 })
+  })
 })

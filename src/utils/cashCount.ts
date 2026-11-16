@@ -52,14 +52,18 @@ export interface CashShortfall {
 
 /**
  * Hinweis, wenn aus einer Kasse mehr bezahlt wurde, als darin (über dem
- * Wechselgeld) lag. Kein Fehler — die Differenz kommt oft aus dem Wechselgeld
- * oder einer anderen Kasse — aber die "Bezahlt aus"-Zuordnung sollte dann
+ * Wechselgeld) lag und auch das Wechselgeld die Differenz nicht deckt — sie
+ * muss dann aus einer anderen Kasse kommen, die "Bezahlt aus"-Zuordnung sollte
  * stimmen. `availableBefore` = null, solange der Kassenstand unbekannt ist.
  */
-export function detectCashShortfall(payouts: number, availableBefore: number | null): CashShortfall | null {
+export function detectCashShortfall(
+  payouts: number,
+  availableBefore: number | null,
+  changeMoney = 0,
+): CashShortfall | null {
   if (availableBefore === null || payouts <= TOLERANCE) return null
   const available = Math.max(0, availableBefore)
   const shortfall = payouts - available
-  if (shortfall <= TOLERANCE) return null
+  if (shortfall <= Math.max(0, changeMoney) + TOLERANCE) return null
   return { payouts, available, shortfall }
 }
