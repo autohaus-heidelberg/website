@@ -1,6 +1,7 @@
 import { api } from '@/services/api'
 import type { PaginatedResponse } from '@/types/api'
 import type {
+  AbrechnungChange,
   BeverageItem,
   EventAccounting,
   RevenueEntry,
@@ -136,6 +137,10 @@ export const accountingService = {
 
   async markExternalFetched(id: number): Promise<{ external_data_fetched_at: string }> {
     return api.post(`/api/abrechnungen/${id}/mark-external-fetched/`, {})
+  },
+
+  async getChanges(id: number): Promise<AbrechnungChange[]> {
+    return api.get<AbrechnungChange[]>(`/api/abrechnungen/${id}/changes/`)
   },
 
   async delete(id: number): Promise<void> {

@@ -36,6 +36,7 @@ import type { BandDealIssues } from '@/utils/artistDeals'
 import { detectPrePayoutCount, detectCashShortfall } from '@/utils/cashCount'
 import { useAuthStore } from '@/stores/auth'
 import { printInvoiceService, PRINT_INVOICE_SOURCE_LABELS, type PrintInvoice } from '@/services/printInvoices'
+import AbrechnungChangeLog from '@/components/admin/AbrechnungChangeLog.vue'
 
 
 const props = defineProps<{
@@ -4368,6 +4369,8 @@ mixin shortfallBoxes
             .detail-row
               span Anzahl Förderanträge
               span.amount {{ grantSummary.grant_count }}
+
+    AbrechnungChangeLog(v-if="accounting.id" :accounting-id="accounting.id")
 
   .error(v-else-if="error") ⚠️ {{ error }}
 </template>

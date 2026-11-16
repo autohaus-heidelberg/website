@@ -189,6 +189,20 @@ export const EXPENSE_PAID_FROM_LABELS: Record<ExpensePaidFrom, string> = {
   other: 'Offen',
 }
 
+/** Eine protokollierte Wertänderung (GET /api/abrechnungen/<id>/changes/). */
+export interface AbrechnungChange {
+  id: number
+  at: string
+  user: string | null
+  scope: 'abrechnung' | 'revenue' | 'expense'
+  /** Einnahme: Quelle, Ausgabe: Beschreibung, sonst leer. */
+  subject: string
+  field: string
+  change_type: 'changed' | 'added' | 'removed'
+  old_value: string | null
+  new_value: string | null
+}
+
 export interface ExpenseEntry {
   id?: number
   accounting: number
