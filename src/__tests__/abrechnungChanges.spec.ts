@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { describeChange } from '@/utils/abrechnungChanges'
+import { describeChange, formatChangeTime } from '@/utils/abrechnungChanges'
 import type { AbrechnungChangeDetail } from '@/types/accounting'
 
 function change(overrides: Partial<AbrechnungChangeDetail>): AbrechnungChangeDetail {
@@ -12,6 +12,16 @@ function change(overrides: Partial<AbrechnungChangeDetail>): AbrechnungChangeDet
 
 // Intl setzt zwischen Zahl und € ein geschütztes Leerzeichen.
 const nbsp = (s: string) => s.replace(/ /g, '\u00a0')
+
+describe('formatChangeTime', () => {
+  it('rechnet UTC in Ortszeit um (Winter: +1 Stunde)', () => {
+    expect(formatChangeTime('2026-11-14T22:07:27Z')).toContain('23:07')
+  })
+
+  it('rechnet im Sommer +2 Stunden', () => {
+    expect(formatChangeTime('2026-07-14T22:07:27Z')).toContain('00:07')
+  })
+})
 
 describe('describeChange', () => {
   it('beschreibt die Änderung eines Rechner-Felds', () => {

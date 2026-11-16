@@ -33,6 +33,18 @@ function subjectLabel(c: AbrechnungChangeDetail): string {
   return FIELD_LABELS[c.field] ?? c.field
 }
 
+/** Genauer Zeitpunkt in Ortszeit, z. B. „Sa., 14.11., 23:07“. */
+export function formatChangeTime(iso: string): string {
+  return new Date(iso).toLocaleString('de-DE', {
+    timeZone: 'Europe/Berlin',
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 /** Ein Satz für den Änderungsverlauf, z. B. „Rechner: Bargeld – 1.010,00 € → 1.160,00 €“. */
 export function describeChange(c: AbrechnungChangeDetail): string {
   if (c.change_type === 'added') return `${subjectLabel(c)} hinzugefügt: ${formatValue(c.field, c.new_value)}`
