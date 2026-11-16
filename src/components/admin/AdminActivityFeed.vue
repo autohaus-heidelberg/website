@@ -2,12 +2,16 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/services/api'
+import type { AbrechnungChangeDetail } from '@/types/accounting'
+import { describeChange } from '@/utils/abrechnungChanges'
 
 interface ChangeEntry {
   entity: string
   label: string
   user: string | null
   at: string
+  /** Nur bei Abrechnungen: welcher Wert sich wie geändert hat. */
+  change?: AbrechnungChangeDetail
 }
 
 const route = useRoute()
@@ -100,8 +104,11 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
     template(v-if="entries.length")
       span.activity-latest
         strong {{ entries[0].user || 'Jemand' }}
-        |  hat {{ entries[0].entity }}
-        |  „{{ entries[0].label }}“ geändert
+        template(v-if="entries[0].change")
+          |  – {{ describeChange(entries[0].change) }}
+        template(v-else)
+          |  hat {{ entries[0].entity }}
+          |  „{{ entries[0].label }}“ geändert
       span.activity-time {{ relativeTime(entries[0].at) }}
     template(v-else)
       span.activity-latest.muted Keine kürzlichen Änderungen
@@ -110,7 +117,7 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
   ul.activity-list(v-if="expanded")
     li.activity-item(v-for="(e, i) in entries" :key="i")
       span.item-entity {{ e.entity }}
-      span.item-label {{ e.label }}
+      span.item-label {{ e.change ? describeChange(e.change) : e.label }}
       span.item-user {{ e.user || 'Jemand' }}
       span.item-time {{ relativeTime(e.at) }}
     li.activity-item.muted(v-if="!entries.length") Keine kürzlichen Änderungen

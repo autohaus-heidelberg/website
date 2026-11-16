@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { describeChange } from '@/utils/abrechnungChanges'
-import type { AbrechnungChange } from '@/types/accounting'
+import type { AbrechnungChangeDetail } from '@/types/accounting'
 
-function change(overrides: Partial<AbrechnungChange>): AbrechnungChange {
+function change(overrides: Partial<AbrechnungChangeDetail>): AbrechnungChangeDetail {
   return {
-    id: 1, at: '2026-11-14T22:07:27Z', user: 'thierry', scope: 'abrechnung',
+    scope: 'abrechnung',
     subject: '', field: '', change_type: 'changed', old_value: null, new_value: null,
     ...overrides,
   }

@@ -1,7 +1,7 @@
 import {
   EXPENSE_PAID_FROM_LABELS,
   REVENUE_SOURCE_LABELS,
-  type AbrechnungChange,
+  type AbrechnungChangeDetail,
 } from '@/types/accounting'
 
 const FIELD_LABELS: Record<string, string> = {
@@ -27,14 +27,14 @@ function formatValue(field: string, value: string | null): string {
   return value
 }
 
-function subjectLabel(c: AbrechnungChange): string {
+function subjectLabel(c: AbrechnungChangeDetail): string {
   if (c.scope === 'revenue') return `Einnahme ${(REVENUE_SOURCE_LABELS as Record<string, string>)[c.subject] ?? c.subject}`
   if (c.scope === 'expense') return `Ausgabe „${c.subject}“`
   return FIELD_LABELS[c.field] ?? c.field
 }
 
 /** Ein Satz für den Änderungsverlauf, z. B. „Rechner: Bargeld – 1.010,00 € → 1.160,00 €“. */
-export function describeChange(c: AbrechnungChange): string {
+export function describeChange(c: AbrechnungChangeDetail): string {
   if (c.change_type === 'added') return `${subjectLabel(c)} hinzugefügt: ${formatValue(c.field, c.new_value)}`
   if (c.change_type === 'removed') return `${subjectLabel(c)} entfernt (war ${formatValue(c.field, c.old_value)})`
   const field = c.scope === 'abrechnung' ? '' : `${FIELD_LABELS[c.field] ?? c.field}: `
