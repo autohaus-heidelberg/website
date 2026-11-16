@@ -2,12 +2,16 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/services/api'
+import type { AbrechnungChangeDetail } from '@/types/accounting'
+import { describeChange, formatChangeTime } from '@/utils/abrechnungChanges'
 
 interface ChangeEntry {
   entity: string
   label: string
   user: string | null
   at: string
+  /** Nur bei Abrechnungen: welcher Wert sich wie geändert hat. */
+  change?: AbrechnungChangeDetail
 }
 
 const route = useRoute()
@@ -78,6 +82,11 @@ function toggle() {
   if (expanded.value) load()
 }
 
+// Abrechnungs-Änderungen mit genauer Uhrzeit: „vor 3 Tagen“ reicht nicht, um sie nachzuvollziehen.
+function entryTime(e: ChangeEntry): string {
+  return e.change ? formatChangeTime(e.at) : relativeTime(e.at)
+}
+
 // Reload whenever the context (route/record) changes.
 watch(context, load)
 
@@ -100,9 +109,12 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
     template(v-if="entries.length")
       span.activity-latest
         strong {{ entries[0].user || 'Jemand' }}
-        |  hat {{ entries[0].entity }}
-        |  „{{ entries[0].label }}“ geändert
-      span.activity-time {{ relativeTime(entries[0].at) }}
+        template(v-if="entries[0].change")
+          |  – {{ describeChange(entries[0].change) }}
+        template(v-else)
+          |  hat {{ entries[0].entity }}
+          |  „{{ entries[0].label }}“ geändert
+      span.activity-time {{ entryTime(entries[0]) }}
     template(v-else)
       span.activity-latest.muted Keine kürzlichen Änderungen
     span.activity-toggle {{ expanded ? '▾' : '▸' }}
@@ -110,9 +122,9 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
   ul.activity-list(v-if="expanded")
     li.activity-item(v-for="(e, i) in entries" :key="i")
       span.item-entity {{ e.entity }}
-      span.item-label {{ e.label }}
+      span.item-label {{ e.change ? describeChange(e.change) : e.label }}
       span.item-user {{ e.user || 'Jemand' }}
-      span.item-time {{ relativeTime(e.at) }}
+      span.item-time {{ entryTime(e) }}
     li.activity-item.muted(v-if="!entries.length") Keine kürzlichen Änderungen
 </template>
 
@@ -189,6 +201,8 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  max-height: 24rem;
+  overflow-y: auto;
 }
 
 .activity-item {
@@ -231,6 +245,19 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
 }
 
 @media (max-width: 768px) {
+  /* Titel, Zeit und Pfeil in die erste Zeile, die letzte \u00c4nderung umbrechend darunter. */
+  .activity-summary {
+    flex-wrap: wrap;
+  }
+
+  .activity-time { margin-left: auto; }
+
+  .activity-latest {
+    order: 3;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
   .activity-item {
     grid-template-columns: 1fr auto;
     grid-template-areas:
