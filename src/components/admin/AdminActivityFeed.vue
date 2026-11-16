@@ -245,6 +245,19 @@ footer.activity-feed(v-if="context" :class="{ 'is-expanded': expanded }")
 }
 
 @media (max-width: 768px) {
+  /* Titel, Zeit und Pfeil in die erste Zeile, die letzte \u00c4nderung umbrechend darunter. */
+  .activity-summary {
+    flex-wrap: wrap;
+  }
+
+  .activity-time { margin-left: auto; }
+
+  .activity-latest {
+    order: 3;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+
   .activity-item {
     grid-template-columns: 1fr auto;
     grid-template-areas:
