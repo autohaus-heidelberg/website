@@ -52,7 +52,12 @@ describe('describeChange', () => {
       scope: 'expense', subject: 'COME', field: 'paid_from', old_value: 'entrance_cash', new_value: 'bar_cash',
     }))
     expect(paid).toBe('Ausgabe „COME“ – Bezahlt aus: Einlasskasse → Barkasse')
+    expect(describeChange(change({ field: 'notes', old_value: '', new_value: 'Hallo' })))
+      .toBe('Notiz – – → Hallo')
+  })
+
+  it('beschreibt ein nicht gesetztes Rechner-Feld als „folgt der Kassenzählung“', () => {
     expect(describeChange(change({ field: 'deal_calc_cash', old_value: null, new_value: '500.00' })))
-      .toBe(`Rechner: Bargeld – – → ${nbsp('500,00 €')}`)
+      .toBe(`Rechner: Bargeld – folgt der Kassenzählung → ${nbsp('500,00 €')}`)
   })
 })

@@ -18,8 +18,11 @@ const FIELD_LABELS: Record<string, string> = {
 
 const MONEY_FIELDS = new Set(['deal_calc_cash', 'deal_calc_change', 'total', 'change_money', 'fees', 'amount'])
 
+// Ohne gespeicherten Wert folgt der Rechner der Kassenzählung, bis ein Feld angefasst wird.
+const CALC_FIELDS = new Set(['deal_calc_cash', 'deal_calc_change'])
+
 function formatValue(field: string, value: string | null): string {
-  if (value === null || value === '') return '–'
+  if (value === null || value === '') return CALC_FIELDS.has(field) ? 'folgt der Kassenzählung' : '–'
   if (MONEY_FIELDS.has(field)) {
     return Number(value).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
   }
