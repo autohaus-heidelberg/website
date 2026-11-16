@@ -585,6 +585,41 @@ const allRevenueSources: RevenueSource[] = [
   'vvk_pretix',
 ]
 
+// PayPal läuft aus: Zeile nur zeigen, wenn es Werte oder Transaktionen gibt
+// (oder sie per Button geholt wurde). Einmal sichtbar bleibt sie, damit sie
+// beim Leeren des Felds nicht unter dem Cursor verschwindet.
+const OPTIONAL_PAYPAL_SOURCES = [
+  { source: 'bar_paypal', category: 'bar', label: 'PayPal (Bar)' },
+  { source: 'entrance_paypal', category: 'entrance', label: 'PayPal (Einlass)' },
+] as const
+
+const paypalShown = ref<Set<string>>(new Set())
+
+function paypalHasData(source: string, category: 'bar' | 'entrance'): boolean {
+  const entry = revenues.value.find(r => r.source === source)
+  return (parseFloat(entry?.total || '0') || 0) !== 0
+    || (parseFloat(entry?.fees || '0') || 0) !== 0
+    || paypalTransactionsFor(category).length > 0
+}
+
+watch(
+  () => OPTIONAL_PAYPAL_SOURCES.filter(p => paypalHasData(p.source, p.category)).map(p => p.source),
+  sources => sources.forEach(s => paypalShown.value.add(s)),
+)
+
+function isRevenueSourceVisible(source: RevenueSource): boolean {
+  const optional = OPTIONAL_PAYPAL_SOURCES.find(p => p.source === source)
+  return !optional || paypalShown.value.has(source) || paypalHasData(source, optional.category)
+}
+
+function visibleRevenueSources(sources: RevenueSource[]): RevenueSource[] {
+  return sources.filter(isRevenueSourceVisible)
+}
+
+function hiddenPaypalSources(sources: RevenueSource[]) {
+  return OPTIONAL_PAYPAL_SOURCES.filter(p => sources.includes(p.source) && !isRevenueSourceVisible(p.source))
+}
+
 function getRevenue(source: RevenueSource): RevenueEntry {
   const existing = revenues.value.find(r => r.source === source)
   if (existing) return existing
@@ -1382,17 +1417,15 @@ function dealLabelFor(
   return `${head} → ${winner} gewinnt (${formatCurrency(row.resolvedAmount)})`
 }
 
-// Kurzform für die Deal-Spalte — der Betrag steht in einer eigenen Spalte,
-// der Vergleich bei Kombi-Deals in einer zweiten Zeile darunter.
-function dealShortLabel(row: BandDealRow): string {
+// Rechenweg einer Band-Gage: wie sich der Betrag aus dem Deal und der
+// Rechner-Basis ergibt — steht als Unterzeile unter der Gage.
+function bandRechenweg(row: BandDealRow): string {
   if (row.dealType === 'guarantee') return 'Festgage'
-  if (row.dealType === 'door_deal') return `Doordeal ${row.doorDealPercentage} %`
-  return `Garantie ${formatCurrency(row.guaranteeAmount)} vs. Doordeal ${row.doorDealPercentage} %`
-}
-
-function dealWinnerHint(row: BandDealRow): string {
-  if (row.dealType !== 'guarantee_plus_door') return ''
-  return row.resolvedSource === 'doordeal' ? '↳ Doordeal gewinnt' : '↳ Garantie gewinnt'
+  const door = `${row.doorDealPercentage} % von ${formatCurrency(dealCalcBase.value)}`
+  if (row.dealType === 'door_deal') return `Doordeal ${door} = ${formatCurrency(row.resolvedAmount)}`
+  const doorAmount = row.doorDealPercentage / 100 * dealCalcBase.value
+  const winner = row.resolvedSource === 'doordeal' ? 'Doordeal' : 'Garantie'
+  return `Garantie ${formatCurrency(row.guaranteeAmount)} vs. Doordeal ${door} = ${formatCurrency(doorAmount)} → ${winner} gewinnt`
 }
 
 function recordedLabelFor(currentAmount: number | null, splitShare: number | null): string {
@@ -1441,6 +1474,27 @@ const bandDealOverview = computed<BandDealRow[]>(() => {
     })
   }
   return rows
+})
+
+// Eine Tabelle für Soll und Ist: noch nicht gebuchte Bands zuerst (offen),
+// danach die gebuchten Gagen. Gebuchte Gagen, die zu einer Band mit Deal
+// gehören, tragen die Band mit ihrem Rechenweg und Status.
+type GageItem =
+  | { key: string; kind: 'open'; band: BandDealRow }
+  | { key: string; kind: 'booked'; exp: ExpenseEntry; band: BandDealRow | null }
+
+const gageItems = computed<GageItem[]>(() => {
+  const bandByName = new Map(bandDealOverview.value.map(b => [b.artistName.trim(), b]))
+  const open = bandDealOverview.value
+    .filter(b => b.currentAmount == null)
+    .map((band): GageItem => ({ key: `band-${band.artistId}`, kind: 'open', band }))
+  const booked = gageExpenses.value.map((exp): GageItem => ({
+    key: `exp-${expenses.value.indexOf(exp)}`,
+    kind: 'booked',
+    exp,
+    band: bandByName.get(exp.description.trim()) ?? null,
+  }))
+  return [...open, ...booked]
 })
 
 // Bands, die (noch) als externer Split geführt werden — Warnung in Sektion B.
@@ -2057,6 +2111,7 @@ async function loadData() {
 
       // Nested data is included in the accounting response
       revenues.value = acc.revenues ?? []
+      paypalShown.value = new Set()
       // Backfill missing rows for all revenue sources up front, while
       // auto-save is still suppressed. `getRevenue()` used to do this
       // lazily from the template (v-model="getRevenue(source).total"),
@@ -2965,7 +3020,7 @@ mixin shortfallBoxes
             .col-amount Gebühren
             .col-amount Brutto
 
-          template(v-for="source in group.sources" :key="source")
+          template(v-for="source in visibleRevenueSources(group.sources)" :key="source")
             .revenue-row
               .col-source {{ REVENUE_SOURCE_LABELS[source] }}
               .col-amount(data-label="Gesamt")
@@ -3067,6 +3122,8 @@ mixin shortfallBoxes
                   .col-amount.sub-val {{ formatCurrency(txn.fee) }}
                   .col-amount.sub-val {{ formatCurrency(txn.net) }}
                   button.btn-remove-txn(@click.stop="removeSumupBarTransaction(idx)" title="Transaktion entfernen") ✕
+          .revenue-add-paypal(v-if="hiddenPaypalSources(group.sources).length")
+            button(v-for="p in hiddenPaypalSources(group.sources)" :key="p.source" type="button" @click="paypalShown.add(p.source)") ↳ {{ p.label }} hinzufügen
         .group-total
           span Gesamt {{ group.label }}:
           strong {{ formatCurrency(groupRevenue(group.sources)) }}
@@ -3590,32 +3647,7 @@ mixin shortfallBoxes
             .deal-calc-step-body
               p.deal-calc-step-text Nach der Auszahlung den restlichen Kasseninhalt unter #[a.deal-calc-step-link(href="#" @click.prevent="activeTab = 'cashcount'") „Kassenzählung“] eintragen – nicht den Stand aus Schritt 1.
 
-        .band-deal-table
-          .band-deal-header
-            span Band
-            span Deal
-            span Betrag
-            span Status
-          .band-deal-row(v-for="row in bandDealOverview" :key="row.artistId" :class="{ 'is-open': !row.allGood }")
-            .band-deal-name {{ row.artistName }}
-            .band-deal-deal
-              span {{ dealShortLabel(row) }}
-              span.band-deal-winner(v-if="dealWinnerHint(row)") {{ dealWinnerHint(row) }}
-            .band-deal-amount {{ formatCurrency(row.resolvedAmount) }}
-            .band-deal-status
-              template(v-if="row.allGood")
-                span.band-deal-tag.tag-ok ✓ gebucht
-              template(v-else-if="row.issues.orphanSplit")
-                span.band-deal-tag.tag-warn ⚠ externer Split ({{ row.splitShare }} %)
-                button.btn-add-sm.btn-add-primary(@click="convertSplitToExpenseRow(row)") {{ row.currentAmount != null ? 'Split entfernen' : 'In Gage umwandeln' }}
-              template(v-else-if="row.issues.amountMismatch")
-                span.band-deal-tag.tag-warn ⚠ gebucht {{ formatCurrency(row.currentAmount || 0) }}
-                button.btn-add-sm.btn-add-ghost(@click="keepPaidAmountRow(row)") behalten
-                button.btn-add-sm.btn-add-primary(@click="applyResolvedAmountRow(row)") auf {{ formatCurrency(row.resolvedAmount) }}
-              template(v-else-if="row.issues.suggestExpense")
-                button.btn-add-sm.btn-add-primary(@click="applyExpenseRow(row)") + Als Gage buchen
-
-        .expenses-table(v-if="gageExpenses.length" :class="{ 'door-deal-active': doorDealActive }")
+        .expenses-table(v-if="gageItems.length" :class="{ 'door-deal-active': doorDealActive }")
           .expense-header
             span.sortable(@click="expSort.toggle('desc')") Beschreibung{{ expSort.indicator('desc') }}
             span.sortable(@click="expSort.toggle('amount')") Betrag{{ expSort.indicator('amount') }}
@@ -3624,40 +3656,59 @@ mixin shortfallBoxes
             span.col-doordeal(v-if="doorDealActive" title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)") 🚪
             span
 
-          .expense-row(v-for="exp in gageExpenses" :key="expenses.indexOf(exp)")
-            span.field-label Beschreibung
-            input.text-input(
-              v-model="exp.description"
-              type="text"
-              placeholder="z.B. Rewe, Hotel..."
-            )
-            span.field-label Betrag
-            .amount-wrap
-              input.amount-input(
-                v-model="exp.amount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-              )
-            span.field-label Bezahlt aus
-            select.select-input(v-model="exp.paid_from")
-              option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
-                | {{ label }}
-            span.field-label Sphäre
-            select.select-input(v-model="exp.tax_sphere" :class="{ 'missing': !exp.tax_sphere }")
-              option(:value="null" disabled hidden) Sphäre wählen
-              option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
-                | {{ label }}
-            span.field-label(v-if="doorDealActive") 🚪 Abziehen
-            .col-doordeal(v-if="doorDealActive")
-              input(
-                type="checkbox"
-                v-model="exp.door_deal_deductible"
-                title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)"
-              )
-            button.btn-remove(@click="removeExpense(exp)") ×
-        .band-deal-empty(v-else-if="bandDealOverview.length") Noch keine Gage gebucht – oben „+ Als Gage buchen“ klicken.
+          .gage-item(v-for="item in gageItems" :key="item.key" :class="{ 'is-open': item.kind === 'open' }" :data-band="item.band?.artistName")
+            template(v-if="item.kind === 'booked'")
+              .expense-row
+                span.field-label Beschreibung
+                input.text-input(
+                  v-model="item.exp.description"
+                  type="text"
+                  placeholder="z.B. Rewe, Hotel..."
+                )
+                span.field-label Betrag
+                .amount-wrap
+                  input.amount-input(
+                    v-model="item.exp.amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                  )
+                span.field-label Bezahlt aus
+                select.select-input(v-model="item.exp.paid_from")
+                  option(v-for="(label, source) in EXPENSE_PAID_FROM_LABELS" :key="source" :value="source")
+                    | {{ label }}
+                span.field-label Sphäre
+                select.select-input(v-model="item.exp.tax_sphere" :class="{ 'missing': !item.exp.tax_sphere }")
+                  option(:value="null" disabled hidden) Sphäre wählen
+                  option(v-for="(label, key) in TAX_SPHERE_LABELS" :key="key" :value="key")
+                    | {{ label }}
+                span.field-label(v-if="doorDealActive") 🚪 Abziehen
+                .col-doordeal(v-if="doorDealActive")
+                  input(
+                    type="checkbox"
+                    v-model="item.exp.door_deal_deductible"
+                    title="Von der Türeinnahme abziehen, bevor die externen Doordeal-Anteile gerechnet werden (z.B. GEMA, KSK)"
+                  )
+                button.btn-remove(@click="removeExpense(item.exp)") ×
+            .expense-row.expense-suggest(v-else)
+              span.expense-suggest-name {{ item.band.artistName }}
+              span.expense-suggest-amount {{ formatCurrency(item.band.resolvedAmount) }}
+            //- Rechenweg + Status der Band direkt unter ihrer Gage.
+            .expense-calc(v-if="item.band")
+              span.expense-calc-text ↳ {{ bandRechenweg(item.band) }}
+              .band-deal-status
+                template(v-if="item.band.allGood")
+                  span.band-deal-tag.tag-ok ✓ gebucht
+                template(v-else-if="item.band.issues.orphanSplit")
+                  span.band-deal-tag.tag-warn ⚠ externer Split ({{ item.band.splitShare }} %)
+                  button.btn-add-sm.btn-add-primary(@click="convertSplitToExpenseRow(item.band)") {{ item.band.currentAmount != null ? 'Split entfernen' : 'In Gage umwandeln' }}
+                template(v-else-if="item.band.issues.amountMismatch")
+                  span.band-deal-tag.tag-warn ⚠ gebucht {{ formatCurrency(item.band.currentAmount || 0) }}
+                  button.btn-add-sm.btn-add-ghost(@click="keepPaidAmountRow(item.band)") behalten
+                  button.btn-add-sm.btn-add-primary(@click="applyResolvedAmountRow(item.band)") auf {{ formatCurrency(item.band.resolvedAmount) }}
+                template(v-else-if="item.band.issues.suggestExpense")
+                  button.btn-add-sm.btn-add-primary(@click="applyExpenseRow(item.band)") + Als Gage buchen
         .group-total
           span Gagen gesamt:
           strong {{ formatCurrency(totalGageExpenses) }}
@@ -5168,62 +5219,51 @@ h2 {
   color: #888;
   margin: 0 0 0.75rem;
 }
-.band-deal-table {
-  border: 0.25rem solid black;
-  background: white;
-  margin: 0 0 0.75rem;
-}
-.band-deal-header,
-.band-deal-row {
-  display: grid;
-  grid-template-columns: 1fr 1.6fr 110px minmax(200px, 1.3fr);
-  gap: 0.5rem 0.75rem;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  text-align: left;
-  font-size: 0.9rem;
-}
-.band-deal-header {
-  font-weight: 900;
-  font-size: 0.8rem;
-  border-bottom: 2px solid black;
-}
-/* Kopf folgt der Ausrichtung seiner Spalte. */
-.band-deal-header > span:nth-child(3),
-.band-deal-header > span:nth-child(4) {
-  text-align: right;
-}
-.band-deal-row {
+/* Gage = Zeile + Unterzeile mit Rechenweg und Status. */
+.gage-item {
   border-bottom: 1px solid #ddd;
-  background: white;
 }
-.band-deal-row:last-child {
+.gage-item:last-child {
   border-bottom: none;
 }
+.gage-item .expense-row {
+  border-bottom: none;
+  background: white;
+}
 /* Offene Posten hervorheben, damit man nachts sieht, wo noch etwas fehlt. */
-.band-deal-row.is-open {
+.gage-item.is-open .expense-row {
   background: #fffbeb;
 }
-.band-deal-name {
+.expense-suggest-name {
   font-weight: 700;
   min-width: 0;
   overflow-wrap: anywhere;
+  text-align: left;
 }
-.band-deal-deal {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-  color: #333;
-}
-.band-deal-winner {
-  font-size: 0.8rem;
-  color: #666;
-}
-.band-deal-amount {
+.expense-suggest-amount {
   text-align: right;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.expense-calc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem 0.75rem;
+  padding: 0.3rem 1rem;
+  background: #f5f5f5;
+  border-top: 1px dashed #ccc;
+  font-size: 0.8rem;
+  color: #666;
+  text-align: left;
+}
+.gage-item.is-open .expense-calc {
+  background: #fff6d6;
+}
+.expense-calc-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .band-deal-status {
   display: flex;
@@ -5253,14 +5293,8 @@ h2 {
   background: #f0f0f0;
   border-bottom: 1px solid #ddd;
 }
-.expenses-subhead ~ .expenses-subhead,
-.band-deal-row + .expenses-subhead {
+.expenses-subhead ~ .expenses-subhead {
   border-top: 0.25rem solid black;
-}
-.band-deal-empty {
-  padding: 0.6rem 1rem;
-  font-size: 0.85rem;
-  color: #888;
 }
 .sphere-info {
   margin-top: 1.25rem;
@@ -6439,6 +6473,30 @@ h2 {
   border-top: none;
 }
 
+.revenue-add-paypal {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.25rem 1rem 0.25rem 1.5rem;
+  background: #f5f5f5;
+  border-top: 1px dashed #ccc;
+}
+
+.revenue-add-paypal button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: #777;
+  font: inherit;
+  font-size: 0.8rem;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.revenue-add-paypal button:hover {
+  color: black;
+  text-decoration: underline;
+}
+
 /* Tabellen mit eigenem Abstand nach unten: Lücke zur Summenzeile schließen. */
 .expenses-table + .group-total {
   margin-top: -1rem;
@@ -7068,31 +7126,17 @@ h2 {
     align-self: center;
   }
 
-  /* Band-Deals als Karte: Name + Betrag in die Kopfzeile, Deal und
-     Aktion darunter über die volle Breite. */
-  .band-deal-header {
-    display: none;
-  }
-
-  .band-deal-row {
-    grid-template-columns: 1fr auto;
-    gap: 0.15rem 0.5rem;
-    padding: 0.75rem 1rem;
-  }
-
-  .band-deal-amount {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .band-deal-deal,
-  .band-deal-status {
+  /* Offene Gage: Name und Betrag untereinander statt in Spalten. */
+  .expense-suggest > * {
     grid-column: 1 / -1;
+  }
+
+  .expense-suggest-amount {
+    text-align: left;
   }
 
   .band-deal-status {
     justify-content: flex-start;
-    margin-top: 0.4rem;
   }
 
   .external-diff-label {
