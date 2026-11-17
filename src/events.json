@@ -1,5 +1,38 @@
 [
     {
+        "id": "autumnsweater-bvs",
+        "date": "2026-12-11T19:00:00+00:00",
+        "endDate": null,
+        "title": "Autumn Sweater (Lux) und The BV's (Augsburg)",
+        "fee": "10",
+        "feeAk": "12",
+        "descriptionShort": "<p>Der Goldesel l&auml;dt euch alle recht herzlich zur Abschlussfeier 2026 ins Carousel ein. Und zum Feiern gibt es einiges: The BV&rsquo;s aus Augsburg kehren zur&uuml;ck ins Autohaus und das nicht mit leeren H&auml;nden: &ldquo;Periphery&rdquo; hei&szlig;t das neue Album, welches am 27. November das Licht der Plattenl&auml;den dieser Welt erblickt. Zum dritten Mal in Heidelberg, aber ihr Debut im Autohaus geben Autumn Sweater aus Luxemburg.<br><br>Indie Pop X Indie Rock, einmal vertr&auml;umt melancholisch, mithin krautig, einmal vertrackt bis hymnisch. Beides qualitativ wie der edle Tropfen, welchen man sonst nur an Weihnachten im Kreis der N&auml;chsten kredenzt bekommt.<br><br>Deshalb: kommt vorbei, freut euch auf ein hervorragendes Programm, die ein oder andere &Uuml;berraschung und lasst uns gemeinsam das vergangene starke und bewegende Jahr Revue passieren.</p>",
+        "descriptionLong": "",
+        "shopLink": "https://pretix.eu/carousel/autumnsweater-bvs/",
+        "img": "/img/39af59f5-3eb0-47ab-b5f4-817559a53f16.webp",
+        "cancelled": false,
+        "artists": [
+            {
+                "name": "The BV's",
+                "link": "https://www.thebvsband.com/",
+                "description": "Mit peripherylegen The BV\u2019sihren insgesamt vierten Longplayer vor. Auch diesmal f\u00fchrt die Reise durch jene musikalische Landschaft, die die Band seit beinahe einer Dekade pr\u00e4gt: melancholische Melodien treffen auf schn\u00f6rkellosen Indiepop, verhallten Dreampop und krautrockartige Wiederholungen. Zwischen arrangierten Songs und offenen, sich langsam entwickelnden Passagen entsteht dabei eine ganz eigene Form von Popmusik \u2013reduziert, eing\u00e4ngig aber immer in bitters\u00fc\u00dfer Bewegung zwischen Post-Genre-Ansatz und Hauntology.\nW\u00e4hrend die vergangenen Platten weitgehend in Eigenregie zwischen Heimstudio und Proberaum entstanden, markiert peripheryeine neue Arbeitsweise f\u00fcr die Band. Im Mai 2026 zog es The BV\u2019s f\u00fcr vier Tage ins Albert Matong Atelier f\u00fcr Musik in Augsburg, um das Album gemeinsam mit Produzent Maximilian W\u00f6rle live aufzunehmen und in unmittelbarer und gemeinsamer Dynamik einzufangen.\nAb Herbst 2026 spielen The BV\u2019s Konzerte in Deutschland und nach vielen anderen europ\u00e4ischen Stationen das erste Mal auch in \u00d6sterreich.\nIn Zusammenarbeit mit den Labels Kleine Untergrund Schallplatten, PaulaPaulPlatten und Shelflife Records erscheint peripheryanalog und digital am 27.11.2026.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/dEAo8_qmb0c",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1979470005/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/1ae64695-2881-4f69-8bd9-4c2023d4cd72.webp"
+            },
+            {
+                "name": "Autumn Sweater",
+                "link": "https://www.instagram.com/autumnsweetiesband",
+                "description": "Autumn Sweater\u200b\u2019s music is sometimes jangly, sometimes noisy, yet always melodic, and occasionally imperfect, in a good way. Though 90s indie rock remains a foundational influence, the band does not shy away from borrowing from other genres and eras.",
+                "soundcloud": "",
+                "youtube": "https://www.youtube.com/embed/GykYCCH5FC0",
+                "bandcamp": "https://bandcamp.com/EmbeddedPlayer/album=1706216159/size=large/bgcol=ffffff/linkcol=0687f5/tracklist=false/transparent=true/",
+                "image": "/img/0816ab73-3eb2-4cc0-a9f5-46357984dee3.webp"
+            }
+        ]
+    },
+    {
         "id": "261121-SuxSuxSux-KingDick",
         "date": "2026-11-21T19:00:00+00:00",
         "endDate": null,
@@ -127,6 +160,15 @@
                 "youtube": "https://www.youtube.com/embed/x6akaGApKQs",
                 "bandcamp": "",
                 "image": "/img/dffc8302-937a-46f6-9ab8-82953cb2cc0b.webp"
+            },
+            {
+                "name": "Yellow Walls",
+                "link": "",
+                "description": "Warmer, hausgemachter Analogsound aus Mannheim",
+                "soundcloud": "",
+                "youtube": "",
+                "bandcamp": "",
+                "image": ""
             }
         ]
     },
