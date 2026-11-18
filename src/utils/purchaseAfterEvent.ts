@@ -1,15 +1,17 @@
 /** Einschätzung, ob ein Einkauf nach dem Event bei einer späten Inventur
- *  mitgezählt wurde. Die zählende Person weiß das oft selbst nicht – die
- *  Zahlen verraten es aber meistens. */
+ *  mitgezählt wurde. Die zählende Person weiß das oft selbst nicht.
+ *
+ *  Bewusst nur Aussagen, die aus den Zahlen zwingend folgen. „Ungewöhnlich
+ *  wenig/viel Verbrauch“ taugt nicht als Indiz: Ein ruhiger Abend (Montags-Show)
+ *  ist normal – bei echten Daten liegt rund jede dritte Zählung unter dem halben
+ *  Durchschnittsverbrauch. Ein falsches „wahrscheinlich mitgezählt“ würde zum
+ *  Abziehen verleiten und den Verbrauch dauerhaft verfälschen.
+ *
+ *  Stufen: deducted = schon abgezogen · pending = noch nicht gezählt ·
+ *  likely = mehr gezählt als da war (Handlung) · unclear = Person entscheidet ·
+ *  none = nichts zu tun, kein Hinweis. */
 
-export type PurchaseHintLevel = 'deducted' | 'pending' | 'likely' | 'unclear' | 'unlikely'
-
-export type PurchaseHintReason =
-  | 'overcount'        // mehr gezählt als vor dem Event da war
-  | 'low_without'      // ohne Abzug ungewöhnlich wenig, mit Abzug normal
-  | 'too_high_with'    // mit Abzug ungewöhnlich viel
-  | 'rest_too_small'   // gezählter Rest kleiner als der Einkauf
-  | 'no_signal'
+export type PurchaseHintLevel = 'deducted' | 'pending' | 'likely' | 'unclear' | 'none'
 
 export interface PurchaseHintInput {
   deducted: boolean
@@ -20,29 +22,19 @@ export interface PurchaseHintInput {
   consumed: number
   /** Flaschen aus dem Einkauf. */
   purchaseQty: number
-  /** Historischer Verbrauch des Getränks (oder der Kategorie); null = zu wenig Daten. */
-  baseline: { mean: number; threshold: number } | null
+  /** Ein späteres Event wurde schon gezählt: niemand korrigiert das frühere
+   *  Event noch, „unklar“ ist dann nur Rauschen. */
+  laterEventCounted?: boolean
 }
 
-export interface PurchaseHint {
-  level: PurchaseHintLevel
-  reason: PurchaseHintReason
-  /** Verbrauch, falls der Einkauf abgezogen würde. */
-  consumedIfDeducted: number
-}
-
-export function classifyPurchaseHint(i: PurchaseHintInput): PurchaseHint {
-  const consumedIfDeducted = i.consumed + i.purchaseQty
-  const hint = (level: PurchaseHintLevel, reason: PurchaseHintReason): PurchaseHint =>
-    ({ level, reason, consumedIfDeducted })
-
-  if (i.deducted) return hint('deducted', 'no_signal')
-  if (!i.counted) return hint('pending', 'no_signal')
-  if (i.countedAfter < i.purchaseQty) return hint('unlikely', 'rest_too_small')
-  if (i.consumed < 0) return hint('likely', 'overcount')
-  if (i.baseline) {
-    if (consumedIfDeducted > i.baseline.threshold) return hint('unlikely', 'too_high_with')
-    if (i.consumed < i.baseline.mean / 2) return hint('likely', 'low_without')
-  }
-  return hint('unclear', 'no_signal')
+export function classifyPurchaseHint(i: PurchaseHintInput): PurchaseHintLevel {
+  if (i.deducted) return 'deducted'
+  if (!i.counted) return 'pending'
+  // Gezählter Rest kleiner als der Einkauf: steckt (nicht mehr) im Wert – nie
+  // drin oder schon von Hand abgezogen. Nichts zu tun.
+  if (i.countedAfter < i.purchaseQty) return 'none'
+  // Der Überschuss muss durch den Einkauf erklärbar sein, sonst fehlt noch etwas anderes.
+  if (i.consumed < 0 && i.consumed + i.purchaseQty >= 0) return 'likely'
+  if (i.laterEventCounted) return 'none'
+  return 'unclear'
 }

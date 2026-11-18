@@ -32,7 +32,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { splitMode, splitQuantity, joinQuantity, stepMinor, normalizeSplit } from '@/utils/inventoryStep'
-import { classifyPurchaseHint, type PurchaseHint } from '@/utils/purchaseAfterEvent'
+import { classifyPurchaseHint, type PurchaseHintLevel } from '@/utils/purchaseAfterEvent'
 import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice, ENTRANCE_VAT_RATE } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
 import { detectPrePayoutCount, detectCashShortfall } from '@/utils/cashCount'
@@ -868,7 +868,7 @@ function inventoryConsumption(entry: InventoryEntry): number {
 /** More on the shelf than there should be. Usually a purchase that was never
  *  entered; the server clamps consumption at 0 for these. */
 function isOvercount(entry: InventoryEntry): boolean {
-  return confirmedInventory.has(entry.beverage_item) && inventoryConsumption(entry) < 0
+  return isCounted(entry) && inventoryConsumption(entry) < 0
 }
 
 function formatPurchaseQty(qty: string, beverage: BeverageItem): string {
@@ -893,55 +893,55 @@ function isCounted(entry: InventoryEntry): boolean {
   return confirmedInventory.has(entry.beverage_item) || (!!entry.id && entry.counted_after != null)
 }
 
-function purchaseHint(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent): PurchaseHint {
+function purchaseHint(entry: InventoryEntry, p: PurchaseAfterEvent): PurchaseHintLevel {
   return classifyPurchaseHint({
     deducted: isPurchaseDeducted(entry, p),
     counted: isCounted(entry),
     countedAfter: parseFloat(entry.quantity_after || '0'),
     consumed: inventoryConsumption(entry),
     purchaseQty: parseFloat(p.quantity),
-    baseline: consumptionBaseline(entry, beverage),
+    laterEventCounted: !!entry.later_event_counted,
   })
 }
 
-const PURCHASE_HINT_ICONS: Record<PurchaseHint['level'], string> = {
-  deducted: '✓', pending: 'ℹ️', likely: '⚠️', unclear: '❓', unlikely: 'ℹ️',
+/** Einkäufe mit Hinweis unter der Zeile (nicht „nichts zu tun“, nicht ausgeblendet). */
+function rowPurchases(entry: InventoryEntry): PurchaseAfterEvent[] {
+  return (entry.purchases_after_event ?? []).filter(p => purchaseHint(entry, p) !== 'none')
 }
 
-/** Hinweistext je Einstufung. Ohne Getränkename für die Mobil-Karte. */
+/** Überzählt und der Einkauf erklärt es: Zeile bekommt den orangen Balken wie bei 💡. */
+function hasOvercountHint(entry: InventoryEntry): boolean {
+  return (entry.purchases_after_event ?? []).some(p => purchaseHint(entry, p) === 'likely')
+}
+
+function purchaseHintIcon(entry: InventoryEntry, p: PurchaseAfterEvent): string {
+  const level = purchaseHint(entry, p)
+  return level === 'likely' ? '⚠️' : level === 'deducted' ? '✓' : 'ℹ️'
+}
+
+/** Hinweistext je Stufe. Ohne Getränkename für die Mobil-Karte. */
 function purchaseHintText(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent, withName = true): string {
-  const h = purchaseHint(entry, beverage, p)
   const qty = formatPurchaseQty(p.quantity, beverage)
   const when = conflictDate(p.date)
   const who = p.entered_by ? ` (eingetragen von ${p.entered_by})` : ''
-  const ask = p.entered_by ? `frag am besten ${p.entered_by}` : 'frag am besten, wer eingekauft hat'
-  const fmt = (n: number) => formatPurchaseQty(String(Math.max(0, Math.round(n))), beverage)
   const prefix = withName ? `${beverage.name}: ` : ''
-  switch (h.reason === 'no_signal' ? h.level : h.reason) {
+  switch (purchaseHint(entry, p)) {
     case 'deducted':
       return `${prefix}Einkauf vom ${when} (${qty}) ist vom gezählten Rest abgezogen.`
     case 'pending':
       return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Gezählt wird der Bestand direkt nach dem Event: Kisten aus diesem Einkauf nicht mitzählen.`
-    case 'overcount':
+    case 'likely':
       return `${prefix}Es wurde mehr gezählt, als vor dem Event da war. Der Einkauf vom ${when} (${qty}) wurde sehr wahrscheinlich mitgezählt – bitte abziehen.`
-    case 'low_without':
-      return `${prefix}Ohne Abzug nur ${fmt(inventoryConsumption(entry))} verbraucht (sonst Ø ${fmt(consumptionBaseline(entry, beverage)!.mean)}), mit Abzug wären es ${fmt(h.consumedIfDeducted)} – der Einkauf vom ${when} (${qty}) wurde also wahrscheinlich mitgezählt.`
-    case 'too_high_with':
-      return `${prefix}Einkauf vom ${when} (${qty}) wurde wahrscheinlich nicht mitgezählt – mit Abzug wären es ${fmt(h.consumedIfDeducted)} verbraucht, deutlich mehr als üblich.`
-    case 'rest_too_small':
-      return `${prefix}Einkauf vom ${when} (${qty}) kann nicht mitgezählt sein – gezählt ist weniger als der Einkauf. Nichts zu tun.`
     default:
-      return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Ob sie beim Zählen schon im Lager standen, geben die Zahlen nicht her – ${ask}.`
+      return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Standen sie beim Zählen schon im Lager? Dann bitte abziehen.`
   }
 }
 
-/** Button nur, wo Abziehen sinnvoll sein kann; bei „wahrscheinlich nicht“
- *  bleibt er als bewusste Übersteuerung. */
 function purchaseHintButton(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent): string | null {
-  const h = purchaseHint(entry, beverage, p)
-  if (h.level === 'deducted') return 'Rückgängig'
-  if (h.level === 'pending' || h.reason === 'rest_too_small') return null
-  return `− ${formatPurchaseQty(p.quantity, beverage)} abziehen`
+  const level = purchaseHint(entry, p)
+  if (level === 'deducted') return 'Rückgängig'
+  if (level === 'likely' || level === 'unclear') return `− ${formatPurchaseQty(p.quantity, beverage)} abziehen`
+  return null
 }
 
 function togglePurchaseDeduction(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent) {
@@ -3339,7 +3339,7 @@ mixin shortfallBoxes
               v-show="inventoryItemVisible(entry)"
               data-testid="inv-row"
               :data-drink="beverage.name"
-              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }"
+              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) && hasOvercountHint(entry) }"
             )
               .col-inv-name
                 router-link.bev-name.bev-name-link(
@@ -3499,14 +3499,14 @@ mixin shortfallBoxes
                 | {{ beverage.name }}: Dieser Verbrauch enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], das seine Inventur noch nicht eingetragen hat. Der Wert wird sich korrigieren, sobald das nachgeholt ist – ein ungewöhnlich hoher Verbrauch ist hier also erst einmal normal.
 
             .inventory-row-after-purchase(
-              v-for="p in entry.purchases_after_event ?? []"
+              v-for="p in rowPurchases(entry)"
               :key="p.purchase_id"
               v-show="inventoryItemVisible(entry)"
+              :class="purchaseHint(entry, p) === 'likely' ? 'inventory-row-miscount' : 'inventory-row-pending'"
+              :data-level="purchaseHint(entry, p)"
               data-testid="inv-after-purchase"
-              :data-level="purchaseHint(entry, beverage, p).level"
-              :class="`is-${purchaseHint(entry, beverage, p).level}`"
             )
-              span.after-purchase-icon {{ PURCHASE_HINT_ICONS[purchaseHint(entry, beverage, p).level] }}
+              span.after-purchase-icon {{ purchaseHintIcon(entry, p) }}
               span.after-purchase-text {{ purchaseHintText(entry, beverage, p) }}
               button.after-purchase-btn(
                 v-if="purchaseHintButton(entry, beverage, p)"
@@ -3517,7 +3517,7 @@ mixin shortfallBoxes
 
         //- Mobile cards
         .inventory-cards.mobile-only
-          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }")
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) && hasOvercountHint(entry) }")
             .inv-card-header
               .inv-card-name
                 router-link.inv-card-name-link(
@@ -3545,11 +3545,11 @@ mixin shortfallBoxes
               span ℹ️
               | Enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], dessen Inventur noch fehlt. Korrigiert sich nach dem Nachtragen.
             .inv-card-after-purchase(
-              v-for="p in entry.purchases_after_event ?? []"
+              v-for="p in rowPurchases(entry)"
               :key="p.purchase_id"
-              :class="`is-${purchaseHint(entry, beverage, p).level}`"
+              :class="purchaseHint(entry, p) === 'likely' ? 'inv-card-miscount' : 'inv-card-pending'"
             )
-              span {{ PURCHASE_HINT_ICONS[purchaseHint(entry, beverage, p).level] }}
+              span {{ purchaseHintIcon(entry, p) }}
               span.after-purchase-text {{ purchaseHintText(entry, beverage, p, false) }}
               button.after-purchase-btn(
                 v-if="purchaseHintButton(entry, beverage, p)"
@@ -5763,10 +5763,11 @@ h2 {
   box-shadow: inset 0.3rem 0 0 #e8710a;
 }
 
-/* Mehr gezählt als erwartet — meist ein nicht erfasster Einkauf. Gleiche
- * Mechanik wie inv-miscount, nur in Violett zur Unterscheidung. */
+/* Mehr gezählt als erwartet — meist ein nicht erfasster oder mitgezählter
+ * Einkauf. Wie inv-miscount: Warnung zur Zahl dieser Zeile = oranger Balken,
+ * der Hinweis darunter erklärt den Fall. */
 .inventory-row.inv-overcount {
-  box-shadow: inset 0.3rem 0 0 #7b1fa2;
+  box-shadow: inset 0.3rem 0 0 #e8710a;
 }
 
 .inventory-row.inv-conflict {
@@ -5892,57 +5893,22 @@ h2 {
   color: #0d3c6e;
 }
 
-/* Einkauf nach dem Event – evtl. bei später Inventur mitgezählt. */
+/* Einkaufs-Hinweise nutzen die bestehenden Stile: blau (…-pending) = Info,
+ * orange (…-miscount) = Zahl prüfen. Hier nur das Layout für Symbol und Button. */
 .inventory-row-after-purchase,
 .inv-card-after-purchase {
-  background: #e7f1fb;
-  border-left: 4px solid #1565c0;
-  color: #0d3c6e;
   display: flex;
   gap: 0.5em;
   align-items: center;
   line-height: 1.4;
 }
 
-.inventory-row-after-purchase {
-  padding: 0.5em 1em;
-  font-size: 0.9em;
-}
-
 .inv-card-after-purchase {
-  padding: 0.4em 0.6em;
-  font-size: 0.85em;
-  border-radius: 4px;
-  margin: 0.4em 0;
   flex-wrap: wrap;
 }
 
-.inventory-row-after-purchase.is-likely,
-.inv-card-after-purchase.is-likely {
-  background: #fff4e5;
-  border-left-color: #e65100;
-  color: #6d2e00;
-}
-
-.inventory-row-after-purchase.is-deducted,
-.inv-card-after-purchase.is-deducted {
-  background: #edf7ed;
-  border-left-color: #2e7d32;
-  color: #1e4620;
-}
-
-.inventory-row-after-purchase.is-unlikely,
-.inv-card-after-purchase.is-unlikely {
-  background: #f4f4f4;
-  border-left-color: #9e9e9e;
-  color: #555;
-}
-
-.is-likely .after-purchase-btn {
-  background: #e65100;
-  border-color: #e65100;
-  color: #fff;
-  font-weight: 600;
+.after-purchase-icon {
+  flex-shrink: 0;
 }
 
 .after-purchase-text {
@@ -6153,7 +6119,7 @@ h2 {
 }
 
 .inv-card.inv-overcount {
-  border-color: #7b1fa2;
+  border-color: #e8710a;
 }
 
 .inv-card.inv-conflict {

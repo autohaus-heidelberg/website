@@ -142,6 +142,9 @@ export interface InventoryEntry {
    *  taken days later may already include them although they are not part of
    *  this event's before-stock. Server-computed, display-only. */
   purchases_after_event?: PurchaseAfterEvent[]
+  /** A later event has been counted – the hint above is no longer actionable
+   *  (nobody revisits the earlier count any more), so the mask hides it. */
+  later_event_counted?: boolean
   /** Purchase ids from `purchases_after_event` that were already deducted
    *  from the counted value via the hint, so it is not offered twice. */
   deducted_purchase_ids?: number[]
