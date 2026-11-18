@@ -176,6 +176,9 @@ export interface LaterConflict {
   this_counted: string
   /** The count on the other event. */
   other_counted: string
+  /** Set when a not-yet-deducted purchase after the *later* event explains the
+   *  jump (it was counted along there); the later event is the one to fix. */
+  late_purchase?: { date: string; quantity: string } | null
 }
 
 /** Historical consumption statistics per drink, used to warn about likely
