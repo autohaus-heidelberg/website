@@ -900,7 +900,6 @@ function purchaseHint(entry: InventoryEntry, beverage: BeverageItem, p: Purchase
     countedAfter: parseFloat(entry.quantity_after || '0'),
     consumed: inventoryConsumption(entry),
     purchaseQty: parseFloat(p.quantity),
-    baseline: consumptionBaseline(entry, beverage),
   })
 }
 
@@ -915,7 +914,6 @@ function purchaseHintText(entry: InventoryEntry, beverage: BeverageItem, p: Purc
   const when = conflictDate(p.date)
   const who = p.entered_by ? ` (eingetragen von ${p.entered_by})` : ''
   const ask = p.entered_by ? `frag am besten ${p.entered_by}` : 'frag am besten, wer eingekauft hat'
-  const fmt = (n: number) => formatPurchaseQty(String(Math.max(0, Math.round(n))), beverage)
   const prefix = withName ? `${beverage.name}: ` : ''
   switch (h.reason === 'no_signal' ? h.level : h.reason) {
     case 'deducted':
@@ -924,19 +922,15 @@ function purchaseHintText(entry: InventoryEntry, beverage: BeverageItem, p: Purc
       return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Gezählt wird der Bestand direkt nach dem Event: Kisten aus diesem Einkauf nicht mitzählen.`
     case 'overcount':
       return `${prefix}Es wurde mehr gezählt, als vor dem Event da war. Der Einkauf vom ${when} (${qty}) wurde sehr wahrscheinlich mitgezählt – bitte abziehen.`
-    case 'low_without':
-      return `${prefix}Ohne Abzug nur ${fmt(inventoryConsumption(entry))} verbraucht (sonst Ø ${fmt(consumptionBaseline(entry, beverage)!.mean)}), mit Abzug wären es ${fmt(h.consumedIfDeducted)} – der Einkauf vom ${when} (${qty}) wurde also wahrscheinlich mitgezählt.`
-    case 'too_high_with':
-      return `${prefix}Einkauf vom ${when} (${qty}) wurde wahrscheinlich nicht mitgezählt – mit Abzug wären es ${fmt(h.consumedIfDeducted)} verbraucht, deutlich mehr als üblich.`
     case 'rest_too_small':
-      return `${prefix}Einkauf vom ${when} (${qty}) kann nicht mitgezählt sein – gezählt ist weniger als der Einkauf. Nichts zu tun.`
+      return `${prefix}Einkauf vom ${when} (${qty}) steckt nicht im gezählten Rest (der ist kleiner als der Einkauf) – nichts abzuziehen.`
     default:
       return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Ob sie beim Zählen schon im Lager standen, geben die Zahlen nicht her – ${ask}.`
   }
 }
 
-/** Button nur, wo Abziehen sinnvoll sein kann; bei „wahrscheinlich nicht“
- *  bleibt er als bewusste Übersteuerung. */
+/** Kein Button, solange nicht gezählt ist oder Abziehen unmöglich wäre; bei
+ *  „unklar“ entscheidet die Person (ggf. nach Rückfrage). */
 function purchaseHintButton(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent): string | null {
   const h = purchaseHint(entry, beverage, p)
   if (h.level === 'deducted') return 'Rückgängig'
