@@ -17,6 +17,7 @@ import type {
   GrantApplication,
   GrantSummary,
   StockEntry,
+  PurchaseAfterEvent,
   TaxSphere,
   VatRate,
 } from '@/types/accounting'
@@ -867,6 +868,48 @@ function inventoryConsumption(entry: InventoryEntry): number {
  *  entered; the server clamps consumption at 0 for these. */
 function isOvercount(entry: InventoryEntry): boolean {
   return confirmedInventory.has(entry.beverage_item) && inventoryConsumption(entry) < 0
+}
+
+function formatPurchaseQty(qty: string, beverage: BeverageItem): string {
+  const n = parseFloat(qty)
+  const upc = beverage.units_per_crate || 1
+  if (upc <= 1) return `${formatQty(n)} Fl.`
+  const crates = Math.floor(n / upc)
+  const rest = Math.round((n - crates * upc) * 100) / 100
+  return rest ? `${crates} K ${formatQty(rest)} Fl.` : `${crates} K`
+}
+
+/** Einkäufe nach dem Event: Bei einer späten Inventur stehen sie schon im
+ *  Lager, gehören aber nicht zum Vorher-Bestand dieses Events. */
+function isPurchaseDeducted(entry: InventoryEntry, p: PurchaseAfterEvent): boolean {
+  return (entry.deducted_purchase_ids ?? []).includes(p.purchase_id)
+}
+
+/** Abziehen nur anbieten, wenn schon gezählt wurde und der Rest den Einkauf
+ *  überhaupt enthalten kann. */
+function canDeductPurchase(entry: InventoryEntry, p: PurchaseAfterEvent): boolean {
+  return confirmedInventory.has(entry.beverage_item)
+    && parseFloat(entry.quantity_after || '0') >= parseFloat(p.quantity)
+}
+
+function togglePurchaseDeduction(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent) {
+  const ids = entry.deducted_purchase_ids ?? []
+  const deducted = ids.includes(p.purchase_id)
+  const qty = parseFloat(p.quantity) * (deducted ? 1 : -1)
+  const after = Math.max(0, Math.round((parseFloat(entry.quantity_after || '0') + qty) * 100) / 100)
+  entry.quantity_after = String(after)
+  const mode = splitMode(beverage)
+  const state = inventoryCrates.value[String(beverage.id)]
+  if (mode && state) {
+    const split = splitQuantity(after, mode)
+    state.afterCrates = split.major
+    state.afterBottles = split.minor
+  }
+  entry.deducted_purchase_ids = deducted
+    ? ids.filter(id => id !== p.purchase_id)
+    : [...ids, p.purchase_id]
+  recomputeConsumed(entry)
+  confirmedInventory.add(beverage.id!)
 }
 
 /** Human-readable date for a counting-conflict message (dd.mm.yyyy). */
@@ -2327,6 +2370,7 @@ async function saveAll(silent = false) {
             accounting: inv.accounting,
             beverage_item: inv.beverage_item,
             counted_after: (isNaN(counted) ? 0 : counted).toFixed(2),
+            ...(inv.deducted_purchase_ids ? { deducted_purchase_ids: inv.deducted_purchase_ids } : {}),
           }
         }),
       expenses: expenses.value
@@ -2366,7 +2410,7 @@ async function saveAll(silent = false) {
     //     have shifted if someone settled an earlier event
     //   - consumed_quantity, which is derived from the two and therefore
     //     follows rather than leads
-    //   - later_conflict / pending_earlier_event, which are read-only hints the
+    //   - later_conflict / pending_earlier_event / purchases_after_event, which are read-only hints the
     //     server recomputes on every save. The user never types these, so it is
     //     safe to overwrite them — and we must, otherwise the pink conflict /
     //     blue pending hint stays stale until a full page reload even after the
@@ -2396,6 +2440,7 @@ async function saveAll(silent = false) {
         // which clears a hint the latest edit just resolved).
         local.later_conflict = serverEntry.later_conflict ?? null
         local.pending_earlier_event = serverEntry.pending_earlier_event ?? null
+        local.purchases_after_event = serverEntry.purchases_after_event ?? []
       }
     }
 
@@ -3382,6 +3427,26 @@ mixin shortfallBoxes
               span.pending-text
                 | {{ beverage.name }}: Dieser Verbrauch enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], das seine Inventur noch nicht eingetragen hat. Der Wert wird sich korrigieren, sobald das nachgeholt ist – ein ungewöhnlich hoher Verbrauch ist hier also erst einmal normal.
 
+            .inventory-row-after-purchase(
+              v-for="p in entry.purchases_after_event ?? []"
+              :key="p.purchase_id"
+              v-show="inventoryItemVisible(entry)"
+              data-testid="inv-after-purchase"
+              :class="{ 'is-overcount': isOvercount(entry) && !isPurchaseDeducted(entry, p), 'is-deducted': isPurchaseDeducted(entry, p) }"
+            )
+              span.after-purchase-icon {{ isPurchaseDeducted(entry, p) ? '✓' : (isOvercount(entry) ? '⚠️' : 'ℹ️') }}
+              span.after-purchase-text
+                template(v-if="isPurchaseDeducted(entry, p)")
+                  | {{ beverage.name }}: Einkauf vom #[strong {{ conflictDate(p.date) }}] ({{ formatPurchaseQty(p.quantity, beverage) }}) ist vom gezählten Rest abgezogen.
+                template(v-else)
+                  | {{ beverage.name }}: Am #[strong {{ conflictDate(p.date) }}] – nach dem Event – kamen #[strong {{ formatPurchaseQty(p.quantity, beverage) }}] dazu{{ p.supplier ? ` (${p.supplier})` : '' }}. Gezählt wird der Bestand direkt nach dem Event: Falls der Einkauf beim Zählen schon im Lager stand, bitte abziehen.
+              button.after-purchase-btn(
+                v-if="isPurchaseDeducted(entry, p) || canDeductPurchase(entry, p)"
+                type="button"
+                data-testid="inv-after-purchase-btn"
+                @click="togglePurchaseDeduction(entry, beverage, p)"
+              ) {{ isPurchaseDeducted(entry, p) ? 'Rückgängig' : `− ${formatPurchaseQty(p.quantity, beverage)} abziehen` }}
+
         //- Mobile cards
         .inventory-cards.mobile-only
           .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }")
@@ -3408,6 +3473,21 @@ mixin shortfallBoxes
             .inv-card-pending(v-if="pendingInflationHint(entry, beverage) && !inventoryConflicts.has(beverage.id)")
               span ℹ️
               | Enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], dessen Inventur noch fehlt. Korrigiert sich nach dem Nachtragen.
+            .inv-card-after-purchase(
+              v-for="p in entry.purchases_after_event ?? []"
+              :key="p.purchase_id"
+              :class="{ 'is-overcount': isOvercount(entry) && !isPurchaseDeducted(entry, p), 'is-deducted': isPurchaseDeducted(entry, p) }"
+            )
+              span {{ isPurchaseDeducted(entry, p) ? '✓' : (isOvercount(entry) ? '⚠️' : 'ℹ️') }}
+              template(v-if="isPurchaseDeducted(entry, p)")
+                | Einkauf vom #[strong {{ conflictDate(p.date) }}] ({{ formatPurchaseQty(p.quantity, beverage) }}) abgezogen.
+              template(v-else)
+                | Nach dem Event am #[strong {{ conflictDate(p.date) }}] gekauft: #[strong {{ formatPurchaseQty(p.quantity, beverage) }}]. Schon mitgezählt? Dann abziehen.
+              button.after-purchase-btn(
+                v-if="isPurchaseDeducted(entry, p) || canDeductPurchase(entry, p)"
+                type="button"
+                @click="togglePurchaseDeduction(entry, beverage, p)"
+              ) {{ isPurchaseDeducted(entry, p) ? 'Rückgängig' : `− ${formatPurchaseQty(p.quantity, beverage)}` }}
             .inv-card-info
               span.inv-info-item
                 span.inv-info-label V:
@@ -5742,6 +5822,66 @@ h2 {
 
 .inventory-row-pending .pending-text strong {
   color: #0d3c6e;
+}
+
+/* Einkauf nach dem Event – evtl. bei später Inventur mitgezählt. */
+.inventory-row-after-purchase,
+.inv-card-after-purchase {
+  background: #e7f1fb;
+  border-left: 4px solid #1565c0;
+  color: #0d3c6e;
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  line-height: 1.4;
+}
+
+.inventory-row-after-purchase {
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+}
+
+.inv-card-after-purchase {
+  padding: 0.4em 0.6em;
+  font-size: 0.85em;
+  border-radius: 4px;
+  margin: 0.4em 0;
+  flex-wrap: wrap;
+}
+
+.inventory-row-after-purchase.is-overcount,
+.inv-card-after-purchase.is-overcount {
+  background: #fff4e5;
+  border-left-color: #e65100;
+  color: #6d2e00;
+}
+
+.inventory-row-after-purchase.is-deducted,
+.inv-card-after-purchase.is-deducted {
+  background: #edf7ed;
+  border-left-color: #2e7d32;
+  color: #1e4620;
+}
+
+.after-purchase-text {
+  flex: 1;
+}
+
+.after-purchase-btn {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0.25em 0.75em;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+  font-size: 0.95em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.after-purchase-btn:hover {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 /* Top banner shown when any drink has an unresolved conflict. */
