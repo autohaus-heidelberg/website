@@ -138,6 +138,23 @@ export interface InventoryEntry {
    *  instead. Server-computed, display-only; null when the preceding event is
    *  counted (or there is none). */
   pending_earlier_event?: PendingEarlierEvent | null
+  /** Purchases dated after this event (up to the next settled event). A count
+   *  taken days later may already include them although they are not part of
+   *  this event's before-stock. Server-computed, display-only. */
+  purchases_after_event?: PurchaseAfterEvent[]
+  /** Purchase ids from `purchases_after_event` that were already deducted
+   *  from the counted value via the hint, so it is not offered twice. */
+  deducted_purchase_ids?: number[]
+}
+
+export interface PurchaseAfterEvent {
+  purchase_id: number
+  date: string
+  supplier: string
+  /** Who entered the purchase (last editor) – the person to ask. */
+  entered_by?: string
+  /** Bottles of this drink in that purchase. */
+  quantity: string
 }
 
 /** The chronologically-preceding event whose inventory is still missing,
@@ -161,6 +178,9 @@ export interface LaterConflict {
   this_counted: string
   /** The count on the other event. */
   other_counted: string
+  /** Set when a not-yet-deducted purchase after the *later* event explains the
+   *  jump (it was counted along there); the later event is the one to fix. */
+  late_purchase?: { date: string; quantity: string } | null
 }
 
 /** Historical consumption statistics per drink, used to warn about likely
