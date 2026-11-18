@@ -79,51 +79,129 @@ function getOrderedArtists(event: Event): Artist[] {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').trim()
+  const withBreaks = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n')
+  const text = new DOMParser().parseFromString(withBreaks, 'text/html').body.textContent || ''
+  return text.replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').trim()
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function euro(v: string): string {
+  return v.endsWith('€') ? v : v + ' €'
+}
+
+function priceLine(event: Event): string {
+  if (event.fee && event.feeAk && event.fee !== event.feeAk) return `VVK ${euro(event.fee)} · AK ${euro(event.feeAk)}`
+  if (event.fee) return `Eintritt ${euro(event.fee)}`
+  return ''
+}
+
+// bandcamp und der SoundCloud-Player sind Embed-URLs und taugen nicht als Link;
+// YouTube-Embeds lassen sich dagegen in einen normalen Video-Link umrechnen.
+function artistUrl(artist: Artist): string {
+  if (artist.link) return artist.link
+  if (artist.soundcloud && !artist.soundcloud.includes('w.soundcloud.com/player')) return artist.soundcloud
+  const yt = artist.youtube?.match(/youtube\.com\/embed\/([\w-]+)/)
+  return yt ? `https://www.youtube.com/watch?v=${yt[1]}` : ''
+}
+
+const TEASER_CHARS = 320
+
+// Absätze der Kurzbeschreibung ohne Trenner und Leerabsätze.
+function descriptionParts(html: string): string[] {
+  return html
+    .replace(/<hr\s*\/?>/gi, '')
+    .replace(/<br\s*\/?>\s*<br\s*\/?>/gi, '</p><p>')
+    .split(/<\/p>|<p[^>]*>/i)
+    .map(p => p.trim().replace(/\s*&nbsp;\s*/g, ' '))
+    .filter(p => stripHtml(p) !== '')
+}
+
+// Wie auf der Webseite: ein gekürzter Anreißer, der am Wortende mit „…“ abbricht.
+function teaserText(event: Event): string {
+  const text = descriptionParts(event.descriptionShort || '').map(stripHtml).join(' ').replace(/\s+/g, ' ').trim()
+  if (text.length <= TEASER_CHARS) return text
+  return text.slice(0, TEASER_CHARS).replace(/\s+\S*$/, '').replace(/[,;:.\-–]+$/, '') + '…'
+}
+
+// Fanzine-Look der Webseite (src/assets/fanzine.css), auf E-Mail-taugliche Inline-Styles reduziert.
+const NL_MONO = "'Courier New',Courier,monospace"
+const NL_HEAD = "'Arial Black','Helvetica Neue',Arial,sans-serif"
+
+// Der harte Schatten (box-shadow) wird von Gmail entfernt; ein schwarzer Rahmen links/unten ahmt ihn nach.
+const BTN_STYLE = `display:inline-block;padding:12px 20px;background:#fff;border:3px solid #000;font-family:${NL_MONO};font-size:15px;line-height:1.4;font-weight:bold;letter-spacing:1px;text-decoration:none;color:#000;`
+
+function button(href: string, label: string): string {
+  return `<span style="display:inline-block;margin:0 16px 16px 0;padding:0 0 5px 5px;background:#000;font-size:0;line-height:0;"><a href="${href}" style="${BTN_STYLE}">${label}</a></span>`
+}
+
+const NL_LABEL = 'display:inline-block;background:#000;color:#fff;text-transform:uppercase;'
+
 function buildNewsletterHtml(events: Event[]): string {
-  let html = ''
+  // Tabellen-Layout: wird von Mail-Clients und Rapidmail zuverlässig zentriert.
+  let html = `<!DOCTYPE html>\n<html lang="de">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n`
+  // Verhindert, dass Mail-Clients im Dunkelmodus die Schwarz-Weiß-Gestaltung invertieren.
+  html += `<meta name="color-scheme" content="light only">\n<meta name="supported-color-schemes" content="light only">\n`
+  html += `<title>Carousel im alten Autohaus</title>\n</head>\n<body style="margin:0;padding:0;background:#fff;">\n`
+  html += `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;"><tr><td align="center" style="padding:16px;">\n`
+  html += `<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;"><tr><td align="left" style="font-family:${NL_MONO};font-size:16px;font-weight:bold;line-height:1.55;letter-spacing:-0.2px;color:#000;">\n`
+  html += `<p style="margin:0 0 32px;"><a href="https://altesauto.haus"><img src="https://altesauto.haus/img/newsletter-header.png" width="600" alt="Carousel im alten Autohaus" style="display:block;width:100%;max-width:100%;height:auto;border:0;font-size:28px;font-weight:900;text-transform:uppercase;color:#000;"></a></p>\n`
+  html += `<p style="margin:0 0 24px;"><span style="${NL_LABEL}padding:4px 16px 6px;font-size:17px;font-weight:900;letter-spacing:3px;">Das Programm</span></p>\n`
 
   for (const event of events) {
-    const dateStr = dayjs(event.date).locale('de').format('dddd, DD. MMMM YYYY')
+    const dateStr = dayjs(event.date).locale('de').format('dd, DD.MM.')
     const timeStr = dayjs(event.date).format('HH:mm')
+    const title = escapeHtml(event.title)
 
-    html += `<h2>${dateStr} – ${event.title}</h2>\n`
-    html += `<p><strong>Einlass: ${timeStr} Uhr</strong></p>\n`
+    html += `<p style="margin:0 0 14px;"><span style="${NL_LABEL}padding:5px 12px;font-size:13px;font-weight:900;letter-spacing:2px;">${dateStr} · ${timeStr} Uhr</span></p>\n`
+    html += `<h2 style="margin:0 0 16px;font-family:${NL_HEAD};font-size:28px;font-weight:900;line-height:1.1;text-transform:uppercase;">${title}</h2>\n`
 
     if (event.image) {
       const filename = event.image.replace(/^.*upload\//, '')
-      html += `<p><img src="https://altesauto.haus/img/${filename}" alt="${event.title}" style="max-width:100%;height:auto;"></p>\n`
+      // Foto im Kopierer-Look wie auf der Webseite; Clients ohne CSS-Filter zeigen das Original.
+      html += `<img src="https://altesauto.haus/img/${filename}" alt="${title}" width="600" style="display:block;box-sizing:border-box;width:100%;max-width:100%;height:auto;margin:0 0 16px;border:4px solid #000;filter:grayscale(1) contrast(1.55) brightness(1.05);">\n`
     }
 
-    html += event.descriptionShort + '\n'
+    const teaser = teaserText(event)
+    if (teaser) html += `<p style="margin:0 0 14px;">${escapeHtml(teaser)}</p>\n`
+
+    const price = priceLine(event)
+    if (price) {
+      html += `<p style="margin:0 0 14px;"><span style="display:inline-block;padding:2px 10px;border:3px solid #000;font-weight:900;letter-spacing:2px;text-transform:uppercase;">${escapeHtml(price)}</span></p>\n`
+    }
 
     const artists = getOrderedArtists(event)
-    for (const artist of artists) {
-      html += `\n<h3>${artist.name}</h3>\n`
-      if (artist.description) {
-        html += `<p>${artist.description}</p>\n`
-      }
+    if (artists.length) {
+      const items = artists.map(a => {
+        const url = artistUrl(a)
+        const name = escapeHtml(a.name)
+        return url ? `<a href="${escapeHtml(url)}" style="color:#000;text-decoration:underline;">${name}</a>` : name
+      })
+      html += `<p style="margin:0 0 20px;font-size:14px;"><span style="text-transform:uppercase;letter-spacing:1px;">Line-up:</span> ${items.join(' &nbsp;/&nbsp; ')}</p>\n`
     }
 
-    html += `\n<p>`
-    html += `<a href="https://altesauto.haus/event/${event.id}">Mehr Infos</a>`
+    html += `<p style="margin:0;">`
     if (event.shopLink) {
-      html += ` &nbsp;|&nbsp; <a href="${event.shopLink}">Tickets kaufen</a>`
+      html += button(escapeHtml(event.shopLink), 'Tickets kaufen')
     }
+    html += button(`https://altesauto.haus/event/${event.id}`, 'Weiterlesen')
     html += `</p>\n`
-    html += `\n<hr>\n\n`
+    html += `<hr style="border:0;border-top:4px solid #000;margin:36px 0;">\n`
   }
 
-  html += `<p><a href="https://altesauto.haus">Zur Homepage</a></p>\n`
-  html += `<p style="font-size: 0.85em; color: #666;">Du möchtest keine Newsletter mehr erhalten? <a href="{%link_unsubscribe}">Hier abmelden</a></p>\n`
+  html += `<div style="border:4px solid #000;padding:16px;font-size:13px;line-height:1.5;">\n`
+  html += `<p style="margin:0 0 8px;">Carousel im alten Autohaus · Hebelstraße 7 · Heidelberg<br><a href="https://altesauto.haus" style="color:#000;text-decoration:underline;">altesauto.haus</a></p>\n`
+  html += `<p style="margin:0;font-size:12px;">Du möchtest keine Newsletter mehr erhalten? <a href="{%link_unsubscribe}" style="color:#000;text-decoration:underline;">Hier abmelden</a></p>\n`
+  html += `</div>\n`
+  html += `</td></tr></table>\n</td></tr></table>\n</body>\n</html>\n`
 
   return html
 }
 
 function buildNewsletterText(events: Event[]): string {
-  let text = ''
+  let text = 'CAROUSEL IM ALTEN AUTOHAUS\n\n'
 
   for (const event of events) {
     const dateStr = dayjs(event.date).locale('de').format('dddd, DD. MMMM YYYY')
@@ -131,18 +209,20 @@ function buildNewsletterText(events: Event[]): string {
 
     text += `${dateStr} – ${event.title}\n`
     text += `${'='.repeat(60)}\n\n`
-    text += `Einlass: ${timeStr} Uhr\n\n`
-    text += stripHtml(event.descriptionShort) + '\n'
+    const price = priceLine(event)
+    text += `Einlass: ${timeStr} Uhr${price ? ' · ' + price : ''}\n\n`
+    text += teaserText(event) + '\n'
 
     const artists = getOrderedArtists(event)
-    for (const artist of artists) {
-      text += `\n--- ${artist.name} ---\n`
-      if (artist.description) {
-        text += stripHtml(artist.description) + '\n'
+    if (artists.length) {
+      text += `\nLine-up:\n`
+      for (const artist of artists) {
+        const url = artistUrl(artist)
+        text += url ? `- ${artist.name}: ${url}\n` : `- ${artist.name}\n`
       }
     }
 
-    text += `\nMehr Infos: https://altesauto.haus/event/${event.id}\n`
+    text += `\nWeiterlesen: https://altesauto.haus/event/${event.id}\n`
     if (event.shopLink) {
       text += `Tickets kaufen: ${event.shopLink}\n`
     }
@@ -153,6 +233,20 @@ function buildNewsletterText(events: Event[]): string {
   text += `Du möchtest keine Newsletter mehr erhalten? {%link_unsubscribe}\n`
 
   return text
+}
+
+const previewDoc = computed(() => {
+  // Lokale Bilder statt der (evtl. noch nicht veröffentlichten) Live-Adresse laden.
+  const html = content.value.replace(/https:\/\/altesauto\.haus\/img\//g, '/img/')
+  const base = '<base target="_blank">'
+  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (m: string) => m + base) : base + html
+})
+
+// Vorschau-Frame auf die Mail-Höhe strecken, damit es keinen zweiten Scrollbereich gibt.
+function fitPreview(e: { target: EventTarget | null }) {
+  const frame = e.target as HTMLIFrameElement
+  const h = frame.contentDocument?.documentElement.scrollHeight
+  if (h) frame.style.height = `${h + frame.offsetHeight - frame.clientHeight}px`
 }
 
 function eventDateShort(iso: string): string {
@@ -242,7 +336,10 @@ async function generateProposal() {
       return
     }
 
-    candidateEvents.value = upcoming
+    // Die Liste enthält nur id+name der Künstler; für Links werden die Details nachgeladen.
+    candidateEvents.value = await Promise.all(
+      upcoming.map(e => eventService.getById(e.id).catch(() => e))
+    )
     // Standardmäßig die Events der nächsten Woche vorauswählen – aber keine,
     // für die laut Verlauf bereits ein Newsletter verschickt wurde.
     selectedEventIds.value = upcoming
@@ -385,7 +482,7 @@ async function sendNewsletter(test = false) {
 
     .preview-section(v-if="content")
       h2 Vorschau
-      .preview-box(v-html="content")
+      iframe.preview-box(:srcdoc="previewDoc" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" title="Newsletter-Vorschau" @load="fitPreview")
 
   template(v-else)
     .history-section
@@ -846,8 +943,11 @@ async function sendNewsletter(test = false) {
 }
 
 .preview-box {
+  display: block;
+  width: 100%;
+  height: 20rem;
   border: 0.5rem solid black;
-  padding: 2rem;
-  transform: rotate(0.5deg);
+  box-sizing: border-box;
+  background: #eee;
 }
 </style>
