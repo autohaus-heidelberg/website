@@ -5,14 +5,13 @@
  *  wenig/viel Verbrauch“ taugt nicht als Indiz: Ein ruhiger Abend (Montags-Show)
  *  ist normal – bei echten Daten liegt rund jede dritte Zählung unter dem halben
  *  Durchschnittsverbrauch. Ein falsches „wahrscheinlich mitgezählt“ würde zum
- *  Abziehen verleiten und den Verbrauch dauerhaft verfälschen. */
+ *  Abziehen verleiten und den Verbrauch dauerhaft verfälschen.
+ *
+ *  Stufen: deducted = schon abgezogen · pending = noch nicht gezählt ·
+ *  likely = mehr gezählt als da war (Handlung) · unclear = Person entscheidet ·
+ *  none = nichts zu tun, kein Hinweis. */
 
-export type PurchaseHintLevel = 'deducted' | 'pending' | 'likely' | 'unclear' | 'unlikely'
-
-export type PurchaseHintReason =
-  | 'overcount'        // mehr gezählt als vor dem Event da war – sicher mitgezählt
-  | 'rest_too_small'   // gezählter Rest kleiner als der Einkauf – steckt (nicht mehr) im Wert; nie drin oder schon abgezogen
-  | 'no_signal'
+export type PurchaseHintLevel = 'deducted' | 'pending' | 'likely' | 'unclear' | 'none'
 
 export interface PurchaseHintInput {
   deducted: boolean
@@ -23,17 +22,18 @@ export interface PurchaseHintInput {
   consumed: number
   /** Flaschen aus dem Einkauf. */
   purchaseQty: number
+  /** Ein späteres Event wurde schon gezählt: niemand korrigiert das frühere
+   *  Event noch, „unklar“ ist dann nur Rauschen. */
+  laterEventCounted?: boolean
 }
 
-export interface PurchaseHint {
-  level: PurchaseHintLevel
-  reason: PurchaseHintReason
-}
-
-export function classifyPurchaseHint(i: PurchaseHintInput): PurchaseHint {
-  if (i.deducted) return { level: 'deducted', reason: 'no_signal' }
-  if (!i.counted) return { level: 'pending', reason: 'no_signal' }
-  if (i.countedAfter < i.purchaseQty) return { level: 'unlikely', reason: 'rest_too_small' }
-  if (i.consumed < 0) return { level: 'likely', reason: 'overcount' }
-  return { level: 'unclear', reason: 'no_signal' }
+export function classifyPurchaseHint(i: PurchaseHintInput): PurchaseHintLevel {
+  if (i.deducted) return 'deducted'
+  if (!i.counted) return 'pending'
+  // Gezählter Rest kleiner als der Einkauf: steckt (nicht mehr) im Wert – nie
+  // drin oder schon von Hand abgezogen. Nichts zu tun.
+  if (i.countedAfter < i.purchaseQty) return 'none'
+  if (i.consumed < 0) return 'likely'
+  if (i.laterEventCounted) return 'none'
+  return 'unclear'
 }
