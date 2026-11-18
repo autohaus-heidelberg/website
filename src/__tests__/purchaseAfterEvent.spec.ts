@@ -22,9 +22,10 @@ describe('classifyPurchaseHint', () => {
     expect(classify({ consumed: -101, laterEventCounted: true })).toBe('none')
   })
 
-  it('needs no hint when the rest is smaller than the purchase', () => {
+  it('shows a quiet info while the rest is smaller than the purchase, then drops it', () => {
     // Gilt auch nach händischer Korrektur: 185 gezählt − 100 abgezogen = 85 < 100.
-    expect(classify({ countedAfter: 60, consumed: 43 })).toBe('none')
+    expect(classify({ countedAfter: 60, consumed: 43 })).toBe('covered')
+    expect(classify({ countedAfter: 60, consumed: 43, laterEventCounted: true })).toBe('none')
   })
 
   it('stays unclear for any plausible consumption, however low or high', () => {

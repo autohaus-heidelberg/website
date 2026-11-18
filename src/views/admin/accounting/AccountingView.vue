@@ -930,6 +930,8 @@ function purchaseHintText(entry: InventoryEntry, beverage: BeverageItem, p: Purc
       return `${prefix}Einkauf vom ${when} (${qty}) ist vom gezählten Rest abgezogen.`
     case 'pending':
       return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Gezählt wird der Bestand direkt nach dem Event: Kisten aus diesem Einkauf nicht mitzählen.`
+    case 'covered':
+      return `${prefix}Einkauf vom ${when} (${qty}) steckt nicht im gezählten Rest (der ist kleiner als der Einkauf) – nichts abzuziehen.`
     case 'likely':
       return `${prefix}Es wurde mehr gezählt, als vor dem Event da war. Der Einkauf vom ${when} (${qty}) wurde sehr wahrscheinlich mitgezählt – bitte abziehen.`
     default:

@@ -9,9 +9,10 @@
  *
  *  Stufen: deducted = schon abgezogen · pending = noch nicht gezählt ·
  *  likely = mehr gezählt als da war (Handlung) · unclear = Person entscheidet ·
- *  none = nichts zu tun, kein Hinweis. */
+ *  covered = steckt nicht im gezählten Rest, nichts zu tun (nur Info, damit
+ *  nachvollziehbar bleibt, dass es einen Einkauf gab) · none = kein Hinweis. */
 
-export type PurchaseHintLevel = 'deducted' | 'pending' | 'likely' | 'unclear' | 'none'
+export type PurchaseHintLevel = 'deducted' | 'pending' | 'likely' | 'unclear' | 'covered' | 'none'
 
 export interface PurchaseHintInput {
   deducted: boolean
@@ -31,8 +32,9 @@ export function classifyPurchaseHint(i: PurchaseHintInput): PurchaseHintLevel {
   if (i.deducted) return 'deducted'
   if (!i.counted) return 'pending'
   // Gezählter Rest kleiner als der Einkauf: steckt (nicht mehr) im Wert – nie
-  // drin oder schon von Hand abgezogen. Nichts zu tun.
-  if (i.countedAfter < i.purchaseQty) return 'none'
+  // drin oder schon von Hand abgezogen. Nichts zu tun; als Info nur, solange
+  // das nächste Event noch nicht gezählt ist.
+  if (i.countedAfter < i.purchaseQty) return i.laterEventCounted ? 'none' : 'covered'
   // Der Überschuss muss durch den Einkauf erklärbar sein, sonst fehlt noch etwas anderes.
   if (i.consumed < 0 && i.consumed + i.purchaseQty >= 0) return 'likely'
   if (i.laterEventCounted) return 'none'
