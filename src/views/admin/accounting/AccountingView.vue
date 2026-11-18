@@ -32,6 +32,7 @@ import {
 import { useSort } from '@/composables/useSort'
 import { parseQty, qtyEquals, normalizeQty } from '@/utils/quantity'
 import { splitMode, splitQuantity, joinQuantity, stepMinor, normalizeSplit } from '@/utils/inventoryStep'
+import { classifyPurchaseHint, type PurchaseHint } from '@/utils/purchaseAfterEvent'
 import { resolveComboDeal, findDuplicateNames, bandDealIssues, parsePrice, ENTRANCE_VAT_RATE } from '@/utils/artistDeals'
 import type { BandDealIssues } from '@/utils/artistDeals'
 import { detectPrePayoutCount, detectCashShortfall } from '@/utils/cashCount'
@@ -876,6 +877,7 @@ function formatPurchaseQty(qty: string, beverage: BeverageItem): string {
   if (upc <= 1) return `${formatQty(n)} Fl.`
   const crates = Math.floor(n / upc)
   const rest = Math.round((n - crates * upc) * 100) / 100
+  if (!crates) return `${formatQty(rest)} Fl.`
   return rest ? `${crates} K ${formatQty(rest)} Fl.` : `${crates} K`
 }
 
@@ -885,20 +887,61 @@ function isPurchaseDeducted(entry: InventoryEntry, p: PurchaseAfterEvent): boole
   return (entry.deducted_purchase_ids ?? []).includes(p.purchase_id)
 }
 
-/** Abziehen nur anbieten, wenn schon gezählt wurde und der Rest den Einkauf
- *  überhaupt enthalten kann. */
-function canDeductPurchase(entry: InventoryEntry, p: PurchaseAfterEvent): boolean {
-  return isCounted(entry) && parseFloat(entry.quantity_after || '0') >= parseFloat(p.quantity)
-}
-
 /** Gezählt – in dieser Sitzung oder schon gespeichert. Gespeicherte Überzählungen
  *  haben serverseitig Verbrauch 0 und landen daher nicht in confirmedInventory. */
 function isCounted(entry: InventoryEntry): boolean {
   return confirmedInventory.has(entry.beverage_item) || (!!entry.id && entry.counted_after != null)
 }
 
-function purchaseHintWarns(entry: InventoryEntry, p: PurchaseAfterEvent): boolean {
-  return isCounted(entry) && inventoryConsumption(entry) < 0 && !isPurchaseDeducted(entry, p)
+function purchaseHint(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent): PurchaseHint {
+  return classifyPurchaseHint({
+    deducted: isPurchaseDeducted(entry, p),
+    counted: isCounted(entry),
+    countedAfter: parseFloat(entry.quantity_after || '0'),
+    consumed: inventoryConsumption(entry),
+    purchaseQty: parseFloat(p.quantity),
+    baseline: consumptionBaseline(entry, beverage),
+  })
+}
+
+const PURCHASE_HINT_ICONS: Record<PurchaseHint['level'], string> = {
+  deducted: '✓', pending: 'ℹ️', likely: '⚠️', unclear: '❓', unlikely: 'ℹ️',
+}
+
+/** Hinweistext je Einstufung. Ohne Getränkename für die Mobil-Karte. */
+function purchaseHintText(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent, withName = true): string {
+  const h = purchaseHint(entry, beverage, p)
+  const qty = formatPurchaseQty(p.quantity, beverage)
+  const when = conflictDate(p.date)
+  const who = p.entered_by ? ` (eingetragen von ${p.entered_by})` : ''
+  const ask = p.entered_by ? `frag am besten ${p.entered_by}` : 'frag am besten, wer eingekauft hat'
+  const fmt = (n: number) => formatPurchaseQty(String(Math.max(0, Math.round(n))), beverage)
+  const prefix = withName ? `${beverage.name}: ` : ''
+  switch (h.reason === 'no_signal' ? h.level : h.reason) {
+    case 'deducted':
+      return `${prefix}Einkauf vom ${when} (${qty}) ist vom gezählten Rest abgezogen.`
+    case 'pending':
+      return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Gezählt wird der Bestand direkt nach dem Event: Kisten aus diesem Einkauf nicht mitzählen.`
+    case 'overcount':
+      return `${prefix}Es wurde mehr gezählt, als vor dem Event da war. Der Einkauf vom ${when} (${qty}) wurde sehr wahrscheinlich mitgezählt – bitte abziehen.`
+    case 'low_without':
+      return `${prefix}Ohne Abzug nur ${fmt(inventoryConsumption(entry))} verbraucht (sonst Ø ${fmt(consumptionBaseline(entry, beverage)!.mean)}), mit Abzug wären es ${fmt(h.consumedIfDeducted)} – der Einkauf vom ${when} (${qty}) wurde also wahrscheinlich mitgezählt.`
+    case 'too_high_with':
+      return `${prefix}Einkauf vom ${when} (${qty}) wurde wahrscheinlich nicht mitgezählt – mit Abzug wären es ${fmt(h.consumedIfDeducted)} verbraucht, deutlich mehr als üblich.`
+    case 'rest_too_small':
+      return `${prefix}Einkauf vom ${when} (${qty}) kann nicht mitgezählt sein – gezählt ist weniger als der Einkauf. Nichts zu tun.`
+    default:
+      return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Ob sie beim Zählen schon im Lager standen, geben die Zahlen nicht her – ${ask}.`
+  }
+}
+
+/** Button nur, wo Abziehen sinnvoll sein kann; bei „wahrscheinlich nicht“
+ *  bleibt er als bewusste Übersteuerung. */
+function purchaseHintButton(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent): string | null {
+  const h = purchaseHint(entry, beverage, p)
+  if (h.level === 'deducted') return 'Rückgängig'
+  if (h.level === 'pending' || h.reason === 'rest_too_small') return null
+  return `− ${formatPurchaseQty(p.quantity, beverage)} abziehen`
 }
 
 function togglePurchaseDeduction(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent) {
@@ -991,17 +1034,24 @@ const missingSellingPriceBeverages = computed(() => {
 // trustworthy enough to warn about outliers.
 const MIN_ANOMALY_HISTORY = 3
 
+/** Historischer Verbrauch des Getränks, ersatzweise seiner Kategorie; null
+ *  bei zu wenig Daten. */
+function consumptionBaseline(entry: InventoryEntry, beverage?: BeverageItem) {
+  let stat = consumptionStats.value.drinks[entry.beverage_item]
+  if ((!stat || stat.count < MIN_ANOMALY_HISTORY) && beverage?.category) {
+    stat = consumptionStats.value.categories[beverage.category]
+  }
+  return stat && stat.count >= MIN_ANOMALY_HISTORY ? stat : null
+}
+
 /** Raw outlier check: does the entered consumption for this row exceed the
  *  drink's (or its category's) historical anomaly threshold? Ignores the
  *  pending-earlier-event context on purpose — callers decide how to interpret
  *  it (red "forgotten Restbestand" warning vs. blue "expected inflation"
  *  hint). Returns the matching stat when it does, else null. */
 function anomalyStat(entry: InventoryEntry, beverage?: BeverageItem): { mean: number; max: number; consumed: number } | null {
-  let stat = consumptionStats.value.drinks[entry.beverage_item]
-  if ((!stat || stat.count < MIN_ANOMALY_HISTORY) && beverage?.category) {
-    stat = consumptionStats.value.categories[beverage.category]
-  }
-  if (!stat || stat.count < MIN_ANOMALY_HISTORY) return null
+  const stat = consumptionBaseline(entry, beverage)
+  if (!stat) return null
   const consumed = inventoryConsumption(entry)
   if (consumed <= stat.threshold) return null
   return { mean: stat.mean, max: stat.max, consumed }
@@ -3453,20 +3503,17 @@ mixin shortfallBoxes
               :key="p.purchase_id"
               v-show="inventoryItemVisible(entry)"
               data-testid="inv-after-purchase"
-              :class="{ 'is-overcount': purchaseHintWarns(entry, p), 'is-deducted': isPurchaseDeducted(entry, p) }"
+              :data-level="purchaseHint(entry, beverage, p).level"
+              :class="`is-${purchaseHint(entry, beverage, p).level}`"
             )
-              span.after-purchase-icon {{ isPurchaseDeducted(entry, p) ? '✓' : (purchaseHintWarns(entry, p) ? '⚠️' : 'ℹ️') }}
-              span.after-purchase-text
-                template(v-if="isPurchaseDeducted(entry, p)")
-                  | {{ beverage.name }}: Einkauf vom #[strong {{ conflictDate(p.date) }}] ({{ formatPurchaseQty(p.quantity, beverage) }}) ist vom gezählten Rest abgezogen.
-                template(v-else)
-                  | {{ beverage.name }}: Am #[strong {{ conflictDate(p.date) }}] – nach dem Event – kamen #[strong {{ formatPurchaseQty(p.quantity, beverage) }}] dazu{{ p.supplier ? ` (${p.supplier})` : '' }}. Gezählt wird der Bestand direkt nach dem Event: Falls der Einkauf beim Zählen schon im Lager stand, bitte abziehen.
+              span.after-purchase-icon {{ PURCHASE_HINT_ICONS[purchaseHint(entry, beverage, p).level] }}
+              span.after-purchase-text {{ purchaseHintText(entry, beverage, p) }}
               button.after-purchase-btn(
-                v-if="isPurchaseDeducted(entry, p) || canDeductPurchase(entry, p)"
+                v-if="purchaseHintButton(entry, beverage, p)"
                 type="button"
                 data-testid="inv-after-purchase-btn"
                 @click="togglePurchaseDeduction(entry, beverage, p)"
-              ) {{ isPurchaseDeducted(entry, p) ? 'Rückgängig' : `− ${formatPurchaseQty(p.quantity, beverage)} abziehen` }}
+              ) {{ purchaseHintButton(entry, beverage, p) }}
 
         //- Mobile cards
         .inventory-cards.mobile-only
@@ -3500,18 +3547,15 @@ mixin shortfallBoxes
             .inv-card-after-purchase(
               v-for="p in entry.purchases_after_event ?? []"
               :key="p.purchase_id"
-              :class="{ 'is-overcount': purchaseHintWarns(entry, p), 'is-deducted': isPurchaseDeducted(entry, p) }"
+              :class="`is-${purchaseHint(entry, beverage, p).level}`"
             )
-              span {{ isPurchaseDeducted(entry, p) ? '✓' : (purchaseHintWarns(entry, p) ? '⚠️' : 'ℹ️') }}
-              span.after-purchase-text(v-if="isPurchaseDeducted(entry, p)")
-                | Einkauf vom #[strong {{ conflictDate(p.date) }}] ({{ formatPurchaseQty(p.quantity, beverage) }}) abgezogen.
-              span.after-purchase-text(v-else)
-                | Nach dem Event am #[strong {{ conflictDate(p.date) }}] gekauft: #[strong {{ formatPurchaseQty(p.quantity, beverage) }}]. Schon mitgezählt? Dann abziehen.
+              span {{ PURCHASE_HINT_ICONS[purchaseHint(entry, beverage, p).level] }}
+              span.after-purchase-text {{ purchaseHintText(entry, beverage, p, false) }}
               button.after-purchase-btn(
-                v-if="isPurchaseDeducted(entry, p) || canDeductPurchase(entry, p)"
+                v-if="purchaseHintButton(entry, beverage, p)"
                 type="button"
                 @click="togglePurchaseDeduction(entry, beverage, p)"
-              ) {{ isPurchaseDeducted(entry, p) ? 'Rückgängig' : `− ${formatPurchaseQty(p.quantity, beverage)}` }}
+              ) {{ purchaseHintButton(entry, beverage, p) }}
             .inv-card-info
               span.inv-info-item
                 span.inv-info-label V:
@@ -5873,8 +5917,8 @@ h2 {
   flex-wrap: wrap;
 }
 
-.inventory-row-after-purchase.is-overcount,
-.inv-card-after-purchase.is-overcount {
+.inventory-row-after-purchase.is-likely,
+.inv-card-after-purchase.is-likely {
   background: #fff4e5;
   border-left-color: #e65100;
   color: #6d2e00;
@@ -5887,9 +5931,28 @@ h2 {
   color: #1e4620;
 }
 
+.inventory-row-after-purchase.is-unlikely,
+.inv-card-after-purchase.is-unlikely {
+  background: #f4f4f4;
+  border-left-color: #9e9e9e;
+  color: #555;
+}
+
+.is-likely .after-purchase-btn {
+  background: #e65100;
+  border-color: #e65100;
+  color: #fff;
+  font-weight: 600;
+}
+
 .after-purchase-text {
   flex: 1;
   text-align: left;
+}
+
+/* Mobil: Text über die volle Breite, Button darunter rechts. */
+.inv-card-after-purchase .after-purchase-text {
+  flex-basis: calc(100% - 2em);
 }
 
 .after-purchase-btn {

@@ -151,6 +151,8 @@ export interface PurchaseAfterEvent {
   purchase_id: number
   date: string
   supplier: string
+  /** Who entered the purchase (last editor) – the person to ask. */
+  entered_by?: string
   /** Bottles of this drink in that purchase. */
   quantity: string
 }
