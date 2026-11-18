@@ -33,7 +33,8 @@ export function classifyPurchaseHint(i: PurchaseHintInput): PurchaseHintLevel {
   // Gezählter Rest kleiner als der Einkauf: steckt (nicht mehr) im Wert – nie
   // drin oder schon von Hand abgezogen. Nichts zu tun.
   if (i.countedAfter < i.purchaseQty) return 'none'
-  if (i.consumed < 0) return 'likely'
+  // Der Überschuss muss durch den Einkauf erklärbar sein, sonst fehlt noch etwas anderes.
+  if (i.consumed < 0 && i.consumed + i.purchaseQty >= 0) return 'likely'
   if (i.laterEventCounted) return 'none'
   return 'unclear'
 }

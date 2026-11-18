@@ -16,6 +16,12 @@ describe('classifyPurchaseHint', () => {
     expect(classify({ consumed: -40 })).toBe('likely')
   })
 
+  it('does not blame the purchase when the surplus is larger than the purchase itself', () => {
+    expect(classify({ consumed: -100 })).toBe('likely')
+    expect(classify({ consumed: -101 })).toBe('unclear')
+    expect(classify({ consumed: -101, laterEventCounted: true })).toBe('none')
+  })
+
   it('needs no hint when the rest is smaller than the purchase', () => {
     // Gilt auch nach händischer Korrektur: 185 gezählt − 100 abgezogen = 85 < 100.
     expect(classify({ countedAfter: 60, consumed: 43 })).toBe('none')

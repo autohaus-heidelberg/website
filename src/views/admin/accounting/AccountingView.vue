@@ -904,41 +904,41 @@ function purchaseHint(entry: InventoryEntry, p: PurchaseAfterEvent): PurchaseHin
   })
 }
 
-/** Einkäufe, bei denen die Zeile selbst warnt: mehr gezählt als da war (orange). */
-function overcountPurchases(entry: InventoryEntry): PurchaseAfterEvent[] {
-  return (entry.purchases_after_event ?? []).filter(p => purchaseHint(entry, p) === 'likely')
+/** Einkäufe mit Hinweis unter der Zeile (nicht „nichts zu tun“, nicht ausgeblendet). */
+function rowPurchases(entry: InventoryEntry): PurchaseAfterEvent[] {
+  return (entry.purchases_after_event ?? []).filter(p => purchaseHint(entry, p) !== 'none')
 }
 
-function overcountHintText(beverage: BeverageItem, p: PurchaseAfterEvent, withName = true): string {
+/** Überzählt und der Einkauf erklärt es: Zeile bekommt den orangen Balken wie bei 💡. */
+function hasOvercountHint(entry: InventoryEntry): boolean {
+  return (entry.purchases_after_event ?? []).some(p => purchaseHint(entry, p) === 'likely')
+}
+
+function purchaseHintIcon(entry: InventoryEntry, p: PurchaseAfterEvent): string {
+  const level = purchaseHint(entry, p)
+  return level === 'likely' ? '⚠️' : level === 'deducted' ? '✓' : 'ℹ️'
+}
+
+/** Hinweistext je Stufe. Ohne Getränkename für die Mobil-Karte. */
+function purchaseHintText(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent, withName = true): string {
+  const qty = formatPurchaseQty(p.quantity, beverage)
+  const when = conflictDate(p.date)
+  const who = p.entered_by ? ` (eingetragen von ${p.entered_by})` : ''
   const prefix = withName ? `${beverage.name}: ` : ''
-  return `${prefix}Es wurde mehr gezählt, als vor dem Event da war. Der Einkauf vom ${conflictDate(p.date)} (${formatPurchaseQty(p.quantity, beverage)}) wurde sehr wahrscheinlich mitgezählt – bitte abziehen.`
+  switch (purchaseHint(entry, p)) {
+    case 'deducted':
+      return `${prefix}Einkauf vom ${when} (${qty}) ist vom gezählten Rest abgezogen.`
+    case 'pending':
+      return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Gezählt wird der Bestand direkt nach dem Event: Kisten aus diesem Einkauf nicht mitzählen.`
+    case 'likely':
+      return `${prefix}Es wurde mehr gezählt, als vor dem Event da war. Der Einkauf vom ${when} (${qty}) wurde sehr wahrscheinlich mitgezählt – bitte abziehen.`
+    default:
+      return `${prefix}Am ${when} – nach dem Event – kamen ${qty} dazu${who}. Standen sie beim Zählen schon im Lager? Dann bitte abziehen.`
+  }
 }
 
-/** Einmal oben in der Inventur: Einkäufe nach dem Event, mit Abzieh-Button je
- *  Getränk. Weg, sobald ein späteres Event gezählt ist. */
-const purchaseBanner = computed(() => {
-  if (inventory.value.some(e => e.later_event_counted)) return []
-  const groups = new Map<number, {
-    purchaseId: number; date: string; supplier: string; enteredBy: string
-    items: { entry: InventoryEntry; beverage: BeverageItem; p: PurchaseAfterEvent; level: PurchaseHintLevel }[]
-  }>()
-  for (const entry of inventory.value) {
-    const beverage = beverages.value.find(b => b.id === entry.beverage_item)
-    if (!beverage?.is_active) continue
-    for (const p of entry.purchases_after_event ?? []) {
-      let g = groups.get(p.purchase_id)
-      if (!g) {
-        g = { purchaseId: p.purchase_id, date: p.date, supplier: p.supplier, enteredBy: p.entered_by ?? '', items: [] }
-        groups.set(p.purchase_id, g)
-      }
-      g.items.push({ entry, beverage, p, level: purchaseHint(entry, p) })
-    }
-  }
-  return [...groups.values()].sort((x, y) => x.date.localeCompare(y.date))
-})
-
-/** Button je Getränk im Banner: nur wo Abziehen möglich und sinnvoll ist. */
-function purchaseChipButton(level: PurchaseHintLevel, beverage: BeverageItem, p: PurchaseAfterEvent): string | null {
+function purchaseHintButton(entry: InventoryEntry, beverage: BeverageItem, p: PurchaseAfterEvent): string | null {
+  const level = purchaseHint(entry, p)
   if (level === 'deducted') return 'Rückgängig'
   if (level === 'likely' || level === 'unclear') return `− ${formatPurchaseQty(p.quantity, beverage)} abziehen`
   return null
@@ -3317,28 +3317,6 @@ mixin shortfallBoxes
             span  ·&nbsp;
             button.conflict-retry(@click="saveAll(false)") Erneut versuchen
 
-      .purchase-banner(v-if="purchaseBanner.length" data-testid="inv-purchase-banner")
-        .purchase-banner-icon ℹ️
-        .purchase-banner-body
-          .purchase-banner-title Nach diesem Event wurde eingekauft
-          .purchase-banner-sub Gezählt wird der Bestand direkt nach dem Event. Standen diese Kisten beim Zählen schon im Lager, bitte abziehen.
-          .purchase-banner-purchase(v-for="g in purchaseBanner" :key="g.purchaseId")
-            .purchase-banner-head {{ conflictDate(g.date) }} · {{ g.supplier || 'Einkauf' }}{{ g.enteredBy ? ` (eingetragen von ${g.enteredBy})` : '' }}
-            .purchase-banner-chip(
-              v-for="it in g.items"
-              :key="it.entry.beverage_item"
-              :class="{ 'is-deducted': it.level === 'deducted' }"
-              data-testid="inv-purchase-chip"
-              :data-level="it.level"
-            )
-              span {{ it.level === 'deducted' ? '✓ ' : '' }}{{ it.beverage.name }}{{ bevSize(it.beverage) }}: {{ formatPurchaseQty(it.p.quantity, it.beverage) }}{{ it.level === 'deducted' ? ' abgezogen' : '' }}
-              button.after-purchase-btn(
-                v-if="purchaseChipButton(it.level, it.beverage, it.p)"
-                type="button"
-                data-testid="inv-chip-btn"
-                @click="togglePurchaseDeduction(it.entry, it.beverage, it.p)"
-              ) {{ purchaseChipButton(it.level, it.beverage, it.p) }}
-
       .section(v-for="(items, group) in inventoryBySupplier" :key="group")
         h3.section-title {{ group }}
           span.inv-progress {{ inventoryProgress(items) }}
@@ -3361,7 +3339,7 @@ mixin shortfallBoxes
               v-show="inventoryItemVisible(entry)"
               data-testid="inv-row"
               :data-drink="beverage.name"
-              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }"
+              :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) && hasOvercountHint(entry) }"
             )
               .col-inv-name
                 router-link.bev-name.bev-name-link(
@@ -3521,22 +3499,25 @@ mixin shortfallBoxes
                 | {{ beverage.name }}: Dieser Verbrauch enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], das seine Inventur noch nicht eingetragen hat. Der Wert wird sich korrigieren, sobald das nachgeholt ist – ein ungewöhnlich hoher Verbrauch ist hier also erst einmal normal.
 
             .inventory-row-after-purchase(
-              v-for="p in overcountPurchases(entry)"
+              v-for="p in rowPurchases(entry)"
               :key="p.purchase_id"
               v-show="inventoryItemVisible(entry)"
+              :class="purchaseHint(entry, p) === 'likely' ? 'inventory-row-miscount' : 'inventory-row-pending'"
+              :data-level="purchaseHint(entry, p)"
               data-testid="inv-after-purchase"
             )
-              span.after-purchase-icon ⚠️
-              span.after-purchase-text {{ overcountHintText(beverage, p) }}
+              span.after-purchase-icon {{ purchaseHintIcon(entry, p) }}
+              span.after-purchase-text {{ purchaseHintText(entry, beverage, p) }}
               button.after-purchase-btn(
+                v-if="purchaseHintButton(entry, beverage, p)"
                 type="button"
                 data-testid="inv-after-purchase-btn"
                 @click="togglePurchaseDeduction(entry, beverage, p)"
-              ) − {{ formatPurchaseQty(p.quantity, beverage) }} abziehen
+              ) {{ purchaseHintButton(entry, beverage, p) }}
 
         //- Mobile cards
         .inventory-cards.mobile-only
-          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) }")
+          .inv-card(v-for="{ beverage, entry } in sortedInventory(items)" :key="beverage.id" v-show="inventoryItemVisible(entry)" :class="{ 'inv-confirmed': isInventoryConfirmed(entry), 'inv-pending': !isInventoryConfirmed(entry), 'inv-conflict': inventoryConflicts.has(beverage.id), 'inv-miscount': !!consumptionAnomaly(entry, beverage), 'inv-overcount': isOvercount(entry) && hasOvercountHint(entry) }")
             .inv-card-header
               .inv-card-name
                 router-link.inv-card-name-link(
@@ -3564,15 +3545,17 @@ mixin shortfallBoxes
               span ℹ️
               | Enthält wahrscheinlich noch das frühere Event #[strong „{{ entry.pending_earlier_event.event_title }}" ({{ conflictDate(entry.pending_earlier_event.event_date) }})], dessen Inventur noch fehlt. Korrigiert sich nach dem Nachtragen.
             .inv-card-after-purchase(
-              v-for="p in overcountPurchases(entry)"
+              v-for="p in rowPurchases(entry)"
               :key="p.purchase_id"
+              :class="purchaseHint(entry, p) === 'likely' ? 'inv-card-miscount' : 'inv-card-pending'"
             )
-              span ⚠️
-              span.after-purchase-text {{ overcountHintText(beverage, p, false) }}
+              span {{ purchaseHintIcon(entry, p) }}
+              span.after-purchase-text {{ purchaseHintText(entry, beverage, p, false) }}
               button.after-purchase-btn(
+                v-if="purchaseHintButton(entry, beverage, p)"
                 type="button"
                 @click="togglePurchaseDeduction(entry, beverage, p)"
-              ) − {{ formatPurchaseQty(p.quantity, beverage) }} abziehen
+              ) {{ purchaseHintButton(entry, beverage, p) }}
             .inv-card-info
               span.inv-info-item
                 span.inv-info-label V:
@@ -5910,92 +5893,22 @@ h2 {
   color: #0d3c6e;
 }
 
-/* Überzählt: Warnung zur Zahl der Zeile – orange wie 💡, Button gefüllt. */
+/* Einkaufs-Hinweise nutzen die bestehenden Stile: blau (…-pending) = Info,
+ * orange (…-miscount) = Zahl prüfen. Hier nur das Layout für Symbol und Button. */
 .inventory-row-after-purchase,
 .inv-card-after-purchase {
-  background: #fff0e2;
-  border-left: 4px solid #e8710a;
-  color: #8a4500;
   display: flex;
   gap: 0.5em;
   align-items: center;
   line-height: 1.4;
 }
 
-.inventory-row-after-purchase {
-  padding: 0.5em 1em;
-  font-size: 0.9em;
-}
-
 .inv-card-after-purchase {
-  padding: 0.4em 0.6em;
-  font-size: 0.85em;
-  border-radius: 4px;
-  margin: 0.4em 0;
   flex-wrap: wrap;
 }
 
-.inventory-row-after-purchase .after-purchase-btn,
-.inv-card-after-purchase .after-purchase-btn {
-  background: #e8710a;
-  border-color: #e8710a;
-  color: #fff;
-  font-weight: 600;
-}
-
-/* Einmal oben in der Inventur: Einkäufe nach dem Event (Info, blau). */
-.purchase-banner {
-  display: flex;
-  gap: 0.6em;
-  align-items: flex-start;
-  margin: 0.75em 0;
-  padding: 0.7em 1em;
-  background: #e7f1fb;
-  border-left: 4px solid #1565c0;
-  color: #0d3c6e;
-  font-size: 0.9em;
-  font-weight: 400;
-  line-height: 1.4;
-  text-align: left;
-}
-
-.purchase-banner-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.purchase-banner-title {
-  font-weight: 700;
-}
-
-.purchase-banner-sub {
-  margin-bottom: 0.4em;
-}
-
-.purchase-banner-head {
-  margin-top: 0.3em;
-  font-weight: 600;
-}
-
-.purchase-banner-chip {
-  padding-left: 0.5em;
-}
-
-.purchase-banner-chip {
-  display: flex;
-  gap: 0.75em;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.15em 0;
-}
-
-.purchase-banner-chip.is-deducted {
-  color: #1e4620;
-}
-
-.purchase-banner .after-purchase-btn {
-  background: #fff;
-  color: inherit;
+.after-purchase-icon {
+  flex-shrink: 0;
 }
 
 .after-purchase-text {
