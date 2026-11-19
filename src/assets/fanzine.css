@@ -212,6 +212,8 @@
 .fz-burst.multi { --burst-tone: var(--multi); }
 .fz-burst svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .fz-burst-lines polygon { fill: #000; }
+.fz-burst-sticker { fill: #fff; stroke: #000; stroke-width: 3; stroke-linejoin: miter; }
+.fz-burst-spark { fill: #000; }
 .fz-burst-out { fill: var(--burst-tone); stroke: #000; stroke-width: 3; stroke-linejoin: miter; }
 .fz-burst-shadow { fill: #000; }
 .fz-burst-in { fill: #fff; }
@@ -236,12 +238,11 @@
     letter-spacing: 0.02em;
     text-align: center;
     text-transform: uppercase;
+    text-shadow: 0.07em 0.07em 0 var(--burst-tone);
 }
-/* Auf dem Foto der Titelstory und an der Ecke des Community-Kastens */
-.fz-burst.on-photo { position: absolute; right: -6.5rem; bottom: -4.5rem; z-index: 3; }
+/* An der Ecke des Community-Kastens */
 .fz-burst.on-box { position: absolute; top: -4rem; right: 0; z-index: 3; transform: rotate(6deg); }
 @media (max-width: 799px) {
-    .fz-burst.on-photo { width: 11em; font-size: 0.75rem; right: -1rem; bottom: -2rem; }
     .fz-burst.on-box { display: none; }
 }
 
@@ -260,6 +261,13 @@
 
 .fz-feature { margin-top: 1.5rem; }
 .fz-feature .fz-photo { transform: rotate(-1.8deg); margin: 0.5rem 0.5rem 0; }
+/* Zweite Titelstory: Foto rechts, Text links */
+.fz-feature + .fz-feature { margin-top: 4rem; }
+.fz-feature.is-second .fz-photo { transform: rotate(1.6deg); }
+@media (min-width: 800px) {
+    .fz-feature.is-second { grid-template-columns: 6fr 5fr; }
+    .fz-feature.is-second .fz-photo { order: 2; }
+}
 .fz-feature-date {
     font-size: clamp(1rem, 2.2vw, 1.2rem);
     font-weight: 900;
@@ -274,7 +282,6 @@
     text-transform: uppercase;
     overflow-wrap: anywhere;
 }
-.fz-feature-diff { margin-top: 0.5rem; font-weight: 700; letter-spacing: 0.05em; }
 .fz-teaser {
     display: -webkit-box;
     -webkit-line-clamp: 6;
@@ -285,6 +292,45 @@
     font-size: clamp(1rem, 1.8vw, 1.1rem);
 }
 .fz-feature .btn { margin-top: 1.5rem; padding: 0.7em 1.2em; }
+
+/* Edding-Markierung am Datum des nächsten Events: handgezogener Kreis, Pfeil und Notiz (Grün = Konzert) */
+.fz-feature-date { position: relative; }
+.fz-feature-date.has-note + .fz-feature-title { margin-top: 1rem !important; }
+.fz-mark-ring {
+    position: absolute;
+    left: -1.25rem;
+    top: -0.95rem;
+    width: calc(100% + 2.5rem);
+    height: calc(100% + 1.9rem);
+    overflow: visible;
+    pointer-events: none;
+    transform: rotate(1deg);
+}
+.fz-mark-ring path, .fz-mark-arrow path {
+    fill: none;
+    stroke: var(--multi);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.fz-mark-ring path { stroke-width: 4; vector-effect: non-scaling-stroke; }
+.fz-mark-arrow { position: absolute; right: -0.3rem; top: -3.6rem; width: 3.75rem; height: 3.1rem; overflow: visible; pointer-events: none; }
+.fz-mark-arrow path { stroke-width: 3.5; }
+.fz-mark-note {
+    position: absolute;
+    right: 3rem;
+    top: -3.1rem;
+    font: 1.6rem/1 "Permanent Marker", "Marker Felt", cursive;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    color: var(--multi);
+    transform: rotate(-4deg);
+}
+/* Gestapelt liegt die Notiz im Abstand zwischen Foto und Datum */
+@media (max-width: 799px) {
+    .fz-feature-date.has-note { margin-top: 2.6rem; }
+    .fz-mark-ring { left: -0.6rem; width: calc(100% + 1.2rem); }
+}
 
 .fz-cancelled { text-decoration: line-through; }
 .fz-cancelled-tag { color: var(--alert); font-weight: 900; letter-spacing: 0.1em; margin-right: 0.5rem; text-decoration: none; display: inline-block; }
@@ -707,3 +753,42 @@
     .fz * { transition: none !important; }
     .fz .fz-plakette { animation: none; }
 }
+
+/* ---------- Handgemacht: Trennlinien und Stempel-Buttons (Filter in FanzineFilters.vue) ---------- */
+
+.fz-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Die Linie ist ein Pseudo-Element mit Filter statt des Rahmens, sonst würde der ganze Inhalt verzogen */
+.fz-cover, #programm, .fz-page-head { border-bottom: 0; }
+.fz-more, .fz-page { border-top: 0; }
+#programm, .fz-page-head, .fz-more, .fz-page { position: relative; }
+.fz-cover::after, #programm::after, .fz-page-head::after, .fz-more::before, .fz-page::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--fz-rule);
+    background: #000;
+    filter: url(#fz-hand);
+    pointer-events: none;
+}
+.fz-cover::after, #programm::after, .fz-page-head::after { bottom: 0; }
+.fz-more::before, .fz-page::before { top: 0; }
+
+/* Cover-Buttons als Gummistempel: nur Rand und Schrift, leicht schief, bei Hover mit Farbe gefüllt */
+.fz .fz-cover-cta .btn {
+    padding: 0.55em 1.1em;
+    font-family: var(--fz-mono);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 0.28rem solid #000;
+    box-shadow: none;
+    transform: rotate(-2.5deg);
+    filter: url(#fz-ink);
+}
+.fz .fz-cover-cta .btn:nth-child(2) { transform: rotate(1.8deg); }
+.fz .fz-cover-cta .btn:hover { background: #000; color: #fff; filter: url(#fz-ink); }
+.fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); box-shadow: none; }
+.fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }

@@ -6,6 +6,8 @@ const OUTER =
   "143,30 166,69 213,48 203,78 253,81 219,104 254,123 215,129 226,157 185,149 177,187 153,156 112,183 112,149 57,160 92,129 43,117 86,106 52,80 101,78 89,42 129,69";
 const INNER =
   "144,46 163,77 200,60 192,84 232,87 205,105 233,120 202,125 211,148 178,141 172,172 152,147 120,168 120,141 76,150 104,125 64,116 99,107 72,86 111,84 101,56 133,77";
+// Vierzackiger Funkelstern um den Nullpunkt
+const SPARK = "M0,-16 L4,-4 16,0 4,4 0,16 -4,4 -16,0 -4,-4 Z";
 </script>
 
 <template lang="pug">
@@ -21,9 +23,13 @@ const INNER =
       polygon(points="31,216 37,220 72,172")
       polygon(points="295,203 289,209 244,162")
       polygon(points="269,216 263,220 228,172")
+    polygon.fz-burst-sticker(:points="OUTER" transform="translate(150 110) scale(1.08) translate(-150 -110)")
     polygon.fz-burst-out(:points="OUTER")
     polygon.fz-burst-shadow(:points="INNER" transform="translate(-5 5)")
     polygon.fz-burst-in(:points="INNER")
+    path.fz-burst-spark(:d="SPARK" transform="translate(20 120) rotate(8)")
+    path.fz-burst-spark(:d="SPARK" transform="translate(283 118) scale(0.7) rotate(-10)")
+    path.fz-burst-spark(:d="SPARK" transform="translate(160 12) scale(0.55)")
   .fz-burst-text
     slot
 </template>

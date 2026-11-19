@@ -44,9 +44,39 @@ const upcoming = computed(() =>
 // Titelstory = nächster Termin, Nebenstories = die nächsten (max. 2) mit Bild, Rest im Inhaltsverzeichnis
 const feature = computed(() => upcoming.value[0]);
 const picks = computed(() => upcoming.value.slice(1).filter((e) => e.img).slice(0, 2));
+// Bei genau einer Nebenstory bekommt sie denselben Aufbau wie die Titelstory (statt halb leerer Kachelreihe)
+const stories = computed(() =>
+  (!feature.value ? [] : picks.value.length === 1 ? [feature.value, picks.value[0]] : [feature.value]).map((s) => ({
+    ...s,
+    cd: countdown(s.date_d),
+  }))
+);
+const sidePicks = computed(() => (picks.value.length === 1 ? [] : picks.value));
 const toc = computed(() =>
   upcoming.value.slice(1).filter((e) => !picks.value.some((p) => p.id === e.id))
 );
+
+// Zeit bis zum Event in Kalendertagen, als Edding-Notiz am Datum des nächsten Events
+const countdown = (d: dayjs.Dayjs) => {
+  const days = d.startOf("day").diff(dayjs().startOf("day"), "day");
+  if (days <= 0) return "heute!";
+  if (days === 1) return "morgen!";
+  return `in ${days} Tagen!`;
+};
+
+// Handgezogene Ellipse (leicht überlappend), wird per preserveAspectRatio="none" auf die Datumsbreite gestreckt
+const MARK_RING = (() => {
+  const w = 300;
+  const h = 60;
+  let d = "";
+  for (let t = 0.15, i = 0; t < Math.PI * 2 * 1.1; t += 0.09, i++) {
+    const k = 1 - 0.035 * (t / (Math.PI * 2)) + 0.012 * Math.sin(t * 3.1);
+    const x = w / 2 + (w / 2 - 4) * Math.cos(t + Math.PI * 0.9) * k;
+    const y = h / 2 + (h / 2 - 3) * Math.sin(t + Math.PI * 0.9) * k;
+    d += `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)} `;
+  }
+  return d;
+})();
 
 const nextMeeting = computed(() =>
   communityOnly(events)
@@ -121,26 +151,32 @@ const zoom = ref(17);
     .fz-empty(v-if="!feature && ongoing.length === 0") Gerade steht nichts auf der Hebebühne. Kein Grund zur Panik: Newsletter abonnieren, dann erfahrt ihr als Erste, wann es wieder kracht.
 
     router-link.plain-link.fz-feature(
-      v-if="feature"
-      :to="eventLink(feature.id)"
-      :class="{ 'no-img': !feature.img }"
+      v-for="(story, i) in stories"
+      :key="story.id"
+      :to="eventLink(story.id)"
+      :class="{ 'no-img': !story.img, 'is-second': i > 0 }"
     )
-      .fz-photo(v-if="feature.img")
+      .fz-photo(v-if="story.img")
         .fz-tape.tl
         .fz-tape.tr
-        img(:src="feature.img" :alt="feature.title" crossorigin="anonymous")
-        FanzineBurst.on-photo(tone="multi") Als nächstes!
+        img(:src="story.img" :alt="story.title" crossorigin="anonymous")
       div
-        .fz-feature-date {{ feature.date_d.format('dddd, DD. MMMM') }} · {{ feature.date_d.format('HH:mm') }} Uhr
-        h2.fz-feature-title(:class="{ 'fz-cancelled': feature.cancelled }")
-          span.fz-cancelled-tag(v-if="feature.cancelled") Abgesagt
-          | {{ feature.title }}
-        p.fz-teaser(v-if="teaser(feature.descriptionShort)") {{ teaser(feature.descriptionShort) }}
-        p.fz-feature-diff Abfahrt {{ feature.date_d.fromNow() }}
+        .fz-feature-date(:class="{ 'has-note': i === 0 && !story.cancelled }")
+          | {{ story.date_d.format('dddd, DD. MMMM') }} · {{ story.date_d.format('HH:mm') }} Uhr
+          template(v-if="i === 0 && !story.cancelled")
+            svg.fz-mark-ring(viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true" focusable="false")
+              path(:d="MARK_RING")
+            svg.fz-mark-arrow(viewBox="0 0 60 50" aria-hidden="true" focusable="false")
+              path(d="M50,4 C40,10 28,18 20,38 M20,38 L16,26 M20,38 L31,32")
+            span.fz-mark-note {{ story.cd }}
+        h2.fz-feature-title(:class="{ 'fz-cancelled': story.cancelled }")
+          span.fz-cancelled-tag(v-if="story.cancelled") Abgesagt
+          | {{ story.title }}
+        p.fz-teaser(v-if="teaser(story.descriptionShort)") {{ teaser(story.descriptionShort) }}
         span.btn Weiterlesen
 
-    .fz-picks(v-if="picks.length")
-      router-link.plain-link.fz-pick(v-for="ev in picks" :key="ev.id" :to="eventLink(ev.id)")
+    .fz-picks(v-if="sidePicks.length")
+      router-link.plain-link.fz-pick(v-for="ev in sidePicks" :key="ev.id" :to="eventLink(ev.id)")
         .fz-photo
           .fz-tape.tc
           img(:src="ev.img" :alt="ev.title" crossorigin="anonymous")
