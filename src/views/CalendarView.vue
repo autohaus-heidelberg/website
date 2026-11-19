@@ -946,4 +946,73 @@ button.active {
     margin-right: 0.2rem;
   }
 }
+
+/* ── Handgezogene Linien (Filter in FanzineFilters.vue): Gitterlinien und Rahmen sind leere Pseudo-Elemente,
+   die echten Ränder bleiben transparent und halten das Layout ── */
+.grid {
+  position: relative;
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+
+.grid::before {
+  content: "";
+  position: absolute;
+  top: -0.3rem;
+  left: -0.3rem;
+  right: 0;
+  bottom: 0;
+  background:
+    linear-gradient(#000, #000) top / 100% 0.3rem no-repeat,
+    linear-gradient(#000, #000) left / 0.3rem 100% no-repeat;
+  filter: url(#fz-grid-a);
+  pointer-events: none;
+}
+
+.weeknum,
+.day {
+  position: relative;
+  border-color: transparent;
+}
+
+/* Rechte und untere Linie der Zelle; ragt 0.3rem in die Nachbarn, damit an den Kreuzungen keine Lücken entstehen */
+.weeknum::before,
+.day::before {
+  content: "";
+  position: absolute;
+  inset: -0.3rem -0.3rem -0.3rem -0.3rem;
+  background:
+    linear-gradient(#000, #000) right / 0.3rem 100% no-repeat,
+    linear-gradient(#000, #000) bottom / 100% 0.3rem no-repeat;
+  filter: url(#fz-grid-a);
+  pointer-events: none;
+}
+
+/* Drei Filter-Varianten, damit sich das Wackeln nicht in jeder Zelle wiederholt */
+.day:nth-child(3n + 2)::before { filter: url(#fz-grid-b); }
+.day:nth-child(3n)::before { filter: url(#fz-grid-c); }
+
+.corner,
+.weekday {
+  filter: url(#fz-ink-soft);
+}
+
+.list-date,
+.list-entry {
+  position: relative;
+  border-color: transparent;
+}
+
+.list-date::before,
+.list-entry::before {
+  content: "";
+  position: absolute;
+  inset: -0.3rem;
+  border: 0.3rem solid #000;
+  filter: url(#fz-frame);
+  pointer-events: none;
+}
+
+.list-entry.community::before { border-style: dashed; }
+.list-entry.cancelled::before { border-style: dotted; }
 </style>

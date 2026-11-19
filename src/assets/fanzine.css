@@ -825,6 +825,12 @@
 /* Stempel (Etiketten wie „Community“) */
 .fz .fz-stamp { filter: url(#fz-ink-soft); }
 
+/* Formularfelder: handgezogener Rahmen als border-image (Felder können keine Pseudo-Elemente haben) */
+.fz input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="file"]), .fz select, .fz textarea {
+    border: 0.2rem solid transparent;
+    border-image: url("./fz-field-border.svg") 32 / 0.2rem / 0 stretch;
+}
+
 /* Buttons als Gummistempel: nur Rand und Schrift, bei Hover mit Farbe gefüllt */
 .fz .btn, .fz button:where(:not(.fz-plakette, .fz-geese)) {
     font-family: var(--fz-mono);
