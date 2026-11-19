@@ -32,7 +32,7 @@
     justify-content: space-between;
     gap: 0.25rem 1.5rem;
     margin-top: 1rem;
-    padding: 0.6rem 1rem 1.1rem;
+    padding: 0.8rem 1.5rem 1.4rem;
     background: #000;
     color: #fff;
     font-size: clamp(0.7rem, 1.5vw, 0.9rem);
@@ -98,7 +98,7 @@
 
 .fz-label {
     display: inline-block;
-    padding: 0.25rem 1rem 0.35rem;
+    padding: 0.45rem 1.5rem 0.65rem;
     margin-bottom: 1.25rem;
     background: #000;
     color: #fff;
@@ -577,7 +577,7 @@
 .fz .fz-h2, .fz .fz-feature-title, .fz .fz-pick-title { font-family: Geologica, sans-serif; }
 
 /* Datum der Titelstory wie mit Marker/Label-Gerät aufgeklebt */
-.fz .fz-feature-date { display: inline-block; padding: 0.2em 0.7em; background: #000; color: #fff; transform: rotate(-1deg); }
+.fz .fz-feature-date { display: inline-block; padding: 0.3em 1em; background: #000; color: #fff; transform: rotate(-1deg); }
 
 /* Handgezogener Marker-Strich unter dem Untertitel */
 .fz .fz-title .fz-line + .fz-line {
