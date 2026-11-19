@@ -825,6 +825,18 @@
 /* Stempel (Etiketten wie „Community“) */
 .fz .fz-stamp { filter: url(#fz-ink-soft); }
 
+/* Schwarze Etiketten (Kopfleiste, „Das Programm“, Türnummern, Anzeigenkopf): wie kopiert. Der schwarze Grund und die
+   ausgerissene Kante liegen in ::before, damit der Filter auch die Kante verzieht (clip-path wirkt sonst erst danach). */
+.fz-strip, .fz-label { position: relative; isolation: isolate; background: none; clip-path: none; filter: url(#fz-ink-soft); }
+.fz-strip::before, .fz-label::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #000; }
+.fz-strip::before { clip-path: polygon(0 0, 100% 0, 100% 85%, 97% 100%, 93% 86%, 89% 100%, 84% 87%, 79% 100%, 74% 86%, 69% 100%, 63% 87%, 58% 100%, 53% 86%, 47% 100%, 42% 87%, 36% 100%, 31% 86%, 25% 100%, 20% 87%, 14% 100%, 9% 86%, 4% 100%, 0 86%); }
+.fz-label::before { clip-path: polygon(0 0, 100% 0, 100% 85%, 96% 100%, 92% 86%, 87% 100%, 82% 87%, 76% 100%, 70% 86%, 64% 100%, 58% 87%, 52% 100%, 46% 86%, 40% 100%, 34% 87%, 28% 100%, 22% 86%, 16% 100%, 10% 87%, 5% 100%, 0 86%); }
+.fz-door-no, .fz-ad-head { filter: url(#fz-ink-soft); }
+
+/* Datumsetikett der Titelstory: nur der Grund ist rau, die Edding-Notiz daran bleibt unverändert */
+.fz .fz-feature-date { position: relative; isolation: isolate; background: none; }
+.fz .fz-feature-date::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #000; filter: url(#fz-ink-soft); }
+
 /* Formularfelder: handgezogener Rahmen als border-image (Felder können keine Pseudo-Elemente haben) */
 .fz input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="file"]), .fz select, .fz textarea {
     border: 0.2rem solid transparent;
