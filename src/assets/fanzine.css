@@ -833,9 +833,6 @@
 .fz-label::before { clip-path: polygon(0 0, 100% 0, 100% 85%, 96% 100%, 92% 86%, 87% 100%, 82% 87%, 76% 100%, 70% 86%, 64% 100%, 58% 87%, 52% 100%, 46% 86%, 40% 100%, 34% 87%, 28% 100%, 22% 86%, 16% 100%, 10% 87%, 5% 100%, 0 86%); }
 .fz-door-no, .fz-ad-head { filter: url(#fz-ink-soft); }
 
-/* Ransom-Titel (Cover und Seitenköpfe) wie frisch kopiert */
-.fz-title, .fz-page-title { filter: url(#fz-ink); }
-
 /* Datumsetikett der Titelstory: nur der Grund ist rau, die Edding-Notiz daran bleibt unverändert */
 .fz .fz-feature-date { position: relative; isolation: isolate; background: none; }
 .fz .fz-feature-date::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #000; filter: url(#fz-ink-soft); }
