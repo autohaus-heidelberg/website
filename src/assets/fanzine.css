@@ -754,15 +754,18 @@
     .fz .fz-plakette { animation: none; }
 }
 
-/* ---------- Handgemacht: Trennlinien und Stempel-Buttons (Filter in FanzineFilters.vue) ---------- */
+/* ---------- Handgemacht: Linien, Rahmen und Stempel-Buttons (Filter in FanzineFilters.vue) ---------- */
 
 .fz-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
 
-/* Die Linie ist ein Pseudo-Element mit Filter statt des Rahmens, sonst würde der ganze Inhalt verzogen */
+/* Linien, Rahmen und Schatten sind leere Pseudo-Elemente mit Filter statt echter Rahmen, sonst würde der Inhalt mitverzogen.
+   Der echte Rahmen bleibt transparent, damit sich das Layout nicht ändert. */
+
+/* Dicke Trennlinien (--fz-rule) */
 .fz-cover, #programm, .fz-page-head { border-bottom: 0; }
-.fz-more, .fz-page { border-top: 0; }
-#programm, .fz-page-head, .fz-more, .fz-page { position: relative; }
-.fz-cover::after, #programm::after, .fz-page-head::after, .fz-more::before, .fz-page::before {
+.fz-more, .fz-page, .fz-run { border-top: 0; }
+#programm, .fz-page-head, .fz-more, .fz-page, .fz-run { position: relative; }
+.fz-cover::after, #programm::after, .fz-page-head::after, .fz-more::before, .fz-page::before, .fz-run::before {
     content: "";
     position: absolute;
     left: 0;
@@ -773,22 +776,82 @@
     pointer-events: none;
 }
 .fz-cover::after, #programm::after, .fz-page-head::after { bottom: 0; }
-.fz-more::before, .fz-page::before { top: 0; }
+.fz-more::before, .fz-page::before, .fz-run::before { top: 0; }
 
-/* Cover-Buttons als Gummistempel: nur Rand und Schrift, leicht schief, bei Hover mit Farbe gefüllt */
-.fz .fz-cover-cta .btn {
-    padding: 0.55em 1.1em;
+/* Dünne Trennstriche (Inhaltsverzeichnis, Ablaufplan, Vereinstreffen) */
+.fz-toc a, .fz-run li, .fz-meeting { position: relative; border-bottom: 0; }
+.fz-toc a::after, .fz-run li::after, .fz-meeting::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0.1rem;
+    background: currentColor;
+    filter: url(#fz-hand-thin);
+    pointer-events: none;
+}
+
+/* Kästen: Rahmen und harter Schatten als eigenes Element über dem Kasten */
+.fz .fz-box, .fz .fz-cut { border-color: transparent; box-shadow: none; }
+.fz .fz-box::after, .fz .fz-cut::after {
+    content: "";
+    position: absolute;
+    inset: -0.25rem;
+    z-index: 2;
+    border: 0.25rem solid #000;
+    filter: url(#fz-frame);
+    pointer-events: none;
+}
+.fz .fz-box::after { box-shadow: 0.5rem 0.5rem 0 #000; }
+.fz .fz-cut::after { border-style: dashed; }
+/* Raster-Kasten darf nicht abschneiden, sonst fehlt der Rahmen am Rand */
+.fz-dots { overflow: visible; }
+
+/* Fotos und Flyer: Rahmen als Element über dem Bild */
+.fz-photo { --fz-photo-border: 0.35rem; }
+.fz-gallery .flyer { --fz-photo-border: 0.25rem; }
+.fz-photo img { display: block; border-color: transparent; }
+.fz-photo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: var(--fz-photo-border) solid #000;
+    filter: url(#fz-frame);
+    pointer-events: none;
+}
+
+/* Stempel (Etiketten wie „Community“) */
+.fz .fz-stamp { filter: url(#fz-ink-soft); }
+
+/* Buttons als Gummistempel: nur Rand und Schrift, bei Hover mit Farbe gefüllt */
+.fz .btn, .fz button:where(:not(.fz-plakette, .fz-geese)) {
     font-family: var(--fz-mono);
     font-weight: 900;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    background: transparent;
-    border: 0.28rem solid #000;
+    background: #fff;
+    border: 0.2rem solid #000;
     box-shadow: none;
+    filter: url(#fz-ink-soft);
+}
+.fz .btn:nth-child(odd) { transform: rotate(-1deg); }
+.fz .btn:nth-child(even) { transform: rotate(0.9deg); }
+.fz .btn:hover, .fz button:where(:not(.fz-plakette, .fz-geese)):hover { background: #000; color: #fff; filter: url(#fz-ink-soft); }
+.fz .btn:active, .fz button:where(:not(.fz-plakette, .fz-geese)):active { transform: scale(0.96); box-shadow: none; }
+.fz .fz-lang .btn { border-width: 0.12rem; }
+
+/* Cover-Buttons: größer und schiefer, mit kräftigerem Stempel-Filter */
+.fz .fz-cover-cta .btn {
+    padding: 0.55em 1.1em;
+    background: transparent;
+    border-width: 0.28rem;
+    letter-spacing: 0.12em;
     transform: rotate(-2.5deg);
     filter: url(#fz-ink);
 }
 .fz .fz-cover-cta .btn:nth-child(2) { transform: rotate(1.8deg); }
 .fz .fz-cover-cta .btn:hover { background: #000; color: #fff; filter: url(#fz-ink); }
-.fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); box-shadow: none; }
+.fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); }
 .fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }
