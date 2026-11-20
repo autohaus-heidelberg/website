@@ -15,8 +15,7 @@
                 span.fz-date-long {{ date }}
                 span.fz-date-short {{ dateShort }}
                 |  Uhr
-        span.event-note(v-if="countdown") {{ countdown }}
-        p.datediff(v-if="showDatediff && !countdown" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
+        p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
         h1.title {{ event.title }}
         .event-meta(v-if="!isCommunityEvent")
@@ -111,28 +110,14 @@ const isOngoing = computed(() => {
   return dayjs().isAfter(dayjs(props.event?.date)) && dayjs().isBefore(endDate.value)
 })
 
-const showDatediff = computed(() => {
-  if (isOngoing.value) return true
-  return dayjs(props.event?.date).diff(dayjs(), "day") < 7
-})
+// Nur laufende und vergangene Events bekommen eine Zeile unter dem Etikett; bei bevorstehenden steht das Datum allein
+const showDatediff = computed(() => isOngoing.value || !dayjs(props.event?.date).isAfter(dayjs()))
 
 const dateDiff = computed(() => {
   if (isOngoing.value && endDate.value) {
     return `Läuft noch bis ${endDate.value.format('DD.MM.YYYY')}`
   }
-  const start = dayjs(props.event?.date).locale('de')
-  return start.isAfter(dayjs()) ? `Abfahrt ${start.fromNow()}` : `Das war ${start.fromNow()}`
-})
-
-// Edding-Notiz wie auf der Startseite, solange der Termin noch bevorsteht und höchstens eine Woche entfernt ist
-const countdown = computed(() => {
-  if (props.event.cancelled || isOngoing.value) return ''
-  const start = dayjs(props.event?.date)
-  if (!start.isAfter(dayjs())) return ''
-  const days = start.startOf('day').diff(dayjs().startOf('day'), 'day')
-  if (days <= 0) return 'heute!'
-  if (days === 1) return 'morgen!'
-  return days < 7 ? `in ${days} Tagen!` : ''
+  return `Das war ${dayjs(props.event?.date).locale('de').fromNow()}`
 })
 
 // Share
@@ -214,19 +199,6 @@ function copyLink() {
     z-index: -1;
     background: #000;
     filter: url(#fz-ink-soft);
-}
-
-/* Edding-Notiz neben dem Etikett: „morgen!“, „in 3 Tagen!“ */
-.event-note {
-    display: inline-block;
-    margin-left: 0.9rem;
-    vertical-align: middle;
-    font: 1.6rem/1 "Permanent Marker", "Marker Felt", cursive;
-    letter-spacing: 0;
-    text-transform: none;
-    white-space: nowrap;
-    color: var(--multi);
-    transform: rotate(-4deg);
 }
 
 /* Vereinstreffen: Textmarker-Strich statt Konzert-Grün (Strich-Variable aus fanzine.css, ohne sie flaches Gelb) */
