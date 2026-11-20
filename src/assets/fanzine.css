@@ -558,9 +558,9 @@
 .fz a:hover .fz-photo img, .fz .fz-photo:hover img, .fz .fz-photo.is-revealed img { filter: none; }
 .fz a:hover .fz-photo::after, .fz .fz-photo:hover::after, .fz .fz-photo.is-revealed::after { opacity: 0; }
 
-/* Titelstory (nächstes Event): Plakat immer in Farbe, ohne Raster */
-.fz .fz-feature .fz-photo img { filter: none; }
-.fz .fz-feature .fz-photo::after { opacity: 0; }
+/* Titelstory (nächstes Event): Plakat immer in Farbe, ohne Raster. Die zweite Story hat den Kopierer-Look und entwickelt sich bei Hover bzw. beim Scrollen. */
+.fz .fz-feature:not(.is-second) .fz-photo img { filter: none; }
+.fz .fz-feature:not(.is-second) .fz-photo::after { opacity: 0; }
 
 /* Ransom-Note-Titel */
 /* Einspaltig (Buttons rutschen unter den Titel): "CAROUSEL" ist ca. 6,6em breit und füllt die ganze Inhaltsbreite */
