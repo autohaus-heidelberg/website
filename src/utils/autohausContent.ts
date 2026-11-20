@@ -52,7 +52,7 @@ export const autohausTeaser = {
 /** Überleitung zur Community-Seite */
 export const hausCommunity = {
   label: 'Wer das alles am Laufen hält',
-  text: 'Ein Autohaus fährt nicht von allein. Der Carousel e.V. hält es am Laufen, ehrenamtlich: Vorstand, Mitglieder und alle, die an Bar, Einlass und Technik mit anpacken.',
+  text: 'Ein Carousel dreht sich nicht von allein. Der Carousel e.V. hält es am Laufen, ehrenamtlich: Vorstand, Mitglieder und alle, die an Bar, Einlass und Technik mit anpacken.',
   cta: 'Zur Community',
 }
 

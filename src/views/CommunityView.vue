@@ -15,6 +15,7 @@ const meetings = communityOnly(events).map((item) => ({ ...item, date_d: dayjs(i
 const upcoming = computed(() =>
   meetings.filter((m) => !isPastEvent(m)).sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
 );
+const nextMeeting = computed(() => upcoming.value.find((m) => !m.cancelled));
 const past = computed(() =>
   meetings.filter((m) => isPastEvent(m)).sort((a, b) => (a.date_d.isAfter(b.date_d) ? -1 : 1)).slice(0, 5)
 );
@@ -33,6 +34,10 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
       |  
       router-link(:to="{ name: 'autohaus' }") Das Autohaus kennenlernen
       | .
+
+  .fz-box.fz-ongoing.fz-dots(v-if="nextMeeting")
+    .fz-stamp Nächstes Vereinstreffen
+    router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
 
   section.fz-section#crew
     .fz-label Wer das Autohaus macht
