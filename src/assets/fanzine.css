@@ -304,13 +304,14 @@
 .fz-feature-date.has-note + .fz-feature-title { margin-top: 1rem !important; }
 .fz-mark-ring {
     position: absolute;
-    left: -1.25rem;
-    top: -0.95rem;
-    width: calc(100% + 2.5rem);
-    height: calc(100% + 1.9rem);
+    left: -0.8rem;
+    top: -0.55rem;
+    width: calc(100% + 1.6rem);
+    height: calc(100% + 1.1rem);
     overflow: visible;
     pointer-events: none;
     transform: rotate(1deg);
+    filter: url(#fz-ink-soft);
 }
 .fz-mark-ring path, .fz-mark-arrow path {
     fill: none;
