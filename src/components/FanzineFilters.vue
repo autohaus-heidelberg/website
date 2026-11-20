@@ -2,9 +2,10 @@
 //- Gemeinsame SVG-Filter für den „Handgemacht"-Look (Trennlinien, Stempel-Buttons); einmal in App.vue eingebunden
 svg.fz-filters(width="0" height="0" aria-hidden="true" focusable="false")
   defs
-    //- Handgezogene Linie: langsames Wackeln entlang der Linie plus fleckige Kanten. Region in Benutzer-Einheiten,
+    //- Handgezogene Linie: langsames Wackeln entlang der Linie plus fleckige Kanten. Region großzügig in Prozent der Linie,
     //- weil die Linien nur ca. 4px hoch sind und der Standardbereich das Wackeln abschneiden würde.
-    filter#fz-hand(filterUnits="userSpaceOnUse" x="-20" y="-30" width="4000" height="70" color-interpolation-filters="sRGB")
+    //- Nicht userSpaceOnUse: Safari/iOS rechnet das für HTML-Elemente in anderen Koordinaten und zeigt die Linie gar nicht.
+    filter#fz-hand(x="-2%" y="-150%" width="104%" height="400%" color-interpolation-filters="sRGB")
       feTurbulence(type="fractalNoise" baseFrequency="0.012 0.12" numOctaves="2" seed="5" result="wobble")
       feDisplacementMap(in="SourceGraphic" in2="wobble" scale="7" xChannelSelector="R" yChannelSelector="G" result="shifted")
       feTurbulence(type="fractalNoise" baseFrequency="0.8" numOctaves="1" seed="2" result="grain")
@@ -32,7 +33,7 @@ svg.fz-filters(width="0" height="0" aria-hidden="true" focusable="false")
       feColorMatrix(in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.4 1.55" result="mask")
       feComposite(in="shifted" in2="mask" operator="in")
     //- Dünne Trennstriche (Inhaltsverzeichnis, Ablaufplan): wie fz-hand, nur viel schwächer
-    filter#fz-hand-thin(filterUnits="userSpaceOnUse" x="-10" y="-12" width="4000" height="30" color-interpolation-filters="sRGB")
+    filter#fz-hand-thin(x="-2%" y="-250%" width="104%" height="600%" color-interpolation-filters="sRGB")
       feTurbulence(type="fractalNoise" baseFrequency="0.015 0.2" numOctaves="2" seed="7" result="wobble")
       feDisplacementMap(in="SourceGraphic" in2="wobble" scale="2.4" xChannelSelector="R" yChannelSelector="G" result="shifted")
       feTurbulence(type="fractalNoise" baseFrequency="0.8" numOctaves="1" seed="2" result="grain")
