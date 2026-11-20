@@ -540,15 +540,25 @@ button.active {
 }
 
 .ev {
+  position: relative;
   display: flex;
   flex-direction: column;
   padding: 0.25rem 0.4rem;
-  /* Veranstaltungen: grüne Kante, weiße Fläche (wie in der Liste und der Legende) */
-  border-left: 0.35rem solid var(--multi);
+  /* Veranstaltungen: grüne Kante, weiße Fläche (wie in der Liste und der Legende); die Kante liegt im ::before, damit sie handgezogen wackelt */
+  border-left: 0.35rem solid transparent;
   background: white;
   font-size: 0.8rem;
   line-height: 1.25;
   color: black;
+}
+
+.ev:not(.community):not(.cancelled)::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 -0.35rem;
+  border-left: 0.35rem solid var(--multi);
+  filter: url(#fz-frame);
+  pointer-events: none;
 }
 
 /* Community-Treffen: gelb markiert, zusätzlich gestrichelt (auch ohne Farbe erkennbar) */
@@ -811,8 +821,12 @@ button.active {
 
 /* Veranstaltung: weiß mit grüner Kante (die Fläche bleibt für Mehrtägiges), sonst wird die Liste zu grün */
 .list-entry.concert {
-  box-shadow: inset 0.45rem 0 0 var(--multi);
   padding-left: 1.2rem;
+}
+
+/* Kante liegt im Rahmen-Element und wackelt mit ihm */
+.list-entry.concert::before {
+  background: linear-gradient(var(--multi), var(--multi)) left / 0.45rem 100% no-repeat;
 }
 
 .list-entry:hover {
@@ -826,6 +840,10 @@ button.active {
   background: white;
   box-shadow: none;
   opacity: 0.6;
+}
+
+.list-day.past .list-entry.concert::before {
+  background: none;
 }
 
 .list-day.past .list-entry.concert {
@@ -954,6 +972,9 @@ button.active {
     background: var(--multi);
   }
 
+  .ev::before {
+    display: none;
+  }
   .ev.community {
     background: var(--mark);
     border: 0.1rem dashed black;
