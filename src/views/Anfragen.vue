@@ -5,7 +5,7 @@
     h1.fz-page-title(aria-label="Anfrage")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Anfrage')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Booking-, Veranstaltungs- und Raumanfragen bitte nur über dieses Formular. Per E-Mail gehen sie bei uns leicht unter.
+    p.fz-page-sub Booking-, Veranstaltungs- und Raumanfragen, auch für Ateliers und Proberäume, bitte nur über dieses Formular. Per E-Mail gehen sie bei uns leicht unter.
   .fz-request
     .fz-box.success-message(v-if="submitted")
       h2.fz-h2 Anfrage gesendet
@@ -46,7 +46,7 @@
             option(value="space") Atelier / Proberaum
             option(value="other") Sonstiges
           .form-hint.hint-warning(v-if="form.type === 'rent'") Achtung: Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
-          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Autohaus. Ob gerade etwas frei ist, klären wir persönlich. Mehr zum Autohaus findest du auf der Seite
+          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Autohaus. Ob gerade etwas frei ist, klären wir persönlich. Mehr dazu:
             |  
             router-link(:to="{ name: 'autohaus' }") Das Autohaus
             | .

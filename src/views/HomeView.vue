@@ -286,7 +286,7 @@ const zoom = ref(17);
 
     .fz-box#anfragen
       h2.fz-h2 Anfragen
-      p Booking-, Veranstaltungs- und Raumanfragen bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
+      p Booking-, Veranstaltungs- und Raumanfragen, auch für Ateliers und Proberäume, bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
       .btn-row
         router-link.btn(:to="{ name: 'requests' }") Anfragenformular
         router-link.btn(:to="{ name: 'autohaus' }") Atelier oder Proberaum?
