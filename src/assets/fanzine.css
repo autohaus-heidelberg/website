@@ -605,6 +605,22 @@
     .fz .fz-cover-cta { justify-content: center; }
 }
 
+/* Handy: Programm weiter nach oben. Engeres Cover; Datum und Titel der Story stehen vor dem Plakat
+   (display: contents löst den Textblock auf, damit Datum/Titel und Teaser/Button getrennt um das Plakat liegen). */
+@media (max-width: 799px) {
+    .fz .fz-cover { padding: 1.25rem 0 1.5rem; gap: 1rem; }
+    .fz .fz-cover-cta { margin-top: 1rem; }
+    .fz #programm { margin-top: 2rem; }
+
+    .fz .fz-feature:not(.no-img) { row-gap: 0; }
+    .fz .fz-feature:not(.no-img) > div:not(.fz-photo) { display: contents; }
+    .fz .fz-feature:not(.no-img) .fz-feature-date { order: 1; justify-self: start; }
+    .fz .fz-feature:not(.no-img) .fz-feature-title { order: 2; }
+    .fz .fz-feature:not(.no-img) > .fz-photo { order: 3; margin-top: 1.5rem; }
+    .fz .fz-feature:not(.no-img) .fz-teaser { order: 4; margin-top: 1.5rem; }
+    .fz .fz-feature:not(.no-img) .btn { order: 5; justify-self: start; }
+}
+
 /* Links in der schwarzen Titelleiste müssen weiß sein (sonst schwarz auf schwarz) */
 .fz-strip a, .fz-strip a:visited, .fz-strip a:hover, .fz-strip a:focus { color: #fff; }
 .fz-strip a:hover { text-decoration-thickness: 0.25em; }
