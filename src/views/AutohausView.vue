@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FanzineNav from "@/components/FanzineNav.vue";
 import { ransomChars } from "@/utils/ransom";
-import { hausCommunity, hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autohausContent";
+import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autohausContent";
 </script>
 
 <template lang="pug">
@@ -20,14 +20,17 @@ import { hausCommunity, hausIntro, hausProgram, hausRequest, hausWorkers } from 
         span.run-when {{ w.label }}
         span.run-what {{ w.text }}
 
-  section.fz-section
-    .fz-label Was sonst noch läuft
+  section.fz-section#carousel
+    .fz-label {{ hausCarousel.label }}
+    p(v-for="(t, i) in hausCarousel.paragraphs" :key="i") {{ t }}
+    h2.fz-h2(style="margin-top: 1.75rem; margin-bottom: 1rem") {{ hausCarousel.programTitle }}
     ol.fz-run
       li(v-for="p in hausProgram" :key="p.label")
         span.run-when {{ p.label }}
         span.run-what {{ p.text }}
     .btn-row
-      router-link.btn(:to="{ name: 'calendar' }") Zum Kalender
+      router-link.btn(:to="{ name: 'calendar' }") {{ hausCarousel.ctaProgram }}
+      router-link.btn(:to="{ name: 'requests' }") {{ hausCarousel.ctaRequest }}
 
   section.fz-section
     .fz-label {{ hausCommunity.label }}

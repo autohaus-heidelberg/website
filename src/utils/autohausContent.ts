@@ -5,7 +5,7 @@ export interface HausRow {
 }
 
 export const hausIntro =
-  'Das Carousel ist nicht nur Bühne. Im alten Autohaus machen rund 20 Bands, Künstler*innen und Kollektive in Proberäumen, Ateliers und Lagern ihr Ding, und der Verein sorgt dafür, dass der Laden für sie läuft.'
+  'Das Autohaus ist das ganze Haus: Rund 20 Bands, Künstler*innen und Kollektive machen hier in Proberäumen, Ateliers und Lagern ihr Ding. Das Carousel ist der Veranstaltungsraum darin, und der Carousel e.V. sorgt dafür, dass der Laden für alle läuft.'
 
 /** Wer im Haus sein Ding macht (Tätigkeitsbericht 2024). */
 export const hausWorkers: HausRow[] = [
@@ -15,8 +15,21 @@ export const hausWorkers: HausRow[] = [
   { label: 'Kollektive', text: 'Räume für Gruppen, die zusammen etwas anzetteln.' },
 ]
 
-/** Was außer Konzerten im Haus läuft (Tätigkeitsbericht 2024 und Über-uns-Text). */
+/** Das Carousel: der Veranstaltungsraum im Autohaus (Tätigkeitsbericht 2024, Datenblatt der Anfrageseite). */
+export const hausCarousel = {
+  label: 'Das Carousel: die Bühne im Autohaus',
+  paragraphs: [
+    'Das Carousel ist der Veranstaltungsraum im Autohaus: eine Bühne mit PA und Monitoring und Platz für 199 Leute (stehend). Gemacht wird hier alles ehrenamtlich, vom Einlass bis zum Mischpult.',
+    'Bands, die hier spielen wollen, und Vereine oder Kollektive, die für eine kulturelle Veranstaltung einen Raum brauchen, schreiben uns über das Anfrageformular. Private Feiern gibt es bei uns nicht.',
+  ],
+  programTitle: 'Was im Carousel läuft',
+  ctaProgram: 'Zum Programm',
+  ctaRequest: 'Booking & Vermietung',
+}
+
+/** Was im Carousel läuft (Tätigkeitsbericht 2024 und Über-uns-Text). */
 export const hausProgram: HausRow[] = [
+  { label: 'Konzerte', text: 'Lokale und internationale Bands, das Kerngeschäft.' },
   { label: 'Partys', text: 'Von elektronischer Musik bis offenes DJ-Pult.' },
   { label: 'Kino', text: 'Filmabende, auch als Open-Air-Kino.' },
   { label: 'Ausstellungen', text: 'Wenn aus dem Atelier etwas an die Wand soll.' },
@@ -28,19 +41,19 @@ export const hausProgram: HausRow[] = [
 export const autohausTeaser = {
   stamp: 'Im Autohaus',
   title: 'Mehr als eine Bühne.',
-  text: 'Im Autohaus gibt es rund 20 Proberäume, Ateliers und Lager, in denen Bands, Künstler*innen und Kollektive ihr Ding machen. Schau, wer hier Gas gibt. Wer das alles am Laufen hält, steht gleich darunter.',
+  text: 'Das Autohaus ist das ganze Haus: rund 20 Proberäume, Ateliers und Lager für Bands, Künstler*innen und Kollektive, dazu das Carousel als Bühne. Wer das alles am Laufen hält, steht gleich darunter.',
   cta: 'Das Autohaus',
 }
 
 /** Überleitung zur Community-Seite */
 export const hausCommunity = {
   label: 'Wer das alles am Laufen hält',
-  text: 'Ein Haus macht sich nicht von allein. Hinter jedem Raum und jedem Abend stehen Leute: im Autohaus, an der Bar, im Verein.',
+  text: 'Ein Haus macht sich nicht von allein. Der Carousel e.V. trägt es, ehrenamtlich: Vorstand, Mitglieder und alle, die an Bar, Einlass und Technik mit anpacken.',
   cta: 'Zur Community',
 }
 
 export const hausRequest = {
-  title: 'Raum gesucht?',
+  title: 'Atelier oder Proberaum gesucht?',
   text: 'Wir geben keine Zusagen auf Zuruf. Schreib uns kurz, was du machst und was du brauchst. Ob etwas frei ist, klären wir persönlich.',
   cta: 'Anfrage stellen',
 }

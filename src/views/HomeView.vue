@@ -148,7 +148,7 @@ const zoom = ref(17);
 
   //- ===== Programm =====
   section.fz-section#programm
-    .fz-label Das Programm
+    .fz-label Das Programm im Carousel
 
     .fz-empty(v-if="!feature && ongoing.length === 0") Gerade steht nichts auf der Hebebühne. Kein Grund zur Panik: Newsletter abonnieren, dann erfahrt ihr als Erste, wann es wieder kracht.
 

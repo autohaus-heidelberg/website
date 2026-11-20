@@ -13,7 +13,7 @@
       button.btn-back(@click="reset") Neue Anfrage stellen
 
     template(v-else)
-      .fz-label(v-if="form.type !== 'space'") Infos zur Location
+      .fz-label(v-if="form.type !== 'space'") Infos zum Carousel
       .fz-box.fz-datasheet(v-if="form.type !== 'space'")
         dl.fz-form-fields
           dt Kapazität
@@ -42,7 +42,7 @@
             option(value="" disabled) Bitte wählen
             option(value="band") Band / Booking
             option(value="event") Veranstaltung
-            option(value="rent") Vermietung (Veranstaltungsraum)
+            option(value="rent") Veranstaltungsraum mieten (Carousel)
             option(value="space") Atelier / Proberaum
             option(value="other") Sonstiges
           .form-hint.hint-warning(v-if="form.type === 'rent'") Achtung: Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.

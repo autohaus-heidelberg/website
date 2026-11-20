@@ -26,14 +26,14 @@ export interface Crew {
 export const crew: Crew[] = [
   {
     id: 'haus',
-    title: 'Im Autohaus',
-    text: 'Bands, Künstler*innen, Fotograf*innen und Kollektive, die in den Proberäumen und Ateliers ihr Ding machen.',
+    title: 'In den Räumen',
+    text: 'Bands, Künstler*innen, Fotograf*innen und Kollektive, die in Proberäumen und Ateliers ihr Ding machen.',
     link: { label: 'Das Autohaus', route: 'autohaus' },
   },
   {
     id: 'bar',
-    title: 'An Bar und Technik',
-    text: 'Die Helfer*innen an Einlass, Bar, Ton und Licht. Ohne sie geht abends keine Tür auf.',
+    title: 'Im Carousel',
+    text: 'Die Helfer*innen an Einlass, Bar, Ton und Licht und alle, die Abende veranstalten. Ohne sie geht abends keine Tür auf.',
     link: { label: 'So machst du mit', route: 'community', hash: '#mitmachen' },
   },
   {
@@ -49,7 +49,7 @@ export const crew: Crew[] = [
 export const doors: Door[] = [
   {
     id: 'helfen',
-    title: 'Bei Veranstaltungen helfen',
+    title: 'Im Carousel helfen',
     text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Serviceleistung: Eine Schicht dauert 90 Minuten, das sind etwa elf Zigaretten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
     cta: 'Link anfragen',
     action: { mail: 'Helfer*in werden' },
