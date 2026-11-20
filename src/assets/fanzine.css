@@ -603,8 +603,6 @@
     /* Titelleiste bis an den Bildschirmrand; ihr Text steht bündig mit Titel und Inhalt darunter (Body schneidet den Überstand ab) */
     .fz .fz-strip { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
     .fz .fz-cover-cta { justify-content: center; }
-    /* Zensurbalken als eigene Zeile, sonst bricht er in zwei Stücke */
-    .fz .fz-claim .fz-censor { display: block; width: fit-content; margin-top: 0.25rem; }
 }
 
 /* Handy: Programm weiter nach oben. Engeres Cover; Datum und Titel der Story stehen vor dem Plakat
