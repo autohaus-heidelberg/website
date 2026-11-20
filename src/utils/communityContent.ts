@@ -43,7 +43,7 @@ export const crew: Crew[] = [
   {
     id: 'verein',
     title: 'Im Verein',
-    text: 'Der Vorstand leitet das Carousel e.V., die Mitglieder wählen ihn bei der Mitgliederversammlung. Ideen für Abende kommen zu den Vereinstreffen.',
+    text: 'Der Vorstand leitet das Carousel e.V., die Mitglieder wählen ihn bei der Mitgliederversammlung. Ideen für neue Abende besprechen wir bei den Vereinstreffen.',
   },
 ]
 
