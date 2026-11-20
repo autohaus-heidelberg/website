@@ -274,6 +274,12 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
+/* Mobil kurzes Datum: ein einzeiliges Etikett statt eines Balkens, der wie eine Rubrik wirkt */
+.fz-date-short { display: none; }
+@media (max-width: 799px) {
+    .fz-date-long { display: none; }
+    .fz-date-short { display: inline; }
+}
 .fz-feature-title {
     margin: 0.4rem 0 1rem !important;
     font-size: clamp(2rem, 6vw, 3.4rem);

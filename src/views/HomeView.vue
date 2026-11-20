@@ -164,7 +164,9 @@ const zoom = ref(17);
         img(:src="story.img" :alt="story.title" crossorigin="anonymous")
       div
         .fz-feature-date(:class="{ 'has-note': i === 0 && !story.cancelled }")
-          | {{ story.date_d.format('dddd, DD. MMMM') }} · {{ story.date_d.format('HH:mm') }} Uhr{{ categoryLabel(story) ? ' · ' + categoryLabel(story) : '' }}
+          span.fz-date-long {{ story.date_d.format('dddd, DD. MMMM') }}
+          span.fz-date-short {{ story.date_d.format('dd, DD.MM.') }}
+          |  · {{ story.date_d.format('HH:mm') }} Uhr{{ categoryLabel(story) ? ' · ' + categoryLabel(story) : '' }}
           template(v-if="i === 0 && !story.cancelled")
             svg.fz-mark-ring(viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true" focusable="false")
               path(:d="MARK_RING")
