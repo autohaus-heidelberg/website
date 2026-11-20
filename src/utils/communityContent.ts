@@ -12,6 +12,8 @@ export interface Door {
   cta: string
   /** `route`: interne Seite (optional mit Sprungmarke oder Query), `mail`: E-Mail mit Betreff */
   action: { route: string; hash?: string; query?: Record<string, string> } | { mail: string }
+  /** Optionaler zweiter Link (z.B. zur ausführlichen Beschreibung weiter unten) */
+  more?: { label: string; route: string; hash?: string }
 }
 
 /** Die Gruppen, die das Autohaus gemeinsam gestalten (Community-Seite). */
@@ -53,6 +55,7 @@ export const doors: Door[] = [
     text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Serviceleistung: Eine Schicht dauert 90 Minuten, das sind etwa elf Zigaretten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
     cta: 'Link anfragen',
     action: { mail: 'Helfer*in werden' },
+    more: { label: 'So läuft ein Konzertabend', route: 'community', hash: '#abend' },
   },
   {
     id: 'veranstalten',

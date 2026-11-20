@@ -51,11 +51,14 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         .fz-door-no {{ i + 1 }}
         h2.fz-h2 {{ d.title }}
         p {{ d.text }}
-        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash, query: d.action.query }") {{ d.cta }}
-        a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
+        .btn-row
+          router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash, query: d.action.query }") {{ d.cta }}
+          a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
+          router-link.btn(v-if="d.more" :to="{ name: d.more.route, hash: d.more.hash }") {{ d.more.label }}
 
-  section.fz-section
+  section.fz-section#abend
     .fz-label So läuft ein Konzertabend
+    p.fz-meetings-intro Ein Beispiel dafür, wie Mitmachen im Carousel aussieht.
     ol.fz-run
       li(v-for="s in eveningSteps" :key="s.when")
         span.run-when {{ s.when }}
