@@ -879,13 +879,16 @@
 
 /* ---------- Textmarker: Gelb als unruhiger Leuchtstift-Strich statt glatter Fläche ---------- */
 /* Schräg angesetzter Strich mit ausgefransten Kanten (Filter), die Farbe deckt ungleichmäßig, die Schrift scheint schwarz durch */
+.fz {
+    --mark-stroke:
+        linear-gradient(176deg, transparent 0 18%, rgba(255, 230, 0, 0.6) 21%, rgba(255, 230, 0, 0.85) 28%, rgba(255, 230, 0, 0.85) 74%, rgba(255, 230, 0, 0.55) 84%, transparent 88%),
+        linear-gradient(90deg, transparent 0, rgba(255, 230, 0, 0.35) 2%, transparent 6%, transparent 94%, rgba(255, 230, 0, 0.3) 98%, transparent 100%);
+}
 .fz .fz-meeting .when,
 .fz .fz-hl,
 .fz .fz-wanted h3 {
     background-color: transparent;
-    background-image:
-        linear-gradient(176deg, transparent 0 18%, rgba(255, 230, 0, 0.6) 21%, rgba(255, 230, 0, 0.85) 28%, rgba(255, 230, 0, 0.85) 74%, rgba(255, 230, 0, 0.55) 84%, transparent 88%),
-        linear-gradient(90deg, transparent 0, rgba(255, 230, 0, 0.35) 2%, transparent 6%, transparent 94%, rgba(255, 230, 0, 0.3) 98%, transparent 100%);
+    background-image: var(--mark-stroke);
     filter: url(#fz-ink-soft);
     mix-blend-mode: multiply;
 }

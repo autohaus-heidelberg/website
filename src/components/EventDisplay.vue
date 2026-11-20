@@ -188,12 +188,17 @@ function copyLink() {
     box-shadow: 0.3rem 0.3rem 0 var(--multi);
 }
 
-/* Vereinstreffen: Textmarker-Gelb statt Konzert-Grün */
+/* Vereinstreffen: Textmarker-Strich statt Konzert-Grün (Strich-Variable aus fanzine.css, ohne sie flaches Gelb) */
 .fz-event-date.is-community {
-    background: var(--mark);
+    background: transparent;
+    background-image: var(--mark-stroke, linear-gradient(var(--mark), var(--mark)));
     color: #000;
-    border: 0.15rem solid #000;
+    border: 0;
     box-shadow: none;
+    padding: 0.3em 0.9em;
+    filter: url(#fz-ink-soft);
+    mix-blend-mode: multiply;
+    transform: rotate(-0.6deg);
 }
 
 .date-cancelled { text-decoration: line-through; }
@@ -231,8 +236,11 @@ function copyLink() {
     text-align: left;
     margin: 0 0 0.75rem;
     padding: 0.2rem 0.7rem;
-    border: 0.2rem dashed black;
-    background: var(--mark);
+    border: 0;
+    background: transparent;
+    background-image: var(--mark-stroke, linear-gradient(var(--mark), var(--mark)));
+    filter: url(#fz-ink-soft);
+    mix-blend-mode: multiply;
     font-size: clamp(0.8rem, 1.6vw, 0.95rem);
     font-weight: 900;
     letter-spacing: 0.1em;
