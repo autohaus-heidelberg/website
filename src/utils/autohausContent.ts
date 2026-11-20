@@ -5,12 +5,12 @@ export interface HausRow {
 }
 
 export const hausIntro =
-  'Das Carousel ist nicht nur Bühne. Im alten Autohaus werkeln rund 20 Bands, Künstler*innen und Kollektive in Proberäumen, Ateliers und Lagern, und der Verein sorgt dafür, dass der Laden für sie läuft.'
+  'Das Carousel ist nicht nur Bühne. Im alten Autohaus machen rund 20 Bands, Künstler*innen und Kollektive in Proberäumen, Ateliers und Lagern ihr Ding, und der Verein sorgt dafür, dass der Laden für sie läuft.'
 
-/** Wer im Haus werkelt (Tätigkeitsbericht 2024). */
+/** Wer im Haus sein Ding macht (Tätigkeitsbericht 2024). */
 export const hausWorkers: HausRow[] = [
   { label: 'Bands', text: 'Proberäume, in denen aus Ideen Songs werden und aus Songs irgendwann Konzerte.' },
-  { label: 'Bildende Kunst', text: 'Ateliers für Künstler*innen, die Platz zum Trödeln brauchen.' },
+  { label: 'Bildende Kunst', text: 'Ateliers für Künstler*innen, die Platz zum Austoben brauchen.' },
   { label: 'Fotografie', text: 'Räume für Fotograf*innen zum Tüfteln und zum Lagern.' },
   { label: 'Kollektive', text: 'Räume für Gruppen, die zusammen etwas anzetteln.' },
 ]

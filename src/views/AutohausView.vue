@@ -14,7 +14,7 @@ import { hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autoha
     p.fz-page-sub {{ hausIntro }}
 
   section.fz-section
-    .fz-label Wer hier werkelt
+    .fz-label Wer hier Gas gibt
     ol.fz-run
       li(v-for="w in hausWorkers" :key="w.label")
         span.run-when {{ w.label }}
