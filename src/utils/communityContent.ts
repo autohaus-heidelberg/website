@@ -1,5 +1,8 @@
 export const CONTACT_EMAIL = 'carouselev@gmail.com'
 
+/** Offener Telegram-Kanal mit den Terminen. Die Helfer-Gruppen bleiben persönlich und werden nie verlinkt. */
+export const TELEGRAM_CHANNEL_URL = 'https://t.me/+PCvpsCalJzkyNzFi'
+
 /** mailto-Link mit vorbelegtem Betreff, damit Anfragen von der Community-Seite gleich zuzuordnen sind. */
 export function mailto(subject: string): string {
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`

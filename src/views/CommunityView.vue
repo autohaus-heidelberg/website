@@ -7,7 +7,7 @@ import { isPastEvent } from "@/utils/eventTime";
 import { communityOnly, helpRequests } from "@/utils/community";
 import { ransomChars } from "@/utils/ransom";
 import FanzineNav from "@/components/FanzineNav.vue";
-import { crew, doors, eveningSteps, mailto, support } from "@/utils/communityContent";
+import { crew, doors, eveningSteps, mailto, support, TELEGRAM_CHANNEL_URL } from "@/utils/communityContent";
 
 dayjs.locale("de");
 
@@ -90,6 +90,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
 
     .btn-row
       router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender
+      a.btn(:href="TELEGRAM_CHANNEL_URL" target="_blank" rel="noopener") Termine auf Telegram
 
     template(v-if="past.length")
       h2.fz-h2(style="margin-top: 2.5rem; margin-bottom: 1rem") Zuletzt
