@@ -19,7 +19,7 @@
           dt Kapazität
           dd 199 Personen (stehend)
           dt Bühne
-          dd 6,30m × 3,30m, Höhe 45cm (3 Europaletten)
+          dd 6,30m × 3,30m, Höhe 45cm
           dt PA
           dd 2 Subs + 4 Tops, Allen & Heath SQ5
           dt Monitoring
