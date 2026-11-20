@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FanzineNav from "@/components/FanzineNav.vue";
 import { ransomChars } from "@/utils/ransom";
-import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausSommerfest, hausWorkers } from "@/utils/autohausContent";
+import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausWorkers, hausZusammen } from "@/utils/autohausContent";
 </script>
 
 <template lang="pug">
@@ -21,8 +21,8 @@ import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausS
         span.run-what {{ w.text }}
 
   section.fz-section
-    .fz-label {{ hausSommerfest.label }}
-    p {{ hausSommerfest.text }}
+    .fz-label {{ hausZusammen.label }}
+    p {{ hausZusammen.text }}
 
   section.fz-section#carousel
     .fz-label {{ hausCarousel.label }}

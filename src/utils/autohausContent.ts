@@ -5,40 +5,40 @@ export interface HausRow {
 }
 
 export const hausIntro =
-  'Das Autohaus ist das ganze Haus: Rund 20 Bands, Künstler*innen und Kollektive machen hier in Proberäumen, Ateliers und Lagern ihr Ding. Das Carousel ist der Veranstaltungsraum darin, und der Carousel e.V. sorgt dafür, dass der Laden für alle läuft.'
+  'Das Autohaus ist das ganze Haus: In rund 20 Proberäumen, Ateliers und Lagern machen Bands, Künstler*innen und Kollektive ihr Ding. Das Carousel ist der Veranstaltungsraum darin, und der Carousel e.V. sorgt dafür, dass der Laden für alle läuft.'
 
-/** Wer im Haus sein Ding macht (Tätigkeitsbericht 2024). */
+/** Wer im Haus sein Ding macht. */
 export const hausWorkers: HausRow[] = [
   { label: 'Bands', text: 'Proberäume, in denen aus Ideen Songs werden und aus Songs irgendwann Konzerte.' },
-  { label: 'Bildende Kunst', text: 'Ateliers für Künstler*innen, die Platz zum Austoben brauchen.' },
-  { label: 'Fotografie', text: 'Räume für Fotograf*innen zum Tüfteln und zum Lagern.' },
+  { label: 'Bildende Kunst', text: 'Ateliers für Künstler*innen, die Platz zum Ausbreiten brauchen.' },
+  { label: 'Fotografie', text: 'Räume für Fotograf*innen, mit Platz fürs Equipment und für Shootings.' },
   { label: 'Kollektive', text: 'Räume für Gruppen, die zusammen etwas anzetteln.' },
 ]
 
-/** Das Carousel: der Veranstaltungsraum im Autohaus (Tätigkeitsbericht 2024, Datenblatt der Anfrageseite). */
+/** Das Carousel: der Veranstaltungsraum im Autohaus (Datenblatt der Anfrageseite). */
 export const hausCarousel = {
   label: 'Das Carousel: die Bühne im Autohaus',
   paragraphs: [
     'Das Carousel ist der Veranstaltungsraum im Autohaus: eine Bühne mit PA und Monitoring und Platz für 199 Leute (stehend). Gemacht wird hier alles ehrenamtlich, vom Einlass bis zum Mischpult.',
     'Bands, die hier spielen wollen, und Vereine oder Kollektive, die für eine kulturelle Veranstaltung einen Raum brauchen, schreiben uns über das Anfrageformular. Private Feiern gibt es bei uns nicht.',
   ],
-  programTitle: 'Was im Carousel läuft',
+  programTitle: 'Was hier zum Beispiel passiert',
   ctaProgram: 'Zum Programm',
   ctaRequest: 'Booking & Vermietung',
 }
 
-/** Was im Carousel läuft (Tätigkeitsbericht 2024 und Über-uns-Text). */
+/** Beispielhafte Formate im Carousel. */
 export const hausProgram: HausRow[] = [
-  { label: 'Konzerte', text: 'Lokale und internationale Bands, das Kerngeschäft.' },
+  { label: 'Konzerte', text: 'Lokale und internationale Bands, live auf der Bühne.' },
   { label: 'Partys', text: 'Von elektronischer Musik bis offenes DJ-Pult.' },
   { label: 'Kino', text: 'Filmabende, auch als Open-Air-Kino.' },
   { label: 'Ausstellungen', text: 'Wenn aus dem Atelier etwas an die Wand soll.' },
 ]
 
-/** Das Sommerfest 2024 als Beispiel, wenn Haus und Carousel zusammenkommen (Tätigkeitsbericht 2024). */
-export const hausSommerfest = {
+/** Haus und Carousel greifen ineinander. */
+export const hausZusammen = {
   label: 'Wenn alles zusammenkommt',
-  text: 'Beim Sommerfest „Kulturkarussell im Autohaus“ 2024 standen die Ateliers offen, Bands aus dem Haus spielten, es gab Workshops, Flohmarkt und Kleidertausch. Rund 450 Gäste, Eintritt frei.',
+  text: 'Manchmal greift alles ineinander: Ateliers stehen offen, Bands aus dem Haus spielen, dazu gibt es Workshops, Flohmarkt oder Kleidertausch.',
 }
 
 /** Teaser auf der Startseite */
