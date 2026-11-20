@@ -13,6 +13,8 @@ export type Event = {
   cancelled?: boolean;
   /** 'concert' (Standard, auch wenn fehlend) oder 'community' (Treffen, nicht in Konzertlisten) */
   type?: string;
+  /** Art der Veranstaltung (Konzert, Kino, ...), nur Anzeige; leer = keine Angabe */
+  category?: string | null;
   title: string;
   // path to image
   img?: string;

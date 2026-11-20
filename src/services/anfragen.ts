@@ -12,7 +12,7 @@ export interface AnfrageMessage {
 
 export interface Anfrage {
   id: number
-  type: 'band' | 'event' | 'rent' | 'other'
+  type: 'band' | 'event' | 'rent' | 'space' | 'other'
   name: string
   message: string
   genre?: string | null
@@ -39,6 +39,7 @@ export const ANFRAGE_TYPE_LABELS: Record<string, string> = {
   band: 'Band',
   event: 'Event',
   rent: 'Vermietung',
+  space: 'Atelier/Proberaum',
   other: 'Sonstige',
 }
 

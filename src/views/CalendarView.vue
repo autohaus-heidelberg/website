@@ -4,6 +4,7 @@ import FanzineBurst from '@/components/FanzineBurst.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { events, type Event } from '../events'
 import { COMMUNITY_LABEL, isCommunity } from '@/utils/community'
+import { categoriesIn, categoryLabel } from '@/utils/eventCategory'
 import FanzineNav from '@/components/FanzineNav.vue'
 import { ransomChars } from '@/utils/ransom'
 import {
@@ -46,8 +47,13 @@ watch([mode, monthKey], () => {
 const weekdayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
 
 // events.json enthält nur veröffentlichte ("live") Events.
-const eventsByDay = groupEventsByDay(events)
-const days = computed(() => buildCalendarDays(cursor.value, 'month', eventsByDay))
+const categories = categoriesIn(events.filter(e => !isCommunity(e)))
+const activeCategory = ref('')
+const visibleEvents = computed(() =>
+  activeCategory.value ? events.filter(e => e.category === activeCategory.value) : events,
+)
+const eventsByDay = computed(() => groupEventsByDay(visibleEvents.value))
+const days = computed(() => buildCalendarDays(cursor.value, 'month', eventsByDay.value))
 const todayKey = dateKey(new Date())
 
 const weeks = computed(() => {
@@ -152,7 +158,7 @@ const subscribeLinks = [
         ul.cal-legend
           li
             span.sw.sw-concert
-            | Konzert
+            | Veranstaltung
           li
             span.sw.sw-meeting
             | Vereinstreffen
@@ -171,7 +177,7 @@ const subscribeLinks = [
     .fz-cut.cal-take.cal-take-top
       FanzineBurst.cal-star Abo!
       .fz-stamp Zum Mitnehmen
-      p Abonnieren, und kein Konzert rauscht mehr an dir vorbei.
+      p Abonnieren, und kein Termin rauscht mehr an dir vorbei.
       .btn-row
         a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 
@@ -184,6 +190,10 @@ const subscribeLinks = [
     .modes(role="group" aria-label="Ansicht")
       button(:class="{ active: mode === 'month' }" :aria-pressed="mode === 'month'" @click="mode = 'month'") Monat
       button(:class="{ active: mode === 'list' }" :aria-pressed="mode === 'list'" @click="mode = 'list'") Liste
+
+  .filters(v-if="categories.length > 1" role="group" aria-label="Art filtern")
+    button(:class="{ active: !activeCategory }" :aria-pressed="!activeCategory" @click="activeCategory = ''") Alles
+    button(v-for="c in categories" :key="c.value" :class="{ active: activeCategory === c.value }" :aria-pressed="activeCategory === c.value" @click="activeCategory = c.value") {{ c.label }}
 
   //- Monatsraster
   .grid(v-if="mode === 'month'" role="grid" :aria-label="`Kalender ${title}`" :style="{ '--weeks': weeks.length }")
@@ -210,6 +220,7 @@ const subscribeLinks = [
         )
           span.ev-time {{ showCancelled(entry.event) ? 'ABGESAGT' : time(entry.event) }}
             span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
+            span.community-tag(v-else-if="categoryLabel(entry.event)")  · {{ categoryLabel(entry.event) }}
           span.ev-title {{ entry.event.title }}
       //- Mehrtägige Events als durchgehende Balken
       .bars(v-if="row.laneCount" :style="{ gridRow: rowIndex + 2 }")
@@ -249,12 +260,13 @@ const subscribeLinks = [
         )
           span.list-time {{ listLabel(entry) }}
             span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
+            span.community-tag(v-else-if="categoryLabel(entry.event)")  · {{ categoryLabel(entry.event) }}
           span.list-title {{ entry.event.title }}
 
   //- Mobil: Abo am Seitenende, damit oben der Kalender steht (am Desktop sitzt der Kasten im Kopf)
   .fz-cut.cal-take.cal-take-bottom
     .fz-stamp Zum Mitnehmen
-    p Abonnieren, und kein Konzert rauscht mehr an dir vorbei.
+    p Abonnieren, und kein Termin rauscht mehr an dir vorbei.
     .btn-row
       a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 </template>
@@ -381,9 +393,23 @@ const subscribeLinks = [
 }
 
 .nav,
-.modes {
+.modes,
+.filters {
   display: flex;
   gap: 0.8rem;
+}
+
+.filters {
+  flex-wrap: wrap;
+  margin: -0.5rem 0 1.5rem;
+  --btn-shadow: 0.2rem;
+  --btn-border: 0.15rem;
+}
+
+.filters button {
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  padding: 0.45em 0.9em;
 }
 
 /* Kompakter als die globalen Buttons (die erben die große Fließtextgröße),

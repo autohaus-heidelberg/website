@@ -7,7 +7,7 @@ import { isPastEvent } from "@/utils/eventTime";
 import { communityOnly, helpRequests } from "@/utils/community";
 import { ransomChars } from "@/utils/ransom";
 import FanzineNav from "@/components/FanzineNav.vue";
-import { doors, eveningSteps, mailto, support } from "@/utils/communityContent";
+import { crew, doors, eveningSteps, mailto, support, TELEGRAM_CHANNEL_URL } from "@/utils/communityContent";
 
 dayjs.locale("de");
 
@@ -15,6 +15,7 @@ const meetings = communityOnly(events).map((item) => ({ ...item, date_d: dayjs(i
 const upcoming = computed(() =>
   meetings.filter((m) => !isPastEvent(m)).sort((a, b) => (a.date_d.isAfter(b.date_d) ? 1 : -1))
 );
+const nextMeeting = computed(() => upcoming.value.find((m) => !m.cancelled));
 const past = computed(() =>
   meetings.filter((m) => isPastEvent(m)).sort((a, b) => (a.date_d.isAfter(b.date_d) ? -1 : 1)).slice(0, 5)
 );
@@ -29,7 +30,21 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
     h1.fz-page-title(aria-label="Community")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Community')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Hinter jedem Konzert stehen Leute, die dafür keinen Cent sehen und trotzdem wiederkommen. Hier steht, wie du dazustößt, wo es gerade brennt und wann wir uns treffen.
+    p.fz-page-sub Hinter jedem Abend im Carousel stehen Leute, die dafür keinen Cent sehen und trotzdem wiederkommen. Hier steht, wie du dazustößt, wo es gerade brennt und wann wir uns treffen.
+
+  .fz-box.fz-ongoing.fz-dots(v-if="nextMeeting")
+    .fz-stamp Nächstes Vereinstreffen
+    router-link(:to="eventLink(nextMeeting.id)") {{ nextMeeting.date_d.format('dddd, DD.MM. · HH:mm') }} Uhr – {{ nextMeeting.title }}
+
+  section.fz-section#crew
+    .fz-label Wer das Autohaus macht
+    ol.fz-run
+      li(v-for="c in crew" :key="c.id")
+        span.run-when {{ c.title }}
+        span.run-what
+          | {{ c.text }}
+          |  
+          router-link(v-if="c.link" :to="{ name: c.link.route, hash: c.link.hash }") {{ c.link.label }}
 
   section.fz-section#mitmachen
     .fz-label So machst du mit
@@ -38,27 +53,26 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         .fz-door-no {{ i + 1 }}
         h2.fz-h2 {{ d.title }}
         p {{ d.text }}
-        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash }") {{ d.cta }}
-        a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
+        .btn-row
+          router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash, query: d.action.query }") {{ d.cta }}
+          a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
+          router-link.btn(v-if="d.more" :to="{ name: d.more.route, hash: d.more.hash }") {{ d.more.label }}
 
-  section.fz-section
-    .fz-label So läuft ein Abend
+  section.fz-section#abend
+    .fz-label So läuft ein Konzertabend
+    p.fz-meetings-intro Ein Beispiel dafür, wie Mitmachen im Carousel aussieht.
     ol.fz-run
       li(v-for="s in eveningSteps" :key="s.when")
         span.run-when {{ s.when }}
         span.run-what {{ s.what }}
 
-  section.fz-section
-    .fz-label
-      s Wir suchen
-      |  Wir brauchen euch
-    ul.fz-wanted(v-if="helpRequests.length")
+  section.fz-section(v-if="helpRequests.length")
+    .fz-label Gerade besonders gesucht
+    ul.fz-wanted
       li.fz-cut(v-for="(h, i) in helpRequests" :key="i")
         .fz-pin
         h3 {{ h.title }}
         p {{ h.text }}
-    .fz-box(v-else)
-      p Gerade ist jeder Posten besetzt. Kommt selten vor, hält nie lange. Schreib uns trotzdem.
 
   section.fz-section#treffen
     .fz-label Vereinstreffen
@@ -73,6 +87,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
 
     .btn-row
       router-link.btn(:to="{ name: 'calendar' }") Alle Termine im Kalender
+      a.btn(:href="TELEGRAM_CHANNEL_URL" target="_blank" rel="noopener") Termine auf Telegram
 
     template(v-if="past.length")
       h2.fz-h2(style="margin-top: 2.5rem; margin-bottom: 1rem") Zuletzt

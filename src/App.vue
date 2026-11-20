@@ -10,7 +10,7 @@ const isHome = computed(() => {
   return route.path === "/";
 })
 // Diese Seiten bringen ihre eigene Fanzine-Kopfleiste mit (FanzineNav)
-const OWN_HEADER_ROUTES = ['community', 'not-found', 'event', 'pastEvents', 'flyerGallery', 'calendar', 'requests', 'about', 'login', 'presale']
+const OWN_HEADER_ROUTES = ['community', 'autohaus', 'not-found', 'event', 'pastEvents', 'flyerGallery', 'calendar', 'requests', 'about', 'login', 'presale']
 const hasOwnHeader = computed(() => OWN_HEADER_ROUTES.includes(route.name as string))
 
 // Der Header richtet sich nach der Breite des Inhalts: Standard (schmal), breite Seiten

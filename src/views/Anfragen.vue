@@ -5,7 +5,7 @@
     h1.fz-page-title(aria-label="Anfrage")
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Anfrage')" :key="i" :class="c.cls") {{ c.ch }}
-    p.fz-page-sub Booking-, Veranstaltungs- und Raumanfragen bitte nur über dieses Formular. Per E-Mail gehen sie bei uns leicht unter.
+    p.fz-page-sub Booking-, Veranstaltungs- und Raumanfragen, auch für Ateliers und Proberäume, bitte nur über dieses Formular. Per E-Mail gehen sie bei uns leicht unter.
   .fz-request
     .fz-box.success-message(v-if="submitted")
       h2.fz-h2 Anfrage gesendet
@@ -13,13 +13,13 @@
       button.btn-back(@click="reset") Neue Anfrage stellen
 
     template(v-else)
-      .fz-label Infos zur Location
-      .fz-box.fz-datasheet
+      .fz-label(v-if="form.type !== 'space'") Infos zum Carousel
+      .fz-box.fz-datasheet(v-if="form.type !== 'space'")
         dl.fz-form-fields
           dt Kapazität
           dd 199 Personen (stehend)
           dt Bühne
-          dd 5m × 3m, Höhe ca. 43cm (3 Europaletten)
+          dd 6,30m × 3,30m, Höhe 45cm
           dt PA
           dd 2 Subs + 4 Tops, Allen & Heath SQ5
           dt Monitoring
@@ -29,7 +29,7 @@
           dt Backline
           dd Nur nach Absprache
           dt Load-In
-          dd Ebenerdig, Parkplatz direkt vor der Tür
+          dd Ebenerdig, Anfahrt bis direkt vor die Tür zum Ein- und Ausladen.
           dt Gagenmodell
           dd Garantie und/oder Tür-Anteil — nach Absprache
 
@@ -42,9 +42,14 @@
             option(value="" disabled) Bitte wählen
             option(value="band") Band / Booking
             option(value="event") Veranstaltung
-            option(value="rent") Vermietung
+            option(value="rent") Veranstaltungsraum mieten (Carousel)
+            option(value="space") Atelier / Proberaum
             option(value="other") Sonstiges
           .form-hint.hint-warning(v-if="form.type === 'rent'") Achtung: Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
+          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Autohaus. Ob gerade etwas frei ist, klären wir persönlich. Mehr dazu:
+            |  
+            router-link(:to="{ name: 'autohaus' }") Das Autohaus
+            | .
           .form-hint.hint-info(v-if="form.type === 'event'")
             | Tipp: Du hast eine eigene Idee für eine Veranstaltung? Am besten stellst du sie persönlich bei einem unserer Treffen vor. Die Termine geben wir hier bekannt:&nbsp;
             a(href="https://t.me/+PCvpsCalJzkyNzFi" target="_blank" rel="noopener") Telegram-Gruppe
@@ -145,6 +150,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { API_BASE_URL } from '@/services/api'
 import axios from 'axios'
 import FanzineNav from '@/components/FanzineNav.vue'
@@ -155,8 +161,11 @@ const genres = [
   'Funk', 'Reggae', 'Hip Hop / Rap', 'Elektronisch', 'Singer-Songwriter', 'Sonstiges',
 ]
 
+// /anfragen?type=space (z.B. von der Seite "Das Autohaus") wählt die Art vor
+const presetType = String(useRoute().query.type ?? '')
+
 const form = reactive({
-  type: '',
+  type: ['band', 'event', 'rent', 'space', 'other'].includes(presetType) ? presetType : '',
   name: '',
   contactEmail: '',
   genre: '',
@@ -177,6 +186,7 @@ const messagePlaceholder = computed(() => {
     case 'band': return 'Erzähl uns kurz was über euch, eure Tour, etc.'
     case 'event': return 'Was für eine Veranstaltung plant ihr? (Konzert, Party, Lesung, ...)'
     case 'rent': return 'Wofür möchtet ihr den Raum nutzen?'
+    case 'space': return 'Was machst du (Musik, Malerei, Foto, ...) und was für einen Raum brauchst du? Wie groß, ab wann, wie laut?'
     default: return 'Was können wir für dich tun?'
   }
 })

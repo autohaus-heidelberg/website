@@ -2,8 +2,8 @@
 .fz
   FanzineNav(:label="isCommunity ? 'Treffen' : 'Programm'")
   .admin-controls(v-if="authStore.hasWebsiteGroup && event")
-    router-link.btn.btn-admin(v-if="!isCommunity" :to="`/admin/events/${event.id}?tab=checklist`") Checkliste
-    router-link.btn.btn-admin(:to="`/admin/events/${event.id}`") Bearbeiten
+    router-link.admin-chip(v-if="!isCommunity" :to="`/admin/events/${event.id}?tab=checklist`") Checkliste
+    router-link.admin-chip(:to="`/admin/events/${event.id}`") Bearbeiten
 
   //- Unbekannte Events fängt die Route ab und zeigt die 404-Seite
   EventDisplay(v-if="event" :event="event")
@@ -29,34 +29,31 @@ const isCommunity = computed(() => !!event.value && isCommunityEvent(event.value
 
 
 <style scoped>
+/* Wie das (A) auf der Startseite: eine kleine Marke unten rechts, die nichts verschiebt und den Flyer frei lässt */
 .admin-controls {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  margin: 1rem 0 0;
-  border: 0.2rem dashed black;
-  background: white;
+  border: 0.15rem solid #000;
+  background: #fff;
+  transform: rotate(-2deg);
+  transition: transform 0.15s;
 }
 
-.btn-admin {
-  flex: 1 1 auto;
-  text-align: center;
-  padding: 0.45em 0.9em;
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
+.admin-controls:hover { transform: rotate(2deg) scale(1.06); }
+
+.admin-chip {
+  padding: 0.25rem 0.65rem;
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
 }
 
-@media screen and (max-width: 480px) {
-  .admin-controls {
-    padding: 1rem;
-    gap: 0.75rem;
-  }
-
-  .btn-admin {
-    padding: 0.75rem 1rem;
-    letter-spacing: 0.1em;
-  }
-}
+.admin-chip + .admin-chip { border-left: 0.15rem solid #000; }
+.admin-chip:hover { background: #000; color: #fff; }
 </style>

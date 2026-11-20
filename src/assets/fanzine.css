@@ -274,6 +274,12 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
+/* Mobil kurzes Datum: ein einzeiliges Etikett statt eines Balkens, der wie eine Rubrik wirkt */
+.fz-date-short { display: none; }
+@media (max-width: 799px) {
+    .fz-date-long { display: none; }
+    .fz-date-short { display: inline; }
+}
 .fz-feature-title {
     margin: 0.4rem 0 1rem !important;
     font-size: clamp(2rem, 6vw, 3.4rem);
@@ -402,6 +408,10 @@
     .fz-community-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
     .fz-community-grid > div:first-child { grid-row: 1 / span 2; }
 }
+/* Mobil ist die Kleinanzeige zu hoch; die Gesuche stehen auf der Community-Seite */
+@media (max-width: 799px) {
+    .fz-community-grid .fz-ad { display: none; }
+}
 .fz-community-grid .fz-ad { margin-top: 1.25rem; max-width: none; }
 .fz-door-links { list-style: none; margin: 1rem 0 0; padding: 0; counter-reset: door; display: grid; gap: 0.5rem; }
 .fz-door-links li { margin: 0; counter-increment: door; display: flex; gap: 0.75rem; align-items: baseline; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -491,17 +501,17 @@
 }
 .fz-censor:hover, .fz-censor:focus-visible, .fz-censor.open { color: #fff; outline: none; }
 
-/* Die drei Türen: drei Wege, mitzumachen */
+/* Die Türen: vier Wege, mitzumachen */
 .fz-doors { display: grid; gap: 1.75rem; margin-top: 0.5rem; }
-@media (min-width: 900px) { .fz-doors { grid-template-columns: repeat(3, 1fr); gap: 2rem; } }
+@media (min-width: 900px) { .fz-doors { grid-template-columns: repeat(2, 1fr); gap: 2rem; } }
 .fz-door { display: flex; flex-direction: column; }
 .fz-door .fz-h2 { font-size: clamp(1.2rem, 2.4vw, 1.45rem); margin-bottom: 0.75rem; }
 .fz-door .btn { margin-top: auto; align-self: flex-start; }
+.fz-door .btn-row { margin-top: auto; }
 .fz-door p { margin-bottom: 1.25rem; }
 .fz-door-no {
-    position: absolute;
-    top: -1.1rem;
-    left: 1rem;
+    align-self: flex-start;
+    margin-bottom: 0.75rem;
     padding: 0 0.7rem;
     background: #000;
     color: #fff;
@@ -511,13 +521,14 @@
 }
 .fz-door:nth-child(2) { transform: rotate(0.4deg); }
 .fz-door:nth-child(3) { transform: rotate(-0.4deg); }
+.fz-door:nth-child(4) { transform: rotate(0.4deg); }
 
 /* Beispielabend als Ablaufplan */
 .fz-run { list-style: none; margin: 0; padding: 0; counter-reset: run; border-top: 0.25rem solid #000; }
 .fz-run li { display: grid; grid-template-columns: 12.5rem 1fr; gap: 1rem; padding: 0.7rem 0.25rem; border-bottom: 0.1rem solid #000; margin: 0; }
 .fz-run .run-when { font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
 @media (max-width: 560px) { .fz-run li { grid-template-columns: 1fr; gap: 0.1rem; } }
-.fz-meetings-intro { margin-bottom: 1.5rem; max-width: 70ch; }
+.fz .fz-meetings-intro { margin-bottom: 1.5rem; max-width: 70ch; }
 
 /* Beschriftung/Wert-Tabelle (Datenblatt der Anfrage-Seite) */
 .fz-form-fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.6rem 1rem; align-items: baseline; margin: 1rem 0 1.25rem; }
@@ -657,56 +668,48 @@
 .fz .fz-plakette {
     position: absolute;
     z-index: 4;
-    /* rechts neben dem Titel, direkt vor der 22rem breiten Seitenspalte: verdeckt weder Claim noch Buttons */
-    right: calc(22rem + 0.75rem);
-    bottom: -1.5rem;
-    display: grid;
-    justify-items: end;
-    gap: 0.4rem;
-    padding: 0;
-    border: 0;
-    background: none;
-    box-shadow: none;
+    left: 50%;
+    top: 46%;
+    translate: -50% -40%;
+    rotate: -12deg;
+    width: min(34rem, 94vw);
+    aspect-ratio: 1;
+    container-type: inline-size;
+    pointer-events: none;
     color: #000;
     font-family: var(--fz-mono);
-    letter-spacing: 0;
-    cursor: pointer;
-    transform: rotate(-11deg);
-    animation: fz-stamp-in 0.22s cubic-bezier(0.2, 1.6, 0.4, 1);
+    /* Gummistempel im Kopierer-Look: verzogener Rand, ungleichmäßig deckende Farbe, Text darunter scheint durch */
+    filter: url(#fz-ink);
+    mix-blend-mode: multiply;
+    animation: fz-stamp-in 0.28s cubic-bezier(0.2, 1.6, 0.4, 1);
 }
-.fz .fz-plakette:hover { filter: none; }
 .fz-plakette .pl-ring {
+    position: absolute;
+    inset: 0;
     display: grid;
     align-content: center;
     justify-items: center;
-    gap: 0.15rem;
-    width: 9rem;
-    height: 9rem;
-    border: 0.3rem solid #000;
+    gap: 1.2cqw;
+    border: 3.4cqw solid #000;
     border-radius: 50%;
-    outline: 0.12rem solid #000;
-    outline-offset: -0.65rem;
-    background: #fff;
+    outline: 1.2cqw solid #000;
+    outline-offset: -7.5cqw;
     text-transform: uppercase;
-    line-height: 1.1;
+    line-height: 1.05;
 }
-.fz-plakette .pl-top { font-size: 0.52rem; font-weight: 900; letter-spacing: 0.08em; }
-.fz-plakette .pl-main { font-family: Geologica, sans-serif; font-size: 1.15rem; font-weight: 900; letter-spacing: 0.02em; }
-.fz-plakette .pl-sub { font-size: 0.7rem; font-weight: 900; }
-.fz-plakette .pl-date { margin-top: 0.2rem; padding: 0.1rem 0.4rem; background: #000; color: #fff; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.08em; }
-.fz-plakette .pl-foot { padding: 0.1rem 0.4rem; background: #fff; font-size: 0.65rem; font-weight: 700; }
+.fz-plakette .pl-top { font-size: 4.6cqw; font-weight: 900; letter-spacing: 0.08em; }
+.fz-plakette .pl-main { font-family: Geologica, sans-serif; font-size: 12cqw; font-weight: 900; letter-spacing: 0.02em; }
+.fz-plakette .pl-sub { font-size: 6.2cqw; font-weight: 900; }
+.fz-plakette .pl-date { margin-top: 1.5cqw; padding: 0.8cqw 3cqw; background: #000; color: #fff; font-size: 4.4cqw; font-weight: 700; letter-spacing: 0.08em; }
+.fz-plakette .pl-foot { position: absolute; left: 0; right: 0; bottom: -7cqw; text-align: center; font-size: 3.6cqw; font-weight: 700; }
 @keyframes fz-stamp-in {
-    from { opacity: 0; transform: rotate(-11deg) scale(2.2); }
-    to { opacity: 1; transform: rotate(-11deg) scale(1); }
+    from { opacity: 0; scale: 1.7; }
+    to { opacity: 1; scale: 1; }
 }
-/* Einspaltig steht der Stempel unter den Buttons im Fluss, damit er nichts verdeckt, und darf größer sein */
-@media (max-width: 999px) {
-    .fz .fz-plakette { position: static; justify-self: end; justify-items: center; margin: -0.5rem 0.5rem -0.5rem 0; }
-    .fz-plakette .pl-ring { width: 10.5rem; height: 10.5rem; }
-    .fz-plakette .pl-top { font-size: 0.6rem; }
-    .fz-plakette .pl-main { font-size: 1.35rem; }
-    .fz-plakette .pl-sub { font-size: 0.8rem; }
-    .fz-plakette .pl-date { font-size: 0.65rem; }
+/* Breit: rechts auf den Rand von Cover und Programm, damit Titel und Claim lesbar bleiben (schwarz auf schwarz geht der Stempel sonst unter) */
+@media (min-width: 1000px) {
+    .fz .fz-plakette { width: min(22rem, 94vw); left: 75%; top: calc(100% + 0.5rem); translate: -50% -50%; }
+    .fz-plakette .pl-top { font-size: 5.4cqw; }
 }
 
 /* Zwei Gänse hinterm Zaun (Fehlerseite): Gruß an das Fanzine „Good Clean Fun“. Sie stehen auf der dicken Linie des Seitenkopfs. */
@@ -873,3 +876,19 @@
 .fz .fz-cover-cta .btn:hover { background: #000; color: #fff; filter: url(#fz-ink); }
 .fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); }
 .fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }
+
+/* ---------- Textmarker: Gelb als gezeichneter Marker-Strich unter der Schrift ---------- */
+/* Zwei übereinanderliegende Striche mit runden Enden (SVG, Strichbreite bleibt beim Strecken gleich); die Schrift bleibt scharf */
+.fz {
+    --mark-stroke: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'><path d='M8 14 C 40 11, 70 16, 105 13 S 165 11, 192 14' fill='none' stroke='%23ffe600' stroke-opacity='0.92' stroke-width='13' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M14 16 C 50 13, 90 17, 130 14 S 175 14, 188 15' fill='none' stroke='%23ffe600' stroke-opacity='0.55' stroke-width='6' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
+}
+.fz .fz-meeting .when,
+.fz .fz-hl,
+.fz .fz-wanted h3 {
+    background-color: transparent;
+    background-image: var(--mark-stroke);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+.fz .fz-meeting .when { padding: 0.15rem 0.7rem; transform: rotate(-0.6deg); }
+.fz .fz-meeting-past .when { background: none; transform: none; }

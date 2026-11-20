@@ -349,6 +349,7 @@ onMounted(() => {
         option(value="band") 🎸 Band
         option(value="event") 🎪 Event
         option(value="rent") 🏠 Vermietung
+        option(value="space") 🎨 Atelier/Proberaum
         option(value="other") 📋 Sonstige
 
   .count-bar(v-if="!isLoading && !error")

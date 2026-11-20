@@ -61,6 +61,11 @@ const router = createRouter({
       component: () => import('../views/CommunityView.vue')
     },
     {
+      path: '/autohaus',
+      name: 'autohaus',
+      component: () => import('../views/AutohausView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue')

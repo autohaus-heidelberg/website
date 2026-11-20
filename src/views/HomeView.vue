@@ -9,9 +9,11 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import { isPastEvent } from "@/utils/eventTime";
 import { communityOnly, concertsOnly, helpRequests } from "@/utils/community";
 import { stripHtml } from "@/utils/calendar";
+import { categoryLabel } from "@/utils/eventCategory";
 import { ransomChars } from "@/utils/ransom";
 import { claim } from "@/utils/claims";
 import { doors, mailto, support, wantedLine } from "@/utils/communityContent";
+import { autohausTeaser } from "@/utils/autohausContent";
 import { aboutTexts, type AboutLang } from "@/utils/about";
 import FanzineBurst from "@/components/FanzineBurst.vue";
 import { PLAKETTE_TAPS, nextInspection } from "@/utils/plakette";
@@ -97,6 +99,10 @@ const censorOpen = ref(false);
 // Easter Egg: mehrfach auf den Spruch in der Kopfleiste tippen → Prüfstempel auf dem Cover
 const plaketteTaps = ref(0);
 const stamped = computed(() => plaketteTaps.value >= PLAKETTE_TAPS);
+// Der Stempel liegt groß über der Seite und klickt durch; erneutes Tippen auf den Spruch nimmt ihn wieder weg
+const onEggTap = () => {
+  plaketteTaps.value = stamped.value ? 0 : plaketteTaps.value + 1;
+};
 const nextHu = nextInspection();
 
 const wantedFallback = wantedLine([]);
@@ -114,7 +120,7 @@ const zoom = ref(17);
   header.fz-masthead
     .fz-strip
       span Nr. {{ issueNo }} · {{ issueMonth }}
-      span.fz-egg(@click="plaketteTaps++") Gebraucht, aber gut in Schuss
+      span.fz-egg(@click="onEggTap") Gebraucht, aber gut in Schuss
     .fz-cover
       h1.fz-title(aria-label="Carousel im alten Autohaus")
         span.fz-line(v-for="(line, li) in titleLines" :key="li" aria-hidden="true")
@@ -136,7 +142,7 @@ const zoom = ref(17);
         .fz-cover-cta
           router-link.btn(:to="{ name: 'calendar' }") Kalender
           router-link.btn(:to="{ name: 'community' }") Mach mit!
-      button.fz-plakette(v-if="stamped" type="button" title="Antippen zum Entfernen" @click="plaketteTaps = 0")
+      .fz-plakette(v-if="stamped" aria-hidden="true")
         span.pl-ring
           span.pl-top Hauptuntersuchung
           span.pl-main Bestanden
@@ -146,7 +152,7 @@ const zoom = ref(17);
 
   //- ===== Programm =====
   section.fz-section#programm
-    .fz-label Das Programm
+    .fz-label Das Programm im Carousel
 
     .fz-empty(v-if="!feature && ongoing.length === 0") Gerade steht nichts auf der Hebebühne. Kein Grund zur Panik: Newsletter abonnieren, dann erfahrt ihr als Erste, wann es wieder kracht.
 
@@ -162,7 +168,9 @@ const zoom = ref(17);
         img(:src="story.img" :alt="story.title" crossorigin="anonymous")
       div
         .fz-feature-date(:class="{ 'has-note': i === 0 && !story.cancelled }")
-          | {{ story.date_d.format('dddd, DD. MMMM') }} · {{ story.date_d.format('HH:mm') }} Uhr
+          span.fz-date-long {{ story.date_d.format('dddd, DD. MMMM') }}
+          span.fz-date-short {{ story.date_d.format('dd, DD.MM.') }}
+          |  · {{ story.date_d.format('HH:mm') }} Uhr{{ categoryLabel(story) ? ' · ' + categoryLabel(story) : '' }}
           template(v-if="i === 0 && !story.cancelled")
             svg.fz-mark-ring(viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true" focusable="false")
               path(:d="MARK_RING")
@@ -180,7 +188,7 @@ const zoom = ref(17);
         .fz-photo
           .fz-tape.tc
           img(:src="ev.img" :alt="ev.title" crossorigin="anonymous")
-        .fz-pick-date {{ ev.date_d.format('dd, DD.MM.') }} · {{ ev.date_d.format('HH:mm') }} Uhr
+        .fz-pick-date {{ ev.date_d.format('dd, DD.MM.') }} · {{ ev.date_d.format('HH:mm') }} Uhr{{ categoryLabel(ev) ? ' · ' + categoryLabel(ev) : '' }}
         h3.fz-pick-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
 
     .fz-box.fz-ongoing.fz-dots(v-if="ongoing.length")
@@ -204,6 +212,14 @@ const zoom = ref(17);
       router-link.btn(:to="{ name: 'pastEvents' }") Vergangene Events
       router-link.btn(:to="{ name: 'calendar' }") Termine abonnieren
 
+  //- ===== Autohaus-Teaser =====
+  section.fz-section#autohaus
+    .fz-box
+      .fz-stamp {{ autohausTeaser.stamp }}
+      h2.fz-h2(style="margin-top: 0.75rem") {{ autohausTeaser.title }}
+      p {{ autohausTeaser.text }}
+      router-link.btn(:to="{ name: 'autohaus' }") {{ autohausTeaser.cta }}
+
   //- ===== Community-Teaser =====
   aside.fz-cut.fz-community#community
     FanzineBurst.on-box Du fehlst!
@@ -211,7 +227,7 @@ const zoom = ref(17);
     .fz-community-grid
       div
         h2.fz-h2(style="margin-top: 0.75rem") Der Laden läuft nicht von allein.
-        p Keine Chefetage, kein Sponsor, kein doppelter Boden. Jeder Abend hier wird von Leuten wie dir gemacht: an der Tür, hinter der Bar, am Mischpult. Drei Wege rein:
+        p Keine Chefetage, kein Sponsor, kein doppelter Boden. Jeder Abend hier wird von Leuten wie dir gemacht: an der Tür, hinter der Bar, am Mischpult. Vier Wege rein:
         ol.fz-door-links
           li(v-for="d in doors" :key="d.id")
             router-link(:to="{ name: 'community', hash: '#mitmachen' }") {{ d.title }}
@@ -271,13 +287,15 @@ const zoom = ref(17);
 
     .fz-box#newsletter
       h2.fz-h2 Newsletter
-      p Abonniere den Newsletter, um Updates über anstehende Konzerte und Veranstaltungen zu erhalten.
+      p Abonniere den Newsletter, um Updates über anstehende Veranstaltungen zu erhalten: Konzerte, Partys, Kino, Ausstellungen und mehr.
       button.rm-open-popup Newsletter abonnieren
 
     .fz-box#anfragen
       h2.fz-h2 Anfragen
-      p Booking-, Veranstaltungs- und Raumanfragen bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
-      router-link.btn(:to="{ name: 'requests' }") Anfragenformular
+      p Booking-, Veranstaltungs- und Raumanfragen, auch für Ateliers und Proberäume, bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
+      .btn-row
+        router-link.btn(:to="{ name: 'requests' }") Anfragenformular
+        router-link.btn(:to="{ name: 'autohaus' }") Atelier oder Proberaum?
 
   //- ===== Kleingedrucktes =====
   section.fz-section.fz-page.fz-print
@@ -290,13 +308,14 @@ const zoom = ref(17);
           button.btn.fz-toggle(:class="{ on: lang === 'de' }" :aria-pressed="lang === 'de'" @click="lang = 'de'") DE
           button.btn.fz-toggle(:class="{ on: lang === 'en' }" :aria-pressed="lang === 'en'" @click="lang = 'en'") EN
       p(v-for="(para, i) in about.paragraphs" :key="i" :lang="lang") {{ para }}
+      .btn-row
+        router-link.btn(:to="{ name: 'autohaus' }") {{ about.more }}
 
     #impressum
-      h2.fz-h2 Impressum
-      p Verantwortlich für den Inhalt dieser Website:
-      p Carousel e.V. – Hebelstraße 7 – 69115 Heidelberg
-      p
+      p Carousel e.V. – Hebelstraße 7 – 69115 Heidelberg –
+        |  
         a(href="mailto:carouselev@gmail.com") carouselev@gmail.com
-      p
-        router-link(:to="{ name: 'about' }") Mehr
+        |  –
+        |  
+        router-link(:to="{ name: 'about' }") Impressum
 </template>

@@ -8,7 +8,13 @@
             .cancelled-stamp(v-if="event.cancelled") ABGESAGT
     .event-header
         router-link.community-stamp.plain-link(v-if="isCommunityEvent" :to="{ name: 'community' }") Community-Treffen · Alle Infos &amp; Mithilfe
-        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
+        .category-stamp(v-else-if="categoryText") {{ categoryText }}
+        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }")
+            template(v-if="isMultiDay") {{ date }}
+            template(v-else)
+                span.fz-date-long {{ date }}
+                span.fz-date-short {{ dateShort }}
+                |  Uhr
         p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
         h1.title {{ event.title }}
@@ -54,6 +60,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/de'
 import dayjs from "dayjs"
 import { computed, ref } from "vue"
+import { categoryLabel } from "@/utils/eventCategory"
 
 const props = defineProps<{ event: Event }>()
 
@@ -66,6 +73,8 @@ const isCommunityEvent = computed(() => {
   const evt = props.event as any
   return (evt.type || evt.event_type) === 'community'
 })
+
+const categoryText = computed(() => categoryLabel(props.event))
 
 // Handle both image_url (new API) and img (old static) properties
 const imageUrl = computed(() => {
@@ -83,8 +92,11 @@ const date = computed(() => {
   if (endDate.value) {
     return `${start.format('DD.MM.YYYY')} – ${endDate.value.format('DD.MM.YYYY')}`
   }
-  return start.format("dddd - DD/MM/YYYY - HH:mm")
+  return start.format("dddd, DD.MM.YYYY · HH:mm")
 })
+
+// Mobil das kurze Datum wie auf der Startseite („Sa, 21.11.2026“)
+const dateShort = computed(() => dayjs(props.event?.date).locale('de').format("dd, DD.MM.YYYY · HH:mm"))
 
 const isMultiDay = computed(() => !!props.event.endDate)
 
@@ -98,17 +110,14 @@ const isOngoing = computed(() => {
   return dayjs().isAfter(dayjs(props.event?.date)) && dayjs().isBefore(endDate.value)
 })
 
-const showDatediff = computed(() => {
-  if (isOngoing.value) return true
-  return dayjs(props.event?.date).diff(dayjs(), "day") < 7
-})
+// Nur laufende und vergangene Events bekommen eine Zeile unter dem Etikett; bei bevorstehenden steht das Datum allein
+const showDatediff = computed(() => isOngoing.value || !dayjs(props.event?.date).isAfter(dayjs()))
 
 const dateDiff = computed(() => {
   if (isOngoing.value && endDate.value) {
     return `Läuft noch bis ${endDate.value.format('DD.MM.YYYY')}`
   }
-  const start = dayjs(props.event?.date).locale('de')
-  return start.isAfter(dayjs()) ? `Abfahrt ${start.fromNow()}` : `Das war ${start.fromNow()}`
+  return `Das war ${dayjs(props.event?.date).locale('de').fromNow()}`
 })
 
 // Share
@@ -170,27 +179,41 @@ function copyLink() {
 .event-header { min-width: 0; }
 
 .fz-event-date {
+    position: relative;
+    isolation: isolate;
     display: inline-block;
     margin: 0 0 0.6rem;
-    padding: 0.2em 0.7em;
-    background: #000;
+    padding: 0.3em 1em;
     color: #fff;
     font-size: clamp(0.95rem, 2.2vw, 1.15rem);
     font-weight: 900;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     transform: rotate(-1deg);
-    /* Konzerte: harter Versatz-Schatten in Grün (Konzertfarbe) */
-    box-shadow: 0.3rem 0.3rem 0 var(--multi);
+}
+/* Schwarzes Etikett mit rauem Tintenrand, wie das Datum der Titelstory auf der Startseite */
+.fz-event-date::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #000;
+    filter: url(#fz-ink-soft);
 }
 
-/* Vereinstreffen: Textmarker-Gelb statt Konzert-Grün */
+/* Vereinstreffen: Textmarker-Strich statt Konzert-Grün (Strich-Variable aus fanzine.css, ohne sie flaches Gelb) */
 .fz-event-date.is-community {
-    background: var(--mark);
+    background: transparent;
+    background-image: var(--mark-stroke, linear-gradient(var(--mark), var(--mark)));
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     color: #000;
-    border: 0.15rem solid #000;
+    border: 0;
     box-shadow: none;
+    padding: 0.3em 0.9em;
+    transform: rotate(-0.6deg);
 }
+.fz-event-date.is-community::before { display: none; }
 
 .date-cancelled { text-decoration: line-through; }
 
@@ -227,13 +250,28 @@ function copyLink() {
     text-align: left;
     margin: 0 0 0.75rem;
     padding: 0.2rem 0.7rem;
-    border: 0.2rem dashed black;
-    background: var(--mark);
+    border: 0;
+    background: transparent;
+    background-image: var(--mark-stroke, linear-gradient(var(--mark), var(--mark)));
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     font-size: clamp(0.8rem, 1.6vw, 0.95rem);
     font-weight: 900;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     transform: rotate(-1.5deg);
+}
+
+.category-stamp {
+    display: block;
+    width: fit-content;
+    margin: 0 0 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border: 0.15rem solid #000;
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .cancelled-display {

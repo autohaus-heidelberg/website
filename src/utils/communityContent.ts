@@ -1,33 +1,67 @@
 export const CONTACT_EMAIL = 'carouselev@gmail.com'
 
+/** Offener Telegram-Kanal mit den Terminen. Die Helfer-Gruppen bleiben persönlich und werden nie verlinkt. */
+export const TELEGRAM_CHANNEL_URL = 'https://t.me/+PCvpsCalJzkyNzFi'
+
 /** mailto-Link mit vorbelegtem Betreff, damit Anfragen von der Community-Seite gleich zuzuordnen sind. */
 export function mailto(subject: string): string {
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`
 }
 
 export interface Door {
-  id: 'helfen' | 'veranstalten' | 'kreativ'
+  id: 'helfen' | 'veranstalten' | 'kreativ' | 'raum'
   title: string
   text: string
   cta: string
-  /** `route`: interne Seite (optional mit Sprungmarke), `mail`: E-Mail mit Betreff */
-  action: { route: string; hash?: string } | { mail: string }
+  /** `route`: interne Seite (optional mit Sprungmarke oder Query), `mail`: E-Mail mit Betreff */
+  action: { route: string; hash?: string; query?: Record<string, string> } | { mail: string }
+  /** Optionaler zweiter Link (z.B. zur ausführlichen Beschreibung weiter unten) */
+  more?: { label: string; route: string; hash?: string }
 }
 
-/** Die drei Wege, bei uns mitzumachen. Einladungslinks zu den Telegram-Gruppen stehen bewusst nicht auf der Seite:
+/** Die Gruppen, die das Autohaus gemeinsam gestalten (Community-Seite). */
+export interface Crew {
+  id: 'haus' | 'bar' | 'verein'
+  title: string
+  text: string
+  /** Optionaler Link zu einer internen Seite */
+  link?: { label: string; route: string; hash?: string }
+}
+
+export const crew: Crew[] = [
+  {
+    id: 'haus',
+    title: 'In den Räumen',
+    text: 'Bands, Künstler*innen, Fotograf*innen und Kollektive, die in Proberäumen und Ateliers ihr Ding machen.',
+    link: { label: 'Das Autohaus', route: 'autohaus' },
+  },
+  {
+    id: 'bar',
+    title: 'Im Carousel',
+    text: 'Die Helfer*innen an Einlass, Bar, Ton und Licht und alle, die Abende veranstalten. Ohne sie geht abends keine Tür auf.',
+  },
+  {
+    id: 'verein',
+    title: 'Im Verein',
+    text: 'Der Vorstand leitet das Carousel e.V., die Mitglieder wählen ihn bei der Mitgliederversammlung. Ideen für neue Abende besprechen wir bei den Vereinstreffen.',
+  },
+]
+
+/** Die vier Wege, bei uns mitzumachen. Einladungslinks zu den Telegram-Gruppen stehen bewusst nicht auf der Seite:
  *  Der Verein gibt sie persönlich weiter, deshalb gibt es sie "auf Anfrage". */
 export const doors: Door[] = [
   {
     id: 'helfen',
-    title: 'Bei Konzerten helfen',
-    text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Serviceleistung: Eine Schicht dauert 90 Minuten, das sind etwa elf Zigaretten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
+    title: 'Im Carousel helfen',
+    text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Eine Schicht dauert meistens 90 Minuten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
     cta: 'Link anfragen',
     action: { mail: 'Helfer*in werden' },
+    more: { label: 'So läuft ein Konzertabend', route: 'community', hash: '#abend' },
   },
   {
     id: 'veranstalten',
     title: 'Selber veranstalten',
-    text: 'Du kennst die Band, die hier spielen muss? Oder hast eine Idee für eine Party, einen Kinoabend, irgendwas dazwischen? Komm zum Vereinstreffen, stell sie kurz vor und such dir Mitstreiter*innen. Wer kann da nein sagen? Termine stehen weiter unten.',
+    text: 'Du kennst die Band, die hier spielen muss? Oder hast eine Idee für eine Party, einen Kinoabend, einen Workshop, irgendwas dazwischen? Komm zum Vereinstreffen, stell sie kurz vor und such dir Mitstreiter*innen. Wer kann da nein sagen? Termine stehen weiter unten.',
     cta: 'Zu den Terminen',
     action: { route: 'community', hash: '#treffen' },
   },
@@ -38,6 +72,13 @@ export const doors: Door[] = [
     cta: 'Link anfragen',
     action: { mail: 'Kreativ mitmachen' },
   },
+  {
+    id: 'raum',
+    title: 'Einen Raum im Autohaus',
+    text: 'Du machst Musik, Kunst oder Fotos und suchst Platz zum Proben, Arbeiten oder Lagern? Im Autohaus gibt es Proberäume, Ateliers und Lager. Ob gerade etwas frei ist, klären wir persönlich.',
+    cta: 'Anfrage stellen',
+    action: { route: 'requests', query: { type: 'space' } },
+  },
 ]
 
 export interface EveningStep {
@@ -47,7 +88,7 @@ export interface EveningStep {
 
 /** Anonymer Beispielabend, abgeleitet aus der Pad-Vorlage (relativ zum Beginn der Veranstaltung). */
 export const eveningSteps: EveningStep[] = [
-  { when: '3 Std. vorher', what: 'Get-In: Der Tourbus parkt vor der Tür, alle packen an' },
+  { when: '3 Std. vorher', what: 'Get-In: Der Tourbus hält vor der Tür, alle packen an' },
   { when: '2 Std. vorher', what: 'Soundcheck drinnen, Hospitality nebenan' },
   { when: '1 Std. vorher', what: 'Warmes Essen für die Bands. Nudeln mit Liebe reichen' },
   { when: 'Beginn', what: 'Türen auf. Einlass und Bar in 90-Minuten-Schichten, an der Bar nie allein' },
