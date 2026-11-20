@@ -33,9 +33,13 @@ export const hausProgram: HausRow[] = [
   { label: 'Partys', text: 'Von elektronischer Musik bis offenes DJ-Pult.' },
   { label: 'Kino', text: 'Filmabende, auch als Open-Air-Kino.' },
   { label: 'Ausstellungen', text: 'Wenn aus dem Atelier etwas an die Wand soll.' },
-  { label: 'Workshops', text: 'Malen, Makramee und was die Leute im Autohaus sonst draufhaben.' },
-  { label: 'Offene Ateliers', text: 'Beim Sommerfest stehen die Ateliers offen, dazu Flohmarkt und Kleidertausch.' },
 ]
+
+/** Das Sommerfest 2024 als Beispiel, wenn Haus und Carousel zusammenkommen (Tätigkeitsbericht 2024). */
+export const hausSommerfest = {
+  label: 'Wenn alles zusammenkommt',
+  text: 'Beim Sommerfest „Kulturkarussell im Autohaus“ 2024 standen die Ateliers offen, Bands aus dem Haus spielten, es gab Workshops, Flohmarkt und Kleidertausch. Rund 450 Gäste, Eintritt frei.',
+}
 
 /** Teaser auf der Startseite */
 export const autohausTeaser = {

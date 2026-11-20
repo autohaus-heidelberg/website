@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FanzineNav from "@/components/FanzineNav.vue";
 import { ransomChars } from "@/utils/ransom";
-import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autohausContent";
+import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausSommerfest, hausWorkers } from "@/utils/autohausContent";
 </script>
 
 <template lang="pug">
@@ -19,6 +19,10 @@ import { hausCarousel, hausCommunity, hausIntro, hausProgram, hausRequest, hausW
       li(v-for="w in hausWorkers" :key="w.label")
         span.run-when {{ w.label }}
         span.run-what {{ w.text }}
+
+  section.fz-section
+    .fz-label {{ hausSommerfest.label }}
+    p {{ hausSommerfest.text }}
 
   section.fz-section#carousel
     .fz-label {{ hausCarousel.label }}

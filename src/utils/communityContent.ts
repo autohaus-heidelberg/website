@@ -57,7 +57,7 @@ export const doors: Door[] = [
   {
     id: 'veranstalten',
     title: 'Selber veranstalten',
-    text: 'Du kennst die Band, die hier spielen muss? Oder hast eine Idee für eine Party, einen Kinoabend, irgendwas dazwischen? Komm zum Vereinstreffen, stell sie kurz vor und such dir Mitstreiter*innen. Wer kann da nein sagen? Termine stehen weiter unten.',
+    text: 'Du kennst die Band, die hier spielen muss? Oder hast eine Idee für eine Party, einen Kinoabend, einen Workshop, irgendwas dazwischen? Komm zum Vereinstreffen, stell sie kurz vor und such dir Mitstreiter*innen. Wer kann da nein sagen? Termine stehen weiter unten.',
     cta: 'Zu den Terminen',
     action: { route: 'community', hash: '#treffen' },
   },
