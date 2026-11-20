@@ -876,7 +876,7 @@
 /* Stempel (Etiketten wie „Community“) */
 .fz .fz-stamp { filter: url(#fz-ink-soft); }
 /* Ransom-Titel: wie kopiert, mit unruhigem Rand und leicht fleckigem Schwarz */
-.fz .fz-title, .fz .fz-page-title { filter: url(#fz-ink-soft); }
+.fz .fz-title, .fz .fz-page-title, .fz .fz-feature-title { filter: url(#fz-ink-soft); }
 
 /* Schwarze Etiketten (Kopfleiste, „Das Programm“, Türnummern, Anzeigenkopf): wie kopiert. Der schwarze Grund und die
    ausgerissene Kante liegen in ::before, damit der Filter auch die Kante verzieht (clip-path wirkt sonst erst danach). */

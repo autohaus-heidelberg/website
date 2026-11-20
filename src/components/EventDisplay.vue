@@ -242,6 +242,7 @@ function copyLink() {
     text-transform: uppercase;
     overflow-wrap: anywhere;
     hyphens: auto;
+    filter: url(#fz-ink-soft);
 }
 
 .community-stamp {
