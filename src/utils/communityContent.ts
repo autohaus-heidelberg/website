@@ -53,7 +53,7 @@ export const doors: Door[] = [
   {
     id: 'helfen',
     title: 'Im Carousel helfen',
-    text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Serviceleistung: Eine Schicht dauert 90 Minuten, das sind etwa elf Zigaretten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
+    text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Eine Schicht dauert meistens 90 Minuten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
     cta: 'Link anfragen',
     action: { mail: 'Helfer*in werden' },
     more: { label: 'So läuft ein Konzertabend', route: 'community', hash: '#abend' },
@@ -88,7 +88,7 @@ export interface EveningStep {
 
 /** Anonymer Beispielabend, abgeleitet aus der Pad-Vorlage (relativ zum Beginn der Veranstaltung). */
 export const eveningSteps: EveningStep[] = [
-  { when: '3 Std. vorher', what: 'Get-In: Der Tourbus parkt vor der Tür, alle packen an' },
+  { when: '3 Std. vorher', what: 'Get-In: Der Tourbus hält vor der Tür, alle packen an' },
   { when: '2 Std. vorher', what: 'Soundcheck drinnen, Hospitality nebenan' },
   { when: '1 Std. vorher', what: 'Warmes Essen für die Bands. Nudeln mit Liebe reichen' },
   { when: 'Beginn', what: 'Türen auf. Einlass und Bar in 90-Minuten-Schichten, an der Bar nie allein' },
