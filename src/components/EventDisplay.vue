@@ -242,6 +242,8 @@ function copyLink() {
     text-transform: uppercase;
     overflow-wrap: anywhere;
     hyphens: auto;
+    filter: url(#fz-ink-soft);
+    transform: translateZ(0); /* eigene Ebene, sonst fehlt der Titel auf iOS */
 }
 
 .community-stamp {

@@ -875,6 +875,9 @@
 
 /* Stempel (Etiketten wie „Community“) */
 .fz .fz-stamp { filter: url(#fz-ink-soft); }
+/* Ransom-Titel: wie kopiert, mit unruhigem Rand und leicht fleckigem Schwarz.
+   translateZ legt jeden Titel auf eine eigene Ebene: iOS zeichnet sonst bei vielen Filtern auf der Seite die großen nicht mehr. */
+.fz .fz-title, .fz .fz-page-title, .fz .fz-feature-title { filter: url(#fz-ink-soft); transform: translateZ(0); }
 
 /* Schwarze Etiketten (Kopfleiste, „Das Programm“, Türnummern, Anzeigenkopf): wie kopiert. Der schwarze Grund und die
    ausgerissene Kante liegen in ::before, damit der Filter auch die Kante verzieht (clip-path wirkt sonst erst danach). */
