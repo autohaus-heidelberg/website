@@ -10,6 +10,7 @@
 
 | Feld | Pflicht | Hinweis |
 |------|---------|---------|
+| Art der Veranstaltung | – | „Konzert / Veranstaltung" (Standard) oder „Community-Treffen" |
 | Event-ID | ✓ | Eindeutig, z.B. `konzert-2026-06-15` (nur A-Z, a-z, 0-9, `-`) |
 | Datum & Uhrzeit | ✓ | Wann Einlass ist |
 | Titel | ✓ | Name der Veranstaltung |
@@ -20,6 +21,12 @@
 | Künstler*innen | – | Aus dem Künstler-Pool auswählen |
 
 Beim Anlegen wird automatisch eine **Checkliste** aus den hinterlegten Vorlagen erstellt (Phasen: Vorher / Während / Nachher).
+
+**Community-Treffen** (die Vereinstreffen; im Laden, jeweils einzeln angekündigt) werden wie Events angelegt, mit Datum/Uhrzeit des **öffentlichen** Teils. Der interne Teil wird nicht veröffentlicht. Beim Auswählen des Typs wird eine Beschreibung vorgeschlagen. Sie werden veröffentlicht, erscheinen aber auf der Website nur im Community-Bereich (`/community`) und im Kalender (als „Treffen" markiert), nicht in der Konzertliste, bei Vergangenen Events und in der Flyer-Galerie. Sie bekommen keine Checkliste und zählen nicht in Statistik, Newsletter-Erinnerung und Getränkeplanung.
+
+**Mithilfe-Gesuche** („Wir suchen …") pflegst du unter Admin → Mithilfe-Gesuche. Sie werden beim Veröffentlichen der Events als `community.json` auf die Website übernommen.
+
+**Einstieg neuer Helfer*innen:** Die Event-Pads bleiben das Werkzeug für Schichten. Auf der Community-Seite stehen keine Einladungslinks zu den Telegram-Gruppen (Helfer*innen, Kreative); wer mitmachen will, schreibt an die Vereinsadresse und bekommt den Link persönlich. Die Pad-Adressen und Gästelisten gehören nicht auf die öffentliche Seite (Pads sind ohne Anmeldung lesbar). Ausnahme: Der öffentliche Telegram-Kanal mit den Treffen-Terminen ist auf der Anfrage-Seite verlinkt, er ist ohnehin öffentlich und keine Gruppe mit Klarnamen.
 
 ---
 

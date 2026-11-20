@@ -30,7 +30,7 @@ const grants = ref<GrantApplication[]>([])
 const isLoading = ref(false)
 const error = ref('')
 const searchQuery = ref('')
-const activeFilter = ref<'all' | 'upcoming' | 'past'>('upcoming')
+const activeFilter = ref<'all' | 'upcoming' | 'past' | 'community'>('upcoming')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 const now = new Date()
 const activeView = ref<'events' | 'calendar' | 'grants' | 'statistics'>('events')
@@ -407,6 +407,7 @@ const filters = [
   { key: 'all' as const, label: 'Alle' },
   { key: 'upcoming' as const, label: 'Kommend' },
   { key: 'past' as const, label: 'Vergangen' },
+  { key: 'community' as const, label: 'Treffen' },
 ]
 
 const events = computed(() => eventsData.value?.results || [])
@@ -456,6 +457,8 @@ const filteredEvents = computed(() => {
     list = list.filter(e => !isPast(e))
   } else if (activeFilter.value === 'past') {
     list = list.filter(e => isPast(e))
+  } else if (activeFilter.value === 'community') {
+    list = list.filter(e => e.event_type === 'community')
   }
 
   list = [...list].sort((a, b) => {
@@ -485,6 +488,7 @@ function filterCount(key: string) {
   if (key === 'all') return list.length
   if (key === 'upcoming') return list.filter(e => !isPast(e)).length
   if (key === 'past') return list.filter(e => isPast(e)).length
+  if (key === 'community') return list.filter(e => e.event_type === 'community').length
   return 0
 }
 
@@ -883,6 +887,7 @@ onMounted(() => {
         .event-header
           .event-id {{ event.id }}
           .event-header-right
+            span.status-badge.badge-community(v-if="event.event_type === 'community'") Treffen
             span.status-badge.badge-cancelled(v-if="event.cancelled") ✗ Abgesagt
             template(v-else)
               span.status-badge.badge-live(v-if="publishedIds.has(event.id)") ✓ Live
@@ -1539,6 +1544,12 @@ h2 {
 @keyframes pulse-urgent {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+.badge-community {
+  background: white;
+  color: black;
+  border: 0.15rem dashed black;
 }
 
 .badge-acc-draft {

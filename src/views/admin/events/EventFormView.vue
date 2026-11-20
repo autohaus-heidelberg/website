@@ -107,6 +107,7 @@ const form = ref<Partial<AppEvent>>({
   date: '',
   endDate: '',
   title: '',
+  event_type: 'concert',
   descriptionShort: '',
   fee: '',
   feeAk: '',
@@ -248,6 +249,27 @@ const endDateOnly = computed({
 const hasEndDate = ref(false)
 watch(hasEndDate, (checked) => {
   if (!checked) form.value.endDate = ''
+})
+
+// Vorschlag für die Beschreibung eines Community-Treffens (nur bei neuen Events mit leerer Beschreibung).
+// Datum/Uhrzeit des Events = Beginn des öffentlichen Teils; der interne Teil wird nicht veröffentlicht.
+const COMMUNITY_DESCRIPTION_TEMPLATE =
+  '<p>Vereinstreffen im Carousel. Der öffentliche Teil startet zur oben genannten Uhrzeit, die Tür ist offen.</p>' +
+  '<p>Ihr habt eine Idee für ein Konzert, eine Party oder einen Abend im Autohaus? ' +
+  'Bringt sie mit, stellt sie kurz vor und findet Mitstreiter*innen.</p>' +
+  '<p>Kommt rum. Mehr als eine Idee braucht ihr nicht.</p>'
+watch(() => form.value.event_type, (type) => {
+  if (type === 'community' && !props.id && !form.value.descriptionShort) {
+    form.value.descriptionShort = COMMUNITY_DESCRIPTION_TEMPLATE
+  }
+})
+
+// Community-Treffen brauchen keine Tickets, Pads, Line-ups, Checklisten oder Abrechnung
+const isCommunityType = computed(() => form.value.event_type === 'community')
+watch(isCommunityType, (community) => {
+  if (!community) return
+  if (activeSection.value === 'accounting') activeSection.value = 'event'
+  if (activeTab.value === 'checklist' || activeTab.value === 'vvk') activeTab.value = 'details'
 })
 
 const presaleUrl = computed(() => {
@@ -552,6 +574,9 @@ async function handleSubmit() {
     // Format date to ISO
     formData.date = new Date(form.value.date!).toISOString()
     formData.endDate = form.value.endDate ? new Date(form.value.endDate).toISOString() : null
+
+    // Bei Community-Treffen sind diese Felder ausgeblendet; ihre alten Werte würden sonst öffentlich angezeigt
+    if (isCommunityType.value) Object.assign(formData, { fee: '', feeAk: '', shopLink: '', artist_ids: [] })
 
     if (isEditing.value) {
       // For editing, only send fields that can be updated (exclude image and image_url)
@@ -897,6 +922,7 @@ function closeDeployModal() {
       type="button"
     ) Veranstaltung
     button.tab.tab-section(
+      v-if="!isCommunityType"
       :class="{ active: activeSection === 'accounting' }"
       @click="activeSection = 'accounting'"
       type="button"
@@ -910,12 +936,13 @@ function closeDeployModal() {
       type="button"
     ) 📝 Details
     button.sub-tab(
-      v-if="form.shopLink"
+      v-if="form.shopLink && !isCommunityType"
       :class="{ active: activeTab === 'vvk' }"
       @click="activeTab = 'vvk'; loadPretixData()"
       type="button"
     ) 🎟️ VVK
     button.sub-tab(
+      v-if="!isCommunityType"
       :class="{ active: activeTab === 'checklist' }"
       @click="activeTab = 'checklist'"
       type="button"
@@ -964,6 +991,13 @@ function closeDeployModal() {
               .field-hint(v-if="hasEndDate") Enddatum – bleibt bis dahin auf der Website sichtbar
 
           .form-group
+            label(for="event_type") Art der Veranstaltung
+            select#event_type(v-model="form.event_type")
+              option(value="concert") Konzert / Veranstaltung
+              option(value="community") Community-Treffen
+            .field-hint(v-if="form.event_type === 'community'") Erscheint auf der Website im Community-Bereich und im Kalender, nicht in der Konzertliste. Keine Checkliste, nicht in der Statistik. Datum/Uhrzeit = Beginn des öffentlichen Teils, der interne Teil wird nicht veröffentlicht.
+
+          .form-group
             label(for="title") Titel *
             input#title(
               v-model="form.title"
@@ -980,7 +1014,7 @@ function closeDeployModal() {
             )
             .field-hint Rich-Text-Editor für Veranstaltungsbeschreibung
 
-          .form-row
+          .form-row(v-if="form.event_type !== 'community'")
             .form-group
               label(for="fee") VVK-Preis
               input#fee(
@@ -997,8 +1031,8 @@ function closeDeployModal() {
               )
               .field-hint Preis muss eine Zahl sein (z.B. 12 für 12€)
 
-          h3.form-divider Ticketing & Links
-          .form-group
+          h3.form-divider(v-if="!isCommunityType") Ticketing & Links
+          .form-group(v-if="!isCommunityType")
             label(for="shopLink") Ticket-Shop-Link
             input#shopLink(
               v-model="form.shopLink"
@@ -1016,7 +1050,7 @@ function closeDeployModal() {
             .success-message(v-if="shopLinkSuccess") {{ shopLinkSuccess }}
             .field-error(v-if="fieldErrors.shopLink") {{ fieldErrors.shopLink }}
 
-          .form-group(v-if="isEditing && form.shopLink")
+          .form-group(v-if="isEditing && form.shopLink && !isCommunityType")
             label Presale-Link (für Booking-Agenturen)
             .presale-link-row(v-if="presaleToken")
               input.presale-link-input(:value="presaleUrl" readonly @click="copyPresaleLink")
@@ -1031,7 +1065,7 @@ function closeDeployModal() {
               .field-hint Erzeugt einen geheimen Link mit VVK-Übersicht zum Teilen.
             .success-message(v-if="presaleSuccess") {{ presaleSuccess }}
 
-          .form-group
+          .form-group(v-if="!isCommunityType")
             label(for="helferpadLink") Helferpad-Link
             input#helferpadLink(
               v-model="form.helferpadLink"
@@ -1048,15 +1082,15 @@ function closeDeployModal() {
               .field-hint Benötigt eine Event-ID.{{ isEditing ? '' : ' Erstellt dabei auch den Event in der Datenbank.' }}
             .success-message(v-if="helferpadSuccess") {{ helferpadSuccess }}
 
-          h3.form-divider Line-up
-          .form-group
+          h3.form-divider(v-if="!isCommunityType") Line-up
+          .form-group(v-if="!isCommunityType")
             label Künstlerauswahl
             ArtistSelector(
               v-model="form.artist_ids"
               v-model:artistOrder="form.artistOrder"
             )
 
-          .form-group(v-if="previewArtists.length")
+          .form-group(v-if="previewArtists.length && !isCommunityType")
             label Gagen / Deals
             ArtistDealFields(
               :artists="previewArtists"
@@ -1077,7 +1111,7 @@ function closeDeployModal() {
               @change="handleImageChange"
             )
             .field-hint Website-Version: WEBP, max. 1000×1000px. Fürs Flyer-Ergebnis am besten JPG/PNG mit ≥1920px hochladen.
-            .generator-row(v-if="isEditing")
+            .generator-row(v-if="isEditing && !isCommunityType")
               .radio-group
                 span.radio-group-label Flyer-Hintergrund
                 label.radio-option(v-for="opt in flyerBgOptions" :key="opt.value")
@@ -1094,7 +1128,7 @@ function closeDeployModal() {
                 @click="generateFlyers"
                 :disabled="isGeneratingFlyers"
               ) {{ isGeneratingFlyers ? 'Wird erzeugt...' : 'Flyer erzeugen' }}
-            .field-hint(v-if="isEditing") Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
+            .field-hint(v-if="isEditing && !isCommunityType") Erzeugt RGG-, Instagram- und komprimierte Formate und legt sie im Google-Drive-Ordner des Events ab. Bei geändertem Bild bitte zuerst speichern.
             .success-message(v-if="flyerSuccess") {{ flyerSuccess }}
             .qr-links(v-if="flyerLinks.length")
               button.qr-download-link(
@@ -1104,7 +1138,7 @@ function closeDeployModal() {
                 @click="downloadFile(flyer.url, flyer.name)"
               ) ⬇ {{ flyer.name }}
 
-            .generator-row(v-if="isEditing")
+            .generator-row(v-if="isEditing && !isCommunityType")
               .radio-group
                 span.radio-group-label Logo
                 label.radio-option
@@ -1118,7 +1152,7 @@ function closeDeployModal() {
                 @click="generateQrCode"
                 :disabled="isGeneratingQr"
               ) {{ isGeneratingQr ? 'Wird erzeugt...' : 'QR-Code erzeugen' }}
-            .field-hint(v-if="isEditing") Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
+            .field-hint(v-if="isEditing && !isCommunityType") Erzeugt einen transparenten 1200×1200 QR-Code mit dem Event-Link und legt ihn im Google-Drive-Ordner ab.
             .success-message(v-if="qrSuccess") {{ qrSuccess }}
             .qr-links(v-if="qrLinks.length")
               button.qr-download-link(
@@ -1148,7 +1182,8 @@ function closeDeployModal() {
           h3 Live-Vorschau
           .loading-indicator(v-if="loadingArtists") Künstler werden geladen...
         .preview-content
-          EventDisplay(:event="previewEvent" v-if="form.title")
+          .fz.fz-preview(v-if="form.title")
+            EventDisplay(:event="previewEvent")
           .preview-empty(v-else)
             p Formular ausfüllen für Vorschau
 

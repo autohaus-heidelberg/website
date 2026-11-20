@@ -1,5 +1,6 @@
 // NOTE: do not add a trailing comma or the script will fail
 import eventsJson from './events.json';
+import { localData, mergeById } from './utils/localPreview';
 
 export type Event = {
   // Unique id, this is used in the URL so URLencoded is better
@@ -10,6 +11,8 @@ export type Event = {
   // single-date event.
   endDate?: string | null;
   cancelled?: boolean;
+  /** 'concert' (Standard, auch wenn fehlend) oder 'community' (Treffen, nicht in Konzertlisten) */
+  type?: string;
   title: string;
   // path to image
   img?: string;
@@ -30,4 +33,9 @@ export type Event = {
   }>;
 };
 
-export const events: Event[] = eventsJson;
+export const events: Event[] = mergeById(eventsJson as Event[], localData<Event[]>('events'));
+
+/** Event zur ID aus der URL (Links kodieren die ID mit encodeURI). */
+export function findEvent(id: string): Event | undefined {
+  return events.find(item => item.id === decodeURI(id));
+}

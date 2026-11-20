@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import FanzineNav from '@/components/FanzineNav.vue'
+import { ransomChars } from '@/utils/ransom'
 
 const router = useRouter()
 const route = useRoute()
@@ -14,7 +16,7 @@ const error = ref('')
 
 async function handleLogin() {
   if (!username.value || !password.value) {
-    error.value = 'Please enter username and password'
+    error.value = 'Bitte Benutzername und Passwort eingeben'
     return
   }
 
@@ -32,162 +34,106 @@ async function handleLogin() {
     const redirect = route.query.redirect as string || '/admin'
     router.push(redirect)
   } else {
-    error.value = authStore.error || 'Login failed'
+    error.value = authStore.error || 'Anmeldung fehlgeschlagen'
   }
 }
 </script>
 
 <template lang="pug">
-.login-page
-  .login-container
-    h1 Login
-    p.subtitle Backend Management
-
-    form.login-form(@submit.prevent="handleLogin")
+.fz
+  FanzineNav(label="Login")
+  header.fz-page-head
+    h1.fz-page-title(aria-label="Login")
+      span.fz-line(aria-hidden="true")
+        span.fz-ch(v-for="(c, i) in ransomChars('Login')" :key="i" :class="c.cls") {{ c.ch }}
+    p.fz-page-sub Zutritt nur fürs Werkstattpersonal.
+  .fz-login
+    form.fz-box.login-form(@submit.prevent="handleLogin")
       .form-group
-        label(for="username") Username
+        label(for="username") Benutzername
         input#username(
           v-model="username"
           type="text"
           required
           autocomplete="username"
           :disabled="isLoading"
-          placeholder="Enter your username"
         )
 
       .form-group
-        label(for="password") Password
+        label(for="password") Passwort
         input#password(
           v-model="password"
           type="password"
           required
           autocomplete="current-password"
           :disabled="isLoading"
-          placeholder="Enter your password"
         )
 
-      .error(v-if="error") {{ error }}
+      .form-error(v-if="error" role="alert") {{ error }}
 
-      button.btn-primary(
-        type="submit"
-        :disabled="isLoading"
-      )
-        span(v-if="isLoading") Logging in...
-        span(v-else) Login
-
-    router-link.back-link(to="/") ← Back to Home
+      button.btn-submit(type="submit" :disabled="isLoading")
+        | {{ isLoading ? 'Anmeldung läuft...' : 'Anmelden' }}
 </template>
 
 <style scoped>
-.login-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #FFFFFF;
-}
-
-.login-container {
-  background: white;
-  padding: 3rem;
-  border: 0.5rem solid #000000;
-  width: 100%;
-  max-width: 420px;
-  transform: rotate(1deg);
-}
-
-h1 {
-  margin-bottom: 0.5rem;
-  text-align: center;
-  font-size: 200%;
-  color: #000000;
-  font-weight: 900;
-}
-
-.subtitle {
-  text-align: center;
-  color: #000000;
-  margin-bottom: 2rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-}
+.fz-login { max-width: 32rem; margin-top: 2.5rem; }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
 
-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #000000;
+.form-group label {
+  font-weight: 900;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 input {
-  width: 100%;
-  height: 3em;
-  padding: 0.5rem;
-  border: solid #000000;
+  padding: 0.6rem 0.75rem;
+  border: 0.2rem solid black;
+  border-radius: 0;
+  background: #fff;
   font-size: 1rem;
+  font-family: inherit;
 }
 
 input:focus {
   outline: none;
-  border-color: #000000;
+  box-shadow: 0.3rem 0.3rem 0 black;
 }
 
 input:disabled {
-  background: #FFFFFF;
-  cursor: not-allowed;
   opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.error {
-  color: #000000;
-  font-size: 0.9rem;
+.form-error {
+  border: 0.2rem solid black;
+  border-left: 0.8rem solid var(--alert);
   padding: 0.75rem;
-  background: #FFFFFF;
-  border: 0.25rem solid #000000;
+  font-weight: 700;
 }
 
-.btn-primary {
-  padding: 0.7em;
-  background: #000000;
-  color: #FFFFFF;
-  border: none;
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.4em;
-  min-width: 280px;
+.btn-submit {
+  align-self: flex-start;
+  padding: 0.6em 1.4em;
+  font-weight: 900;
+  font-size: 0.95rem;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: filter 0.2s, transform 0.1s;
 }
 
-.btn-primary:hover:not(:disabled) {
-  filter: brightness(120%);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: scale(0.99);
-}
-
-.btn-primary:disabled {
+.btn-submit:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.back-link {
-  display: block;
-  text-align: center;
-  margin-top: 1.5rem;
-  color: #000000;
-  font-size: 0.95rem;
 }
 </style>

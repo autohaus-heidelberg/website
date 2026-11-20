@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import FanzineBurst from '@/components/FanzineBurst.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { events, type Event } from '../events'
+import { COMMUNITY_LABEL, isCommunity } from '@/utils/community'
+import FanzineNav from '@/components/FanzineNav.vue'
+import { ransomChars } from '@/utils/ransom'
 import {
   buildAgendaDays,
   buildCalendarDays,
@@ -126,24 +130,63 @@ const feedPath = '/calendar.ics'
 const subscribeUrl = `webcal://${window.location.host}${feedPath}`
 // Google Kalender (Web) reagiert nicht auf webcal://, hat aber einen eigenen Abo-Link.
 const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(subscribeUrl)}`
+
+const subscribeLinks = [
+  { label: 'Apple / Outlook', href: subscribeUrl },
+  { label: 'Google Kalender', href: googleSubscribeUrl, external: true },
+  { label: '.ics-Datei', href: feedPath, download: 'carousel-termine.ics' },
+]
 </script>
 
 <template lang="pug">
-.calendar-page
-  h1 Kalender
+.fz.fz-wide
+ FanzineNav(label="Kalender")
+ .calendar-page
+  header.fz-page-head.cal-head
+    div
+      h1.fz-page-title(aria-label="Kalender")
+        span.fz-line(aria-hidden="true")
+          span.fz-ch(v-for="(c, i) in ransomChars('Kalender')" :key="i" :class="c.cls") {{ c.ch }}
+      .cal-help
+        p.fz-page-sub So liest du den Kalender:
+        ul.cal-legend
+          li
+            span.sw.sw-concert
+            | Konzert
+          li
+            span.sw.sw-meeting
+            | Vereinstreffen
+          li
+            span.sw.sw-multi
+            | mehrtägig
+          li
+            span.sw.sw-cancel
+            | abgesagt
+          li
+            span.sw.sw-past
+            | vorbei
+          li
+            span.sw.sw-today
+            | heute
+    .fz-cut.cal-take.cal-take-top
+      FanzineBurst.cal-star Abo!
+      .fz-stamp Zum Mitnehmen
+      p Abonnieren, und kein Konzert rauscht mehr an dir vorbei.
+      .btn-row
+        a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 
   .toolbar
     .nav
       button.nav-btn(@click="prev" aria-label="Vorheriger Monat") ‹
       button.nav-btn(@click="today") Heute
       button.nav-btn(@click="next" aria-label="Nächster Monat") ›
-    h2.title(aria-live="polite") {{ title }}
+    h2.title.fz-label(aria-live="polite") {{ title }}
     .modes(role="group" aria-label="Ansicht")
       button(:class="{ active: mode === 'month' }" :aria-pressed="mode === 'month'" @click="mode = 'month'") Monat
       button(:class="{ active: mode === 'list' }" :aria-pressed="mode === 'list'" @click="mode = 'list'") Liste
 
   //- Monatsraster
-  .grid(v-if="mode === 'month'" role="grid" :aria-label="`Kalender ${title}`")
+  .grid(v-if="mode === 'month'" role="grid" :aria-label="`Kalender ${title}`" :style="{ '--weeks': weeks.length }")
     .corner KW
     .weekday(v-for="w in weekdayLabels" :key="w" role="columnheader") {{ w }}
     template(v-for="(row, rowIndex) in weeks" :key="row.key")
@@ -162,10 +205,11 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="entry in singleEntries(day)"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :class="{ cancelled: entry.event.cancelled }"
+          :class="{ cancelled: entry.event.cancelled, community: isCommunity(entry.event) }"
           :title="tooltip(entry.event, `${time(entry.event)} Uhr`)"
         )
           span.ev-time {{ showCancelled(entry.event) ? 'ABGESAGT' : time(entry.event) }}
+            span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
           span.ev-title {{ entry.event.title }}
       //- Mehrtägige Events als durchgehende Balken
       .bars(v-if="row.laneCount" :style="{ gridRow: rowIndex + 2 }")
@@ -174,7 +218,7 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           :key="seg.event.id"
           :to="eventLink(seg.event)"
           :title="tooltip(seg.event, dateRange(seg.event))"
-          :class="{ 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter, cancelled: seg.event.cancelled }"
+          :class="{ 'cont-before': seg.continuesBefore, 'cont-after': seg.continuesAfter, cancelled: seg.event.cancelled, community: isCommunity(seg.event) }"
           :style="{ gridColumn: `${seg.startCol + 1} / span ${seg.span}`, gridRow: seg.lane + 1 }"
         )
           span.bar-title {{ seg.continuesBefore ? '◂ ' : '' }}
@@ -185,7 +229,7 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 
   //- Liste
   .list(v-else)
-    p.empty(v-if="!listDays.length") Keine Termine im {{ title }}.
+    p.empty(v-if="!listDays.length") Im {{ title }} steht noch nichts. Kommt noch.
     .list-day(
       v-for="day in listDays"
       :key="day.key"
@@ -201,26 +245,130 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
           v-for="entry in day.entries"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled }"
+          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled, community: isCommunity(entry.event) }"
         )
           span.list-time {{ listLabel(entry) }}
+            span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
           span.list-title {{ entry.event.title }}
 
-  .footer
-    a.btn(:href="subscribeUrl") Kalender abonnieren
-    a.btn(:href="googleSubscribeUrl" target="_blank" rel="noopener") In Google Kalender
-    a.btn(:href="feedPath" download="carousel-termine.ics") Als .ics herunterladen
-    p.footer-hint Mit dem Abo erscheinen neue Termine automatisch in deinem Kalender.
+  //- Mobil: Abo am Seitenende, damit oben der Kalender steht (am Desktop sitzt der Kasten im Kopf)
+  .fz-cut.cal-take.cal-take-bottom
+    .fz-stamp Zum Mitnehmen
+    p Abonnieren, und kein Konzert rauscht mehr an dir vorbei.
+    .btn-row
+      a.btn(v-for="l in subscribeLinks" :key="l.label" :href="l.href" :target="l.external ? '_blank' : undefined" :rel="l.external ? 'noopener' : undefined" :download="l.download") {{ l.label }}
 </template>
 
 <style scoped>
 .calendar-page {
-  --multiday-bg: #fdf3d0;
-  --multiday-bg-hover: #f7e7a8;
-  --multiday-accent: #ffcc00;
-  max-width: var(--wide-page-width);
-  margin: auto;
-  padding: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Kopf: Titel und Legende links, Abo-Kasten rechts (auf schmalen Bildschirmen darunter) */
+.cal-head {
+  display: grid;
+  gap: 1.5rem 3rem;
+  align-items: center;
+}
+
+@media (min-width: 1000px) {
+  .cal-head { grid-template-columns: minmax(0, 1fr) minmax(18rem, 30rem); }
+}
+
+.cal-help .fz-page-sub { font-size: 1rem; }
+
+/* Legende: kleine Muster in der Optik der echten Einträge */
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.cal-legend li { margin: 0; }
+
+.sw {
+  display: inline-block;
+  width: 1.6rem;
+  height: 0.9rem;
+  margin-right: 0.45rem;
+  vertical-align: -0.1rem;
+  border: 0.12rem solid #000;
+  background: #fff;
+}
+
+.sw-concert { border-left: 0.4rem solid var(--multi); background: var(--soft); }
+.sw-meeting { border-style: dashed; background: var(--mark); }
+.sw-multi { border-color: var(--multi); background: var(--hatch), var(--soft); }
+.sw-cancel { border-style: dotted; }
+.sw-past {
+  background: linear-gradient(to bottom right, transparent calc(50% - 0.05rem), #000 calc(50% - 0.05rem), #000 calc(50% + 0.05rem), transparent calc(50% + 0.05rem)), #fff;
+}
+.sw-today {
+  width: 0.9rem;
+  margin-right: 0.6rem;
+  background: #000;
+  transform: rotate(-7deg);
+}
+
+/* Kompakter Abo-Kasten: kleinere Schrift und Buttons als im Fließtext */
+.cal-take {
+  padding: 1rem 1.25rem;
+  --btn-shadow: 0.2rem;
+  --btn-border: 0.15rem;
+}
+
+.cal-take .fz-stamp {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Kopf-Kasten nur ab Desktop, mobil steht der Kasten am Seitenende */
+.cal-take-top { display: none; }
+.cal-take-bottom { margin-top: 2.5rem; }
+
+@media (min-width: 1000px) {
+  .cal-take-top { display: block; }
+  .cal-take-bottom { display: none; }
+}
+
+/* Reine Deko: Stern sitzt an der oberen rechten Ecke des Kastens, nur ab Desktop */
+.cal-star { display: none; }
+
+@media (min-width: 1000px) {
+  .cal-star {
+    display: grid;
+    position: absolute;
+    top: -3rem;
+    right: -0.5rem;
+    z-index: 3;
+    width: 11em;
+    font-size: 0.8rem;
+    transform: rotate(7deg);
+  }
+
+  .cal-star :deep(.fz-burst-text) { font-size: 1.25em; }
+}
+
+.cal-take p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.cal-take .btn-row {
+  margin-top: 0.75rem;
+  gap: 0.6rem;
+}
+
+.cal-take .btn {
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  padding: 0.4em 0.8em;
 }
 
 .toolbar {
@@ -229,7 +377,7 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin: 2rem 0 1.5rem;
 }
 
 .nav,
@@ -240,14 +388,12 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
 
 /* Kompakter als die globalen Buttons (die erben die große Fließtextgröße),
    damit die Steuerung nicht das dichte Kalenderraster erschlägt. */
-.toolbar,
-.footer {
+.toolbar {
   --btn-shadow: 0.2rem;
   --btn-border: 0.15rem;
 }
 
-.toolbar button,
-.footer .btn {
+.toolbar button {
   font-size: 0.85rem;
   letter-spacing: 0.06em;
   padding: 0.45em 0.9em;
@@ -257,9 +403,9 @@ const googleSubscribeUrl = `https://calendar.google.com/calendar/r?cid=${encodeU
   min-width: 2.4rem;
 }
 
-.title {
+/* Monatstitel als schwarzes Etikett (.fz-label aus fanzine.css) */
+.title.fz-label {
   margin: 0;
-  text-transform: capitalize;
 }
 
 button.active {
@@ -275,6 +421,8 @@ button.active {
   --num-h: 1.8rem;
   display: grid;
   grid-template-columns: 2.4rem repeat(7, minmax(0, 1fr));
+  /* Alle Wochen so hoch wie die höchste */
+  grid-template-rows: auto repeat(var(--weeks), 1fr);
   border-top: 0.3rem solid black;
   border-left: 0.3rem solid black;
 }
@@ -307,6 +455,7 @@ button.active {
 }
 
 .day {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
@@ -331,9 +480,27 @@ button.active {
   flex-shrink: 0;
 }
 
+/* Heute: nur die Zahl, schief aufgestempelt. Kein Gelb, das gehört den Vereinstreffen. */
 .day.today .day-num {
   background: black;
   color: white;
+  outline: 0.12rem solid black;
+  outline-offset: 0.15rem;
+  transform: rotate(-7deg);
+}
+
+/* Vergangene Tage: wie auf dem Papierkalender durchgestrichen (Diagonale hinter dem Inhalt) */
+.day.past::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom right, transparent calc(50% - 0.05rem), black calc(50% - 0.05rem), black calc(50% + 0.05rem), transparent calc(50% + 0.05rem));
+}
+
+.day.past > * {
+  position: relative;
+  z-index: 1;
 }
 
 .day.other-month .day-num {
@@ -349,11 +516,43 @@ button.active {
 .ev {
   display: flex;
   flex-direction: column;
-  padding: 0.2rem 0.35rem;
-  border-left: 0.3rem solid black;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.4rem;
+  /* Konzerte: grüne Kante und zarte grüne Fläche, damit sie im schwarzen Raster auffallen */
+  border-left: 0.35rem solid var(--multi);
+  background: var(--soft);
+  font-size: 0.8rem;
   line-height: 1.25;
   color: black;
+}
+
+/* Community-Treffen: gelb markiert, zusätzlich gestrichelt (auch ohne Farbe erkennbar) */
+.ev.community {
+  border: 0.12rem dashed black;
+  border-left-width: 0.3rem;
+  background: var(--mark);
+}
+
+.list-entry.community {
+  border-style: dashed;
+  background: var(--mark);
+}
+
+.bar.community {
+  border-style: dashed;
+  border-color: black;
+  background: var(--mark);
+  color: black;
+}
+
+.ev.community:hover,
+.list-entry.community:hover,
+.bar.community:hover {
+  background: black;
+  color: white;
+}
+
+.community-tag {
+  font-weight: 600;
 }
 
 .ev:hover {
@@ -372,16 +571,17 @@ button.active {
   line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
+  font-weight: 800;
 }
 
-.day.past .ev {
-  opacity: 0.55;
-}
-
-/* Abgesagt: grau und durchgestrichen (kein Rot, die Seite bleibt schwarz-weiß + Gelb) */
+/* Abgesagt: durchgestrichen und gepunktet */
 .ev.cancelled {
-  color: #666;
-  border-left-color: #999;
+  border-left: 0.35rem dotted black;
+  background: white;
+}
+
+.ev.cancelled:hover {
+  background: black;
 }
 
 .ev.cancelled .ev-title {
@@ -390,6 +590,11 @@ button.active {
 
 .ev.cancelled .ev-time {
   letter-spacing: 0.05em;
+  color: var(--alert);
+}
+
+.ev.cancelled:hover .ev-time {
+  color: white;
 }
 
 .bars {
@@ -402,6 +607,9 @@ button.active {
   /* Zellen-Padding + Tageszahl + Flex-Gap der Zelle */
   padding-top: calc(var(--cell-pad) + var(--num-h) + 0.3rem);
   pointer-events: none;
+  /* Über den (jetzt positionierten) Tageszellen */
+  position: relative;
+  z-index: 2;
 }
 
 /* Mehrtägige Events wie im internen Kalender: ein durchgehender Balken pro Woche */
@@ -414,10 +622,10 @@ button.active {
   /* 0.3rem rechts = Zellrand, damit der Balken nicht über die Gitterlinie läuft */
   margin: 0 calc(var(--cell-pad) + 0.3rem) 0 var(--cell-pad);
   padding: 0 0.5rem;
-  /* Bewusste Farbausnahme (siehe DESIGN.md): wie im internen Kalender */
-  background: var(--multiday-bg);
+  /* Schraffur; Titel und Zeitraum liegen auf weißen Etiketten. Treffen gelb (.community) */
+  background: var(--hatch), var(--soft);
   color: black;
-  border-left: 0.35rem solid var(--multiday-accent);
+  border: 0.12rem solid var(--multi);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
@@ -425,15 +633,27 @@ button.active {
   overflow: hidden;
 }
 
+.bar-title,
+.bar-range {
+  background: white;
+  padding: 0 0.3rem;
+}
+
 .bar:hover {
-  background: var(--multiday-bg-hover);
+  background: black;
+}
+
+.bar:hover .bar-title,
+.bar:hover .bar-range {
+  background: black;
+  color: white;
 }
 
 /* Fortsetzung aus der Vorwoche / in die nächste Woche: Balken läuft bis an den Rand */
 .bar.cont-before {
   margin-left: 0;
   border-left-width: 0;
-  padding-left: 0.6rem;
+  padding-left: 0.3rem;
 }
 
 .bar.cont-after {
@@ -447,13 +667,15 @@ button.active {
 }
 
 .bar.cancelled {
-  background: #e6e6e6;
-  color: #666;
-  border-left-color: #999;
+  background: white;
+  color: black;
+  border-style: dotted;
+  border-color: black;
 }
 
 .bar.cancelled:hover {
-  background: #d9d9d9;
+  background: black;
+  color: white;
 }
 
 .bar.cancelled .bar-title {
@@ -466,13 +688,17 @@ button.active {
   margin-right: 0.4em;
   font-weight: 900;
   letter-spacing: 0.05em;
+  color: var(--alert);
+}
+
+.bar.cancelled:hover .cancel-label {
+  color: white;
 }
 
 .bar-range {
   flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 600;
-  opacity: 0.6;
 }
 
 .bar-arrow {
@@ -498,8 +724,18 @@ button.active {
   scroll-margin-top: 6rem;
 }
 
-.list-day.past {
-  opacity: 0.55;
+/* Vergangene Tage in der Liste: Datumskasten durchgestrichen statt blass */
+.list-day.past .list-date {
+  position: relative;
+  background: white;
+}
+
+.list-day.past .list-date::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom right, transparent calc(50% - 0.04rem), black calc(50% - 0.04rem), black calc(50% + 0.04rem), transparent calc(50% + 0.04rem));
 }
 
 .list-date {
@@ -516,6 +752,7 @@ button.active {
 .list-day.today .list-date {
   background: black;
   color: white;
+  transform: rotate(-4deg);
 }
 
 .list-dow,
@@ -551,28 +788,30 @@ button.active {
   color: white;
 }
 
-/* Bewusste Farbausnahme (siehe DESIGN.md): wie im internen Kalender */
+/* Mehrtägig: schraffierter Streifen links */
 .list-entry.multiday {
-  background: var(--multiday-bg);
-  color: black;
-  border-left: 0.6rem solid var(--multiday-accent);
+  background: var(--hatch) left / 1rem 100% no-repeat, var(--soft);
+  padding-left: 1.6rem;
 }
 
-.list-entry.multiday:hover {
-  background: var(--multiday-bg-hover);
-  color: black;
+.list-entry.multiday.community {
+  background: var(--hatch) left / 1rem 100% no-repeat, var(--mark);
+}
+
+.list-entry.multiday:hover,
+.list-entry.multiday.community:hover {
+  background: black;
 }
 
 .list-entry.cancelled,
 .list-entry.cancelled.multiday {
-  background: #f2f2f2;
-  color: #666;
-  border-color: #999;
+  background: white;
+  border-style: dotted;
 }
 
 .list-entry.cancelled:hover {
-  background: #e6e6e6;
-  color: #666;
+  background: black;
+  color: white;
 }
 
 .list-entry.cancelled .list-title {
@@ -612,8 +851,7 @@ button.active {
 
   .title {
     order: -1;
-    width: 100%;
-    text-align: center;
+    margin: 0 auto;
   }
 
   .grid {
@@ -653,11 +891,17 @@ button.active {
     height: 0.45rem;
     padding: 0;
     border-left: none;
-    background: black;
+    background: var(--multi);
+  }
+
+  .ev.community {
+    background: var(--mark);
+    border: 0.1rem dashed black;
   }
 
   .ev.cancelled {
-    background: #bbb;
+    background: white;
+    border: 0.1rem dotted black;
   }
 
   .grid {
@@ -682,17 +926,20 @@ button.active {
     display: none;
   }
 
-  /* Als dünner Streifen ist das helle Gelb zu blass */
   .bar {
     pointer-events: none;
     padding: 0;
     margin-right: calc(var(--cell-pad) + 0.2rem);
     border-left: none;
-    background: var(--multiday-accent);
+    background: var(--hatch), var(--soft);
+  }
+
+  .bar.community {
+    background: var(--mark);
   }
 
   .bar.cancelled {
-    background: #bbb;
+    background: white;
   }
 
   .bar.cont-after {

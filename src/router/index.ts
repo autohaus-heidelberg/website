@@ -1,10 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
+import { findEvent } from '../events'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to, from, savedPosition) {
+    // Sprungmarken (z.B. /community#mitmachen) scrollen zum Element
+    if (to.hash) return { el: to.hash, top: 16 }
     // Reine Query-Änderungen (z.B. Kalendermonat) sollen nicht nach oben springen.
     if (to.path === from.path) return false
     return { top: 0 }
@@ -19,7 +22,14 @@ const router = createRouter({
       path: '/event/:id',
       name: 'event',
       props: true,
-      component: () => import('../views/Event.vue')
+      component: () => import('../views/Event.vue'),
+      // Unbekannte Events zeigen die 404-Seite, die Adresse bleibt dabei stehen
+      beforeEnter: (to) => findEvent(String(to.params.id)) ? true : {
+        name: 'not-found',
+        params: { pathMatch: to.path.slice(1).split('/') },
+        query: to.query,
+        hash: to.hash,
+      }
     },
     {
       path: '/past-events/',
@@ -44,6 +54,11 @@ const router = createRouter({
       name: 'flyerGallery',
       component: () => import('../views/PastEvents.vue'),
       props: { view: 'gallery' }
+    },
+    {
+      path: '/community',
+      name: 'community',
+      component: () => import('../views/CommunityView.vue')
     },
     {
       path: '/about',
@@ -108,6 +123,11 @@ const router = createRouter({
           name: 'admin-artist-edit',
           component: () => import('../views/admin/artists/ArtistFormView.vue'),
           props: true
+        },
+        {
+          path: 'help-requests',
+          name: 'admin-help-requests',
+          component: () => import('../views/admin/community/HelpRequestsView.vue')
         },
         {
           path: 'settings',
@@ -207,6 +227,13 @@ const router = createRouter({
           component: () => import('../views/admin/anfragen/AnfragenListView.vue')
         }
       ]
+    },
+
+    // Unbekannte Adressen (muss zuletzt stehen)
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('../views/NotFoundView.vue')
     }
   ]
 })

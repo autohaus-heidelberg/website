@@ -82,9 +82,7 @@ No colors, gradients, or shades of gray are used in the design.
 - No decorative elements
 - No rounded corners
 - No shadows (exception: hard offset shadow on public buttons)
-- No colors (exception: multi-day events in the public calendar `/calendar/` use the
-  same light yellow as the admin calendar — background `#fdf3d0`, hover `#f7e7a8`,
-  start accent `#ffcc00` — so long-running events stand apart from single dates)
+- No colors (the admin calendar still marks multi-day events with light yellow; the public calendar uses a black/white hatch instead)
 - No gradients
 - No icons or symbols (text only)
 - Geometric, slightly rotated elements for visual interest
@@ -106,6 +104,41 @@ No colors, gradients, or shades of gray are used in the design.
 - Font size adjusts fluidly with clamp()
 - Layout changes from single to two-column at 800px
 - Navigation adapts for mobile (stacked layout)
+
+## Fanzine-Stil (Startseite `/` und Community `/community`)
+
+Die Startseite ist wie eine Punk-/DIY-Fanzine-Ausgabe aufgebaut (Titelleiste, Cover, Titelstory, Inhaltsverzeichnis, Rubriken), mit Schreibmaschinen-/Kopierer-Ästhetik. Stylesheet: `src/assets/fanzine.css`, Präfix `.fz-`. Weiterhin nur Schwarz/Weiß; Ausnahmen für diese Seiten:
+
+- Schraffur-Muster (`repeating-linear-gradient`) für „Klebeband" (`.fz-tape`) und Rasterpunkte (`radial-gradient`) als Kopierer-Overlay – nur als Dekor-Textur, keine Verläufe.
+- Kopierer-Körnung (SVG-Rauschen, geringe Deckkraft) über der Seite – reine Textur, klickt durch; Lesbarkeit hat Vorrang. Kaffeering und abgerissene Cover-Ecke wurden ausprobiert und verworfen (wirkten nicht).
+- Harte Offset-Schatten an Kästen, wie bei den Buttons.
+- Ausgerissene Kante (`clip-path`) an der schwarzen Titelleiste und an Rubrikenlabels, gestrichelte „Ausschneide"-Kästen (`.fz-cut`), Stempel (`.fz-stamp`), leichte Rotationen (max. ca. 2°).
+- Flyer/Poster im Kopierer-Look (Graustufen + Raster, Farbe bei Hover). Auf Touch-Geräten ohne Hover „entwickelt“ sich das Foto in Farbe, sobald es im mittleren Bildschirmbereich liegt (`utils/photoReveal.ts`, Klasse `.is-revealed`). Das Poster der Event-Seite zeigt immer das Original.
+- Schreibmaschinen-Schrift (Courier-Stack) für Fließtext, „Ransom-Note"-Titel (Erpresserbrief, Buchstaben einzeln, `ransomChars()` in `src/utils/ransom.ts`), Marker-Strich unter dem Untertitel und Schreibmaschinen-Korrektur (`<s>`).
+- Admin-Zugang für Eingeloggte: kleines „(A)" (Anarchie-A) unten rechts statt eines Banners (`.fz-admin`).
+- Auto-Anspielungen nur als Text, nie als Bild: „Gebraucht, aber gut in Schuss" in der Titelleiste, Kleinanzeige im Community-Teaser (`.fz-ad`), kurzer „Über uns"-Text mit DE/EN-Umschalter (`src/utils/about.ts`), „Pannenhilfe"-Hinweise bei Fehlerseite und Leerzuständen.
+- Unterseiten im Fanzine-Stil (Community, Fehlerseite) bringen ihre eigene schwarze Kopfleiste mit (`FanzineNav.vue`) und blenden den allgemeinen Zurück-/Logo-Header aus.
+- Alle öffentlichen Seiten nutzen den Fanzine-Stil, auch Login und Presale-Link (mit deutschen Texten, Fehlerzustand als „Pannenhilfe“-Kasten): Event-Detail (Poster links als Kopierer-Foto mit Klebeband, Text rechts, Künstler:innen darunter; auch in der Admin-Vorschau über einen `.fz`-Wrapper), Archiv (Liste nach Jahren, Flyer-Galerie), Kalender (breite Variante `.fz-wide`), Anfrage (Datenblatt statt Emoji-Tabelle) und Impressum. Neue Seiten: `.fz`-Wrapper, `FanzineNav` und Ransom-Titel (`ransomChars`), und die Route in `OWN_HEADER_ROUTES` (App.vue) eintragen.
+- Community-Treffen werden im Kalender gelb (Textmarker) hinterlegt, gestrichelt umrandet und mit Label „Treffen“ markiert.
+- Farbregel für alle Fanzine-Seiten (Variablen `--mark`, `--alert`, `--multi`, `--soft`, `--hatch` auf `.fz` in `fanzine.css`): **Gelb = Verein/Community** (Treffen, Gesuche), **Grün = Konzerte**, **Rot = abgesagt**. Auf der Community-Seite: Gesuchs-Zettel weiß mit gelbem Marker-Strich nur unter dem Titel (ganzflächig gelb war zu viel), Datum der Vereinstreffen als gelbes Etikett (vergangene ohne). Türen, Etiketten, Titel und Unterstützen-Kasten bleiben schwarz/weiß.
+- Öffentlicher Kalender (Ausnahme vom Schwarz-Weiß, Übersichtlichkeit hat Vorrang): zwei Akzente, Marker-Gelb `--mark` (#ffe600) für Treffen, Stempel-Rot `--alert` (#d10000) nur für „ABGESAGT“. Alles andere bleibt schwarz/weiß: Monatstitel als schwarzes Etikett, Konzerte in Riso-Grün (`--multi` #0b8a6c für Kante/Rahmen, `--soft` #e1f3ec als zarte Fläche): Einzeltermine mit grüner Kante und fetterem Titel, mehrtägige als helle Schraffur mit weißen Etiketten für Titel und Zeitraum, vergangene Tage diagonal durchgestrichen (kein Grau), abgesagte Termine gepunktet und durchgestrichen, „Heute“ als schwarzer Innenrahmen der Zelle (nicht gelb, sonst verschwinden Treffen darin) mit schief aufgestempelter Zahl im schwarzen Kasten, Abo-Buttons im Kasten „Zum Mitnehmen“ neben dem Titel. Alle Wochenzeilen sind gleich hoch.
+- Riso-Paletten für die Konzertfarbe im Kalender (Variablen `--multi` Kante/Rahmen, `--soft` Fläche, `--hatch` Schraffurlinien in `CalendarView.vue`). Aktiv ist Grün; Pink wurde ausprobiert und gefiel gut, ist aber näher am roten „ABGESAGT“ (dann `--alert` dunkler und wärmer wählen, z. B. #b3261e). Blau (#3d68d4 / #e6edfb / #7d9ae4) wurde verworfen.
+
+  | Palette | `--multi` | `--soft` | Schraffur |
+  |---|---|---|---|
+  | Grün (aktiv) | #0b8a6c | #e1f3ec | #6cc3a8 |
+  | Pink | #d8307f | #fce6f0 | #ee8fb9 |
+  | Blau (verworfen) | #3d68d4 | #e6edfb | #7d9ae4 |
+- Trennlinien auf der Startseite: dicke durchgezogene Linie (`--fz-rule`) trennt die „Seiten“ (Cover, Programm, Rubriken); innerhalb des Programms gibt es keine weiteren Trennlinien, nur Abstände, das schwarze Etikett „Außerdem im Programm“ und die Weiterblättern-Leiste. Gestrichelte Kästen (Community-Teaser) bleiben eigene Blöcke.
+- Pop-Art-Sprechblase (`FanzineBurst.vue`, `.fz-burst`, wie „POW!“/„BANG!“) als zweites Etikett neben dem Ransom-Etikett: unregelmäßiger SVG-Zackenstern mit Farbband, schwarzem Schatten, schwarzen Speed-Strichen und Rasterpunkten in der Farbe des Sterns, weiße Fläche mit kursivem Text, leicht gedreht, nur Deko (`aria-hidden`). Farbe folgt der Farbregel: Gelb (Standard) für Verein/Community, `tone="multi"` (Grün) für Konzerte. Sparsam einsetzen, aktuell zwei Stück: „Als nächstes!“ an der Ecke des Titelstory-Fotos (`.on-photo`) und „Du fehlst!“ an der Ecke des Community-Kastens (`.on-box`, nur ab 800px).
+- Unterer Teil der Startseite: Rahmen folgen einer Regel. Gestrichelter Kasten (`.fz-cut`) nur für den Community-Aufruf, durchgezogene Kästen (`.fz-box`) für praktische Infos („Gut zu wissen“: Lage, Newsletter, Anfragen), „Kleingedrucktes“ (Über uns, Impressum) ohne Kasten in kleiner Schrift. Jede dieser „Seiten“ beginnt mit einer dicken Linie (`.fz-page`) und einem schwarzen Etikett. Im Community-Kasten stehen links Aufruf, Türen und Buttons, rechts Kleinanzeige und nächstes Vereinstreffen.
+- Rasterpunkte (Kopierer-Halbton) nur im Kasten „Läuft aktuell“ (`.fz-ongoing::before`), von rechts nach links ausblendend. Auf dem Cover waren sie zu heftig und wurden verworfen, ebenso ein „Nächste Abfahrt“-Zettel.
+- Event-Seite nach Farbregel: Datumsetikett schwarz mit grünem Versatz-Schatten (Konzert) bzw. gelb mit schwarzem Rand (Treffen, dazu gelber „Community-Treffen“-Hinweis), Preis-/VVK-Hinweis mit grüner Kante und zarter Fläche, Etikett „Line-up“ über den Künstler:innen, laufende Events („Läuft noch bis …“) als Kasten mit Rasterpunkten (`.fz-dots`), „Abgesagt“ in `--alert`.
+- Anfrage-Seite nach den Regeln: Etiketten „Infos zur Location“ und „Deine Anfrage“, das Datenblatt als durchgezogener Kasten (praktische Info), Warnhinweis (Vermietung) als gelber Kasten, Fehler mit `--alert`-Kante, Erfolgsmeldung mit grüner Kante.
+- Rahmenregel für alle Fanzine-Seiten: gestrichelt (`.fz-cut`) = Aufforderung zum Mitnehmen/Mitmachen (Community-Aufruf, Gesuchs-Zettel; beim Kalender-Abo als kompakter gestrichelter Kasten „Zum Mitnehmen“ mit den drei Abo-Buttons: ab 1000px rechts im Kalender-Kopf, mobil am Seitenende unter Raster/Liste, damit oben der Kalender steht; links unter dem Titel steht die Legende „So liest du den Kalender“ mit Mustern für Konzert, Vereinstreffen, mehrtägig, abgesagt, vorbei. Ein aufklappbarer Abo-Bereich wurde ausprobiert und verworfen; der Stern „Abo!“ sitzt nur als Deko an der oberen rechten Ecke des Kastens (nur ab 1000px).), durchgezogen (`.fz-box`) = praktische Infos und Funktionen (Lage, Newsletter, Datenblatt, Türen), kein Kasten = Kleingedrucktes. Rasterpunkte (`.fz-dots`) markieren Besonderes: laufende Events („Läuft aktuell“, „Läuft noch bis …“). Die „Pannenhilfe“ auf der 404-Seite steht ohne Kasten im Seitenkopf: Stempel und Buttons links, die Gänse rechts, beide auf der Linie des Seitenkopfs. Unbekannte Events (`/event/…`) landen ebenfalls dort, mit eigenem Untertitel „Dieses Event gibt es nicht (mehr)“ und zusätzlichem Button „Zum Archiv“.
+- Schriftgrößen im Fanzine-Stil: Courier ist breit, daher wächst der Fließtext auf Desktop nicht mit dem globalen `1.5vw` mit, sondern liegt bei `clamp(1rem, 0.5vw + 0.65rem, 1.15rem)` auf `.fz` (ca. 18px bei 1560px, mobil 16px). Überschriften in Kästen/Listen (`.fz-h2`, Türen, Gesuche, Treffen, Künstler:innen) liegen bei max. ca. 1.4–2rem, Datums-/Etikettzeilen bei 1.1–1.2rem; nur Titelzeilen (Ransom-Titel, Titelstory) sind groß.
+- Easter Eggs (bewusst versteckt, nirgends beschriftet): Fünfmal auf „Gebraucht, aber gut in Schuss“ in der Kopfleiste der Startseite tippen stempelt eine Prüfplakette („Hauptuntersuchung bestanden“) aufs Cover, Antippen entfernt sie wieder (`utils/plakette.ts`, `.fz-plakette`; eigener Stempel, keine echte Plakette). Auf der Fehlerseite stehen zwei Gänse hinterm Zaun rechts neben der Pannenhilfe auf der Linie des Seitenkopfs (`FanzineGeese.vue`): ein Gruß an das Fanzine „Good Clean Fun“, das die Inspiration für diesen Stil war. Eigene Zeichnung, kein Bild aus dem Heft.
+- `prefers-reduced-motion` wird respektiert; Kontrast und Lesbarkeit des Fließtexts haben Vorrang vor Deko.
 
 ## Admin Section Specifics
 

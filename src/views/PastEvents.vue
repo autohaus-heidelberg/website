@@ -1,31 +1,14 @@
-<template lang="pug">
-.past-events
-  h1 Events
-  .view-toggle
-    button.toggle-btn(:class="{ active: currentView === 'list' }" @click="currentView = 'list'") Liste
-    button.toggle-btn(:class="{ active: currentView === 'gallery' }" @click="currentView = 'gallery'") Galerie
-
-  .events-grid(v-if="currentView === 'list'")
-    .event(v-for="event in upcoming" :key="event.id")
-      EventPreview(:event="event")
-
-  .gallery(v-else)
-    router-link.flyer.plain-link(
-      v-for="event in dedupedFlyers"
-      :key="event.id"
-      :to="{ name: 'event', params: { id: encodeURI(event.id) } }"
-      :title="event.title"
-    )
-      img(:src="event.img" loading="lazy" crossorigin="anonymous")
-
-</template>
-
 <script lang="ts" setup>
 import { computed, ref, watchEffect } from "vue";
 import { events, type Event } from "../events";
-import EventPreview from "../components/EventPreview.vue";
+import { concertsOnly } from "@/utils/community";
 import { isPastEvent } from "@/utils/eventTime";
+import { ransomChars } from "@/utils/ransom";
+import FanzineNav from "@/components/FanzineNav.vue";
 import dayjs from "dayjs";
+import "dayjs/locale/de";
+
+dayjs.locale("de");
 
 const props = withDefaults(defineProps<{ view?: "list" | "gallery" }>(), {
   view: "list",
@@ -34,18 +17,29 @@ const props = withDefaults(defineProps<{ view?: "list" | "gallery" }>(), {
 // Initial tab depends on which route led here; user can still switch freely.
 const currentView = ref(props.view);
 
-const upcoming = computed(() =>
-  events
+const past = computed(() =>
+  concertsOnly(events)
     // Multi-day events (e.g. exhibitions) only count as over once their endDate passes
     .map((item) => ({ ...item, date_d: dayjs(item.endDate || item.date) }))
-    // Naming is misleading; this actually shows *past* events
     .filter((item) => isPastEvent(item))
     .sort((a, b) => (a.date_d.isBefore(b.date_d) ? 1 : -1))
 );
 
-const flyers = computed(() =>
-  upcoming.value.filter((event) => event.img)
-);
+// Archiv nach Jahren gruppiert (neueste zuerst)
+const byYear = computed(() => {
+  const groups: { year: string; items: typeof past.value }[] = [];
+  for (const item of past.value) {
+    const year = item.date_d.format("YYYY");
+    const last = groups[groups.length - 1];
+    if (last && last.year === year) last.items.push(item);
+    else groups.push({ year, items: [item] });
+  }
+  return groups;
+});
+
+const flyers = computed(() => past.value.filter((event) => event.img));
+
+const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) } });
 
 // Recurring series (e.g. cinema nights) often reuse the exact same artwork
 // under a freshly generated filename each time, so dedup by file content
@@ -77,75 +71,35 @@ watchEffect(async () => {
 });
 </script>
 
-<style scoped>
-.past-events {
-  max-width: min(95vw, 2048px);
-  margin: auto;
-  padding: 1rem;
-}
+<template lang="pug">
+.fz
+  FanzineNav(label="Archiv")
+  header.fz-page-head
+    h1.fz-page-title(aria-label="Archiv")
+      span.fz-line(aria-hidden="true")
+        span.fz-ch(v-for="(c, i) in ransomChars('Archiv')" :key="i" :class="c.cls") {{ c.ch }}
+    p.fz-page-sub {{ past.length }} Abende, die ihr entweder erlebt oder verpasst habt. Nach Jahren sortiert, oder einfach durch die Flyer blättern.
+    .btn-row
+      button.btn.fz-toggle(:class="{ on: currentView === 'list' }" :aria-pressed="currentView === 'list'" @click="currentView = 'list'") Liste
+      button.btn.fz-toggle(:class="{ on: currentView === 'gallery' }" :aria-pressed="currentView === 'gallery'" @click="currentView = 'gallery'") Galerie
 
-.view-toggle {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
+  section.fz-section(v-if="currentView === 'list'")
+    template(v-for="group in byYear" :key="group.year")
+      h2.fz-h2.fz-year {{ group.year }}
+      ul.fz-toc
+        li(v-for="ev in group.items" :key="ev.id")
+          router-link.plain-link(:to="eventLink(ev.id)")
+            span.toc-date {{ ev.date_d.format('dd DD.MM.') }}
+            span.toc-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
+            span.toc-lead
 
-.toggle-btn.active {
-  background-color: var(--text-color);
-  color: var(--background-color);
-}
-
-.events-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 500px));
-  gap: 2rem;
-  justify-content: center;
-  margin-top: 2rem;
-}
-
-@media (max-width: 600px) {
-  .events-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-}
-
-.event {
-  display: flex;
-  justify-content: center;
-}
-
-.gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.flyer {
-  display: block;
-  flex-grow: 1;
-}
-
-.flyer img {
-  display: block;
-  height: 400px;
-  width: auto;
-  max-width: 100%;
-  object-fit: cover;
-  margin: 0;
-}
-
-@media (max-width: 800px) {
-  .flyer img {
-    height: 260px;
-  }
-}
-
-@media (max-width: 500px) {
-  .flyer img {
-    height: 200px;
-  }
-}
-</style>
+  section.fz-section(v-else)
+    .fz-gallery
+      router-link.flyer.plain-link.fz-photo(
+        v-for="event in dedupedFlyers"
+        :key="event.id"
+        :to="eventLink(event.id)"
+        :title="event.title"
+      )
+        img(:src="event.img" :alt="event.title" loading="lazy" crossorigin="anonymous")
+</template>
