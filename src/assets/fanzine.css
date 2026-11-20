@@ -706,6 +706,11 @@
     from { opacity: 0; scale: 1.7; }
     to { opacity: 1; scale: 1; }
 }
+/* Breit: rechts auf den Rand von Cover und Programm, damit Titel und Claim lesbar bleiben (schwarz auf schwarz geht der Stempel sonst unter) */
+@media (min-width: 1000px) {
+    .fz .fz-plakette { width: min(22rem, 94vw); left: 75%; top: calc(100% + 0.5rem); translate: -50% -50%; }
+    .fz-plakette .pl-top { font-size: 5.4cqw; }
+}
 
 /* Zwei Gänse hinterm Zaun (Fehlerseite): Gruß an das Fanzine „Good Clean Fun“. Sie stehen auf der dicken Linie des Seitenkopfs. */
 .fz-page-head.has-geese { padding-bottom: 0; }
