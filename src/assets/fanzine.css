@@ -335,7 +335,7 @@
 /* Mobil: Notiz als grünes Etikett an der linken oberen Ecke des Datumsbalkens statt darüber (spart Höhe), ohne Pfeil */
 @media (max-width: 799px) {
     .fz-feature-date.has-note { margin-top: 1.4rem; }
-    .fz-mark-ring { left: -0.6rem; width: calc(100% + 1.2rem); }
+    .fz-mark-ring { left: -0.6rem; width: calc(100% + 1.2rem); top: -0.55rem; height: calc(100% + 1.1rem); filter: url(#fz-ink-soft); }
     .fz-mark-arrow { display: none; }
     .fz-mark-note {
         right: auto;
