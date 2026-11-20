@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import FanzineNav from "@/components/FanzineNav.vue";
 import { ransomChars } from "@/utils/ransom";
-import { hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autohausContent";
+import { hausCommunity, hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autohausContent";
 </script>
 
 <template lang="pug">
@@ -28,6 +28,12 @@ import { hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autoha
         span.run-what {{ p.text }}
     .btn-row
       router-link.btn(:to="{ name: 'calendar' }") Zum Kalender
+
+  section.fz-section
+    .fz-label {{ hausCommunity.label }}
+    p {{ hausCommunity.text }}
+    .btn-row
+      router-link.btn(:to="{ name: 'community' }") {{ hausCommunity.cta }}
 
   section.fz-section#raum
     .fz-box

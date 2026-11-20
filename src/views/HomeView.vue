@@ -137,7 +137,6 @@ const zoom = ref(17);
             template(v-else) {{ part.text }}
         .fz-cover-cta
           router-link.btn(:to="{ name: 'calendar' }") Kalender
-          router-link.btn(:to="{ name: 'autohaus' }") Autohaus
           router-link.btn(:to="{ name: 'community' }") Mach mit!
       button.fz-plakette(v-if="stamped" type="button" title="Antippen zum Entfernen" @click="plaketteTaps = 0")
         span.pl-ring
@@ -222,7 +221,7 @@ const zoom = ref(17);
     .fz-community-grid
       div
         h2.fz-h2(style="margin-top: 0.75rem") Der Laden läuft nicht von allein.
-        p Keine Chefetage, kein Sponsor, kein doppelter Boden. Jeder Abend hier wird von Leuten wie dir gemacht: an der Tür, hinter der Bar, am Mischpult. Drei Wege rein:
+        p Keine Chefetage, kein Sponsor, kein doppelter Boden. Jeder Abend hier wird von Leuten wie dir gemacht: an der Tür, hinter der Bar, am Mischpult. Vier Wege rein:
         ol.fz-door-links
           li(v-for="d in doors" :key="d.id")
             router-link(:to="{ name: 'community', hash: '#mitmachen' }") {{ d.title }}

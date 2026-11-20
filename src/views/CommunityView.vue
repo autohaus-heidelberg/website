@@ -7,7 +7,7 @@ import { isPastEvent } from "@/utils/eventTime";
 import { communityOnly, helpRequests } from "@/utils/community";
 import { ransomChars } from "@/utils/ransom";
 import FanzineNav from "@/components/FanzineNav.vue";
-import { doors, eveningSteps, mailto, support } from "@/utils/communityContent";
+import { crew, doors, eveningSteps, mailto, support } from "@/utils/communityContent";
 
 dayjs.locale("de");
 
@@ -30,6 +30,19 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Community')" :key="i" :class="c.cls") {{ c.ch }}
     p.fz-page-sub Hinter jedem Abend stehen Leute, die dafür keinen Cent sehen und trotzdem wiederkommen. Hier steht, wie du dazustößt, wo es gerade brennt und wann wir uns treffen.
+      |  
+      router-link(:to="{ name: 'autohaus' }") Das Autohaus kennenlernen
+      | .
+
+  section.fz-section#crew
+    .fz-label Wer das Autohaus macht
+    ol.fz-run
+      li(v-for="c in crew" :key="c.id")
+        span.run-when {{ c.title }}
+        span.run-what
+          | {{ c.text }}
+          |  
+          router-link(v-if="c.link" :to="{ name: c.link.route, hash: c.link.hash }") {{ c.link.label }}
 
   section.fz-section#mitmachen
     .fz-label So machst du mit
@@ -38,7 +51,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         .fz-door-no {{ i + 1 }}
         h2.fz-h2 {{ d.title }}
         p {{ d.text }}
-        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash }") {{ d.cta }}
+        router-link.btn(v-if="'route' in d.action" :to="{ name: d.action.route, hash: d.action.hash, query: d.action.query }") {{ d.cta }}
         a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
 
   section.fz-section

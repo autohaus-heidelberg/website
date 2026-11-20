@@ -6,15 +6,45 @@ export function mailto(subject: string): string {
 }
 
 export interface Door {
-  id: 'helfen' | 'veranstalten' | 'kreativ'
+  id: 'helfen' | 'veranstalten' | 'kreativ' | 'raum'
   title: string
   text: string
   cta: string
-  /** `route`: interne Seite (optional mit Sprungmarke), `mail`: E-Mail mit Betreff */
-  action: { route: string; hash?: string } | { mail: string }
+  /** `route`: interne Seite (optional mit Sprungmarke oder Query), `mail`: E-Mail mit Betreff */
+  action: { route: string; hash?: string; query?: Record<string, string> } | { mail: string }
 }
 
-/** Die drei Wege, bei uns mitzumachen. Einladungslinks zu den Telegram-Gruppen stehen bewusst nicht auf der Seite:
+/** Die Gruppen, die das Autohaus gemeinsam gestalten (Community-Seite). */
+export interface Crew {
+  id: 'haus' | 'bar' | 'verein'
+  title: string
+  text: string
+  /** Optionaler Link zu einer internen Seite */
+  link?: { label: string; route: string; hash?: string }
+}
+
+export const crew: Crew[] = [
+  {
+    id: 'haus',
+    title: 'Im Haus',
+    text: 'Bands, Künstler*innen, Fotograf*innen und Kollektive, die in den Proberäumen und Ateliers ihr Ding machen.',
+    link: { label: 'Das Autohaus', route: 'autohaus' },
+  },
+  {
+    id: 'bar',
+    title: 'An Bar und Technik',
+    text: 'Die Helfer*innen an Einlass, Bar, Ton und Licht. Ohne sie geht abends keine Tür auf.',
+    link: { label: 'So machst du mit', route: 'community', hash: '#mitmachen' },
+  },
+  {
+    id: 'verein',
+    title: 'Im Verein',
+    text: 'Der Vorstand leitet das Carousel e.V., die Mitglieder wählen ihn bei der Mitgliederversammlung. Ideen für Abende kommen zu den Vereinstreffen.',
+    link: { label: 'Vereinstreffen', route: 'community', hash: '#treffen' },
+  },
+]
+
+/** Die vier Wege, bei uns mitzumachen. Einladungslinks zu den Telegram-Gruppen stehen bewusst nicht auf der Seite:
  *  Der Verein gibt sie persönlich weiter, deshalb gibt es sie "auf Anfrage". */
 export const doors: Door[] = [
   {
@@ -37,6 +67,13 @@ export const doors: Door[] = [
     text: 'Plakate, Flyer, Fotos, Texte, Schnapsideen. Unsere Flyer fallen nicht vom Himmel, die macht immer jemand. Nächstes Mal steht da vielleicht: Flyer art by dir. Telegram-Gruppe gibt\'s auch hier, Link auf Anfrage.',
     cta: 'Link anfragen',
     action: { mail: 'Kreativ mitmachen' },
+  },
+  {
+    id: 'raum',
+    title: 'Einen Raum im Haus',
+    text: 'Du machst Musik, Kunst oder Fotos und suchst Platz zum Proben, Arbeiten oder Lagern? Im Autohaus gibt es Proberäume, Ateliers und Lager. Ob gerade etwas frei ist, klären wir persönlich.',
+    cta: 'Anfrage stellen',
+    action: { route: 'requests', query: { type: 'space' } },
   },
 ]
 

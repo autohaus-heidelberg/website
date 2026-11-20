@@ -28,8 +28,15 @@ export const hausProgram: HausRow[] = [
 export const autohausTeaser = {
   stamp: 'Im Haus',
   title: 'Mehr als eine Bühne.',
-  text: 'Im Autohaus gibt es rund 20 Proberäume, Ateliers und Lager, in denen Bands, Künstler*innen und Kollektive ihr Ding machen. Schau, wer hier Gas gibt.',
+  text: 'Im Autohaus gibt es rund 20 Proberäume, Ateliers und Lager, in denen Bands, Künstler*innen und Kollektive ihr Ding machen. Schau, wer hier Gas gibt. Wer das alles am Laufen hält, steht gleich darunter.',
   cta: 'Das Autohaus',
+}
+
+/** Überleitung zur Community-Seite */
+export const hausCommunity = {
+  label: 'Wer das alles am Laufen hält',
+  text: 'Ein Haus macht sich nicht von allein. Hinter jedem Raum und jedem Abend stehen Leute: im Haus, an der Bar, im Verein.',
+  cta: 'Zur Community',
 }
 
 export const hausRequest = {

@@ -1,20 +1,24 @@
 import { describe, it, expect } from 'vitest'
-import { CONTACT_EMAIL, doors, eveningSteps, mailto, support, wantedLine } from '../utils/communityContent'
+import { CONTACT_EMAIL, crew, doors, eveningSteps, mailto, support, wantedLine } from '../utils/communityContent'
 
 describe('communityContent', () => {
   it('builds a mailto link with an encoded subject', () => {
     expect(mailto('Helfer*in werden')).toBe(`mailto:${CONTACT_EMAIL}?subject=Helfer*in%20werden`)
   })
 
-  it('has the three doors and every door has an action', () => {
-    expect(doors.map(d => d.id)).toEqual(['helfen', 'veranstalten', 'kreativ'])
+  it('has the four doors and every door has an action', () => {
+    expect(doors.map(d => d.id)).toEqual(['helfen', 'veranstalten', 'kreativ', 'raum'])
     for (const d of doors) {
       expect('route' in d.action || 'mail' in d.action).toBe(true)
     }
   })
 
+  it('names the three groups that shape the Autohaus', () => {
+    expect(crew.map(c => c.id)).toEqual(['haus', 'bar', 'verein'])
+  })
+
   it('never publishes Telegram invite links (they are shared personally)', () => {
-    const all = JSON.stringify({ doors, eveningSteps, support })
+    const all = JSON.stringify({ doors, crew, eveningSteps, support })
     expect(all).not.toMatch(/t\.me|telegram\.me/i)
   })
 
