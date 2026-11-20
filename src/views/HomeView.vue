@@ -306,11 +306,10 @@ const zoom = ref(17);
         router-link.btn(:to="{ name: 'autohaus' }") {{ about.more }}
 
     #impressum
-      h2.fz-h2 Impressum
-      p Verantwortlich für den Inhalt dieser Website:
-      p Carousel e.V. – Hebelstraße 7 – 69115 Heidelberg
-      p
+      p Carousel e.V. – Hebelstraße 7 – 69115 Heidelberg –
+        |  
         a(href="mailto:carouselev@gmail.com") carouselev@gmail.com
-      p
-        router-link(:to="{ name: 'about' }") Mehr
+        |  –
+        |  
+        router-link(:to="{ name: 'about' }") Impressum
 </template>
