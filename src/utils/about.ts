@@ -11,16 +11,16 @@ export const aboutTexts: Record<AboutLang, AboutText> = {
     title: 'Über uns',
     paragraphs: [
       'Wir sind ein kleiner Haufen Leute, die für Musik und alles drumherum brennen. Wir machen Konzerte, Partys, Kinoabende, Ausstellungen, Workshops und worauf wir sonst Lust haben, inzwischen als ehrenamtlicher Verein Carousel e.V.',
-      'Das Haus ist auch Arbeitsplatz: In rund 20 Proberäumen, Ateliers und Lagern arbeiten Bands, Künstler*innen, Fotograf*innen und Kollektive.',
       'Möglich macht das ein deutlich größerer Haufen: die Helfer*innen an der Tür, hinter der Bar und überall, wo sonst noch was zu tun ist.',
+      'Das Autohaus ist auch Arbeitsplatz: In rund 20 Proberäumen, Ateliers und Lagern arbeiten Bands, Künstler*innen, Fotograf*innen und Kollektive.',
     ],
   },
   en: {
     title: 'About us',
     paragraphs: [
       'We are a small bunch of people who live and breathe music and everything around it. We put on concerts, parties, film nights, exhibitions, workshops and whatever else we feel like, these days as the volunteer-run association Carousel e.V.',
-      'The building is also a workplace: around 20 rehearsal rooms, studios and storage rooms are used by bands, artists, photographers and collectives.',
       'It is made possible by a much bigger bunch: the helpers at the door, behind the bar and wherever else there is something to do.',
+      'The building is also a workplace: around 20 rehearsal rooms, studios and storage rooms are used by bands, artists, photographers and collectives.',
       'Find us at Hebelstraße 7, Heidelberg, in the former car dealership. Nearest tram stop: Rudolf-Diesel-Straße.',
     ],
   },

@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import FanzineNav from "@/components/FanzineNav.vue";
 import { ransomChars } from "@/utils/ransom";
-import { hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/hausContent";
+import { hausIntro, hausProgram, hausRequest, hausWorkers } from "@/utils/autohausContent";
 </script>
 
 <template lang="pug">
 .fz
-  FanzineNav(label="Das Haus")
+  FanzineNav(label="Das Autohaus")
   header.fz-page-head
-    h1.fz-page-title(aria-label="Das Haus")
+    h1.fz-page-title(aria-label="Das Autohaus")
       span.fz-line(aria-hidden="true")
-        span.fz-ch(v-for="(c, i) in ransomChars('Das Haus')" :key="i" :class="c.cls") {{ c.ch }}
+        span.fz-ch(v-for="(c, i) in ransomChars('Das Autohaus')" :key="i" :class="c.cls") {{ c.ch }}
     p.fz-page-sub {{ hausIntro }}
 
   section.fz-section

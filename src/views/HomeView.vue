@@ -280,7 +280,7 @@ const zoom = ref(17);
       p Booking-, Veranstaltungs- und Raumanfragen bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
       .btn-row
         router-link.btn(:to="{ name: 'requests' }") Anfragenformular
-        router-link.btn(:to="{ name: 'haus' }") Atelier oder Proberaum?
+        router-link.btn(:to="{ name: 'autohaus' }") Atelier oder Proberaum?
 
   //- ===== Kleingedrucktes =====
   section.fz-section.fz-page.fz-print

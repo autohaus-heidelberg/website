@@ -61,9 +61,9 @@ const router = createRouter({
       component: () => import('../views/CommunityView.vue')
     },
     {
-      path: '/haus',
-      name: 'haus',
-      component: () => import('../views/HausView.vue')
+      path: '/autohaus',
+      name: 'autohaus',
+      component: () => import('../views/AutohausView.vue')
     },
     {
       path: '/about',

@@ -46,9 +46,9 @@
             option(value="space") Atelier / Proberaum
             option(value="other") Sonstiges
           .form-hint.hint-warning(v-if="form.type === 'rent'") Achtung: Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
-          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Haus. Ob gerade etwas frei ist, klären wir persönlich. Mehr zum Haus findest du auf der Seite
+          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Haus. Ob gerade etwas frei ist, klären wir persönlich. Mehr zum Autohaus findest du auf der Seite
             |  
-            router-link(:to="{ name: 'haus' }") Das Haus
+            router-link(:to="{ name: 'autohaus' }") Das Autohaus
             | .
           .form-hint.hint-info(v-if="form.type === 'event'")
             | Tipp: Du hast eine eigene Idee für eine Veranstaltung? Am besten stellst du sie persönlich bei einem unserer Treffen vor. Die Termine geben wir hier bekannt:&nbsp;
@@ -161,7 +161,7 @@ const genres = [
   'Funk', 'Reggae', 'Hip Hop / Rap', 'Elektronisch', 'Singer-Songwriter', 'Sonstiges',
 ]
 
-// /anfragen?type=space (z.B. von der Seite "Das Haus") wählt die Art vor
+// /anfragen?type=space (z.B. von der Seite "Das Autohaus") wählt die Art vor
 const presetType = String(useRoute().query.type ?? '')
 
 const form = reactive({

@@ -5,7 +5,7 @@ export interface HausRow {
 }
 
 export const hausIntro =
-  'Das Carousel ist nicht nur Bühne. Im alten Autohaus arbeiten rund 20 Bands, Künstler*innen und Kollektive in Proberäumen, Ateliers und Lagern, und der Verein sorgt dafür, dass das Haus für sie läuft.'
+  'Das Carousel ist nicht nur Bühne. Im alten Autohaus arbeiten rund 20 Bands, Künstler*innen und Kollektive in Proberäumen, Ateliers und Lagern, und der Verein sorgt dafür, dass der Laden für sie läuft.'
 
 /** Wer im Haus arbeitet (Tätigkeitsbericht 2024). */
 export const hausWorkers: HausRow[] = [
