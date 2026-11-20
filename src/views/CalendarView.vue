@@ -256,7 +256,7 @@ const subscribeLinks = [
           v-for="entry in day.entries"
           :key="entry.event.id"
           :to="eventLink(entry.event)"
-          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled, community: isCommunity(entry.event) }"
+          :class="{ multiday: entry.multiDay, cancelled: entry.event.cancelled, community: isCommunity(entry.event), concert: !entry.multiDay && !entry.event.cancelled && !isCommunity(entry.event) }"
         )
           span.list-time {{ listLabel(entry) }}
             span.community-tag(v-if="isCommunity(entry.event)")  · {{ COMMUNITY_LABEL }}
@@ -809,11 +809,21 @@ button.active {
   color: black;
 }
 
+/* Veranstaltung: grüne Kante und zarte grüne Fläche wie im Monatsraster und in der Legende */
+.list-entry.concert {
+  background: var(--soft);
+  box-shadow: inset 0.45rem 0 0 var(--multi);
+  padding-left: 1.2rem;
+}
+
 .list-entry:hover {
   background: black;
   color: white;
 }
 
+.list-entry.concert:hover {
+  background: black;
+}
 /* Mehrtägig: schraffierter Streifen links */
 .list-entry.multiday {
   background: var(--hatch) left / 1rem 100% no-repeat, var(--soft);
