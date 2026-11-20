@@ -944,13 +944,34 @@ button.active {
 
 /* ── Handy: Monatsraster nur als Übersicht, Tippen springt in die Liste ── */
 @media (max-width: 700px) {
+  /* Zeile 1: Monatsetikett mittig; Zeile 2: Pfeile links, Monat/Liste rechts */
   .toolbar {
-    justify-content: center;
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .toolbar .nav,
+  .toolbar .modes {
+    gap: 0.5rem;
   }
 
   .title {
+    grid-column: 1 / -1;
+    justify-self: center;
     order: -1;
-    margin: 0 auto;
+    margin: 0;
+  }
+
+  /* Schmale Handys: Tasten etwas enger, damit beide Gruppen in eine Zeile passen */
+  @media (max-width: 400px) {
+    .toolbar button { padding: 0.45em 0.6em; }
+  }
+
+  /* Sehr schmale Handys: untereinander statt über den Rand */
+  @media (max-width: 340px) {
+    .toolbar { grid-template-columns: auto; justify-content: center; }
   }
 
   .grid {
