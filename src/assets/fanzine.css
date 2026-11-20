@@ -893,6 +893,11 @@
 .fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); }
 .fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }
 
+/* Handy: Cover-Buttons kleiner, damit sie nicht gegen Titel und Claim anschreien */
+@media (max-width: 700px) {
+    .fz .fz-cover-cta .btn { font-size: 0.85rem; padding: 0.5em 1em; border-width: 0.22rem; letter-spacing: 0.1em; }
+}
+
 /* ---------- Textmarker: Gelb als gezeichneter Marker-Strich unter der Schrift ---------- */
 /* Zwei übereinanderliegende Striche mit runden Enden (SVG, Strichbreite bleibt beim Strecken gleich); die Schrift bleibt scharf */
 .fz {
