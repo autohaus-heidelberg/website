@@ -233,12 +233,12 @@ function copyLink() {
 .fz-event-date.is-community {
     background: transparent;
     background-image: var(--mark-stroke, linear-gradient(var(--mark), var(--mark)));
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     color: #000;
     border: 0;
     box-shadow: none;
     padding: 0.3em 0.9em;
-    filter: url(#fz-ink-soft);
-    mix-blend-mode: multiply;
     transform: rotate(-0.6deg);
 }
 .fz-event-date.is-community::before { display: none; }
@@ -281,8 +281,8 @@ function copyLink() {
     border: 0;
     background: transparent;
     background-image: var(--mark-stroke, linear-gradient(var(--mark), var(--mark)));
-    filter: url(#fz-ink-soft);
-    mix-blend-mode: multiply;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
     font-size: clamp(0.8rem, 1.6vw, 0.95rem);
     font-weight: 900;
     letter-spacing: 0.1em;

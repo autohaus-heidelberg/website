@@ -877,20 +877,18 @@
 .fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); }
 .fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }
 
-/* ---------- Textmarker: Gelb als unruhiger Leuchtstift-Strich statt glatter Fläche ---------- */
-/* Schräg angesetzter Strich mit ausgefransten Kanten (Filter), die Farbe deckt ungleichmäßig, die Schrift scheint schwarz durch */
+/* ---------- Textmarker: Gelb als gezeichneter Marker-Strich unter der Schrift ---------- */
+/* Zwei übereinanderliegende Striche mit runden Enden (SVG, Strichbreite bleibt beim Strecken gleich); die Schrift bleibt scharf */
 .fz {
-    --mark-stroke:
-        linear-gradient(176deg, transparent 0 18%, rgba(255, 230, 0, 0.6) 21%, rgba(255, 230, 0, 0.85) 28%, rgba(255, 230, 0, 0.85) 74%, rgba(255, 230, 0, 0.55) 84%, transparent 88%),
-        linear-gradient(90deg, transparent 0, rgba(255, 230, 0, 0.35) 2%, transparent 6%, transparent 94%, rgba(255, 230, 0, 0.3) 98%, transparent 100%);
+    --mark-stroke: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'><path d='M8 14 C 40 11, 70 16, 105 13 S 165 11, 192 14' fill='none' stroke='%23ffe600' stroke-opacity='0.92' stroke-width='13' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M14 16 C 50 13, 90 17, 130 14 S 175 14, 188 15' fill='none' stroke='%23ffe600' stroke-opacity='0.55' stroke-width='6' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
 }
 .fz .fz-meeting .when,
 .fz .fz-hl,
 .fz .fz-wanted h3 {
     background-color: transparent;
     background-image: var(--mark-stroke);
-    filter: url(#fz-ink-soft);
-    mix-blend-mode: multiply;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
 }
-.fz .fz-meeting .when { padding: 0.15rem 0.6rem; border-radius: 0.3em 0.9em 0.4em 0.7em / 0.5em 0.3em 0.6em 0.4em; transform: rotate(-0.6deg); }
-.fz .fz-meeting-past .when { background: none; filter: none; mix-blend-mode: normal; transform: none; }
+.fz .fz-meeting .when { padding: 0.15rem 0.7rem; transform: rotate(-0.6deg); }
+.fz .fz-meeting-past .when { background: none; transform: none; }
