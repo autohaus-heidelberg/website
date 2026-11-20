@@ -43,7 +43,7 @@ export const hausZusammen = {
 
 /** Teaser auf der Startseite */
 export const autohausTeaser = {
-  stamp: 'Im Autohaus',
+  stamp: 'Das Autohaus',
   title: 'Mehr als eine Bühne.',
   text: 'Heidelbergs schärfstes Autohaus: rund 20 Proberäume, Ateliers und Lager für Bands, Künstler*innen und Kollektive, dazu das Carousel als Bühne. Wer das alles am Laufen hält, steht gleich darunter.',
   cta: 'Das Autohaus',
