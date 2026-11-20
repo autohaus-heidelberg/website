@@ -884,10 +884,10 @@
 .fz .fz-wanted h3 {
     background-color: transparent;
     background-image:
-        linear-gradient(172deg, transparent 0 12%, rgba(255, 230, 0, 0.78) 15%, var(--mark) 24%, var(--mark) 76%, rgba(255, 230, 0, 0.7) 88%, transparent 92%),
-        linear-gradient(90deg, transparent 0, rgba(255, 230, 0, 0.5) 2%, transparent 6%, transparent 94%, rgba(255, 230, 0, 0.45) 98%, transparent 100%);
+        linear-gradient(176deg, transparent 0 18%, rgba(255, 230, 0, 0.6) 21%, rgba(255, 230, 0, 0.85) 28%, rgba(255, 230, 0, 0.85) 74%, rgba(255, 230, 0, 0.55) 84%, transparent 88%),
+        linear-gradient(90deg, transparent 0, rgba(255, 230, 0, 0.35) 2%, transparent 6%, transparent 94%, rgba(255, 230, 0, 0.3) 98%, transparent 100%);
     filter: url(#fz-ink-soft);
     mix-blend-mode: multiply;
 }
-.fz .fz-meeting .when { padding: 0.2rem 0.7rem; border-radius: 0.3em 0.9em 0.4em 0.7em / 0.5em 0.3em 0.6em 0.4em; transform: rotate(-1.2deg); }
+.fz .fz-meeting .when { padding: 0.15rem 0.6rem; border-radius: 0.3em 0.9em 0.4em 0.7em / 0.5em 0.3em 0.6em 0.4em; transform: rotate(-0.6deg); }
 .fz .fz-meeting-past .when { background: none; filter: none; mix-blend-mode: normal; transform: none; }
