@@ -9,8 +9,14 @@
     .event-header
         router-link.community-stamp.plain-link(v-if="isCommunityEvent" :to="{ name: 'community' }") Community-Treffen · Alle Infos &amp; Mithilfe
         .category-stamp(v-else-if="categoryText") {{ categoryText }}
-        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
-        p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
+        h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }")
+            template(v-if="isMultiDay") {{ date }}
+            template(v-else)
+                span.fz-date-long {{ date }}
+                span.fz-date-short {{ dateShort }}
+                |  Uhr
+        span.event-note(v-if="countdown") {{ countdown }}
+        p.datediff(v-if="showDatediff && !countdown" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
         h1.title {{ event.title }}
         .event-meta(v-if="!isCommunityEvent")
@@ -87,8 +93,11 @@ const date = computed(() => {
   if (endDate.value) {
     return `${start.format('DD.MM.YYYY')} – ${endDate.value.format('DD.MM.YYYY')}`
   }
-  return start.format("dddd - DD/MM/YYYY - HH:mm")
+  return start.format("dddd, DD.MM.YYYY · HH:mm")
 })
+
+// Mobil das kurze Datum wie auf der Startseite („Sa, 21.11.2026“)
+const dateShort = computed(() => dayjs(props.event?.date).locale('de').format("dd, DD.MM.YYYY · HH:mm"))
 
 const isMultiDay = computed(() => !!props.event.endDate)
 
@@ -113,6 +122,17 @@ const dateDiff = computed(() => {
   }
   const start = dayjs(props.event?.date).locale('de')
   return start.isAfter(dayjs()) ? `Abfahrt ${start.fromNow()}` : `Das war ${start.fromNow()}`
+})
+
+// Edding-Notiz wie auf der Startseite, solange der Termin noch bevorsteht und höchstens eine Woche entfernt ist
+const countdown = computed(() => {
+  if (props.event.cancelled || isOngoing.value) return ''
+  const start = dayjs(props.event?.date)
+  if (!start.isAfter(dayjs())) return ''
+  const days = start.startOf('day').diff(dayjs().startOf('day'), 'day')
+  if (days <= 0) return 'heute!'
+  if (days === 1) return 'morgen!'
+  return days < 7 ? `in ${days} Tagen!` : ''
 })
 
 // Share
@@ -174,18 +194,39 @@ function copyLink() {
 .event-header { min-width: 0; }
 
 .fz-event-date {
+    position: relative;
+    isolation: isolate;
     display: inline-block;
     margin: 0 0 0.6rem;
-    padding: 0.2em 0.7em;
-    background: #000;
+    padding: 0.3em 1em;
     color: #fff;
     font-size: clamp(0.95rem, 2.2vw, 1.15rem);
     font-weight: 900;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     transform: rotate(-1deg);
-    /* Konzerte: harter Versatz-Schatten in Grün (Konzertfarbe) */
-    box-shadow: 0.3rem 0.3rem 0 var(--multi);
+}
+/* Schwarzes Etikett mit rauem Tintenrand, wie das Datum der Titelstory auf der Startseite */
+.fz-event-date::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #000;
+    filter: url(#fz-ink-soft);
+}
+
+/* Edding-Notiz neben dem Etikett: „morgen!“, „in 3 Tagen!“ */
+.event-note {
+    display: inline-block;
+    margin-left: 0.9rem;
+    vertical-align: middle;
+    font: 1.6rem/1 "Permanent Marker", "Marker Felt", cursive;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    color: var(--multi);
+    transform: rotate(-4deg);
 }
 
 /* Vereinstreffen: Textmarker-Strich statt Konzert-Grün (Strich-Variable aus fanzine.css, ohne sie flaches Gelb) */
@@ -200,6 +241,7 @@ function copyLink() {
     mix-blend-mode: multiply;
     transform: rotate(-0.6deg);
 }
+.fz-event-date.is-community::before { display: none; }
 
 .date-cancelled { text-decoration: line-through; }
 
