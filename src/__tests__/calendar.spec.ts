@@ -12,6 +12,7 @@ import {
   shiftCursor,
   shiftEventToDay,
   startOfWeek,
+  stripHtml,
   visibleRange,
   type CalendarEvent,
 } from '../utils/calendar'
@@ -19,6 +20,12 @@ import {
 function ev(id: string, date: string, endDate?: string): CalendarEvent {
   return { id, date, endDate, title: id }
 }
+
+describe('stripHtml', () => {
+  it('decodes the entities used in event texts, incl. typographic quotes', () => {
+    expect(stripHtml('<p>The BV&rsquo;s &ndash; &laquo;live&raquo; f&uuml;r 5&nbsp;&euro; &amp; mehr</p>')).toBe('The BV’s – «live» für 5 € & mehr')
+  })
+})
 
 describe('dateKey / parseDateKey', () => {
   it('formats local dates', () => {

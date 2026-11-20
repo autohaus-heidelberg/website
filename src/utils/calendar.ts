@@ -289,6 +289,8 @@ const HTML_ENTITIES: Record<string, string> = {
   nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
   auml: 'ä', ouml: 'ö', uuml: 'ü', Auml: 'Ä', Ouml: 'Ö', Uuml: 'Ü', szlig: 'ß',
   ndash: '–', mdash: '—', hellip: '…', bdquo: '„', ldquo: '“', rdquo: '”',
+  lsquo: '‘', rsquo: '’', laquo: '«', raquo: '»', eacute: 'é', Agrave: 'À', euro: '€', middot: '·', deg: '°', bull: '•',
+  emsp: ' ', lrm: '', zwj: '',
 }
 
 function decodeEntities(text: string): string {
