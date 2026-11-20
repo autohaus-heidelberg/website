@@ -332,10 +332,12 @@
     color: var(--multi);
     transform: rotate(-4deg);
 }
-/* Gestapelt liegt die Notiz im Abstand zwischen Foto und Datum */
+/* Mobil: Notiz neben dem Datum statt darüber (spart Höhe), ohne Pfeil */
 @media (max-width: 799px) {
-    .fz-feature-date.has-note { margin-top: 2.6rem; }
+    .fz-feature-date.has-note { margin-top: 1rem; max-width: calc(100% - 4.5rem); }
     .fz-mark-ring { left: -0.6rem; width: calc(100% + 1.2rem); }
+    .fz-mark-arrow { display: none; }
+    .fz-mark-note { right: auto; left: calc(100% + 1rem); top: 0.55rem; font-size: 1.05rem; }
 }
 
 .fz-cancelled { text-decoration: line-through; }
