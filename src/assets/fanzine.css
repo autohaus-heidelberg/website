@@ -815,7 +815,15 @@
     pointer-events: none;
 }
 .fz .fz-box::after { box-shadow: 0.5rem 0.5rem 0 #000; }
-.fz .fz-cut::after { border-style: dashed; }
+/* Gestrichelt per Verlauf statt border-style: dashed (Safari/iOS lässt dort die linke Kante weg) */
+.fz .fz-cut::after {
+    border: 0;
+    background:
+        repeating-linear-gradient(90deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) top / 100% 0.25rem no-repeat,
+        repeating-linear-gradient(90deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) bottom / 100% 0.25rem no-repeat,
+        repeating-linear-gradient(0deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) left / 0.25rem 100% no-repeat,
+        repeating-linear-gradient(0deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) right / 0.25rem 100% no-repeat;
+}
 /* Raster-Kasten darf nicht abschneiden, sonst fehlt der Rahmen am Rand */
 .fz-dots { overflow: visible; }
 

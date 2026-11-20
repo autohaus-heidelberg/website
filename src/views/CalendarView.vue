@@ -314,9 +314,8 @@ const subscribeLinks = [
 }
 
 .sw-concert { border-left: 0.4rem solid var(--multi); }
-.sw-meeting { border-style: dashed; background: var(--mark); }
+.sw-meeting { background: var(--mark); }
 .sw-multi { border-color: var(--multi); background: var(--hatch), var(--soft); }
-.sw-cancel { border-style: dotted; }
 .sw-past {
   background: linear-gradient(to bottom right, transparent calc(50% - 0.05rem), #000 calc(50% - 0.05rem), #000 calc(50% + 0.05rem), transparent calc(50% + 0.05rem)), #fff;
 }
@@ -561,22 +560,33 @@ button.active {
   pointer-events: none;
 }
 
-/* Community-Treffen: gelb markiert, zusätzlich gestrichelt (auch ohne Farbe erkennbar) */
+/* Community-Treffen: gelb markiert, zusätzlich gestrichelt (auch ohne Farbe erkennbar).
+   Die Striche sind Verläufe statt border-style: dashed, weil Safari/iOS dort Kanten weglässt. */
+.ev.community,
+.bar.community,
+.sw-meeting {
+  --dash: 0.12rem;
+  --dash-left: var(--dash);
+  border: var(--dash) solid transparent;
+  background:
+    repeating-linear-gradient(90deg, #000 0 0.4rem, transparent 0.4rem 0.7rem) top / 100% var(--dash) no-repeat,
+    repeating-linear-gradient(90deg, #000 0 0.4rem, transparent 0.4rem 0.7rem) bottom / 100% var(--dash) no-repeat,
+    repeating-linear-gradient(0deg, #000 0 0.4rem, transparent 0.4rem 0.7rem) left / var(--dash-left) 100% no-repeat,
+    repeating-linear-gradient(0deg, #000 0 0.4rem, transparent 0.4rem 0.7rem) right / var(--dash) 100% no-repeat,
+    var(--mark);
+  background-origin: border-box;
+}
+
 .ev.community {
-  border: 0.12rem dashed black;
+  --dash-left: 0.3rem;
   border-left-width: 0.3rem;
-  background: var(--mark);
 }
 
 .list-entry.community {
-  border-style: dashed;
   background: var(--mark);
 }
 
 .bar.community {
-  border-style: dashed;
-  border-color: black;
-  background: var(--mark);
   color: black;
 }
 
@@ -610,10 +620,25 @@ button.active {
   font-weight: 800;
 }
 
-/* Abgesagt: durchgestrichen und gepunktet */
+/* Abgesagt: durchgestrichen und gepunktet (Verlauf statt border-style: dotted, siehe Treffen) */
+.ev.cancelled,
+.bar.cancelled,
+.sw-cancel {
+  --dash: 0.12rem;
+  --dash-left: var(--dash);
+  border: var(--dash) solid transparent;
+  background:
+    repeating-linear-gradient(90deg, #000 0 var(--dash), transparent var(--dash) calc(var(--dash) * 2)) top / 100% var(--dash) no-repeat,
+    repeating-linear-gradient(90deg, #000 0 var(--dash), transparent var(--dash) calc(var(--dash) * 2)) bottom / 100% var(--dash) no-repeat,
+    repeating-linear-gradient(0deg, #000 0 var(--dash-left), transparent var(--dash-left) calc(var(--dash-left) * 2)) left / var(--dash-left) 100% no-repeat,
+    repeating-linear-gradient(0deg, #000 0 var(--dash), transparent var(--dash) calc(var(--dash) * 2)) right / var(--dash) 100% no-repeat,
+    white;
+  background-origin: border-box;
+}
+
 .ev.cancelled {
-  border-left: 0.35rem dotted black;
-  background: white;
+  --dash-left: 0.35rem;
+  border-left-width: 0.35rem;
 }
 
 .ev.cancelled:hover {
@@ -703,10 +728,7 @@ button.active {
 }
 
 .bar.cancelled {
-  background: white;
   color: black;
-  border-style: dotted;
-  border-color: black;
 }
 
 .bar.cancelled:hover {
@@ -884,7 +906,6 @@ button.active {
 .list-entry.cancelled,
 .list-entry.cancelled.multiday {
   background: white;
-  border-style: dotted;
 }
 
 .list-entry.cancelled:hover {
@@ -976,13 +997,15 @@ button.active {
     display: none;
   }
   .ev.community {
-    background: var(--mark);
-    border: 0.1rem dashed black;
+    --dash: 0.1rem;
+    --dash-left: 0.1rem;
+    border: 0.1rem solid transparent;
   }
 
   .ev.cancelled {
-    background: white;
-    border: 0.1rem dotted black;
+    --dash: 0.1rem;
+    --dash-left: 0.1rem;
+    border: 0.1rem solid transparent;
   }
 
   .grid {
@@ -1094,6 +1117,21 @@ button.active {
   pointer-events: none;
 }
 
-.list-entry.community::before { border-style: dashed; }
-.list-entry.cancelled::before { border-style: dotted; }
+.list-entry.community::before {
+  border: 0;
+  background:
+    repeating-linear-gradient(90deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) top / 100% 0.3rem no-repeat,
+    repeating-linear-gradient(90deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) bottom / 100% 0.3rem no-repeat,
+    repeating-linear-gradient(0deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) left / 0.3rem 100% no-repeat,
+    repeating-linear-gradient(0deg, #000 0 0.8rem, transparent 0.8rem 1.3rem) right / 0.3rem 100% no-repeat;
+}
+
+.list-entry.cancelled::before {
+  border: 0;
+  background:
+    repeating-linear-gradient(90deg, #000 0 0.3rem, transparent 0.3rem 0.6rem) top / 100% 0.3rem no-repeat,
+    repeating-linear-gradient(90deg, #000 0 0.3rem, transparent 0.3rem 0.6rem) bottom / 100% 0.3rem no-repeat,
+    repeating-linear-gradient(0deg, #000 0 0.3rem, transparent 0.3rem 0.6rem) left / 0.3rem 100% no-repeat,
+    repeating-linear-gradient(0deg, #000 0 0.3rem, transparent 0.3rem 0.6rem) right / 0.3rem 100% no-repeat;
+}
 </style>
