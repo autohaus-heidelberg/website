@@ -62,9 +62,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         span.run-what {{ s.what }}
 
   section.fz-section
-    .fz-label
-      s Wir suchen
-      |  Wir brauchen euch
+    .fz-label Wir brauchen euch
     ul.fz-wanted(v-if="helpRequests.length")
       li.fz-cut(v-for="(h, i) in helpRequests" :key="i")
         .fz-pin
