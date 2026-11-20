@@ -498,6 +498,8 @@
     transition: color 0.15s;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
+    /* Kopierer-Look: unruhiger Rand und ungleichmäßig deckendes Schwarz wie bei den Stempeln */
+    filter: url(#fz-ink-soft);
 }
 .fz-censor:hover, .fz-censor:focus-visible, .fz-censor.open { color: #fff; outline: none; }
 
