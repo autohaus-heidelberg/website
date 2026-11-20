@@ -91,7 +91,7 @@ onMounted(load)
     h2 Mithilfe-Gesuche
     button.btn-primary(v-if="editingId === null" @click="startNew") + Neues Gesuch
 
-  p.help-text Diese Einträge erscheinen auf der öffentlichen Community-Seite unter „Wir suchen". Nur aktive Einträge werden veröffentlicht, und zwar beim nächsten Veröffentlichen der Events.
+  p.help-text Diese Einträge erscheinen auf der öffentlichen Community-Seite unter „Gerade besonders gesucht“ und als Kleinanzeige auf der Startseite. Gedacht für Zeitgebundenes (z. B. „Flyer für Dezember“), das die festen Mitmach-Texte nicht abdecken. Gibt es keinen aktiven Eintrag, entfällt der Abschnitt auf der Community-Seite. Veröffentlicht wird beim nächsten Veröffentlichen der Events.
 
   .error(v-if="error") {{ error }}
   .success(v-if="success") {{ success }}

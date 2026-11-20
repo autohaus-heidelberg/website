@@ -64,15 +64,13 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         span.run-when {{ s.when }}
         span.run-what {{ s.what }}
 
-  section.fz-section
-    .fz-label Wir brauchen euch
-    ul.fz-wanted(v-if="helpRequests.length")
+  section.fz-section(v-if="helpRequests.length")
+    .fz-label Gerade besonders gesucht
+    ul.fz-wanted
       li.fz-cut(v-for="(h, i) in helpRequests" :key="i")
         .fz-pin
         h3 {{ h.title }}
         p {{ h.text }}
-    .fz-box(v-else)
-      p Gerade ist jeder Posten besetzt. Kommt selten vor, hält nie lange. Schreib uns trotzdem.
 
   section.fz-section#treffen
     .fz-label Vereinstreffen
