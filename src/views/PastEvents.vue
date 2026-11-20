@@ -44,6 +44,8 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
 // Recurring series (e.g. cinema nights) often reuse the exact same artwork
 // under a freshly generated filename each time, so dedup by file content
 // rather than by URL. Starts out un-deduped, then narrows once hashed.
+// Nur in der Galerie, und nur Bilder mit gleicher Dateigröße werden komplett geladen und gehasht
+// (alle Flyer zu laden waren knapp 40 MB, bevor die Seite fertig war).
 const dedupedFlyers = ref(flyers.value);
 
 async function hashImage(url: string): Promise<string> {
@@ -54,10 +56,28 @@ async function hashImage(url: string): Promise<string> {
     .join("");
 }
 
+async function fileSize(url: string): Promise<number | null> {
+  try {
+    const length = (await fetch(url, { method: "HEAD" })).headers.get("content-length");
+    return length ? Number(length) : null;
+  } catch {
+    return null;
+  }
+}
+
 watchEffect(async () => {
+  if (currentView.value !== "gallery") return;
   const list = flyers.value;
+  const sizes = await Promise.all(list.map((event) => fileSize(event.img!)));
+  const sizeCount = new Map<number, number>();
+  for (const size of sizes) if (size !== null) sizeCount.set(size, (sizeCount.get(size) ?? 0) + 1);
   const hashes = await Promise.all(
-    list.map((event) => hashImage(event.img!).catch(() => null))
+    list.map((event, i) => {
+      const size = sizes[i];
+      // Einzigartige Dateigröße: kann kein Duplikat sein, nicht herunterladen
+      if (size !== null && sizeCount.get(size) === 1) return Promise.resolve(`unique:${event.id}`);
+      return hashImage(event.img!).catch(() => null);
+    })
   );
   const seen = new Set<string>();
   const result: (Event & { date_d: dayjs.Dayjs })[] = [];
