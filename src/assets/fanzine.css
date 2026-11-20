@@ -600,6 +600,8 @@
 /* Einspaltiges Cover: Untertitel und Buttons mittig unter "CAROUSEL" */
 @media (max-width: 999px) {
     .fz .fz-cover .fz-title .fz-line + .fz-line { margin-inline: auto; }
+    /* Titelleiste bis an den Bildschirmrand; ihr Text steht bündig mit Titel und Inhalt darunter (Body schneidet den Überstand ab) */
+    .fz .fz-strip { margin-inline: calc(50% - 50vw); padding-inline: calc(50vw - 50%); }
     .fz .fz-cover-cta { justify-content: center; }
 }
 
