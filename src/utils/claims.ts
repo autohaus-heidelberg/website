@@ -4,6 +4,6 @@ export type Claim = ClaimPart[]
 
 /** Fester Cover-Claim im Schreibmaschinen-Stil; der Verein spricht, ohne Markennamen einzelner Veranstalter. */
 export const claim: Claim = [
-  { text: 'Früher Gebrauchtwagen, heute Gebrauchskunst. ' },
+  { text: 'Früher Gebrauchtwagen, heute Bühne, Proberäume, Ateliers. ' },
   { censor: 'Unfallfrei. Fast.' },
 ]
