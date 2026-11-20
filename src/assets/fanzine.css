@@ -876,3 +876,18 @@
 .fz .fz-cover-cta .btn:hover { background: #000; color: #fff; filter: url(#fz-ink); }
 .fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); }
 .fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }
+
+/* ---------- Textmarker: Gelb als unruhiger Leuchtstift-Strich statt glatter Fläche ---------- */
+/* Schräg angesetzter Strich mit ausgefransten Kanten (Filter), die Farbe deckt ungleichmäßig, die Schrift scheint schwarz durch */
+.fz .fz-meeting .when,
+.fz .fz-hl,
+.fz .fz-wanted h3 {
+    background-color: transparent;
+    background-image:
+        linear-gradient(172deg, transparent 0 12%, rgba(255, 230, 0, 0.78) 15%, var(--mark) 24%, var(--mark) 76%, rgba(255, 230, 0, 0.7) 88%, transparent 92%),
+        linear-gradient(90deg, transparent 0, rgba(255, 230, 0, 0.5) 2%, transparent 6%, transparent 94%, rgba(255, 230, 0, 0.45) 98%, transparent 100%);
+    filter: url(#fz-ink-soft);
+    mix-blend-mode: multiply;
+}
+.fz .fz-meeting .when { padding: 0.2rem 0.7rem; border-radius: 0.3em 0.9em 0.4em 0.7em / 0.5em 0.3em 0.6em 0.4em; transform: rotate(-1.2deg); }
+.fz .fz-meeting-past .when { background: none; filter: none; mix-blend-mode: normal; transform: none; }
