@@ -61,6 +61,11 @@ const router = createRouter({
       component: () => import('../views/CommunityView.vue')
     },
     {
+      path: '/haus',
+      name: 'haus',
+      component: () => import('../views/HausView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue')

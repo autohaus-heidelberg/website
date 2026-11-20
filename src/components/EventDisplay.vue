@@ -8,6 +8,7 @@
             .cancelled-stamp(v-if="event.cancelled") ABGESAGT
     .event-header
         router-link.community-stamp.plain-link(v-if="isCommunityEvent" :to="{ name: 'community' }") Community-Treffen · Alle Infos &amp; Mithilfe
+        .category-stamp(v-else-if="categoryText") {{ categoryText }}
         h2.date.fz-event-date(:class="{ 'date-cancelled': event.cancelled, 'is-community': isCommunityEvent }") {{ date }}{{ isMultiDay ? '' : ' Uhr' }}
         p.datediff(v-if="showDatediff" :class="{ 'fz-dots': isOngoing, ongoing: isOngoing }") {{ dateDiff }}
         .cancelled-display(v-if="event.cancelled") ABGESAGT
@@ -54,6 +55,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/de'
 import dayjs from "dayjs"
 import { computed, ref } from "vue"
+import { categoryLabel } from "@/utils/eventCategory"
 
 const props = defineProps<{ event: Event }>()
 
@@ -66,6 +68,8 @@ const isCommunityEvent = computed(() => {
   const evt = props.event as any
   return (evt.type || evt.event_type) === 'community'
 })
+
+const categoryText = computed(() => categoryLabel(props.event))
 
 // Handle both image_url (new API) and img (old static) properties
 const imageUrl = computed(() => {
@@ -234,6 +238,18 @@ function copyLink() {
     letter-spacing: 0.1em;
     text-transform: uppercase;
     transform: rotate(-1.5deg);
+}
+
+.category-stamp {
+    display: block;
+    width: fit-content;
+    margin: 0 0 0.75rem;
+    padding: 0.15rem 0.6rem;
+    border: 0.15rem solid #000;
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
 .cancelled-display {

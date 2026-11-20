@@ -19,7 +19,7 @@ export interface Door {
 export const doors: Door[] = [
   {
     id: 'helfen',
-    title: 'Bei Konzerten helfen',
+    title: 'Bei Veranstaltungen helfen',
     text: 'Bar, Einlass, Ton und Licht, Essen für die Bands. Serviceleistung: Eine Schicht dauert 90 Minuten, das sind etwa elf Zigaretten. Danach stehst du wieder vor der Bühne. Die erste machst du mit geschultem Personal an deiner Seite. Organisiert wird in einer Telegram-Gruppe, den Link gibt\'s persönlich: schreib uns kurz.',
     cta: 'Link anfragen',
     action: { mail: 'Helfer*in werden' },

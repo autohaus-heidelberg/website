@@ -9,6 +9,7 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import { isPastEvent } from "@/utils/eventTime";
 import { communityOnly, concertsOnly, helpRequests } from "@/utils/community";
 import { stripHtml } from "@/utils/calendar";
+import { categoryLabel } from "@/utils/eventCategory";
 import { ransomChars } from "@/utils/ransom";
 import { claim } from "@/utils/claims";
 import { doors, mailto, support, wantedLine } from "@/utils/communityContent";
@@ -162,7 +163,7 @@ const zoom = ref(17);
         img(:src="story.img" :alt="story.title" crossorigin="anonymous")
       div
         .fz-feature-date(:class="{ 'has-note': i === 0 && !story.cancelled }")
-          | {{ story.date_d.format('dddd, DD. MMMM') }} · {{ story.date_d.format('HH:mm') }} Uhr
+          | {{ story.date_d.format('dddd, DD. MMMM') }} · {{ story.date_d.format('HH:mm') }} Uhr{{ categoryLabel(story) ? ' · ' + categoryLabel(story) : '' }}
           template(v-if="i === 0 && !story.cancelled")
             svg.fz-mark-ring(viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true" focusable="false")
               path(:d="MARK_RING")
@@ -180,7 +181,7 @@ const zoom = ref(17);
         .fz-photo
           .fz-tape.tc
           img(:src="ev.img" :alt="ev.title" crossorigin="anonymous")
-        .fz-pick-date {{ ev.date_d.format('dd, DD.MM.') }} · {{ ev.date_d.format('HH:mm') }} Uhr
+        .fz-pick-date {{ ev.date_d.format('dd, DD.MM.') }} · {{ ev.date_d.format('HH:mm') }} Uhr{{ categoryLabel(ev) ? ' · ' + categoryLabel(ev) : '' }}
         h3.fz-pick-title(:class="{ 'fz-cancelled': ev.cancelled }") {{ ev.title }}
 
     .fz-box.fz-ongoing.fz-dots(v-if="ongoing.length")
@@ -271,13 +272,15 @@ const zoom = ref(17);
 
     .fz-box#newsletter
       h2.fz-h2 Newsletter
-      p Abonniere den Newsletter, um Updates über anstehende Konzerte und Veranstaltungen zu erhalten.
+      p Abonniere den Newsletter, um Updates über anstehende Veranstaltungen zu erhalten: Konzerte, Partys, Kino, Ausstellungen und mehr.
       button.rm-open-popup Newsletter abonnieren
 
     .fz-box#anfragen
       h2.fz-h2 Anfragen
       p Booking-, Veranstaltungs- und Raumanfragen bitte nur über unser Anfragenformular. Per E-Mail gehen sie bei uns leicht unter.
-      router-link.btn(:to="{ name: 'requests' }") Anfragenformular
+      .btn-row
+        router-link.btn(:to="{ name: 'requests' }") Anfragenformular
+        router-link.btn(:to="{ name: 'haus' }") Atelier oder Proberaum?
 
   //- ===== Kleingedrucktes =====
   section.fz-section.fz-page.fz-print

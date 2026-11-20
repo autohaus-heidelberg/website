@@ -1,0 +1,31 @@
+export interface HausRow {
+  /** Linke Spalte der Liste (Kurzbezeichnung) */
+  label: string
+  text: string
+}
+
+export const hausIntro =
+  'Das Carousel ist nicht nur Bühne. Im alten Autohaus arbeiten rund 20 Bands, Künstler*innen und Kollektive in Proberäumen, Ateliers und Lagern, und der Verein sorgt dafür, dass das Haus für sie läuft.'
+
+/** Wer im Haus arbeitet (Tätigkeitsbericht 2024). */
+export const hausWorkers: HausRow[] = [
+  { label: 'Bands', text: 'Proberäume, in denen aus Ideen Songs werden und aus Songs irgendwann Konzerte.' },
+  { label: 'Bildende Kunst', text: 'Ateliers für Künstler*innen, die Platz zum Arbeiten brauchen.' },
+  { label: 'Fotografie', text: 'Räume für Fotograf*innen zum Arbeiten und zum Lagern.' },
+  { label: 'Kollektive', text: 'Räume für Gruppen, die zusammen etwas anzetteln.' },
+]
+
+/** Was außer Konzerten im Haus läuft (Tätigkeitsbericht 2024 und Über-uns-Text). */
+export const hausProgram: HausRow[] = [
+  { label: 'Partys', text: 'Von elektronischer Musik bis offenes DJ-Pult.' },
+  { label: 'Kino', text: 'Filmabende, auch als Open-Air-Kino.' },
+  { label: 'Ausstellungen', text: 'Wenn aus dem Atelier etwas an die Wand soll.' },
+  { label: 'Workshops', text: 'Malen, Makramee und was die Leute im Haus sonst draufhaben.' },
+  { label: 'Offene Ateliers', text: 'Beim Sommerfest stehen die Ateliers offen, dazu Flohmarkt und Kleidertausch.' },
+]
+
+export const hausRequest = {
+  title: 'Raum gesucht?',
+  text: 'Wir geben keine Zusagen auf Zuruf. Schreib uns kurz, was du machst und was du brauchst. Ob etwas frei ist, klären wir persönlich.',
+  cta: 'Anfrage stellen',
+}

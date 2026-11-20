@@ -12,6 +12,7 @@ import DeployModal from '@/components/admin/DeployModal.vue'
 import ArtistSelector from '@/components/admin/ArtistSelector.vue'
 import ArtistDealFields from '@/components/admin/ArtistDealFields.vue'
 import EventDisplay from '@/components/EventDisplay.vue'
+import { EVENT_CATEGORIES } from '@/utils/eventCategory'
 import EventChecklistTab from '@/components/admin/EventChecklistTab.vue'
 import AccountingView from '@/views/admin/accounting/AccountingView.vue'
 
@@ -108,6 +109,7 @@ const form = ref<Partial<AppEvent>>({
   endDate: '',
   title: '',
   event_type: 'concert',
+  category: '',
   descriptionShort: '',
   fee: '',
   feeAk: '',
@@ -996,6 +998,13 @@ function closeDeployModal() {
               option(value="concert") Konzert / Veranstaltung
               option(value="community") Community-Treffen
             .field-hint(v-if="form.event_type === 'community'") Erscheint auf der Website im Community-Bereich und im Kalender, nicht in der Konzertliste. Keine Checkliste, nicht in der Statistik. Datum/Uhrzeit = Beginn des öffentlichen Teils, der interne Teil wird nicht veröffentlicht.
+
+          .form-group(v-if="form.event_type !== 'community'")
+            label(for="category") Art (Label auf der Website)
+            select#category(v-model="form.category")
+              option(value="") keine Angabe
+              option(v-for="c in EVENT_CATEGORIES" :key="c.value" :value="c.value") {{ c.label }}
+            .field-hint Erscheint als Label an der Veranstaltung und als Filter im Kalender. Ändert nichts an Checkliste, Abrechnung oder Statistik.
 
           .form-group
             label(for="title") Titel *
