@@ -99,6 +99,10 @@ const censorOpen = ref(false);
 // Easter Egg: mehrfach auf den Spruch in der Kopfleiste tippen → Prüfstempel auf dem Cover
 const plaketteTaps = ref(0);
 const stamped = computed(() => plaketteTaps.value >= PLAKETTE_TAPS);
+// Der Stempel liegt groß über der Seite und klickt durch; erneutes Tippen auf den Spruch nimmt ihn wieder weg
+const onEggTap = () => {
+  plaketteTaps.value = stamped.value ? 0 : plaketteTaps.value + 1;
+};
 const nextHu = nextInspection();
 
 const wantedFallback = wantedLine([]);
@@ -116,7 +120,7 @@ const zoom = ref(17);
   header.fz-masthead
     .fz-strip
       span Nr. {{ issueNo }} · {{ issueMonth }}
-      span.fz-egg(@click="plaketteTaps++") Gebraucht, aber gut in Schuss
+      span.fz-egg(@click="onEggTap") Gebraucht, aber gut in Schuss
     .fz-cover
       h1.fz-title(aria-label="Carousel im alten Autohaus")
         span.fz-line(v-for="(line, li) in titleLines" :key="li" aria-hidden="true")
@@ -138,7 +142,7 @@ const zoom = ref(17);
         .fz-cover-cta
           router-link.btn(:to="{ name: 'calendar' }") Kalender
           router-link.btn(:to="{ name: 'community' }") Mach mit!
-      button.fz-plakette(v-if="stamped" type="button" title="Antippen zum Entfernen" @click="plaketteTaps = 0")
+      .fz-plakette(v-if="stamped" aria-hidden="true")
         span.pl-ring
           span.pl-top Hauptuntersuchung
           span.pl-main Bestanden
