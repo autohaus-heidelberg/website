@@ -305,9 +305,9 @@
 .fz-mark-ring {
     position: absolute;
     left: -0.8rem;
-    top: -0.55rem;
+    top: -0.8rem;
     width: calc(100% + 1.6rem);
-    height: calc(100% + 1.1rem);
+    height: calc(100% + 1.6rem);
     overflow: visible;
     pointer-events: none;
     transform: rotate(1deg);
@@ -320,12 +320,12 @@
     stroke-linejoin: round;
 }
 .fz-mark-ring path { stroke-width: 4; vector-effect: non-scaling-stroke; }
-.fz-mark-arrow { position: absolute; right: -0.3rem; top: -3.6rem; width: 3.75rem; height: 3.1rem; overflow: visible; pointer-events: none; }
+.fz-mark-arrow { position: absolute; right: -0.3rem; top: -3.1rem; width: 3.75rem; height: 3.1rem; overflow: visible; pointer-events: none; }
 .fz-mark-arrow path { stroke-width: 3.5; }
 .fz-mark-note {
     position: absolute;
     right: 3rem;
-    top: -3.1rem;
+    top: -2.6rem;
     font: 1.6rem/1 "Permanent Marker", "Marker Felt", cursive;
     letter-spacing: 0;
     text-transform: none;
