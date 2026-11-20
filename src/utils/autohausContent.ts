@@ -24,6 +24,14 @@ export const hausProgram: HausRow[] = [
   { label: 'Offene Ateliers', text: 'Beim Sommerfest stehen die Ateliers offen, dazu Flohmarkt und Kleidertausch.' },
 ]
 
+/** Teaser auf der Startseite */
+export const autohausTeaser = {
+  stamp: 'Im Haus',
+  title: 'Mehr als eine Bühne.',
+  text: 'Im Autohaus gibt es rund 20 Proberäume, Ateliers und Lager, in denen Bands, Künstler*innen und Kollektive ihr Ding machen. Schau, wer hier Gas gibt.',
+  cta: 'Das Autohaus',
+}
+
 export const hausRequest = {
   title: 'Raum gesucht?',
   text: 'Wir geben keine Zusagen auf Zuruf. Schreib uns kurz, was du machst und was du brauchst. Ob etwas frei ist, klären wir persönlich.',

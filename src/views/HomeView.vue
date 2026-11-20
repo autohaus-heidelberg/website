@@ -13,6 +13,7 @@ import { categoryLabel } from "@/utils/eventCategory";
 import { ransomChars } from "@/utils/ransom";
 import { claim } from "@/utils/claims";
 import { doors, mailto, support, wantedLine } from "@/utils/communityContent";
+import { autohausTeaser } from "@/utils/autohausContent";
 import { aboutTexts, type AboutLang } from "@/utils/about";
 import FanzineBurst from "@/components/FanzineBurst.vue";
 import { PLAKETTE_TAPS, nextInspection } from "@/utils/plakette";
@@ -136,6 +137,7 @@ const zoom = ref(17);
             template(v-else) {{ part.text }}
         .fz-cover-cta
           router-link.btn(:to="{ name: 'calendar' }") Kalender
+          router-link.btn(:to="{ name: 'autohaus' }") Autohaus
           router-link.btn(:to="{ name: 'community' }") Mach mit!
       button.fz-plakette(v-if="stamped" type="button" title="Antippen zum Entfernen" @click="plaketteTaps = 0")
         span.pl-ring
@@ -204,6 +206,14 @@ const zoom = ref(17);
       router-link.btn(:to="{ name: 'flyerGallery' }") Flyer-Galerie
       router-link.btn(:to="{ name: 'pastEvents' }") Vergangene Events
       router-link.btn(:to="{ name: 'calendar' }") Termine abonnieren
+
+  //- ===== Autohaus-Teaser =====
+  section.fz-section#autohaus
+    .fz-box
+      .fz-stamp {{ autohausTeaser.stamp }}
+      h2.fz-h2(style="margin-top: 0.75rem") {{ autohausTeaser.title }}
+      p {{ autohausTeaser.text }}
+      router-link.btn(:to="{ name: 'autohaus' }") {{ autohausTeaser.cta }}
 
   //- ===== Community-Teaser =====
   aside.fz-cut.fz-community#community
