@@ -29,7 +29,7 @@
           dt Backline
           dd Nur nach Absprache
           dt Load-In
-          dd Ebenerdig, Parkplatz direkt vor der Tür
+          dd Ebenerdig, Anfahrt bis direkt vor die Tür zum Ein- und Ausladen. Geparkt wird woanders.
           dt Gagenmodell
           dd Garantie und/oder Tür-Anteil — nach Absprache
 
