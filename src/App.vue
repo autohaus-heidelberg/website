@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
+import FanzineFilters from '@/components/FanzineFilters.vue'
 
 const router = useRouter();
 
@@ -58,6 +59,7 @@ header(v-if="!isHome && !hasOwnHeader" :class="[`layout-${headerLayout}`, { hidd
       span Zurück
   router-link.header-logo(to="/" aria-label="Startseite")
     img(src="/img/logo.svg" alt="Autohaus")
+FanzineFilters
 RouterView
 </template>
 

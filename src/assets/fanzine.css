@@ -32,7 +32,7 @@
     justify-content: space-between;
     gap: 0.25rem 1.5rem;
     margin-top: 1rem;
-    padding: 0.6rem 1rem 1.1rem;
+    padding: 0.8rem 1.5rem 1.4rem;
     background: #000;
     color: #fff;
     font-size: clamp(0.7rem, 1.5vw, 0.9rem);
@@ -98,7 +98,7 @@
 
 .fz-label {
     display: inline-block;
-    padding: 0.25rem 1rem 0.35rem;
+    padding: 0.45rem 1.5rem 0.65rem;
     margin-bottom: 1.25rem;
     background: #000;
     color: #fff;
@@ -212,6 +212,8 @@
 .fz-burst.multi { --burst-tone: var(--multi); }
 .fz-burst svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .fz-burst-lines polygon { fill: #000; }
+.fz-burst-sticker { fill: #fff; stroke: #000; stroke-width: 3; stroke-linejoin: miter; }
+.fz-burst-spark { fill: #000; }
 .fz-burst-out { fill: var(--burst-tone); stroke: #000; stroke-width: 3; stroke-linejoin: miter; }
 .fz-burst-shadow { fill: #000; }
 .fz-burst-in { fill: #fff; }
@@ -236,12 +238,11 @@
     letter-spacing: 0.02em;
     text-align: center;
     text-transform: uppercase;
+    text-shadow: 0.07em 0.07em 0 var(--burst-tone);
 }
-/* Auf dem Foto der Titelstory und an der Ecke des Community-Kastens */
-.fz-burst.on-photo { position: absolute; right: -6.5rem; bottom: -4.5rem; z-index: 3; }
+/* An der Ecke des Community-Kastens */
 .fz-burst.on-box { position: absolute; top: -4rem; right: 0; z-index: 3; transform: rotate(6deg); }
 @media (max-width: 799px) {
-    .fz-burst.on-photo { width: 11em; font-size: 0.75rem; right: -1rem; bottom: -2rem; }
     .fz-burst.on-box { display: none; }
 }
 
@@ -260,6 +261,13 @@
 
 .fz-feature { margin-top: 1.5rem; }
 .fz-feature .fz-photo { transform: rotate(-1.8deg); margin: 0.5rem 0.5rem 0; }
+/* Zweite Titelstory: Foto rechts, Text links */
+.fz-feature + .fz-feature { margin-top: 4rem; }
+.fz-feature.is-second .fz-photo { transform: rotate(1.6deg); }
+@media (min-width: 800px) {
+    .fz-feature.is-second { grid-template-columns: 6fr 5fr; }
+    .fz-feature.is-second .fz-photo { order: 2; }
+}
 .fz-feature-date {
     font-size: clamp(1rem, 2.2vw, 1.2rem);
     font-weight: 900;
@@ -274,7 +282,6 @@
     text-transform: uppercase;
     overflow-wrap: anywhere;
 }
-.fz-feature-diff { margin-top: 0.5rem; font-weight: 700; letter-spacing: 0.05em; }
 .fz-teaser {
     display: -webkit-box;
     -webkit-line-clamp: 6;
@@ -285,6 +292,45 @@
     font-size: clamp(1rem, 1.8vw, 1.1rem);
 }
 .fz-feature .btn { margin-top: 1.5rem; padding: 0.7em 1.2em; }
+
+/* Edding-Markierung am Datum des nächsten Events: handgezogener Kreis, Pfeil und Notiz (Grün = Konzert) */
+.fz-feature-date { position: relative; }
+.fz-feature-date.has-note + .fz-feature-title { margin-top: 1rem !important; }
+.fz-mark-ring {
+    position: absolute;
+    left: -1.25rem;
+    top: -0.95rem;
+    width: calc(100% + 2.5rem);
+    height: calc(100% + 1.9rem);
+    overflow: visible;
+    pointer-events: none;
+    transform: rotate(1deg);
+}
+.fz-mark-ring path, .fz-mark-arrow path {
+    fill: none;
+    stroke: var(--multi);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.fz-mark-ring path { stroke-width: 4; vector-effect: non-scaling-stroke; }
+.fz-mark-arrow { position: absolute; right: -0.3rem; top: -3.6rem; width: 3.75rem; height: 3.1rem; overflow: visible; pointer-events: none; }
+.fz-mark-arrow path { stroke-width: 3.5; }
+.fz-mark-note {
+    position: absolute;
+    right: 3rem;
+    top: -3.1rem;
+    font: 1.6rem/1 "Permanent Marker", "Marker Felt", cursive;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: nowrap;
+    color: var(--multi);
+    transform: rotate(-4deg);
+}
+/* Gestapelt liegt die Notiz im Abstand zwischen Foto und Datum */
+@media (max-width: 799px) {
+    .fz-feature-date.has-note { margin-top: 2.6rem; }
+    .fz-mark-ring { left: -0.6rem; width: calc(100% + 1.2rem); }
+}
 
 .fz-cancelled { text-decoration: line-through; }
 .fz-cancelled-tag { color: var(--alert); font-weight: 900; letter-spacing: 0.1em; margin-right: 0.5rem; text-decoration: none; display: inline-block; }
@@ -531,7 +577,7 @@
 .fz .fz-h2, .fz .fz-feature-title, .fz .fz-pick-title { font-family: Geologica, sans-serif; }
 
 /* Datum der Titelstory wie mit Marker/Label-Gerät aufgeklebt */
-.fz .fz-feature-date { display: inline-block; padding: 0.2em 0.7em; background: #000; color: #fff; transform: rotate(-1deg); }
+.fz .fz-feature-date { display: inline-block; padding: 0.3em 1em; background: #000; color: #fff; transform: rotate(-1deg); }
 
 /* Handgezogener Marker-Strich unter dem Untertitel */
 .fz .fz-title .fz-line + .fz-line {
@@ -707,3 +753,123 @@
     .fz * { transition: none !important; }
     .fz .fz-plakette { animation: none; }
 }
+
+/* ---------- Handgemacht: Linien, Rahmen und Stempel-Buttons (Filter in FanzineFilters.vue) ---------- */
+
+.fz-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* Linien, Rahmen und Schatten sind leere Pseudo-Elemente mit Filter statt echter Rahmen, sonst würde der Inhalt mitverzogen.
+   Der echte Rahmen bleibt transparent, damit sich das Layout nicht ändert. */
+
+/* Dicke Trennlinien (--fz-rule) */
+.fz-cover, #programm, .fz-page-head { border-bottom: 0; }
+.fz-more, .fz-page, .fz-run { border-top: 0; }
+#programm, .fz-page-head, .fz-more, .fz-page, .fz-run { position: relative; }
+.fz-cover::after, #programm::after, .fz-page-head::after, .fz-more::before, .fz-page::before, .fz-run::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: var(--fz-rule);
+    background: #000;
+    filter: url(#fz-hand);
+    pointer-events: none;
+}
+.fz-cover::after, #programm::after, .fz-page-head::after { bottom: 0; }
+.fz-more::before, .fz-page::before, .fz-run::before { top: 0; }
+
+/* Dünne Trennstriche (Inhaltsverzeichnis, Ablaufplan, Vereinstreffen) */
+.fz-toc a, .fz-run li, .fz-meeting { position: relative; border-bottom: 0; }
+.fz-toc a::after, .fz-run li::after, .fz-meeting::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0.1rem;
+    background: currentColor;
+    filter: url(#fz-hand-thin);
+    pointer-events: none;
+}
+
+/* Kästen: Rahmen und harter Schatten als eigenes Element über dem Kasten */
+.fz .fz-box, .fz .fz-cut { border-color: transparent; box-shadow: none; }
+.fz .fz-box::after, .fz .fz-cut::after {
+    content: "";
+    position: absolute;
+    inset: -0.25rem;
+    z-index: 2;
+    border: 0.25rem solid #000;
+    filter: url(#fz-frame);
+    pointer-events: none;
+}
+.fz .fz-box::after { box-shadow: 0.5rem 0.5rem 0 #000; }
+.fz .fz-cut::after { border-style: dashed; }
+/* Raster-Kasten darf nicht abschneiden, sonst fehlt der Rahmen am Rand */
+.fz-dots { overflow: visible; }
+
+/* Fotos und Flyer: Rahmen als Element über dem Bild */
+.fz-photo { --fz-photo-border: 0.35rem; }
+.fz-gallery .flyer { --fz-photo-border: 0.25rem; }
+.fz-photo img { display: block; border-color: transparent; }
+.fz-photo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border: var(--fz-photo-border) solid #000;
+    filter: url(#fz-frame);
+    pointer-events: none;
+}
+
+/* Stempel (Etiketten wie „Community“) */
+.fz .fz-stamp { filter: url(#fz-ink-soft); }
+
+/* Schwarze Etiketten (Kopfleiste, „Das Programm“, Türnummern, Anzeigenkopf): wie kopiert. Der schwarze Grund und die
+   ausgerissene Kante liegen in ::before, damit der Filter auch die Kante verzieht (clip-path wirkt sonst erst danach). */
+.fz-strip, .fz-label { position: relative; isolation: isolate; background: none; clip-path: none; filter: url(#fz-ink-soft); }
+.fz-strip::before, .fz-label::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #000; }
+.fz-strip::before { clip-path: polygon(0 0, 100% 0, 100% 85%, 97% 100%, 93% 86%, 89% 100%, 84% 87%, 79% 100%, 74% 86%, 69% 100%, 63% 87%, 58% 100%, 53% 86%, 47% 100%, 42% 87%, 36% 100%, 31% 86%, 25% 100%, 20% 87%, 14% 100%, 9% 86%, 4% 100%, 0 86%); }
+.fz-label::before { clip-path: polygon(0 0, 100% 0, 100% 85%, 96% 100%, 92% 86%, 87% 100%, 82% 87%, 76% 100%, 70% 86%, 64% 100%, 58% 87%, 52% 100%, 46% 86%, 40% 100%, 34% 87%, 28% 100%, 22% 86%, 16% 100%, 10% 87%, 5% 100%, 0 86%); }
+.fz-door-no, .fz-ad-head { filter: url(#fz-ink-soft); }
+
+/* Datumsetikett der Titelstory: nur der Grund ist rau, die Edding-Notiz daran bleibt unverändert */
+.fz .fz-feature-date { position: relative; isolation: isolate; background: none; }
+.fz .fz-feature-date::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #000; filter: url(#fz-ink-soft); }
+
+/* Formularfelder: handgezogener Rahmen als border-image (Felder können keine Pseudo-Elemente haben) */
+.fz input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="file"]), .fz select, .fz textarea {
+    border: 0.2rem solid transparent;
+    border-image: url("./fz-field-border.svg") 32 / 0.2rem / 0 stretch;
+}
+
+/* Buttons als Gummistempel: nur Rand und Schrift, bei Hover mit Farbe gefüllt */
+.fz .btn, .fz button:where(:not(.fz-plakette, .fz-geese)) {
+    font-family: var(--fz-mono);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: #fff;
+    border: 0.2rem solid #000;
+    box-shadow: none;
+    filter: url(#fz-ink-soft);
+}
+.fz .btn:nth-child(odd) { transform: rotate(-1deg); }
+.fz .btn:nth-child(even) { transform: rotate(0.9deg); }
+.fz .btn:hover, .fz button:where(:not(.fz-plakette, .fz-geese)):hover { background: #000; color: #fff; filter: url(#fz-ink-soft); }
+.fz .btn:active, .fz button:where(:not(.fz-plakette, .fz-geese)):active { transform: scale(0.96); box-shadow: none; }
+.fz .fz-lang .btn { border-width: 0.12rem; }
+
+/* Cover-Buttons: größer und schiefer, mit kräftigerem Stempel-Filter */
+.fz .fz-cover-cta .btn {
+    padding: 0.55em 1.1em;
+    background: transparent;
+    border-width: 0.28rem;
+    letter-spacing: 0.12em;
+    transform: rotate(-2.5deg);
+    filter: url(#fz-ink);
+}
+.fz .fz-cover-cta .btn:nth-child(2) { transform: rotate(1.8deg); }
+.fz .fz-cover-cta .btn:hover { background: #000; color: #fff; filter: url(#fz-ink); }
+.fz .fz-cover-cta .btn:active { transform: rotate(-2.5deg) scale(0.96); }
+.fz .fz-cover-cta .btn:nth-child(2):active { transform: rotate(1.8deg) scale(0.96); }
