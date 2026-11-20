@@ -39,13 +39,11 @@ export const crew: Crew[] = [
     id: 'bar',
     title: 'Im Carousel',
     text: 'Die Helfer*innen an Einlass, Bar, Ton und Licht und alle, die Abende veranstalten. Ohne sie geht abends keine Tür auf.',
-    link: { label: 'So machst du mit', route: 'community', hash: '#mitmachen' },
   },
   {
     id: 'verein',
     title: 'Im Verein',
     text: 'Der Vorstand leitet das Carousel e.V., die Mitglieder wählen ihn bei der Mitgliederversammlung. Ideen für Abende kommen zu den Vereinstreffen.',
-    link: { label: 'Vereinstreffen', route: 'community', hash: '#treffen' },
   },
 ]
 

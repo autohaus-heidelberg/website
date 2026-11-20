@@ -31,9 +31,6 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
       span.fz-line(aria-hidden="true")
         span.fz-ch(v-for="(c, i) in ransomChars('Community')" :key="i" :class="c.cls") {{ c.ch }}
     p.fz-page-sub Hinter jedem Abend im Carousel stehen Leute, die dafür keinen Cent sehen und trotzdem wiederkommen. Hier steht, wie du dazustößt, wo es gerade brennt und wann wir uns treffen.
-      |  
-      router-link(:to="{ name: 'autohaus' }") Das Autohaus kennenlernen
-      | .
 
   .fz-box.fz-ongoing.fz-dots(v-if="nextMeeting")
     .fz-stamp Nächstes Vereinstreffen
