@@ -809,9 +809,8 @@ button.active {
   color: black;
 }
 
-/* Veranstaltung: grüne Kante und zarte grüne Fläche wie im Monatsraster und in der Legende */
+/* Veranstaltung: weiß mit grüner Kante (die Fläche bleibt für Mehrtägiges), sonst wird die Liste zu grün */
 .list-entry.concert {
-  background: var(--soft);
   box-shadow: inset 0.45rem 0 0 var(--multi);
   padding-left: 1.2rem;
 }
@@ -821,8 +820,33 @@ button.active {
   color: white;
 }
 
-.list-entry.concert:hover {
+/* Vergangene Einträge: wie die Tage durchgestrichen, ohne Grün und blasser */
+.list-day.past .list-entry {
+  position: relative;
+  background: white;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.list-day.past .list-entry.concert {
+  padding-left: 0.8rem;
+}
+
+.list-day.past .list-entry::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom right, transparent calc(50% - 0.04rem), black calc(50% - 0.04rem), black calc(50% + 0.04rem), transparent calc(50% + 0.04rem));
+}
+
+.list-day.past .list-entry:hover {
   background: black;
+  opacity: 1;
+}
+
+.list-day.past .list-entry:hover::after {
+  display: none;
 }
 /* Mehrtägig: schraffierter Streifen links */
 .list-entry.multiday {
