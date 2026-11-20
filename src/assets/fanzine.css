@@ -510,18 +510,14 @@
 .fz-door .btn-row { margin-top: auto; }
 .fz-door p { margin-bottom: 1.25rem; }
 .fz-door-no {
-    position: absolute;
-    top: -1.6rem;
-    left: 1rem;
-    padding: 0.05rem 0.9rem;
+    align-self: flex-start;
+    margin-bottom: 0.75rem;
+    padding: 0 0.7rem;
     background: #000;
     color: #fff;
-    font-size: 1.9rem;
+    font-size: 1.4rem;
     font-weight: 900;
-    line-height: 1.2;
     transform: rotate(-4deg);
-    /* weißer Rand trennt die Zahl vom schwarzen Kastenrand, sonst verschwimmt sie damit */
-    box-shadow: 0 0 0 0.3rem #fff;
 }
 .fz-door:nth-child(2) { transform: rotate(0.4deg); }
 .fz-door:nth-child(3) { transform: rotate(-0.4deg); }
