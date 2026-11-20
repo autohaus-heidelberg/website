@@ -313,7 +313,7 @@ const subscribeLinks = [
   background: #fff;
 }
 
-.sw-concert { border-left: 0.4rem solid var(--multi); background: var(--soft); }
+.sw-concert { border-left: 0.4rem solid var(--multi); }
 .sw-meeting { border-style: dashed; background: var(--mark); }
 .sw-multi { border-color: var(--multi); background: var(--hatch), var(--soft); }
 .sw-cancel { border-style: dotted; }
@@ -543,9 +543,9 @@ button.active {
   display: flex;
   flex-direction: column;
   padding: 0.25rem 0.4rem;
-  /* Konzerte: grüne Kante und zarte grüne Fläche, damit sie im schwarzen Raster auffallen */
+  /* Veranstaltungen: grüne Kante, weiße Fläche (wie in der Liste und der Legende) */
   border-left: 0.35rem solid var(--multi);
-  background: var(--soft);
+  background: white;
   font-size: 0.8rem;
   line-height: 1.25;
   color: black;
