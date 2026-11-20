@@ -528,7 +528,7 @@
 .fz-run li { display: grid; grid-template-columns: 12.5rem 1fr; gap: 1rem; padding: 0.7rem 0.25rem; border-bottom: 0.1rem solid #000; margin: 0; }
 .fz-run .run-when { font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
 @media (max-width: 560px) { .fz-run li { grid-template-columns: 1fr; gap: 0.1rem; } }
-.fz-meetings-intro { margin-bottom: 1.5rem; max-width: 70ch; }
+.fz .fz-meetings-intro { margin-bottom: 1.5rem; max-width: 70ch; }
 
 /* Beschriftung/Wert-Tabelle (Datenblatt der Anfrage-Seite) */
 .fz-form-fields { display: grid; grid-template-columns: max-content 1fr; gap: 0.6rem 1rem; align-items: baseline; margin: 1rem 0 1.25rem; }
