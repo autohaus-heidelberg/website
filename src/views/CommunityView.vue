@@ -55,7 +55,7 @@ const eventLink = (id: string) => ({ name: "event", params: { id: encodeURI(id) 
         a.btn(v-else :href="mailto(d.action.mail)") {{ d.cta }}
 
   section.fz-section
-    .fz-label So läuft ein Abend
+    .fz-label So läuft ein Konzertabend
     ol.fz-run
       li(v-for="s in eveningSteps" :key="s.when")
         span.run-when {{ s.when }}
