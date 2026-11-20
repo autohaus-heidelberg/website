@@ -20,13 +20,13 @@ export const hausProgram: HausRow[] = [
   { label: 'Partys', text: 'Von elektronischer Musik bis offenes DJ-Pult.' },
   { label: 'Kino', text: 'Filmabende, auch als Open-Air-Kino.' },
   { label: 'Ausstellungen', text: 'Wenn aus dem Atelier etwas an die Wand soll.' },
-  { label: 'Workshops', text: 'Malen, Makramee und was die Leute im Haus sonst draufhaben.' },
+  { label: 'Workshops', text: 'Malen, Makramee und was die Leute im Autohaus sonst draufhaben.' },
   { label: 'Offene Ateliers', text: 'Beim Sommerfest stehen die Ateliers offen, dazu Flohmarkt und Kleidertausch.' },
 ]
 
 /** Teaser auf der Startseite */
 export const autohausTeaser = {
-  stamp: 'Im Haus',
+  stamp: 'Im Autohaus',
   title: 'Mehr als eine Bühne.',
   text: 'Im Autohaus gibt es rund 20 Proberäume, Ateliers und Lager, in denen Bands, Künstler*innen und Kollektive ihr Ding machen. Schau, wer hier Gas gibt. Wer das alles am Laufen hält, steht gleich darunter.',
   cta: 'Das Autohaus',
@@ -35,7 +35,7 @@ export const autohausTeaser = {
 /** Überleitung zur Community-Seite */
 export const hausCommunity = {
   label: 'Wer das alles am Laufen hält',
-  text: 'Ein Haus macht sich nicht von allein. Hinter jedem Raum und jedem Abend stehen Leute: im Haus, an der Bar, im Verein.',
+  text: 'Ein Haus macht sich nicht von allein. Hinter jedem Raum und jedem Abend stehen Leute: im Autohaus, an der Bar, im Verein.',
   cta: 'Zur Community',
 }
 

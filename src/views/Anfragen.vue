@@ -46,7 +46,7 @@
             option(value="space") Atelier / Proberaum
             option(value="other") Sonstiges
           .form-hint.hint-warning(v-if="form.type === 'rent'") Achtung: Private Feiern (z.B. Geburtstage) bieten wir nicht an. Für kulturelle Veranstaltungen von Vereinen, Initiativen oder Kollektiven ist eine Vermietung nach Absprache aber möglich.
-          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Haus. Ob gerade etwas frei ist, klären wir persönlich. Mehr zum Autohaus findest du auf der Seite
+          .form-hint.hint-info(v-if="form.type === 'space'") Wir vergeben Proberäume, Ateliers und Lager im Autohaus. Ob gerade etwas frei ist, klären wir persönlich. Mehr zum Autohaus findest du auf der Seite
             |  
             router-link(:to="{ name: 'autohaus' }") Das Autohaus
             | .

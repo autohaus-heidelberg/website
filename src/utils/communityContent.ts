@@ -26,7 +26,7 @@ export interface Crew {
 export const crew: Crew[] = [
   {
     id: 'haus',
-    title: 'Im Haus',
+    title: 'Im Autohaus',
     text: 'Bands, Künstler*innen, Fotograf*innen und Kollektive, die in den Proberäumen und Ateliers ihr Ding machen.',
     link: { label: 'Das Autohaus', route: 'autohaus' },
   },
@@ -70,7 +70,7 @@ export const doors: Door[] = [
   },
   {
     id: 'raum',
-    title: 'Einen Raum im Haus',
+    title: 'Einen Raum im Autohaus',
     text: 'Du machst Musik, Kunst oder Fotos und suchst Platz zum Proben, Arbeiten oder Lagern? Im Autohaus gibt es Proberäume, Ateliers und Lager. Ob gerade etwas frei ist, klären wir persönlich.',
     cta: 'Anfrage stellen',
     action: { route: 'requests', query: { type: 'space' } },
