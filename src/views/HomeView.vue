@@ -302,6 +302,8 @@ const zoom = ref(17);
           button.btn.fz-toggle(:class="{ on: lang === 'de' }" :aria-pressed="lang === 'de'" @click="lang = 'de'") DE
           button.btn.fz-toggle(:class="{ on: lang === 'en' }" :aria-pressed="lang === 'en'" @click="lang = 'en'") EN
       p(v-for="(para, i) in about.paragraphs" :key="i" :lang="lang") {{ para }}
+      .btn-row
+        router-link.btn(:to="{ name: 'autohaus' }") {{ about.more }}
 
     #impressum
       h2.fz-h2 Impressum
