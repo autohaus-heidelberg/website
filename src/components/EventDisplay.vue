@@ -45,7 +45,7 @@
                 a.btn.band-website-btn(v-if="artist.link" :href="artist.link" target="_blank" rel="noopener") Band-Website
                 .bandcamp-container(v-if="artist.bandcamp")
                     p.media-label Klingt so:
-                    iframe.bandcamp(:src="artist.bandcamp" title="Bandcamp player" frameborder="0" width="100%" height="175" seamless)
+                    iframe.bandcamp(:src="bandcampEmbed(artist.bandcamp).src" :style="{ height: bandcampEmbed(artist.bandcamp).height + 'px' }" title="Bandcamp player" frameborder="0" width="100%" seamless)
                 template(v-if="artist.youtube")
                     p.media-label Video
                     .video-container
@@ -61,6 +61,7 @@ import 'dayjs/locale/de'
 import dayjs from "dayjs"
 import { computed, ref } from "vue"
 import { categoryLabel } from "@/utils/eventCategory"
+import { bandcampEmbed } from "@/utils/bandcamp"
 
 const props = defineProps<{ event: Event }>()
 
@@ -441,7 +442,7 @@ function copyLink() {
 }
 
 .bandcamp-container { width: 100%; max-width: 780px; margin-bottom: 1rem; }
-.bandcamp-container iframe { width: 100% !important; display: block; height: 175px; }
+.bandcamp-container iframe { width: 100% !important; display: block; }
 
 .video-container {
     position: relative;
